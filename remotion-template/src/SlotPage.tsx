@@ -64,9 +64,21 @@ const FitText: React.FC<{
   })();
   return (
     <div style={vertical
-      ? { writingMode: "vertical-rl", maxHeight: "100%", maxWidth: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }
+      // ⚠⚠ vertical-rl 下 flex 的**主轴是水平**（字往左竖排）。
+      //   原来的 alignItems/justifyContent 组合会把 4 个字横着拆成两列，
+      //   渲成「站 火 / 器 / 营」。3 字刚好不跨列，E9 因此没暴露 ——
+      //   **短文案掩盖了布局 bug，加到 4 字才显形**。
+      //   正确：主轴（横）用 justifyContent，纵向用 alignItems，
+      //   并给满 width/height + whiteSpace:nowrap 阻止换列。
+      ? {
+          writingMode: "vertical-rl" as const,
+          maxHeight: "100%", maxWidth: "100%",
+          display: "flex", flexDirection: "row",
+          justifyContent: "center", alignItems: "center",
+          width: "100%", height: "100%",
+        }
       : { textAlign: "center" }}>
-      <div style={{ fontSize: fs, fontWeight: weight, color, letterSpacing: vertical ? "0.06em" : ls, lineHeight: lh ?? 1.25, textAlign: vertical ? "start" : "center" }}>{text}</div>
+      <div style={{ fontSize: fs, fontWeight: weight, color, letterSpacing: vertical ? "0.06em" : ls, lineHeight: lh ?? 1.25, textAlign: vertical ? "start" : "center", whiteSpace: vertical ? "nowrap" : undefined }}>{text}</div>
       {sub ? <div style={{ fontSize: subFs || Math.max(16, fs * 0.72), color: PALETTE.inkSoft, marginTop: fs * 0.25, textAlign: "center", lineHeight: 1.35 }}>{sub}</div> : null}
     </div>
   );
