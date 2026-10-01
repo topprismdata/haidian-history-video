@@ -37,11 +37,8 @@ export const EpisodeCourse: React.FC = () => (
   <AbsoluteFill style={{ backgroundColor: "#f5eeda" }}>
     {PAGES.map((_, i) =>
       audioBeats(i + 1).map((b) => (
-        <Sequence
-          key={`a-${b.name}`}
-          from={pageOffsetFrames(i) + Math.round(b.from * VIDEO.fps)}
-          name={b.name}
-        >
+        // ⚠ b.from 已是**帧**（见 data/narration.ts 的单位约定），不要再乘 fps
+        <Sequence key={`a-${b.name}`} from={pageOffsetFrames(i) + b.from} name={b.name}>
           <Audio src={staticFile(`audio/${EPISODE}/${b.name}.wav`)} />
         </Sequence>
       )),

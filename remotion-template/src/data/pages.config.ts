@@ -6,9 +6,13 @@
 // 生成方式见 METHODOLOGY.md §「工具化」：
 //   python3 <集>_video/build_remotion_data.py
 //
-// 两条纪律：
+// 三条纪律：
 //  1) 页长用含留白的 PAGE_DURATIONS_SEC；页起点用纯音频累加（见 pageMap.ts）
 //  2) 除 kind:"tag" 外，所有压在插画上的文字一律 backing: true
+//  3) ⚠ slots.json 里**必须带 id 字段** —— SlotPage 的 boxOf() 靠
+//     find(x => x.id === slotId) 定位。缺 id 就静默返回 10×10 兜底框，
+//     FitText 在 10px 宽的框里装不下字，终态帧上表现为「整页槽位空白」。
+//     （E10 实测踩中，排查了三轮才定位：先疑 anchor、再疑检测器，最后是数据缺字段。）
 
 const INK = "#3a3226";
 

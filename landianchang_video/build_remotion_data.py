@@ -69,9 +69,13 @@ def main():
     print(f"读到 {len(pages)} 页 / {total} 槽位")
 
     # ── slots.json（几何，只给 SlotPage 用）──
+    # ⚠ **必须带 id 字段**：SlotPage 的 boxOf() 靠 find(x => x.id === ref) 定位槽位，
+    #   缺 id 就永远找不到，会静默返回 10×10 的兜底框 ——
+    #   FitText 在 10px 宽的框里把字压到装不下，终态帧上表现为「整页槽位空白」。
+    #   （E10 实测踩中：8 页全缺，一度以为是 anchor 算错。）
     geo = {
         p: {"plate": [1920, 1080],
-            "slots": [{k: s[k] for k in ("x", "y", "w", "h")} for s in slots]}
+            "slots": [{k: s[k] for k in ("id", "x", "y", "w", "h")} for s in slots]}
         for p, slots in pages.items()
     }
     OUT.mkdir(parents=True, exist_ok=True)
