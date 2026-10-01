@@ -90,6 +90,45 @@ def test_real_shucun_passes_l1():
     assert [f for f in fs if f.level == "fail"] == []
 
 
+def test_l1_platform_consistency_detects_missing_files(tmp_path):
+    p = _page([("title", 0, 0, 400, 100)], [("title", "标题", 20, True, None)])
+    ep = Episode("mock_ep", [p], [(0, 660)], data_dir=tmp_path)
+    codes = _codes(check_l1(ep))
+    assert "PAGEMAP_MISSING" in codes
+    assert "SUBTITLES_MISSING" in codes
+
+
+def test_l1_platform_consistency_detects_page_count_mismatch(tmp_path):
+    p1 = _page([("title", 0, 0, 400, 100)], [("title", "标题1", 20, True, None)], number=1)
+    p2 = _page([("title", 0, 0, 400, 100)], [("title", "标题2", 20, True, None)], number=2)
+    ep = Episode("mock_ep", [p1, p2], [(0, 660), (660, 660)], data_dir=tmp_path)
+
+    (tmp_path / "pageMap.ts").write_text("export const PAGE_DURATIONS_SEC = [ 20.0 ];\n", encoding="utf-8")
+    (tmp_path / "subtitles.ts").write_text("export const SUBTITLES = { 1: [] };\n", encoding="utf-8")
+
+    fs = check_l1(ep)
+    mismatch_fs = [f for f in fs if f.code == "PAGE_COUNT_MISMATCH"]
+    assert len(mismatch_fs) == 2
+
+
+def test_l1_platform_consistency_passes_when_aligned(tmp_path):
+    p1 = _page([("title", 0, 0, 400, 100)], [("title", "标题1", 20, True, None)], number=1)
+    p2 = _page([("title", 0, 0, 400, 100)], [("title", "标题2", 20, True, None)], number=2)
+    ep = Episode("mock_ep", [p1, p2], [(0, 660), (660, 660)], data_dir=tmp_path)
+
+    (tmp_path / "pageMap.ts").write_text("export const PAGE_DURATIONS_SEC = [ 20.0, 30.0 ];\n", encoding="utf-8")
+    (tmp_path / "subtitles.ts").write_text("export const SUBTITLES = { 1: [], 2: [] };\n", encoding="utf-8")
+
+    fs = check_l1(ep)
+    assert [f for f in fs if f.level == "fail"] == []
+
+
+def test_l1_detects_no_slots():
+    p = Page(1, (1672, 941), [], [])
+    ep = Episode("mock_empty", [p], [(0, 660)])
+    codes = _codes(check_l1(ep))
+    assert "NO_SLOTS" in codes
+
 def test_estimate_lines_respects_manual_breaks():
     # 3 行，每行 4 字，槽宽足够 → 3 行
     assert estimate_lines("甲乙\n丙丁\n戊己", 500, 20) == 3

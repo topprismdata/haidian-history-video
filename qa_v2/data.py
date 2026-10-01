@@ -86,11 +86,16 @@ class Episode(object):
         name: str,
         pages: List[Page],
         layout: List[Tuple[int, int]],
+        data_dir: Optional[pathlib.Path] = None,
     ):
         self.name = name
         self.pages = pages
         self.layout = layout
-
+        if data_dir is not None:
+            self.data_dir = pathlib.Path(data_dir)
+        else:
+            default_dir = ROOT / "src" / name / "data"
+            self.data_dir = default_dir if default_dir.exists() else None
     def page(self, number: int) -> Optional[Page]:
         for p in self.pages:
             if p.number == number:
@@ -227,7 +232,7 @@ def load_episode(ep: str, root: Optional[pathlib.Path] = None) -> Episode:
         slots = [Slot(s["id"], s["x"], s["y"], s["w"], s["h"])
                  for s in det["slots"]]
         pages.append(Page(num, plate, slots, cfg.get(num, [])))
-    return Episode(ep, pages, layout)
+    return Episode(ep, pages, layout, data_dir=ep_dir / "data")
 
 
 def narration_text(ep: str, root: Optional[pathlib.Path] = None) -> Dict[int, str]:

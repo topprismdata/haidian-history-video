@@ -5,19 +5,16 @@
 该判据对插画底色敏感，板图越暗误判率越高。L3 一律用「该槽该有的文本」。
 """
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Sequence, Set
 
 import numpy as np
 from PIL import Image
 from scipy.ndimage import binary_erosion, label
 
-from qa_v2.geometry import Rect
-
 from qa_v2.data import Page, Slot
 from qa_v2.frames import OcrResult, text_at
-from qa_v2.geometry import plate_to_canvas
+from qa_v2.geometry import Rect, plate_to_canvas
 from qa_v2.report import Finding
-
 TAG_IDS: Set[str] = {"evidence_tag"}
 
 # 负控制：把槽位平移这么多 px 后必须判为空。
@@ -51,27 +48,126 @@ def check_l3(page: Page, ocr: OcrResult) -> List[Finding]:
                 {"text": found[0][0][:30], "score": round(worst, 3)}))
     return out
 
+class NegativeControlResult(int):
+    """负控制结果：继承 int（值为 not_caught，兼容 bool 与 == 0 判断）。
+
+    同时记录 untestable（无法在板面上找到不撞任何槽位的空白区而被跳过的槽数）。
+    """
+    not_caught: int
+    untestable: int
+
+    def __new__(cls, not_caught: int, untestable: int = 0):
+        obj = super().__new__(cls, not_caught)
+        obj.not_caught = not_caught
+        obj.untestable = untestable
+        return obj
+
+    def __str__(self) -> str:
+        return str(self.not_caught)
+
+    def __repr__(self) -> str:
+        return (f"NegativeControlResult(not_caught={self.not_caught}, "
+                f"untestable={self.untestable})")
+
+    def __iter__(self):
+        yield self.not_caught
+        yield self.untestable
+
+
+def _intersects(r1: Rect, r2: Rect) -> bool:
+    x1, y1, w1, h1 = r1
+    x2, y2, w2, h2 = r2
+    return max(x1, x2) < min(x1 + w1, x2 + w2) and max(y1, y2) < min(y1 + h1, y2 + h2)
+
+
+def _find_negative_control_rect(
+    slot: Slot, all_slots: Sequence[Slot], plate: Sequence[int], shift: int
+) -> Optional[Rect]:
+    """寻找与所有真槽及自身原矩形均不相交且在板面内的负控制平移矩形。"""
+    orig: Rect = (int(slot.x), int(slot.y), int(slot.w), int(slot.h))
+    all_rects = [(int(s.x), int(s.y), int(s.w), int(s.h)) for s in all_slots]
+    pw, ph = plate[0], plate[1]
+
+    candidate_shifts = [
+        (shift, 0),
+        (-shift, 0),
+        (0, shift),
+        (0, -shift),
+        (int(slot.w + 50), 0),
+        (-int(slot.w + 50), 0),
+        (0, int(slot.h + 50)),
+        (0, -int(slot.h + 50)),
+        (shift, shift),
+        (-shift, shift),
+        (shift, -shift),
+        (-shift, -shift),
+        (2 * shift, 0),
+        (-2 * shift, 0),
+        (0, 2 * shift),
+        (0, -2 * shift),
+        (shift // 2, 0),
+        (-shift // 2, 0),
+        (0, shift // 2),
+        (0, -shift // 2),
+    ]
+
+    seen = set()
+    for dx, dy in candidate_shifts:
+        if (dx, dy) == (0, 0) or (dx, dy) in seen:
+            continue
+        seen.add((dx, dy))
+        cand: Rect = (int(slot.x + dx), int(slot.y + dy), int(slot.w), int(slot.h))
+        if cand[0] < 0 or cand[1] < 0 or cand[0] + cand[2] > pw or cand[1] + cand[3] > ph:
+            continue
+        if _intersects(cand, orig):
+            continue
+        if any(_intersects(cand, other) for other in all_rects):
+            continue
+        return cand
+
+    # 回退到网格搜索（步长 100）
+    for dy in [0, 100, -100, 200, -200, 300, -300, 400, -400, 500, -500]:
+        for dx in [0, 100, -100, 200, -200, 300, -300, 400, -400, 500, -500]:
+            if (dx, dy) == (0, 0) or (dx, dy) in seen:
+                continue
+            seen.add((dx, dy))
+            cand = (int(slot.x + dx), int(slot.y + dy), int(slot.w), int(slot.h))
+            if cand[0] < 0 or cand[1] < 0 or cand[0] + cand[2] > pw or cand[1] + cand[3] > ph:
+                continue
+            if _intersects(cand, orig):
+                continue
+            if any(_intersects(cand, other) for other in all_rects):
+                continue
+            return cand
+
+    return None
+
 
 def assert_negative_control(
     page: Page, ocr: OcrResult, shift: int = NEGATIVE_CONTROL_SHIFT
-) -> int:
-    """负控制：平移槽位后应判为空。返回「未命中」的槽位数。
+) -> NegativeControlResult:
+    """负控制：平移槽位后应判为空。返回 NegativeControlResult(not_caught, untestable)。
 
-    判据恒真时这个数 > 0 —— 旧 QA 缺的正是这个证明。
-    shift=0 会被拒绝：那等于没验证。
+    要求：
+    1. 平移落点与所有真槽及自身原矩形不相交。若撞了就换方向/加大位移；
+    2. 实在无法构造的槽，跳过并计入 untestable（不计入 not_caught）；
+    3. 负控制路径上 text_at 的 pad 置 0；
+    4. 继承 int，兼容 if missed: 与 == 0 判断。
     """
     assert shift > 0, "负控制的平移量必须 > 0，否则等于没验证"
     not_caught = 0
+    untestable = 0
     for s in page.slots:
         if s.id in TAG_IDS:
             continue
-        moved = Slot(s.id, s.x + shift, s.y, s.w, s.h)
-        rect = plate_to_canvas(page.plate, moved.x, moved.y,
-                               moved.w, moved.h)
-        if text_at(ocr, rect):
+        cand = _find_negative_control_rect(s, page.slots, page.plate, shift)
+        if cand is None:
+            untestable += 1
+            continue
+        rect = plate_to_canvas(page.plate, cand[0], cand[1], cand[2], cand[3])
+        if text_at(ocr, rect, pad=0):
             not_caught += 1
-    return not_caught
-
+    return NegativeControlResult(not_caught=not_caught, untestable=untestable)
 
 # ── L5 溢出检测 ──────────────────────────────────────────────────────
 

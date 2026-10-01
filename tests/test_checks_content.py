@@ -66,6 +66,12 @@ def test_l4a_ignores_punctuation_only_diff():
     assert [f for f in check_l4a(p, _ocr(p, {"sub": ["树村.圆明园正北"]}))
             if f.level == "fail"] == []
 
+def test_l4a_arrow_separated_numbers_match():
+    """E11 P7 真实场景：'1799 → 1800 → 1801' 在两侧同口径下不报 NUMBER_MISMATCH。"""
+    p = _page([_ti("title", "1799 → 1800 → 1801")])
+    o = _ocr(p, {"title": ["1799 → 1800 → 1801"]})
+    assert [f for f in check_l4a(p, o) if f.code == "NUMBER_MISMATCH"] == []
+
 
 def test_l4a_no_numbers_is_trivially_ok():
     p = _page([_ti("title", "一个村子，三重身份")])

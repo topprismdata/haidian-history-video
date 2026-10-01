@@ -10,6 +10,7 @@ from qa_v2.data import Page, Slot
 from qa_v2.frames import OcrResult
 from qa_v2.checks_render import (
     check_l3, assert_negative_control, NEGATIVE_CONTROL_SHIFT,
+    NegativeControlResult,
 )
 
 PLATE = (1672, 941)
@@ -65,6 +66,52 @@ def test_negative_control_detects_always_true_detector():
     with pytest.raises(AssertionError):
         assert_negative_control(p, o, shift=0)
 
+
+def test_negative_control_avoids_neighbor_slot_and_does_not_false_fail():
+    """平移落点撞邻槽时，换方向/加大位移，不计未命中。"""
+    p = _page([("title", 0, 0, 200, 100), ("sub", 300, 0, 200, 100)])
+    o = OcrResult(
+        ["村名", "副标题"],
+        [(50, 30, 150, 70), (350, 30, 450, 70)],
+        [0.99, 0.99]
+    )
+    res = assert_negative_control(p, o)
+    assert res == 0
+    assert res.not_caught == 0
+
+
+def test_negative_control_uses_pad_zero():
+    """负控制路径 text_at pad=0：距离矩形边缘 15px 的文字不应命中，在槽内的应命中。"""
+    # plate 设为 (1920, 1080)，scale 恒为 1.0，板面像素直接等于画布像素
+    p = Page(1, (1920, 1080), [Slot("title", 0, 0, 100, 100)], [])
+    # 平移到 (300, 0, 100, 100)，右边界为 400
+    # 构造 OCR 文字框：中心在 (415, 50)，距平移矩形右边缘 15px
+    # 在 pad=25 内，但在 pad=0 外
+    o_near = OcrResult(["边上字"], [(410, 40, 420, 60)], [0.99])
+    res = assert_negative_control(p, o_near)
+    assert res == 0
+    assert res.not_caught == 0
+
+    # 若在槽内中心 (350, 50)，则命中了恒真
+    o_inside = OcrResult(["槽内字"], [(340, 40, 360, 60)], [0.99])
+    res_inside = assert_negative_control(p, o_inside)
+    assert res_inside.not_caught == 1
+    assert res_inside == 1
+
+    # 若在 35px 外中心 (435, 50)，pad=25 和 pad=0 都不命中
+    o_far = OcrResult(["远方字"], [(430, 40, 440, 60)], [0.99])
+    res_far = assert_negative_control(p, o_far)
+    assert res_far == 0
+    assert res_far.not_caught == 0
+
+def test_negative_control_skips_untestable_slots():
+    """无法在板面上找到不撞任何槽位的空白区时，跳过该槽并单独计数，不计入 not_caught。"""
+    p = Page(1, (100, 100), [Slot("giant", 0, 0, 100, 100)], [])
+    o = OcrResult(["全屏字"], [(10, 10, 90, 90)], [0.99])
+    res = assert_negative_control(p, o)
+    assert res.untestable == 1
+    assert res.not_caught == 0
+    assert res == 0
 
 import numpy as np
 from PIL import Image

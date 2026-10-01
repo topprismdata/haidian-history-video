@@ -1,7 +1,7 @@
 """统一入口：跑一集的七层验收。
 
-    python3 -m qa_v2.run shucun            # L1/L2/L3/L5/L6（快，~2s/页）
-    python3 -m qa_v2.run shucun --ocr      # 加 L4（~2min/页，8 页约 2 分钟）
+    python3 -m qa_v2.run shucun            # L1/L2/L5/L6（快档，~1s/页；不含 L3/L4）
+    python3 -m qa_v2.run shucun --ocr      # 加 L3+L4（~2min/页，8 页约 2 分钟）
     python3 -m qa_v2.run shucun --full     # 全开
     python3 -m qa_v2.run shucun --json     # 机读输出
 
@@ -10,8 +10,7 @@
 import argparse
 import pathlib
 import sys
-from typing import Dict, List, Optional, Tuple
-
+from typing import List, Optional, Tuple
 from qa_v2.checks_content import check_l4a, check_l4b, check_l4c, load_names
 from qa_v2.checks_data import check_l1, check_l2
 from qa_v2.checks_render import (

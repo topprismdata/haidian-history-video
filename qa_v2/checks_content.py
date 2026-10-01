@@ -62,7 +62,7 @@ def check_l4a(page: Page, ocr: OcrResult) -> List[Finding]:
         if not want:
             continue
         got_raw = _ocr_text_for(page, ocr, item.slot_id)
-        got = set(extract_numbers(normalize_punct(got_raw)))
+        got = set(extract_numbers(got_raw))
 
         rate = number_unknown_rate(item.text)
         if rate > UNKNOWN_RATE_WARN:
@@ -107,9 +107,6 @@ def check_l4b(page: Page, ocr: OcrResult, names: Set[str]) -> List[Finding]:
                 {"expect": item.text[:50]}))
     return out
 
-
-# 卷号/版本号类引用：口播通常不念，不参与交叉
-_VOLUME_RE = None
 
 
 def _is_volume_ref(n: int) -> bool:

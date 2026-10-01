@@ -5,12 +5,12 @@ L1 抓的是「静默失败」——最阴的一类：数据不匹配时代码�
 E11 实测踩中：badge→evidence_tag 改名后文案侧漏改，
 boxOf 找不到槽位却静默返回 10×10 兜底框。
 """
+import re
 from typing import List
 
-from qa_v2.data import Episode
+from qa_v2.data import Episode, _nums
 from qa_v2.geometry import overlap_ratio, out_of_bounds
 from qa_v2.report import Finding
-
 # 交叠面积占较小者的比例达到此值算 fail（边框相邻不算叠）
 OVERLAP_FAIL_RATIO = 0.05
 # 槽位尺寸下限：低于此值基本装不下任何文字
@@ -26,6 +26,48 @@ def check_l1(ep: Episode) -> List[Finding]:
             "L1", None, None, "fail", "PAGE_COUNT_MISMATCH",
             "页数与页长表不符：%d 页 vs %d 项"
             % (len(ep.pages), len(ep.layout))))
+
+    # 平台一致性检查（spec §5.2 L1：subtitles.ts / pageMap.ts 存在且页数与槽位数一致）
+    if ep.data_dir is not None:
+        pagemap_path = ep.data_dir / "pageMap.ts"
+        if not pagemap_path.exists():
+            out.append(Finding(
+                "L1", None, None, "fail", "PAGEMAP_MISSING",
+                "找不到 pageMap.ts，平台页长数据缺失",
+                {"path": str(pagemap_path)}))
+        else:
+            pm_text = pagemap_path.read_text(encoding="utf-8")
+            m = re.search(r"PAGE_DURATIONS_SEC[^=]*=\s*\[([^\]]+)\]", pm_text)
+            if m:
+                dur_count = len(_nums(m.group(1)))
+                if dur_count != len(ep.pages):
+                    out.append(Finding(
+                        "L1", None, None, "fail", "PAGE_COUNT_MISMATCH",
+                        "pageMap.ts 页数与板面页数不符：%d 页 vs %d 页"
+                        % (dur_count, len(ep.pages)),
+                        {"pagemap_pages": dur_count, "episode_pages": len(ep.pages)}))
+
+        subtitles_path = ep.data_dir / "subtitles.ts"
+        if not subtitles_path.exists():
+            out.append(Finding(
+                "L1", None, None, "fail", "SUBTITLES_MISSING",
+                "找不到 subtitles.ts，平台字幕数据缺失",
+                {"path": str(subtitles_path)}))
+        else:
+            sub_text = subtitles_path.read_text(encoding="utf-8")
+            sub_keys = re.findall(r"[\{\,]\s*[\"']?(\w+)[\"']?\s*:\s*\[", sub_text)
+            if len(sub_keys) != len(ep.pages):
+                out.append(Finding(
+                    "L1", None, None, "fail", "PAGE_COUNT_MISMATCH",
+                    "subtitles.ts 页数与板面页数不符：%d 页 vs %d 页"
+                    % (len(sub_keys), len(ep.pages)),
+                    {"subtitles_pages": len(sub_keys), "episode_pages": len(ep.pages)}))
+
+    total_slots = sum(len(p.slots) for p in ep.pages)
+    if not ep.pages:
+        out.append(Finding("L1", None, None, "fail", "NO_PAGES", "整集没有配置任何页面"))
+    elif total_slots == 0:
+        out.append(Finding("L1", None, None, "fail", "NO_SLOTS", "整集没有配置任何槽位"))
 
     for page in ep.pages:
         have = set(s.id for s in page.slots)
