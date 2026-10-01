@@ -44,8 +44,9 @@ def test_to_int(tok, expect):
     assert to_int(tok) == expect
 
 
-@pytest.mark.parametrize("tok", ["蜀村", "", "·", "abc"])
+@pytest.mark.parametrize("tok", ["蜀村", "", "·", "abc", "百", "千", "万"])
 def test_to_int_returns_none_for_non_number(tok):
+    """单独的单位字（百/千/万）不是定量数字，返回 None。"""
     assert to_int(tok) is None
 
 
@@ -57,6 +58,25 @@ def test_extract_numbers_mixes_forms():
 def test_extract_numbers_reads_speech_years():
     """口播里年份是逐位念的：「一七二四年」→ 1724。"""
     assert extract_numbers("雍正二年，也就是一七二四年") == [1724]
+
+
+def test_extract_numbers_ignores_non_quantitative_units():
+    """修辞性用词（逾千年、万寿山、百年老字号）不抽取为定量数字。"""
+    assert extract_numbers("若音转成立，地名逾千年") == []
+    assert extract_numbers("绕万寿山西麓") == []
+    assert extract_numbers("百年老字号") == []
+
+
+def test_extract_numbers_handles_parallel_reign_years():
+    """并列省略年号名时（嘉庆四年 · 五年 · 六年），五年、六年不误判为定量数字。"""
+    txt = "嘉庆四年设总兵 · 五年十一月十七日下诏 · 六年移驻"
+    assert extract_numbers(txt) == [11, 17]
+
+
+def test_extract_numbers_preserves_gregorian_years():
+    """四位中文公历年份（一七八一年）绝不能被误判成年号剥离。"""
+    txt = "一七八一年，乾隆四十六年七月"
+    assert extract_numbers(txt) == [1781, 7]
 
 
 def test_number_unknown_rate_is_zero_for_clean_text():

@@ -173,3 +173,57 @@ def test_l4c_flags_number_absent_from_narration():
     o = OcrResult(["1485"], [(10, 10, 200, 50)], [0.99])
     fs = [f for f in check_l4c(ep, {3: o}) if f.level == "fail"]
     assert len(fs) == 1 and fs[0].code == "NUMBER_NOT_IN_NARRATION"
+
+
+def test_l4c_e11_p3_real_dense_table_no_false_alarm():
+    """基于 E11 P3 真实数据：口播只念方位不念房数时，49 槽的密集表格不产生假阳性。"""
+    from qa_v2.data import Episode, load_episode, narration_text
+    ep = load_episode("shucun")
+    p3 = ep.page(3)
+    assert p3 is not None
+    narr = narration_text("shucun")
+    ep_p3 = Episode("shucun", [p3], [(0, 660)])
+    ep_p3.narration = {3: narr[3]}
+    fs = check_l4c(ep_p3, {})
+    fail_codes = [f.code for f in fs if f.level == "fail"]
+    assert fail_codes == [], "真实 E11 P3 不得产生 NUMBER_NOT_IN_NARRATION 误报: %s" % fs
+
+
+def test_l4c_catches_conflicting_headline_numbers():
+    """核心文案数字与口播矛盾时必须抓出（如文案写 1350，口播念 1250）。"""
+    from qa_v2.data import Episode, Page, Slot, TextItem
+    pg = Page(2, PLATE, [Slot("note_left", 0, 0, 300, 60)], [
+        TextItem("note_left", "共盖房一万间\n分为八处\n每处一千三百五十间", 20, True, None)
+    ])
+    ep = Episode("shucun", [pg], [(0, 660)])
+    ep.narration = {2: "按《钦定八旗通志》的记载，一共盖房一万间，分为八处，每处一千二百五十间。"}
+    fs = [f for f in check_l4c(ep, {}) if f.level == "fail"]
+    assert len(fs) == 1
+    assert fs[0].code == "NUMBER_NOT_IN_NARRATION"
+    assert "1350" in fs[0].message
+
+
+def test_l4c_exempts_era_parenthetical_year_when_era_spoken():
+    """文案注「万历二十八年（1600）」，口播念「万历二十八年」时公历年份豁免。"""
+    from qa_v2.data import Episode, Page, Slot, TextItem
+    pg = Page(5, PLATE, [Slot("note_left", 0, 0, 300, 60)], [
+        TextItem("note_left", "五圣庵\n鐡磬一\n万历二十八年（1600）", 20, True, None)
+    ])
+    ep = Episode("shucun", [pg], [(0, 660)])
+    ep.narration = {5: "五圣庵有一件万历二十八年的铁磬题记。"}
+    fs = [f for f in check_l4c(ep, {}) if f.level == "fail"]
+    assert fs == []
+
+
+def test_l4c_catches_when_year_mismatches():
+    """文案年份写 1782，口播念 1781 时必须报警。"""
+    from qa_v2.data import Episode, Page, Slot, TextItem
+    pg = Page(6, PLATE, [Slot("title", 0, 0, 300, 60)], [
+        TextItem("title", "1782：编入五营二十三汛", 20, True, None)
+    ])
+    ep = Episode("shucun", [pg], [(0, 660)])
+    ep.narration = {6: "一七八一年，乾隆四十六年七月，朝廷把巡捕三营扩成五营，共设二十三汛。"}
+    fs = [f for f in check_l4c(ep, {}) if f.level == "fail"]
+    assert len(fs) == 1
+    assert fs[0].code == "NUMBER_NOT_IN_NARRATION"
+    assert "1782" in fs[0].message

@@ -16,9 +16,9 @@ _CN_DIGIT = {
 }
 _CN_UNIT = {"十": 10, "百": 100, "千": 1000, "万": 10000}
 
-# 连续的阿拉伯数字 / 中文数字 / 数字单位
+# 连续的阿拉伯数字 / 中文数字（中文数字首字必须是数词，不能直接以「百/千/万」开头）
 _NUM_RE = re.compile(
-    r"[0-9]+|[零〇一二两三四五六七八九十百千万]+"
+    r"[0-9]+|[零〇一二两三四五六七八九十][零〇一二两三四五六七八九十百千万]*"
 )
 
 # 历史片常见朝代年号（如「雍正二年」「乾隆八年」「万历三十五年」）
@@ -29,6 +29,19 @@ _REIGN_NAMES = (
     "大定|承安|泰和|贞祐|至元|乾亨|太平兴国"
 )
 _REIGN_YEAR_RE = re.compile(rf"(?:{_REIGN_NAMES})[零〇一二两三四五六七八九十]+年")
+_PARALLEL_REIGN_YEAR = re.compile(r"(?<=[·、，,和与至到\s])([零〇一二两三四五六七八九十]{1,2}年)")
+
+
+def clean_reign_years(s: str) -> str:
+    """剥离帝号年号（如「乾隆四十六年」「嘉庆四年」）及紧随其后的简写年号（如「· 五年」）。
+
+    注意：4 位数字的公历年份（如「一七八一年」）绝不是年号，必须保留。
+    """
+    has_reign = bool(_REIGN_YEAR_RE.search(s))
+    s = _REIGN_YEAR_RE.sub("", s)
+    if has_reign:
+        s = _PARALLEL_REIGN_YEAR.sub("", s)
+    return s
 
 
 def normalize_punct(s: str) -> str:
@@ -77,14 +90,20 @@ def to_int(token: str) -> Optional[int]:
         else:
             unit = _CN_UNIT[c]
             if unit == 10000:
-                section = (section + (last_digit if last_digit is not None else 1)) * unit
+                if last_digit is None and section == 0:
+                    # 单独一个「万」不是定量数字（如「万寿山」）
+                    return None
+                section = (section + (last_digit if last_digit is not None else 0)) * unit
                 total += section
                 section = 0
                 last_digit = None
             else:
                 if last_digit is None:
-                    # 「十二」的「十」前面没数字，按 1 处理
-                    last_digit = 1
+                    # 只有「十」在开头可以省略「一」（「十二」-> 12）；「百」「千」不可省略（如「百年」「逾千年」）
+                    if unit == 10:
+                        last_digit = 1
+                    else:
+                        return None
                 section += last_digit * unit
                 last_digit = None
     if last_digit is not None:
@@ -94,7 +113,7 @@ def to_int(token: str) -> Optional[int]:
 
 def extract_numbers(s: str) -> List[int]:
     """从文本抽出全部可解析的数字，已归一到 int；解析不了的跳过。"""
-    s_clean = _REIGN_YEAR_RE.sub("", s)
+    s_clean = clean_reign_years(s)
     out = []
     for m in _NUM_RE.finditer(s_clean):
         v = to_int(m.group())
