@@ -42,6 +42,10 @@
 !*_video/layout/
 !*_video/layout/**
 
+# ── 放行：系列排产注册表（2026-10-02 E12 起）───────────────────────────
+# ⚠ series_registry.md 是跨集排产/QA 纪律/教训的唯一汇总，必须入库。
+!anheqiao_video/series_registry.md
+
 # ── 放行：Remotion 合成模板（第 8/9 步的唯一起点）────────────────────
 # ⚠ 漏了这一条，克隆下来就只剩文档，流程最后三分之一无从下手。
 !/remotion-template/
