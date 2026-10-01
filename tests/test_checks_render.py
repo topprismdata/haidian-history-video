@@ -64,3 +64,65 @@ def test_negative_control_detects_always_true_detector():
     # 把平移量设成 0（等于不验证）应当被拒绝
     with pytest.raises(AssertionError):
         assert_negative_control(p, o, shift=0)
+
+
+import numpy as np
+from PIL import Image
+from qa_v2.checks_render import check_l5, text_bbox_in_slot, TOUCH_MARGIN
+
+
+def _slot_img(w, h, text_rows, pad_x=30, pad_y=20, size=28):
+    """造一张槽位图：白底 + 居中若干行「字」（深色横条模拟笔画）。"""
+    a = np.full((h + 2 * pad_y, w + 2 * pad_x, 3), 250, dtype=np.uint8)
+    lh = int(size * 1.4)
+    total = len(text_rows) * lh
+    y0 = (a.shape[0] - total) // 2
+    for i in range(len(text_rows)):
+        yy = y0 + i * lh + 4
+        for x in range(pad_x + 10, pad_x + w - size + 1, size):
+            a[yy:yy + size - 6, x:x + size - 10] = 60
+    return a
+
+
+def test_text_bbox_finds_centered_text():
+    a = _slot_img(500, 100, ["甲乙丙丁"])
+    box = (30, 20, 500, 100)
+    r = text_bbox_in_slot(a, box)
+    assert r is not None
+    x, y, w, h = r
+    assert x > box[0] and y > box[1]
+    assert x + w < box[0] + box[2]
+    assert y + h < box[1] + box[3]
+
+
+def test_text_bbox_returns_none_when_blank():
+    a = np.full((140, 560, 3), 250, dtype=np.uint8)
+    assert text_bbox_in_slot(a, (30, 20, 500, 100)) is None
+
+
+def test_text_bbox_detects_touching_edge():
+    a = np.full((100, 100, 3), 250, dtype=np.uint8)
+    a[10:90, 0:20] = 60          # 文字贴住左边
+    r = text_bbox_in_slot(a, (0, 0, 100, 100))
+    assert r[0] <= TOUCH_MARGIN
+
+
+def test_l5_ok_when_text_has_margin(tmp_path):
+    a = _slot_img(500, 100, ["甲乙丙丁"])
+    p = tmp_path / "s.png"
+    Image.fromarray(a).save(p)
+    page = _page([("note_left", 30, 20, 500, 100)], number=5)
+    # 直接用板面坐标=画布坐标的简版 plate 免去换算干扰
+    page.plate = (1920, 1080)
+    assert [f for f in check_l5(page, p) if f.level == "fail"] == []
+
+
+def test_l5_fails_when_text_touches_edge(tmp_path):
+    a = np.full((100, 100, 3), 250, dtype=np.uint8)
+    a[10:90, 0:25] = 60          # 文字溢出到槽外
+    p = tmp_path / "s2.png"
+    Image.fromarray(a).save(p)
+    page = _page([("note_left", 0, 0, 100, 100)], number=5)
+    page.plate = (1920, 1080)
+    fs = [f for f in check_l5(page, p) if f.level == "fail"]
+    assert len(fs) == 1 and fs[0].code == "TEXT_TOUCHES_SLOT_EDGE"
