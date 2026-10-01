@@ -27,7 +27,7 @@ from faster_whisper import WhisperModel
 
 ROOT = pathlib.Path("/tmp/chemistry-video")
 EPS = ["yimuyuan", "niangniangfu", "xisanqi", "gaoliangqiao",
-       "dazhongsi", "landianchang"]
+       "dazhongsi", "landianchang", "shucun"]
 PUNCT = re.compile(r'[\s，。、：；？！""''「」『』（）—…·《》,.;:?!\[\]"\']')
 TRAD = {"銅": "铜", "鑄": "铸", "銀": "银", "徑": "径", "園": "园", "裡": "里",
         "樹": "树", "臺": "台", "號": "号", "們": "们", "這": "这", "說": "说",
