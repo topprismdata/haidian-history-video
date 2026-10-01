@@ -20,8 +20,7 @@ import pathlib
 import subprocess
 from typing import Any, List, Optional, Tuple
 
-from qa_v2.data import Episode, Slot
-from qa_v2.geometry import CANVAS, Rect
+from qa_v2.geometry import Rect
 
 # OCR 结果落盘缓存目录。
 # 注意：缓存文件名以 "%s_p%02d.json" % (ep, page) 命名，并未计算帧图像内容哈希（MD5）。
