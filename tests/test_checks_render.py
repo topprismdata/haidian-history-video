@@ -126,3 +126,65 @@ def test_l5_fails_when_text_touches_edge(tmp_path):
     page.plate = (1920, 1080)
     fs = [f for f in check_l5(page, p) if f.level == "fail"]
     assert len(fs) == 1 and fs[0].code == "TEXT_TOUCHES_SLOT_EDGE"
+
+
+# ── L6 tag 槽 ────────────────────────────────────────────────────────
+import pathlib
+import tempfile
+from qa_v2.data import TextItem
+from qa_v2.checks_render import (
+    check_l6, WHITE_MIN, WHITE_MAX_RATIO, WHITE_MIN_RATIO,
+)
+
+
+def _tmp_png(a, name="t.png"):
+    d = pathlib.Path(tempfile.mkdtemp())
+    p = d / name
+    Image.fromarray(a).save(p)
+    return p
+
+
+def test_l6_passes_when_white_text_on_dark():
+    """tag 槽是深底白字，深色墨判据天然不适用 —— 旧 QA 直接排除，
+    所以证据标签从不被检查。"""
+    a = np.full((80, 300, 3), 90, dtype=np.uint8)      # 深底
+    a[30:50, 60:240] = 245                              # 白字
+    p = _tmp_png(a)
+    page = _page([("evidence_tag", 0, 0, 300, 80)], number=1)
+    page.plate = (1920, 1080)
+    page.items = [TextItem("evidence_tag", "文献记载", 20, True, "tag")]
+    assert [f for f in check_l6(page, p) if f.level == "fail"] == []
+
+
+def test_l6_fails_when_tag_not_rendered():
+    a = np.full((80, 300, 3), 90, dtype=np.uint8)      # 全深底，没字
+    p = _tmp_png(a)
+    page = _page([("evidence_tag", 0, 0, 300, 80)], number=1)
+    page.plate = (1920, 1080)
+    page.items = [TextItem("evidence_tag", "文献记载", 20, True, "tag")]
+    fs = [f for f in check_l6(page, p) if f.level == "fail"]
+    assert len(fs) == 1 and fs[0].code == "TAG_SLOT_EMPTY"
+
+
+def test_l6_flags_all_white_slab():
+    """整槽全白说明判据抓错了区域，不是有字。"""
+    a = np.full((80, 300, 3), 250, dtype=np.uint8)
+    p = _tmp_png(a)
+    page = _page([("evidence_tag", 0, 0, 300, 80)], number=1)
+    page.plate = (1920, 1080)
+    page.items = [TextItem("evidence_tag", "文献记载", 20, True, "tag")]
+    fs = check_l6(page, p)
+    assert any(f.code == "TAG_SLOT_ALL_WHITE" for f in fs)
+
+
+def test_real_shucun_passes_l6():
+    from qa_v2.data import load_episode
+    ep = load_episode("shucun")
+    outdir = pathlib.Path("/tmp/qa_shucun_frames")
+    outdir.mkdir(parents=True, exist_ok=True)
+    from qa_v2.frames import render_frame
+    for p in ep.pages:
+        png = outdir / ("p%02d.png" % p.number)
+        if not png.exists():
+            render_frame("ShucunCourse", ep.final_frame(p.number), png)
+        assert [f for f in check_l6(p, png) if f.level == "fail"] == [], p.number

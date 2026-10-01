@@ -147,3 +147,48 @@ def check_l5(page: Page, png: Path) -> List[Finding]:
                 {"text_rect": [tx, ty, tw, th],
                  "slot_rect": [rx, ry, rw, rh]}))
     return out
+
+
+# ── L6 tag 槽 ────────────────────────────────────────────────────────
+
+# 白字阈值（深底白字反白样式）
+WHITE_MIN: int = 200
+# 白像素占比上限：超过说明抓到的是浅色底板而非文字块
+WHITE_MAX_RATIO: float = 0.40
+# 白像素占比下限：低于说明槽里没东西
+WHITE_MIN_RATIO: float = 0.01
+
+
+def check_l6(page: Page, png: Path) -> List[Finding]:
+    """tag 型槽（深底白字）的独立判据。
+
+    旧 qa_all.py 用 TAG_IDS 把这类槽直接排除 —— 于是**证据标签
+    从不被检查**。E11 实测 8 个 evidence_tag 槽全部有值
+    （[文献记载]/[官书记载]/[存疑待考]/[原书记载]/[实录记载]/[系列联动]），
+    说明判据可用。
+    """
+    a = np.array(Image.open(str(png)).convert("RGB"))
+    out: List[Finding] = []
+    for s in page.slots:
+        items = [i for i in page.items if i.slot_id == s.id]
+        if not items or not items[0].is_tag:
+            continue
+        rect = plate_to_canvas(page.plate, s.x, s.y, s.w, s.h)
+        rx, ry, rw, rh = rect
+        H, W = a.shape[:2]
+        x1, y1 = min(W, rx + rw), min(H, ry + rh)
+        sub = a[max(0, ry):y1, max(0, rx):x1]
+        if sub.size == 0:
+            continue
+        white = (sub.min(axis=2) > WHITE_MIN).mean()
+        if white < WHITE_MIN_RATIO:
+            out.append(Finding(
+                "L6", page.number, s.id, "fail", "TAG_SLOT_EMPTY",
+                "证据标签槽内无白字（tag 是深底白字，此槽未渲染）",
+                {"white_ratio": round(float(white), 4)}))
+        elif white > WHITE_MAX_RATIO:
+            out.append(Finding(
+                "L6", page.number, s.id, "warn", "TAG_SLOT_ALL_WHITE",
+                "槽内几乎全白，可能抓错区域",
+                {"white_ratio": round(float(white), 4)}))
+    return out
