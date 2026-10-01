@@ -24,18 +24,30 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path("/tmp/chemistry-video/src")
-AUDIO = pathlib.Path("/Volumes/macstudio/video-projects/audio_new")
+AUDIO = pathlib.Path("/tmp/chemistry-video/public/audio")
 GAP = 1.6
 EPS = ["yimuyuan", "niangniangfu", "xisanqi", "gaoliangqiao", "dazhongsi", "landianchang"]
+
+
+def audio_file(ep, i):
+    """音频文件名两种约定都要试：p01.wav（多数集）与 p1.wav（E10）。
+
+    [WARN] 早先硬编码 p{i:02d}.wav，E10 用 p1..p8 就直接 sys.exit 崩掉 ——
+        而 E10 恰恰是唯一一个 pageMap 带 TOTAL_FRAMES 的集，
+        一崩就漏改总帧数，故障延后到渲染时才炸。
+    """
+    for name in (f"p{i:02d}.wav", f"p{i}.wav", f"p{i:02d}_000.wav", f"p{i}_000.wav"):
+        f = AUDIO / ep / name
+        if f.exists():
+            return f
+    sys.exit(f"{ep}: 缺第 {i} 页音频（试过 p{i:02d}.wav / p{i}.wav / *_000.wav）")
 
 
 def measure(ep):
     """实测 8 段纯音频时长。"""
     out = []
     for i in range(1, 9):
-        f = AUDIO / ep / f"p{i:02d}.wav"
-        if not f.exists():
-            sys.exit(f"{ep}: 缺 {f}")
+        f = audio_file(ep, i)
         r = subprocess.run(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
              "-of", "csv=p=0", str(f)], capture_output=True, text=True)

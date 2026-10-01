@@ -79,10 +79,15 @@ AUDIO_DIR = pathlib.Path("/tmp/chemistry-video/public/audio")
 
 def wav_sec(ep: str, page: int) -> float:
     """实测该页 wav 时长（秒），取不到返回 0。"""
-    f = AUDIO_DIR / ep / f"p{page:02d}.wav"
-    if not f.exists():
-        f = AUDIO_DIR / ep / f"p{page}.wav"
-    if not f.exists():
+    # 两种文件名约定都要试：p01.wav（多数集）与 p1.wav（E10）
+    f = None
+    for name in (f"p{page:02d}.wav", f"p{page}.wav",
+                 f"p{page:02d}_000.wav", f"p{page}_000.wav"):
+        cand = AUDIO_DIR / ep / name
+        if cand.exists():
+            f = cand
+            break
+    if f is None:
         return 0.0
     r = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
