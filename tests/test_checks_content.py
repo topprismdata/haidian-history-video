@@ -8,7 +8,7 @@ import pytest
 
 from qa_v2.data import Page, Slot, TextItem
 from qa_v2.frames import OcrResult
-from qa_v2.checks_content import check_l4a, check_l4b, load_names
+from qa_v2.checks_content import check_l4a, check_l4b, check_l4c, load_names
 
 PLATE = (1920, 1080)
 
@@ -132,3 +132,38 @@ def test_names_file_loads():
     names = load_names()
     assert "树村" in names
     assert len(names) > 20
+
+
+# ── L4-c 字幕交叉 ──
+def test_l4c_skips_when_narration_missing():
+    from qa_v2.data import Episode
+    ep = Episode("__none__", [_page([_ti("a", "1485")], 1)], [(0, 660)])
+    assert any(f.code == "NO_NARRATION" for f in check_l4c(ep, {1: _ocr(_page([]), {})}))
+
+
+def test_l4c_passes_when_number_in_narration():
+    """真实数据：E11 P3 口播含「1485」；卷号（116）口播未念亦豁免。"""
+    from qa_v2.data import Episode, Page, Slot, TextItem
+    pg = Page(3, PLATE, [
+        Slot("r3_total", 0, 0, 300, 60),
+        Slot("ref", 0, 0, 300, 60),
+    ], [
+        TextItem("r3_total", "1485", 20, True, None),
+        TextItem("ref", "《钦定八旗通志》卷116", 20, True, None),
+    ])
+    ep = Episode("shucun", [pg], [(0, 660)])
+    ep.narration = {3: "正红旗在安河桥，官房一千四百八十五间。"}
+    o = OcrResult(["1485"], [(10, 10, 200, 50)], [0.99])
+    assert [f for f in check_l4c(ep, {3: o}) if f.level == "fail"] == []
+
+
+def test_l4c_flags_number_absent_from_narration():
+    """两边都错的情况：文案写 1485，口播里根本没有这个数。"""
+    from qa_v2.data import Episode, Page, Slot, TextItem
+    pg = Page(3, PLATE, [Slot("r3_total", 0, 0, 300, 60)],
+              [TextItem("r3_total", "1485", 20, True, None)])
+    ep = Episode("shucun", [pg], [(0, 660)])
+    ep.narration = {3: "正红旗在安河桥，官房一千四百六十间。"}
+    o = OcrResult(["1485"], [(10, 10, 200, 50)], [0.99])
+    fs = [f for f in check_l4c(ep, {3: o}) if f.level == "fail"]
+    assert len(fs) == 1 and fs[0].code == "NUMBER_NOT_IN_NARRATION"
