@@ -17,6 +17,10 @@
 !/scripts/
 !/scripts/**
 
+# ── 放行：设计与规格文档（docs/superpowers/specs/ 存 QA 等子系统的设计稿）──
+!/docs/
+!/docs/**
+
 # ── 放行：配音脚本与旁白文本 ─────────────────────────────────────────────
 # ⚠ narration/all.json 必须入库：gen_tts.sh 的默认输入就是它，
 #   缺了这条，克隆下来直接跑 ./gen_tts.sh <集名> 会报「找不到旁白 JSON」。
