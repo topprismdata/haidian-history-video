@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# 本仓库只入库「方法论与脚本」——能重建产物的源文件。
+# 图片、音频、成片、虚拟环境一律不入库（见文件末尾的白名单）。
+#
+# 理由：产物可由 design.md + prompts/ + gen_tts.sh + remotion render 重建；
+#       板面图单张 2-4MB，八页 30MB，十集 300MB，且会永久留在 git 历史里。
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── 默认全部忽略，然后只放行方法论资产 ─────────────────────────────────────
+#  ⚠ 语义是"先全拒、再开洞"，所以下面几个 **/ 通配是安全的；
+#     将来新增任何集目录都自动适用，不必改这里。
+*
+!.gitignore
+
+# ── 放行：方法论文档 ─────────────────────────────────────────────────────
+!README.md
+!METHODOLOGY.md
+!board_quality_redline.md
+
+# ── 放行：可复用脚本 ─────────────────────────────────────────────────────
+!/gen_tts.sh
+!/scripts/
+!/scripts/setup_tts.sh
+!/scripts/send_board_prompt.js
+!/scripts/wait_ready.js
+
+# ── 放行：各集的方法论资产 ───────────────────────────────────────────────
+# research.md  史料档案（证据分级 + GPT 闸门记录）
+# design.md    立论 + 槽位 + 红线
+# slotcheck.py 几何校验器
+# make_prompts.js 送图 prompt 生成器
+# prompts/     送图 prompt 本身
+# SEND_LOG.md  送图踩坑记录
+# DELIVERY.md  交付说明
+!*_video/
+!*/research.md
+!*/design.md
+!*/slotcheck.py
+!*/make_prompts.js
+!*/SEND_LOG.md
+!*/DELIVERY.md
+!*/prompts/
+!*/prompts/*.txt
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 以下为显式说明（`*` 已默认忽略，这里只是留个记录）
+# ═══════════════════════════════════════════════════════════════════════════
+# tts/            工具链（venv 2GB + 模型 13GB）→ scripts/setup_tts.sh 重建
+# audio/          配音 → gen_tts.sh 重建
+# **/boards/      板面图 → 出图模型重新生成
+# **/*.mp4        成片 → npx remotion render 重建
+# chemistry-video/  Remotion 工程（6 万文件，含第三方 CosyVoice 源码）
+# node_modules/    npm 依赖
+# *-venv/          Python 虚拟环境
