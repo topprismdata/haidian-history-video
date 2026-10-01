@@ -18,7 +18,8 @@ from typing import Dict, List, Optional, Set
 from qa_v2.data import Episode, Page
 from qa_v2.frames import OcrResult
 from qa_v2.normalize import (
-    _REIGN_NAMES, extract_numbers, normalize_punct, number_unknown_rate,
+    _REIGN_NAMES, extract_numbers, normalize_punct, normalize_script,
+    number_unknown_rate,
 )
 from qa_v2.report import Finding
 
@@ -47,7 +48,7 @@ def load_names(path: Optional[pathlib.Path] = None) -> Set[str]:
     for line in p.read_text(encoding="utf-8").splitlines():
         s = line.strip()
         if s and not s.startswith("#"):
-            out.add(s)
+            out.add(normalize_script(s))
     return out
 
 
@@ -177,11 +178,12 @@ def check_l4b(page: Page, ocr: OcrResult, names: Set[str]) -> List[Finding]:
     for item in page.items:
         if item.is_tag:
             continue
-        want = [n for n in names if n in item.text]
+        norm_item_text = normalize_punct(item.text)
+        want = [normalize_punct(n) for n in names if normalize_punct(n) in norm_item_text]
         if not want:
             continue
         got = normalize_punct(_ocr_text_for(page, ocr, item.slot_id))
-        missing = [n for n in want if normalize_punct(n) not in got]
+        missing = [n for n in want if n not in got]
         if missing:
             out.append(Finding(
                 "L4-b", page.number, item.slot_id, "fail",

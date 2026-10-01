@@ -9,7 +9,7 @@ E11 用 PaddleOCR 3.7 跑完 8 页，平均置信 0.989，噪声**只有标点**
 import pytest
 
 from qa_v2.normalize import (
-    normalize_punct, to_int, extract_numbers, number_unknown_rate,
+    normalize_punct, normalize_script, to_int, extract_numbers, number_unknown_rate,
 )
 
 
@@ -27,6 +27,16 @@ def test_normalize_punct(raw, expect):
 
 def test_normalize_punct_keeps_latin_and_cjk():
     assert normalize_punct("五圣庵·鐡磬一") == "五圣庵鐡磬一"
+
+def test_normalize_script_converts_traditional():
+    assert normalize_script("正黃旗") == "正黄旗"
+    assert normalize_script("鑲黃旗與正白旗") == "镶黄旗与正白旗"
+    assert normalize_script("圓明園") == "圆明园"
+
+
+def test_normalize_punct_integrates_script_conversion():
+    assert normalize_punct("正黃旗 · 圓明園") == "正黄旗圆明园"
+    assert normalize_punct("觀音寺·鐵鐘一") == "观音寺铁钟一"
 
 
 @pytest.mark.parametrize("tok,expect", [

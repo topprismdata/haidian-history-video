@@ -148,6 +148,35 @@ def test_l4b_passes_when_name_present():
             if f.level == "fail"] == []
 
 
+def test_l4b_matches_traditional_simplified():
+    """测试「正黄旗」↔「正黃旗」繁简混淆能成功匹配。"""
+    p = _page([_ti("flag", "正黄旗")])
+    names = {"正黄旗"}
+    o = _ocr(p, {"flag": ["正黃旗"]})
+    assert [f for f in check_l4b(p, o, names) if f.level == "fail"] == []
+
+
+def test_l4b_real_shucun_p3_p8_proper_names():
+    """补一条 E11 真实数据测试：check_l4b 跑 P3/P8 真实页不报 PROPER_NAME_MISSING。"""
+    from qa_v2.data import load_episode
+    from qa_v2.frames import CACHE
+    import json
+    ep = load_episode("shucun")
+    names = load_names()
+    p3 = next(p for p in ep.pages if p.number == 3)
+    p8 = next(p for p in ep.pages if p.number == 8)
+
+    p3_cache = json.loads((CACHE / "shucun_p03.json").read_text(encoding="utf-8"))
+    ocr3 = OcrResult.from_json(p3_cache)
+    fs3 = [f for f in check_l4b(p3, ocr3, names) if f.level == "fail"]
+    assert fs3 == []
+
+    p8_cache = json.loads((CACHE / "shucun_p08.json").read_text(encoding="utf-8"))
+    ocr8 = OcrResult.from_json(p8_cache)
+    fs8 = [f for f in check_l4b(p8, ocr8, names) if f.level == "fail"]
+    assert fs8 == []
+
+
 def test_l4b_catches_wrong_place_name():
     p = _page([_ti("dir", "树村西")])
     names = {"树村", "肖家河"}
