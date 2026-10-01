@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!-- page_08_layout 底板：三集联动（肖家河—树村—蓝靛厂）。
+     三个集名留白位 + 连线 + 拼合后的全图轮廓，文字全部由 DOM 填。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+
+  .frame { position:absolute; inset:26px; border:3px solid #6b5b3e; border-radius:6px; }
+  .frame::before { content:""; position:absolute; inset:9px;
+                   border:1px solid #a08a5f; border-radius:3px; }
+
+  /* 三个集名留白牌：立式碑形 */
+  .stele {
+    position:absolute; width:326px; height:182px;
+    background:rgba(247,240,223,.94);
+    border:2.5px solid #6b5b3e; border-radius:8px;
+    box-shadow: 0 4px 14px rgba(60,40,20,.16);
+  }
+  .stele::after { content:""; position:absolute; inset:7px;
+                  border:1px solid #a08a5f; border-radius:4px; }
+  /* 碑首小台阶，做成碑形 */
+  .stele::before { content:""; position:absolute; top:-16px; left:50%;
+                   transform:translateX(-50%);
+                   width:74px; height:16px;
+                   background:rgba(247,240,223,.94);
+                   border:2.5px solid #6b5b3e;
+                   border-bottom:none; border-radius:7px 7px 0 0; }
+
+  /* 连线：三条虚线指向中央圆明园 */
+  .link { position:absolute; height:0;
+          border-top:2.5px dashed #8a7550; }
+  .link-dot { position:absolute; width:13px; height:13px; border-radius:50%;
+              background:#8a7550; }
+
+  /* 中央：圆明园全图轮廓（示意，非实测比例） */
+  .core-ring {
+    position:absolute; left:640px; top:268px; width:392px; height:286px;
+    border:2.5px solid #6b5b3e; border-radius:50%;
+    background:rgba(160,130,70,.07);
+  }
+  .core-ring::after { content:""; position:absolute; inset:16px;
+                      border:1px dashed #a08a5f; border-radius:50%; }
+
+  /* 底部收束带 */
+  .band {
+    position:absolute; left:150px; right:150px; bottom:52px; height:84px;
+    background:rgba(247,240,223,.94);
+    border:2.5px solid #6b5b3e; border-radius:6px;
+  }
+  .band::after { content:""; position:absolute; inset:7px;
+                 border:1px solid #a08a5f; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="corner tl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner tr"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner bl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner br"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+
+<div class="frame"></div>
+
+<!-- 三个集名碑位：左(E1 肖家河) / 下(E11 树村) / 右(E10 蓝靛厂) -->
+<div class="stele" style="left:104px;  top:230px;"></div>
+<div class="stele" style="left:670px;  top:586px;"></div>
+<div class="stele" style="right:104px; top:230px;"></div>
+
+<!-- 连线汇入中央 -->
+<div class="link" style="left:434px; top:330px; width:200px; transform:rotate(17deg); transform-origin:left center;"></div>
+<div class="link-dot" style="left:624px; top:388px;"></div>
+
+<div class="link" style="left:836px; top:586px; width:96px;"></div>
+<div class="link-dot" style="left:929px; top:579px;"></div>
+
+<div class="link" style="left:1040px; top:330px; width:200px; transform:rotate(-17deg); transform-origin:left center;"></div>
+<div class="link-dot" style="left:1033px; top:388px;"></div>
+
+<div class="core-ring"></div>
+
+<div class="band"></div>
+
+</body>
+</html>

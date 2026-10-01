@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!-- page_03_layout 底板：八所营房方位全表。
+     底纹宣纸质感 + 墨色边框，融入 E1–E11 整体画风。
+     表格骨架、表头纹样、旗名留白位画在这里；文字全部由 DOM 填。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  /* 四角云纹 —— 与全系列统一 */
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+
+  /* 墨色双线外框 */
+  .frame {
+    position:absolute; inset:26px;
+    border:3px solid #6b5b3e; border-radius:6px;
+  }
+  .frame::before {
+    content:""; position:absolute; inset:9px;
+    border:1px solid #a08a5f; border-radius:3px;
+  }
+
+  /* 表头横带（斜线底纹，留白给文字） */
+  .thead-band {
+    position:absolute; left:120px; right:120px; top:230px; height:56px;
+    background: repeating-linear-gradient(115deg,
+      rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .thead-band::after {
+    content:""; position:absolute; inset:5px;
+    border:1px solid #a08a5f; border-radius:2px;
+  }
+  /* 列分隔竖线：4 条数据列 */
+  .vline { position:absolute; top:290px; height:472px; width:2px; background:#8a7550; }
+  /* 8 条行横线 */
+  .hline { position:absolute; left:120px; right:120px; height:2px; background:#8a7550; }
+
+  /* 树村两行高亮（镶黄旗在村西 / 正白旗在村东）——本集主角 */
+  .hl { position:absolute; left:120px; right:120px; background:rgba(160,120,50,.11);
+        border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- 四角云纹（简化卷云，与系列同源） -->
+<div class="corner tl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner tr"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner bl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner br"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+
+<div class="frame"></div>
+
+<div class="thead-band"></div>
+
+<!-- 列竖线：x = 470 / 800 / 1090 / 1330 -->
+<div class="vline" style="left:470px"></div>
+<div class="vline" style="left:800px"></div>
+<div class="vline" style="left:1090px"></div>
+<div class="vline" style="left:1330px"></div>
+
+<!-- 8 条行线：y = 358 / 418 / 478 / 538 / 598 / 658 / 718 / 772 -->
+<div class="hline" style="top:348px"></div>
+<div class="hline" style="top:406px"></div>
+<div class="hline" style="top:464px"></div>
+<div class="hline" style="top:522px"></div>
+<div class="hline" style="top:580px"></div>
+<div class="hline" style="top:638px"></div>
+<div class="hline" style="top:696px"></div>
+<div class="hline" style="top:754px"></div>
+
+<!-- 树村两行高亮：第 1 行(镶黄旗·村西) 与第 2 行(正白旗·村东)，本集主角 -->
+<div class="hl" style="top:292px; height:54px;"></div>
+<div class="hl" style="top:350px; height:54px;"></div>
+
+</body>
+</html>
