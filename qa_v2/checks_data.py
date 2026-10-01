@@ -67,3 +67,69 @@ def check_l1(ep: Episode) -> List[Finding]:
                         "与 %s 交叠 %.0f%%" % (b.id, r * 100),
                         {"other": b.id, "ratio": round(r, 3)}))
     return out
+
+
+# ── L2 几何可行性（渲染前预检）────────────────────────────────────────
+
+# 需要高度超过槽高此倍数才报 warn（FitText 内部有自适应缩放，
+# 真实溢出点略高于理论值，1.15 是实测留的容差）
+OVERFLOW_TOLERANCE = 1.15
+
+# 单个汉字的宽度约等于字号；ASCII 约 0.55 倍
+_WIDE = 1.0
+_NARROW = 0.55
+
+
+def _text_units(s: str) -> float:
+    """估算文本的"字宽单位"：汉字 1.0，ASCII 0.55。"""
+    n = 0.0
+    for ch in s:
+        n += _NARROW if ord(ch) < 128 else _WIDE
+    return n
+
+
+def estimate_lines(text: str, slot_w: float, size: int) -> int:
+    """估算渲染后占几行。与 FitText 的 effW 同口径（宽字符算 1，窄字符 0.45~0.55）。"""
+    if not text or size <= 0:
+        return 0
+    per_line = max(1.0, float(slot_w) / float(size))
+    if "\n" in text:
+        return sum(
+            max(1, int(-(-_text_units(l) // per_line)))
+            for l in text.split("\n")
+            if l.strip()
+        )
+    return max(1, int(-(-_text_units(text) // per_line)))
+
+
+def item_lh(item, default: float = 1.4) -> float:
+    """获取文本项的行高倍数。
+
+    说明：TextItem 当前 __slots__ 未包含 lh 字段，故真实 TextItem 对象上
+    getattr(item, "lh", None) 会返回 None 并回退到 default (1.4)。
+    保留 getattr 是为了防御性兼容未来扩展或带 lh 属性的测试 mock 对象。
+    """
+    return getattr(item, "lh", None) or default
+
+
+def check_l2(ep: Episode) -> List[Finding]:
+    """渲染前的溢出预检。装不下就 warn，省得渲完再靠眼睛找。"""
+    out = []
+    for page in ep.pages:
+        for item in page.items:
+            slot = page.slot(item.slot_id)
+            if slot is None or slot.h <= 0 or item.size <= 0:
+                continue
+            lines = estimate_lines(item.text, slot.w, item.size)
+            if lines <= 0:
+                continue
+            need = lines * item.size * item_lh(item)
+            ratio = need / float(slot.h)
+            if ratio > OVERFLOW_TOLERANCE:
+                out.append(Finding(
+                    "L2", page.number, item.slot_id, "warn",
+                    "ESTIMATED_OVERFLOW",
+                    "预计需 %.0fpx / 槽高 %dpx（%d 行 @%dpx）"
+                    % (need, slot.h, lines, item.size),
+                    {"ratio": round(ratio, 2), "lines": lines}))
+    return out

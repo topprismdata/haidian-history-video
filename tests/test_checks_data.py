@@ -4,6 +4,7 @@ import pytest
 from qa_v2.data import Episode, Page, Slot, TextItem
 from qa_v2.checks_data import (
     check_l1, OVERLAP_FAIL_RATIO, MIN_SLOT_W, MIN_SLOT_H,
+    check_l2, estimate_lines, OVERFLOW_TOLERANCE, item_lh,
 )
 
 
@@ -86,4 +87,49 @@ def test_real_shucun_passes_l1():
     """E11 实测：93 槽位，重叠 0、越界 0、双向一致。"""
     from qa_v2.data import load_episode
     fs = check_l1(load_episode("shucun"))
+    assert [f for f in fs if f.level == "fail"] == []
+
+
+def test_estimate_lines_respects_manual_breaks():
+    # 3 行，每行 4 字，槽宽足够 → 3 行
+    assert estimate_lines("甲乙\n丙丁\n戊己", 500, 20) == 3
+
+
+def test_estimate_lines_wraps_when_no_break():
+    # 无 \n，25 个汉字，槽宽 500px @20px 字 → 每行约 25 字 → 1 行
+    assert estimate_lines("一" * 25, 500, 20) == 1
+
+
+def test_estimate_lines_wraps_to_multiple():
+    # 100 字，槽宽 500px @20px → 每行 25 字 → 4 行
+    assert estimate_lines("一" * 100, 500, 20) == 4
+
+
+def test_l2_ok_when_fits():
+    ep = _ep([_page([("a", 0, 0, 500, 100)], [("a", "甲乙丙丁", 20, True, None)])])
+    assert _codes(check_l2(ep)) == []
+
+
+def test_l2_warns_on_overflow():
+    """E11 P4/P5 各有一处：文案多行装不下，首尾行被切在框外。
+    当时靠目视发现，QA 全绿。"""
+    ep = _ep([_page([("a", 0, 0, 500, 60)],           # 60px 装不下 4 行 @20px lh1.4
+                    [("a", "甲\n乙\n丙\n丁", 20, True, None)])])
+    fs = check_l2(ep)
+    assert len(fs) == 1
+    assert fs[0].code == "ESTIMATED_OVERFLOW"
+    assert fs[0].level == "warn"
+
+
+def test_l2_uses_tolerance():
+    """刚好在 1.15 倍以内不该报。"""
+    # 3 行 @20px lh1.4 = 84px；槽高 80px → 84/80 = 1.05 < 1.15
+    ep = _ep([_page([("a", 0, 0, 500, 80)],
+                    [("a", "甲\n乙\n丙", 20, True, None)])])
+    assert "ESTIMATED_OVERFLOW" not in _codes(check_l2(ep))
+
+
+def test_real_shucun_passes_l2():
+    from qa_v2.data import load_episode
+    fs = check_l2(load_episode("shucun"))
     assert [f for f in fs if f.level == "fail"] == []
