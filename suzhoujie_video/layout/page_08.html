@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!-- page_08_layout 底板：长河三集联动 + 皇家一念线。
+     宣纸底纹 + 墨色边框，零文字：全部由 DOM 按槽位填。
+     槽位随件 layout/slots.json -> p08（板面 1672x941）。
+     地理口径（天咫偶闻卷九自证）：长河自西北向东南；
+     蓝靛厂在万寿寺以西、长河南岸；高梁桥在下游东南。三框不作"隔河正对"构图。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+  .frame { position:absolute; inset:26px; border:3px solid #6b5b3e; border-radius:6px; }
+  .frame::before { content:""; position:absolute; inset:9px; border:1px solid #a08a5f; border-radius:3px; }
+
+  .title-band {
+    position:absolute; left:376px; top:64px; width:920px; height:64px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .title-band::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:2px; }
+
+  /* 河流：淡青水色带 + 内纹 */
+  .river { position:absolute; inset:0; }
+
+  /* 三个地名空框（本集主角居中，框线略重） */
+  .marker { position:absolute; border:3px solid #6b5b3e; border-radius:5px;
+    background:rgba(246,239,220,.72); }
+  .marker::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:3px; }
+  .m-main { box-shadow: 0 0 0 6px rgba(160,120,50,.14); }
+
+  /* 指向河流的连线 */
+  .tick { position:absolute; width:2px; background:#8a7550; opacity:.7; }
+
+  /* 底部皇家一念线带 */
+  .idea-band {
+    position:absolute; left:140px; top:740px; width:1392px; height:80px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .idea-band::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:2px; }
+</style>
+</head>
+<body>
+
+<div class="corner tl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner tr"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner bl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner br"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+
+<div class="frame"></div>
+<div class="title-band"></div>
+
+<!-- 长河：西北 -> 东南，缓 S 曲线 -->
+<svg class="river" viewBox="0 0 1672 941" preserveAspectRatio="none">
+  <path d="M120 430 C 480 340, 900 340, 1180 440 S 1520 520, 1552 560"
+        fill="none" stroke="#9db8a5" stroke-width="58" stroke-linecap="round" opacity=".55"/>
+  <path d="M120 430 C 480 340, 900 340, 1180 440 S 1520 520, 1552 560"
+        fill="none" stroke="#7f9c88" stroke-width="2.5" stroke-dasharray="14 10" opacity=".7"/>
+</svg>
+
+<!-- 三处地名空框 -->
+<div class="marker m-main" style="left:700px; top:180px; width:400px; height:150px;"></div>
+<div class="marker" style="left:170px; top:540px; width:330px; height:150px;"></div>
+<div class="marker" style="left:1180px; top:540px; width:330px; height:150px;"></div>
+
+<!-- 连线：框 -> 河 -->
+<div class="tick" style="left:899px; top:330px; height:44px;"></div>
+<div class="tick" style="left:334px; top:522px; height:18px;"></div>
+<div class="tick" style="left:1344px; top:522px; height:18px;"></div>
+
+<div class="idea-band"></div>
+
+</body>
+</html>

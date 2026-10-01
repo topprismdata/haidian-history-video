@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- page_03_layout 底板：双万寿年轮对照表。
+     宣纸底纹 + 墨色边框，融入系列画风。零文字：全部由 DOM 按槽位填。
+     槽位随件 layout/slots.json -> p03（板面 1672x941）。
+     行3 高亮 = 本集主角（1761 新增工程：营建万寿街）。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+  .frame { position:absolute; inset:26px; border:3px solid #6b5b3e; border-radius:6px; }
+  .frame::before { content:""; position:absolute; inset:9px; border:1px solid #a08a5f; border-radius:3px; }
+
+  /* 标题横带 */
+  .title-band {
+    position:absolute; left:376px; top:120px; width:920px; height:64px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .title-band::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:2px; }
+
+  /* 两列表头框 */
+  .colhead { position:absolute; top:240px; width:680px; height:70px;
+    border:2px solid #6b5b3e; border-radius:4px; background:rgba(246,239,220,.6); }
+  .colhead::after { content:""; position:absolute; inset:4px; border:1px solid #a08a5f; border-radius:2px; }
+  .cl { left:140px; }
+  .cr { left:852px; }
+
+  /* 中缝分隔 + 表体横线 */
+  .divider { position:absolute; left:836px; top:240px; width:2px; height:530px; background:#8a7550; }
+  .hline { position:absolute; left:140px; right:140px; height:2px; background:#8a7550; }
+
+  /* 行3 高亮：1761 新增工程 */
+  .hl { position:absolute; left:140px; right:140px; top:592px; height:116px;
+    background:rgba(160,120,50,.11); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="corner tl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner tr"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner bl"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+<div class="corner br"><svg viewBox="0 0 100 100"><g fill="none" stroke="#8a7550" stroke-width="2.4" stroke-linecap="round">
+  <path d="M6 40 q14 -22 34 -16 q16 5 12 19 q-3 10 -13 9 q-7 -1 -6 -7 q1 -5 6 -4"/>
+  <path d="M6 62 q18 -8 30 2 q10 9 4 18 q-5 8 -13 5"/>
+  <path d="M34 24 q10 -12 24 -8"/></g></svg></div>
+
+<div class="frame"></div>
+<div class="title-band"></div>
+
+<div class="colhead cl"></div>
+<div class="colhead cr"></div>
+<div class="divider"></div>
+
+<div class="hline" style="top:316px"></div>
+<div class="hline" style="top:452px"></div>
+<div class="hline" style="top:584px"></div>
+<div class="hline" style="top:708px"></div>
+
+<div class="hl"></div>
+
+</body>
+</html>
