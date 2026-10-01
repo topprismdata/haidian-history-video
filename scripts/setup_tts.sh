@@ -5,7 +5,7 @@
 #
 # 装到 <ROOT>/tts/，供 gen_tts.sh 使用：
 #   <ROOT>/tts/venv/                      虚拟环境
-#   <ROOT>/tts/models/qwen3/Base-1.7B     模型（13 GB，需另下）
+#   <ROOT>/tts/models/qwen3/Base-1.7B     模型（2.9 GB，需另下）
 #   <ROOT>/tts/voices/ref_10s.wav         参考音频（10 秒，你自己录）
 #   <ROOT>/tts/voices/ref_10s.txt         参考音频的逐字文本
 #
@@ -16,7 +16,7 @@
 #   brew install python@3.10 ffmpeg
 #   xcode-select --install        # 提供 Python 头文件，编译依赖用
 #
-# 模型不在本脚本下载范围（13 GB，且需从官方渠道取），请手动放到
+# 模型不在本脚本下载范围（2.9 GB，且需从官方渠道取），请手动放到
 #   $TTS_HOME/models/qwen3/Base-1.7B
 # -----------------------------------------------------------------------------
 
@@ -47,12 +47,20 @@ fi
 # ---- 前置依赖 --------------------------------------------------------------
 command -v ffmpeg >/dev/null || die "缺 ffmpeg：brew install ffmpeg"
 PY_BOOTSTRAP=""
-for c in "python$PY_MINOR" python3; do
-  if command -v "$c" >/dev/null && "$c" -c 'import sys; sys.exit(0 if sys.version_info[:2]=='"$PY_MINOR"' else 1)' 2>/dev/null; then
+# ⚠ 比较 Python 版本必须比 tuple，不能比 "3.10" 这个 float ——
+#   sys.version_info[:2] 是 (3, 10)，与 3.10 恒为 False，探测永远失败。
+PY_TUPLE="(${PY_MINOR//./,})"
+for c in "python${PY_MINOR}" python3 python; do
+  if command -v "$c" >/dev/null &&
+     "$c" -c "import sys; sys.exit(0 if sys.version_info[:2]==${PY_TUPLE} else 1)" 2>/dev/null; then
     PY_BOOTSTRAP="$c"; break
   fi
 done
-[[ -n "$PY_BOOTSTRAP" ]] || die "找不到 Python $PY_MINOR：brew install python@$PY_MINOR"
+# ⚠ 变量后紧跟中文标点会被 bash 并进变量名（$VAR：→ $VAR\xef\xbc\x9a），
+#   在 set -u 下直接 unbound variable 退出。凡是变量接中文，一律用 ${} 显式闭合。
+if [[ -z "$PY_BOOTSTRAP" ]]; then
+  die "找不到 Python ${PY_MINOR}：brew install python@${PY_MINOR}"
+fi
 
 # ---- 建 venv ---------------------------------------------------------------
 VENV="$TTS_HOME/venv"
@@ -92,17 +100,32 @@ cat > "$TTS_HOME/voices/README.txt" <<'TXT'
 TXT
 
 # ---- 校验 ------------------------------------------------------------------
+# ⚠ 这里只 import 本脚本真正装了的包。mlx-audio 的依赖是
+#   huggingface_hub, miniaudio, mlx, numpy, scipy, sounddevice, tqdm, transformers
+#   ——**不含 torch**，import torch 必然 ModuleNotFoundError。
+# ⚠ mlx 没有 __version__ 属性，取版本要用 importlib.metadata。
 echo
 echo "==> 校验"
 "$PY" - <<'PYEOF'
-import mlx, mlx_audio, numpy, torch
-print(f"  mlx        {mlx.__version__}")
-print(f"  numpy      {numpy.__version__}")
-print(f"  torch      {torch.__version__}  mps={torch.backends.mps.is_available()}")
+import sys
+from importlib.metadata import version, PackageNotFoundError
+
+for pkg in ("mlx-audio", "mlx", "numpy"):
+    try:
+        print(f"  {pkg:<12} {version(pkg)}")
+    except PackageNotFoundError:
+        print(f"  {pkg:<12} 未安装  ← 异常")
+        sys.exit(1)
+
+# 关键能力：mlx_audio 能否被导入（这才是 TTS 能否跑的前提）
 try:
-    print(f"  mlx_audio  {getattr(mlx_audio, '__version__', '(无 __version__)')}")
+    import mlx_audio  # noqa: F401
+    print("  mlx_audio   导入成功")
 except Exception as e:
-    print(f"  mlx_audio  导入异常: {e}")
+    print(f"  mlx_audio   导入失败: {e}")
+    sys.exit(1)
+
+print(f"  python       {sys.version.split()[0]}")
 PYEOF
 
 echo

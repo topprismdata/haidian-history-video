@@ -22,4 +22,4 @@ cd /tmp/history_video && /tmp/chemistry-video/.cosyvoice-venv/bin/python gen_tts
 - 配音文案：`/tmp/history_video/narration/*.txt`（TTS 版）；`pack/xiaojiahe_history_pack/spec/course_script.md`（字幕版）
 - 资产包：`/tmp/history_video/pack/`（同 `~/Downloads/xiaojiahe_history_pack.zip`）
 - Remotion 页面：`/tmp/chemistry-video/src/history/pages/Page01-08.tsx` + `ui.tsx` + `data/`
-- ChatGPT 会话：`https://chatgpt.com/c/6aba59e1-9b3c-83e8-b6b4-0337f75765cd`
+- ChatGPT 会话：`<私有会话链接，已从公开仓库移除>`

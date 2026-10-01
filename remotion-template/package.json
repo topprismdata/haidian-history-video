@@ -1,0 +1,20 @@
+{
+  "name": "haidian-history-episode",
+  "private": true,
+  "version": "1.0.0",
+  "description": "海淀历史地名培训视频 — Remotion 合成工程",
+  "scripts": {
+    "still": "remotion still src/index.tsx EpisodeCourse",
+    "render": "remotion render src/index.tsx EpisodeCourse out/final.mp4 --codec=h264",
+    "qa": "python3 scripts/qa_page.py"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.529",
+    "@remotion/cli": "4.0.529",
+    "@remotion/media-utils": "4.0.529",
+    "@remotion/renderer": "4.0.529",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.529"
+  }
+}

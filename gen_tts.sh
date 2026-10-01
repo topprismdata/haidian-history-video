@@ -5,7 +5,7 @@
 #
 # 引擎：Qwen3-TTS via mlx_audio（Apple Silicon MLX 加速）
 #   实测版本：mlx-audio 0.5.6 / mlx 0.32.2 / Python 3.10.20
-#   模型：    Qwen3-TTS-12Hz-1.7B-Base（13 GB）
+#   模型：    Qwen3-TTS-12Hz-1.7B-Base（2.9 GB）
 #   输出：    24000 Hz / 单声道 / pcm_s16le
 #
 # 用法：
@@ -17,6 +17,10 @@
 #
 # 旁白 JSON 格式（键名任意，按 key 排序生成）：
 #   {"p01": "第一段旁白…", "p02": "第二段旁白…", ...}
+#
+# ⚠ 键名即输出文件名。**建议用 p01…p08**（两位），与 Remotion 模板的
+#   pages/Page01.tsx、audioBeats() 的 `p${pageNo}` 对得上。
+#   用 p1…p8 也能跑，但时间轴与字幕要跟着改成一位数。
 #
 # ── 路径约定（全部可覆盖，无机器专属硬编码）────────────────────────────────
 #   脚本从自身位置推导 ROOT，ROOT 之下按标准布局找资源。
@@ -112,9 +116,17 @@ TSV="$OUT/texts.tsv"
 # ---- 旁白 JSON → TSV ------------------------------------------------------
 # ⚠ 不用 python 内联 heredoc 里的中文弯引号（会 SyntaxError）；
 #   也不要把 ${} 放进 python 的 f-string 与 bash 混排。
-python3 - "$NARR" > "$TSV" <<'PYEOF'
+#
+# ⚠ 必须先写临时文件、成功后再 mv：直接 `> "$TSV"` 会先把 TSV 截断，
+#   JSON 损坏时 python 报错退出，但脚本不检查退出码 →
+#   报「DONE — 0 段」且 exit 0，同时把断点续跑用的 texts.tsv 清成 0 字节。
+TSV_TMP="$OUT/.texts.tsv.tmp"
+if ! python3 - "$NARR" > "$TSV_TMP" <<'PYEOF'
 import json, sys
-data = json.load(open(sys.argv[1], encoding="utf-8"))
+try:
+    data = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception as e:
+    sys.exit(f"旁白 JSON 解析失败: {e}")
 if not isinstance(data, dict) or not data:
     sys.exit("旁白 JSON 必须是非空对象")
 for k in sorted(data):
@@ -125,8 +137,18 @@ for k in sorted(data):
         sys.exit(f"段 {k} 含制表符，会破坏 TSV")
     print(k + "\t" + v)
 PYEOF
+then
+  rm -f "$TSV_TMP"
+  echo "错误: 旁白 JSON 无效，未生成任何音频。原有 texts.tsv 未改动。" >&2
+  exit 1
+fi
+mv -f "$TSV_TMP" "$TSV"
 
 n_seg=$(wc -l < "$TSV" | tr -d ' ')
+if [[ "$n_seg" -eq 0 ]]; then
+  echo "错误: 解析出 0 段旁白。" >&2
+  exit 1
+fi
 echo "集:     $NAME"
 echo "项目根: $ROOT"
 echo "旁白:   $NARR  ($n_seg 段)"
@@ -136,11 +158,16 @@ echo
 # ---- 逐段生成（断点续跑）--------------------------------------------------
 total=0
 while IFS=$'\t' read -r key text; do
-  # ⚠ mlx_audio 会在 --file_prefix 后自动追加 "_000" 序号，
-  #   实际产物是 p01_000.wav。这里 glob 兼容两种命名，
-  #   否则断点续跑会每次都重新生成（E8 的旧脚本就有这个 bug）。
-  existing=$(ls "$OUT/${key}"*.wav 2>/dev/null | head -1)
-  if [[ -n "$existing" && -s "$existing" ]]; then
+  # ⚠ 只能用**精确**匹配，不能用 "${key}*.wav" 前缀 glob ——
+  #   p1 会命中 p10.wav，导致 p1 段被误判为已完成而静默跳过，
+  #   最终静默产出缺一段的素材集。
+  #   mlx_audio 会在 --file_prefix 后自动追加 "_000" 序号，
+  #   所以两个候选都要查（E8 的旧脚本就漏了这层，续跑等于没生效）。
+  existing=""
+  for cand in "$OUT/${key}.wav" "$OUT/${key}_000.wav"; do
+    if [[ -s "$cand" ]]; then existing="$cand"; break; fi
+  done
+  if [[ -n "$existing" ]]; then
     d=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$existing" 2>/dev/null || echo 0)
     printf '  %-8s skip  %6.2fs  (%s)\n' "$key" "$d" "$(basename "$existing")"
     total=$(echo "$total + $d" | bc)
@@ -159,12 +186,15 @@ while IFS=$'\t' read -r key text; do
       --output_path "$OUT" \
       --file_prefix "$key" \
       --audio_format wav > "$OUT/.log_$key" 2>&1; then
-    made=$(ls "$OUT/${key}"*.wav 2>/dev/null | head -1)
-    if [[ -z "$made" || ! -s "$made" ]]; then
+    made=""
+    for cand in "$OUT/${key}.wav" "$OUT/${key}_000.wav"; do
+      if [[ -s "$cand" ]]; then made="$cand"; break; fi
+    done
+    if [[ -z "$made" ]]; then
       printf 'NO OUTPUT  (见 %s/.log_%s)\n' "$OUT" "$key"
       exit 1
     fi
-    # 归一到 pNN.wav，与 E8/E9 成片引用的命名一致
+    # 归一到 pNN.wav，与成片引用一致
     if [[ "$(basename "$made")" != "$key.wav" ]]; then
       mv -f "$made" "$OUT/$key.wav"
       made="$OUT/$key.wav"

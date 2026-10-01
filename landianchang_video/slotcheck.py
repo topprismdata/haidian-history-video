@@ -33,7 +33,7 @@ def load_slots():
     """从 design.md 的 json 代码块里抽出各页槽位。"""
     text = DESIGN.read_text(encoding="utf-8")
     pages = {}
-    for m in re.finditer(r'"(p0[1-8])"\s*:\s*\[(.*?)\n\]', text, re.S):
+    for m in re.finditer(r'"(p0[1-8])"\s*:\s*\[(.*?)\n\s*\]', text, re.S):
         page, body = m.group(1), m.group(2)
         slots = []
         # 每个槽位是一个 {...} 块；usage 里可能有转义引号但不含裸花括号
@@ -115,11 +115,19 @@ if __name__ == "__main__":
         print(json.dumps(pages, ensure_ascii=False, indent=2))
         sys.exit(0)
 
-    total = 0
+    # ⚠ 硬断言：解析不到槽位必须报错，不能静默"通过"。
+    #   design.md 为空、或 JSON 块写法变了，都会落到这里。
+    total = sum(len(v) for v in pages.values())
+    if not pages or total == 0:
+        print("X 未从 design.md 解析到任何槽位。", file=sys.stderr)
+        print("  检查 design.md 是否含形如  \"p01\": [ ... ]  的 JSON 块。", file=sys.stderr)
+        sys.exit(1)
+    if len(pages) < 8:
+        print(f"X 只解析到 {len(pages)}/8 页（缺 {8 - len(pages)} 页）", file=sys.stderr)
+        sys.exit(1)
+
     for p in sorted(pages):
-        n = len(pages[p])
-        total += n
-        print(f"  {p}: {n} 槽位")
+        print(f"  {p}: {len(pages[p])} 槽位")
     print(f"合计 {total} 槽位\n")
 
     issues, warns = check(pages)

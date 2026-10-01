@@ -1,15 +1,11 @@
 # ═══════════════════════════════════════════════════════════════════════════
-# 本仓库只入库「方法论与脚本」——能重建产物的源文件。
-# 图片、音频、成片、虚拟环境一律不入库（见文件末尾的白名单）。
+# 本仓库入库「方法论与脚本 + 旁白 + Remotion 模板」——能重建成片的全部源文件。
+# 板面图、音频、成片、虚拟环境不入库。
 #
-# 理由：产物可由 design.md + prompts/ + gen_tts.sh + remotion render 重建；
-#       板面图单张 2-4MB，八页 30MB，十集 300MB，且会永久留在 git 历史里。
+# 语义：先全拒（*），再逐条开洞。所以下面每条 ! 规则都必须写全。
 # ═══════════════════════════════════════════════════════════════════════════
-
-# ── 默认全部忽略，然后只放行方法论资产 ─────────────────────────────────────
-#  ⚠ 语义是"先全拒、再开洞"，所以下面几个 **/ 通配是安全的；
-#     将来新增任何集目录都自动适用，不必改这里。
 *
+
 !.gitignore
 
 # ── 放行：方法论文档 ─────────────────────────────────────────────────────
@@ -17,38 +13,48 @@
 !METHODOLOGY.md
 !board_quality_redline.md
 
-# ── 放行：可复用脚本 ─────────────────────────────────────────────────────
-!/gen_tts.sh
+# ── 放行：可复用脚本（用 /scripts/** 整目录放行，避免新增脚本被静默忽略）──
 !/scripts/
-!/scripts/setup_tts.sh
-!/scripts/send_board_prompt.js
-!/scripts/wait_ready.js
+!/scripts/**
+
+# ── 放行：配音脚本与旁白文本 ─────────────────────────────────────────────
+# ⚠ narration/all.json 必须入库：gen_tts.sh 的默认输入就是它，
+#   缺了这条，克隆下来直接跑 ./gen_tts.sh <集名> 会报「找不到旁白 JSON」。
+!/gen_tts.sh
+!*_video/narration/
+!*_video/narration/*.json
+
+# ── 放行：Remotion 合成模板（第 8/9 步的唯一起点）────────────────────
+# ⚠ 漏了这一条，克隆下来就只剩文档，流程最后三分之一无从下手。
+!/remotion-template/
+!/remotion-template/**
 
 # ── 放行：各集的方法论资产 ───────────────────────────────────────────────
 # research.md  史料档案（证据分级 + GPT 闸门记录）
 # design.md    立论 + 槽位 + 红线
 # slotcheck.py 几何校验器
 # make_prompts.js 送图 prompt 生成器
+# build_remotion_data.py 数据生成器
 # prompts/     送图 prompt 本身
-# SEND_LOG.md  送图踩坑记录
-# DELIVERY.md  交付说明
+# SEND_LOG.md / DELIVERY.md
 !*_video/
 !*/research.md
 !*/design.md
 !*/slotcheck.py
 !*/make_prompts.js
+!*/build_remotion_data.py
 !*/SEND_LOG.md
 !*/DELIVERY.md
 !*/prompts/
 !*/prompts/*.txt
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 以下为显式说明（`*` 已默认忽略，这里只是留个记录）
+# 以下明确不入库（`*` 已默认忽略，这里只作记录）
 # ═══════════════════════════════════════════════════════════════════════════
-# tts/            工具链（venv 2GB + 模型 13GB）→ scripts/setup_tts.sh 重建
-# audio/          配音 → gen_tts.sh 重建
-# **/boards/      板面图 → 出图模型重新生成
-# **/*.mp4        成片 → npx remotion render 重建
-# chemistry-video/  Remotion 工程（6 万文件，含第三方 CosyVoice 源码）
-# node_modules/    npm 依赖
-# *-venv/          Python 虚拟环境
+# tts/                工具链（venv 5.3G + 模型 2.9G）→ scripts/setup_tts.sh 重建
+# audio/              生成的配音 → gen_tts.sh 重建
+# */boards/           板面图 → 出图模型重新生成
+# *.mp4               成片 → npx remotion render 重建
+# node_modules/       npm 依赖
+# *-venv/             Python 虚拟环境
+# chemistry-video/    本机工程副本（Remotion 模板见 remotion-template/）

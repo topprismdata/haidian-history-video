@@ -13,7 +13,7 @@
 # 1. 装 TTS 工具链（venv + mlx-audio，只需一次）
 ./scripts/setup_tts.sh
 #    然后按提示放：
-#      tts/models/qwen3/Base-1.7B     模型（13 GB，手动下载）
+#      tts/models/qwen3/Base-1.7B     模型（2.9 GB，手动下载）
 #      tts/voices/ref_10s.wav         你的 10 秒参考音频
 #      tts/voices/ref_10s.txt         该音频的逐字文本
 
@@ -54,11 +54,33 @@ mkdir -p <集名>_video/{boards,prompts,narration}
 | 4 | 生成 prompt | `node make_prompts.js` | 坐标自动读，不手抄 |
 | 5 | 出图 | 改 `scripts/send_board_prompt.js` 的 `N`/`EP`，逐页发 | 见下 |
 | 6 | 验收板面 | 视觉模型问「有无汉字」**+ 逐格核对图例编码** | 零汉字 ≠ 画对了 |
-| 7 | 配音 | `./gen_tts.sh <集名>` | 必须在设计定稿后 |
-| 8 | 装配 | 写 `timeline.json` + `composition.json` | 页长用 `PAGE_DURATIONS_SEC` 累加 |
-| 9 | 渲染验收 | 终态帧逐页程序化验收 → `npx remotion render` | 终态帧口径见 METHODOLOGY §7 |
+| 7 | 配音 | 写 `narration/all.json` → `./gen_tts.sh <集名>` | **必须在设计定稿后**（时长决定时间轴） |
+| 8 | 装配 | `cp -r remotion-template <工程>` → 改 4 处 → `python3 build_remotion_data.py` | 见 `remotion-template/README.md` |
+| 9 | 渲染验收 | `python3 scripts/qa_page.py` → `npm run render` | 终态帧口径见下方警告 |
+
+**旁白 JSON 格式**（`gen_tts.sh` 的输入，键名建议 `p01`…`p08`）：
+
+```json
+{ "p01": "第一段旁白……", "p02": "第二段旁白……" }
+```
+
+> ⚠ **页长与页起点是两套口径**：
+> 页长 = 纯音频 + 1.6s 留白；页起点 = 前序各页**纯音频**累加（**不含**留白）。
+> 留白是页尾的，计入下一页起点就会逐页漂移（E8 曾累计 +288 帧）。
 
 **第 3 步零成本，能省 1–2 轮白渲染。E8 跳过它，白渲 2 版才修完 6 处缺陷。**
+
+## 克隆后能直接做什么
+
+```bash
+git clone <repo> && cd haidian-history-video
+
+python3 landianchang_video/slotcheck.py      # 校验槽位（应零冲突）
+node landianchang_video/make_prompts.js     # 重新生成送图 prompt
+./gen_tts.sh <集名>                          # 生成配音（需先 setup_tts.sh）
+```
+
+第 8/9 步的起点是 `remotion-template/`，其 README 列了要改的 4 处。
 
 ---
 
@@ -82,6 +104,7 @@ E9 P4 板面尺寸全对、零汉字、槽位全留白，却因**图例编码画
 
 | 脚本 | 用途 |
 |---|---|
+| `remotion-template/` | Remotion 合成工程模板（第 8/9 步的起点） |
 | `scripts/setup_tts.sh` | 一键装 TTS 工具链（Darwin/arm64） |
 | `gen_tts.sh` | 生成一集 8 段旁白（断点续跑） |
 | `scripts/send_board_prompt.js` | 送图（改 `N` / `EP` 两行） |
@@ -99,7 +122,8 @@ E9 P4 板面尺寸全对、零汉字、槽位全留白，却因**图例编码画
 E1 肖家河 · E2 安河桥 · E3 青龙桥 · E4 有大庄 · E5 一亩园 ·
 E6 娘娘府 · E7 西三旗 · E8 高梁桥 · E9 大钟寺
 
-E10 蓝靛厂研究档案 v2 定稿，设计稿 + 槽位校验完成，板面 7/8。
+E10 蓝靛厂：研究 v2 定稿，设计稿 107 槽位零冲突，**板面 8/8 全部验收 PASS**，
+配音与 Remotion 装配进行中。逐页验收记录见 `landianchang_video/SEND_LOG.md`。
 
 ---
 

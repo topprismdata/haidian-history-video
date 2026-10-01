@@ -15,7 +15,7 @@
 |---|---|
 | CPU | Apple M1 Max（`torch.backends.mps.is_available() == True`） |
 | RAM | 64 GB |
-| 磁盘 | TTS 模型 13 GB + 4 个 venv 约 17 GB（`chemistry-video/` 整目录 29 GB） |
+| 磁盘 | TTS 模型 2.9 GB + 4 个 venv 合计 5.3 GB（`chemistry-video/` 整目录 29 GB） |
 
 **Apple Silicon 是硬性前提**——TTS 走 MLX（MPS 加速），CPU 跑不动。
 
@@ -51,10 +51,19 @@ npm i remotion@4.0.529 @remotion/cli@4.0.529 \
 
 ### 0.4 TTS 克隆音色
 
-**本系列最终用的是 Qwen3-TTS via `mlx_audio`。**（E8/E9/E10 全系列一致）
+**本系列用的是 Qwen3-TTS via `mlx_audio`。**（E8 与 E10 有脚本可证；E9 见下方说明）
 
-**实证方式**（不靠印象）：E9 的 `p05` 与 E8 的 `p06` 音频文件**字节数完全相同（998444）**——
-只有同一引擎对同一文本才会如此，而 E8 脚本明写 `--model .../qwen3/Base-1.7B`。
+| 集 | 证据强度 | 依据 |
+|---|---|---|
+| E8 高梁桥 | ✅ **确定** | `gen_tts_gaoliangqiao.sh` 留存，明写 `--model .../qwen3/Base-1.7B` |
+| E10 蓝靛厂 | ✅ **确定** | 本仓库 `gen_tts.sh` + `scripts/setup_tts.sh`，可复现 |
+| E9 大钟寺 | ⚠️ **未取证** | 配音生成脚本已丢失，旁白源 `narration/all.json` 尚存 |
+
+> **E9 的引擎无法证明。** 曾用「E9 p05 与 E8 p06 字节数相同（998444）」作为证据，
+> 这是**错的**——24000Hz 单声道 16bit 的 WAV，字节数**只由时长决定**
+> （`20.80s × 24000 × 2 + 44 字节头 = 998444`），与内容和引擎无关。
+> 音频规格（24000/单声道/16bit）三个引擎完全一致，基频等声学特征随内容变化，
+> 也不能用来判引擎。**E9 的旁白源还在，需要时可重跑确认。**
 
 #### 安装（一条命令）
 
@@ -71,7 +80,7 @@ npm i remotion@4.0.529 @remotion/cli@4.0.529 \
 <ROOT>/
   tts/
     venv/                       # 脚本装
-    models/qwen3/Base-1.7B      # 手动放（13 GB）
+    models/qwen3/Base-1.7B      # 手动放（2.9 GB）
     voices/ref_10s.wav          # 手动放（你录的 10 秒）
     voices/ref_10s.txt          # 手动放（该音频的逐字文本）
   audio/<集名>/pNN.wav          # 产物
@@ -166,7 +175,7 @@ python3 -m pip install numpy pillow scipy
 | 路径 | 状态 | 备注 |
 |---|---|---|
 | **ChatGPT 出图（web relay）** | ✅ **本系列全程使用** | 交互式、能根据验收反馈立刻重出；缺点是**有配额**、需手动发 prompt |
-| **本地 Stable Diffusion / FLUX（diffusers）** | ⚠️ **未验证** | `torch 2.14.0` + MPS 可用、`.cosyvoice-venv` 里已装 `diffusers 0.25.0`，**但导入失败**（`cannot import name 'cached_download'`，`diffusers` 与 `huggingface_hub` 版本冲突）。修 `huggingface_hub` 版本或新建干净 venv 后可用。优点是**无配额、可批量、可离线** |
+| **本地 Stable Diffusion / FLUX（diffusers）** | ⚠️ **未验证** | `torch 2.14.0` + MPS 可用、`.cosyvoice-venv` 里已装 `diffusers 0.25.0`，**但导入失败**（`cannot import name 'cached_download'`，`diffusers 0.25.0` 与 `huggingface_hub 0.36.2` 版本冲突）。**预计**修 `huggingface_hub` 版本或新建干净 venv 后可用（未实测）。优点是**无配额、可批量、可离线** |
 | ComfyUI | 未安装 | 可作 SD 路线的替代前端 |
 | Midjourney / 即梦 / 通义万相 等 | 未使用 | 同样适用，只要能出**无字**的图并把 prompt 里的槽位要求说清 |
 
@@ -185,7 +194,7 @@ python3 -m pip install numpy pillow scipy
 ---
 
 
-## 1. 整体流程
+## 3. 整体流程
 
 ```
 ① 研究档案  research.md      ← 史料核验 + GPT 复查闸门
@@ -202,7 +211,7 @@ python3 -m pip install numpy pillow scipy
 
 ---
 
-## 2. 研究：GPT 闸门必须逐条独立核实
+## 4. 研究：GPT 闸门必须逐条独立核实
 
 **做法**：把研究档案送 GPT 做事实复查，要求 `PASS / PASS WITH EDITS / FAIL` + 逐条意见。
 
@@ -224,14 +233,14 @@ E10 八页全挂 `[文献记载]`——营区已踪迹全无，无实物可拍�
 
 ---
 
-## 3. 设计：一集一个立论，不是资料罗列
+## 5. 设计：一集一个立论，不是资料罗列
 
 **每集必须有能用一句话说清的立论**，否则会退化成流水账。
 
 E10 的立论：**一个地名，比它指称的三样东西都活得久。**
 （明朝的染坊 + 清朝的特种部队 + 明清的庙会，压在同一个名字上，且每层都被误解）
 
-### 3.1 红线要写进设计稿
+### 5.1 红线要写进设计稿
 
 每集 `design.md` 末尾固定一节「全片红线」，把**禁止说的错**逐条列明：
 
@@ -246,7 +255,7 @@ E10 的立论：**一个地名，比它指称的三样东西都活得久。**
 
 **验收时按红线逐条 grep**，而不是凭印象。
 
-### 3.2 用"少画"传递信息
+### 5.2 用「少画」传递信息
 
 E10 P8 要表达"营区踪迹全无"，做法是**三栏等宽等距**：
 - 第一栏画建筑轮廓
@@ -257,7 +266,7 @@ E10 P8 要表达"营区踪迹全无"，做法是**三栏等宽等距**：
 
 ---
 
-## 4. 几何校验：写完 design.md 立刻跑，不渲帧
+## 6. 几何校验：写完 design.md 立刻跑，不渲帧
 
 `slotcheck.py` 三层检测：
 
@@ -274,14 +283,14 @@ E10 P8 要表达"营区踪迹全无"，做法是**三栏等宽等距**：
 
 ---
 
-## 5. 送图：最静默失败的一环
+## 7. 送图：最静默失败的一环
 
 ### 5.1 零汉字红线
 
 板面图**不得出现任何汉字、数字、字母**——横排竖排、书法篆字、印章匾额统统不许。
 验收时逐页用视觉模型问「图内有无任何可辨认汉字」，一条条列出来问。
 
-### 5.2 但零汉字不够——还要验语义编码
+### 7.2 但零汉字不够——还要验语义编码
 
 **E9 P4 出过一次"零汉字、尺寸全对、槽位全留白，却整版作废"的板面。**
 
@@ -305,11 +314,11 @@ E10 P8 要表达"营区踪迹全无"，做法是**三栏等宽等距**：
 斜纹必须出现在靠右的两格，左边两格必须留白。
 ```
 
-### 5.3 槽位坐标从 design.md 直接读，不手抄
+### 7.3 槽位坐标从 design.md 直接读，不手抄
 
 `make_prompts.js` 跑 `slotcheck.py --json` 拿到坐标，生成 prompt 清单。手抄必错。
 
-### 5.4 送图脚本的决定性坑
+### 7.4 送图脚本的决定性坑
 
 > **`tab.run(fn, {args:[X]})` 的解构参数拿到的是 `[object Object]`，不是 X。**
 
@@ -325,7 +334,7 @@ cell 里 `typeof X === 'string'` 的检查**毫无意义**——只有到达页�
 
 **修复**：零参数调用，值写死。
 
-### 5.5 其他送图纪律
+### 7.5 其他送图纪律
 
 - **必须选中可见的输入框**：一个会话里会堆着多个 `div.ProseMirror`（旧的隐藏但仍在 DOM 里），
   `querySelector` 取第一个会写到隐藏元素上。
@@ -343,7 +352,7 @@ cell 里 `typeof X === 'string'` 的检查**毫无意义**——只有到达页�
 
 ---
 
-## 6. TTS 克隆：见 §0.4
+## 8. TTS 克隆：见 §0.4
 
 安装、目录布局、调用方式与两个关键坑（`--ref_text` 必须逐字一致、`mlx_audio` 会加 `_000` 序号）
 都在 §0.4。这里只强调流程位置：
@@ -359,36 +368,53 @@ cell 里 `typeof X === 'string'` 的检查**毫无意义**——只有到达页�
 
 ---
 
-## 7. 装配：音频秒数决定一切
+## 9. 装配：音频秒数决定一切
+
+成片是 **1920×1080**；**1672×941 是板面 PNG 的尺寸**，不是成片尺寸
+（板面经 `objectFit:"cover"` 放回 1920×1080 设计空间）。
 
 ```json
 {
-  "fps": 30, "width": 1672, "height": 941,
+  "fps": 30, "width": 1920, "height": 1080,
   "pages": [{
     "id": "p01",
-    "board": "../boards/page_01.png",
-    "audio": "../audio_qwen/p01_000.wav",
-    "startFrame": 0,
-    "durationInFrames": 583,          // ← 音频 19.44s × 30 + 留白
+    "board": "../boards/page_01.png",     // 1672×941
+    "audio": "../audio/p01.wav",          // 24000Hz mono
+    "startFrame": 0,                      // 纯音频累加的页起点
+    "durationInFrames": 631,              // (19.44 + 1.6) × 30，含页尾留白
     "caption": "北京有座高梁桥，名字里的「梁」是木字底…"
   }]
 }
 ```
 
-**页边界必须由 `PAGE_DURATIONS_SEC` 累加算出（含留白），不能用 `_meta.json` 的 `bounds`。**
+> E8 的 `src/composition.json` 是**已废弃的旧文件**（4857 帧，纯音频累加），
+> 不要拿它当模板——它正是 E8 v2 修掉页边界漂移之前的产物。
 
-> 两者差 1.6s 留白/页。E9 在 P4 处差 **144 帧**，照 `bounds` 抽帧会渲到**前一页的尾巴**。
-> 症状极具误导性：某些槽位"缺字"，**换任何帧号都不补齐**——
-> 当时误查了 `pageDur`/`anchor`/数组截断/缓存/坐标错位五个方向。
+#### 页长与页起点：**两套口径，用途不同**
 
-**终态帧取"纯音频结束处"**，不能取"纯音频末 − 0.5s"——
+| 量 | 算法 | 谁用 |
+|---|---|---|
+| **页长** | 纯音频 + 1.6s 页尾留白 | `Series.Sequence` 的 `durationInFrames` |
+| **页起点** | 前序各页**纯音频**累加（**不含**留白） | `pageOffsetFrames` → 槽位 `bounds`、终态帧 |
+
+> **留白是页尾的，绝不能计入下一页的起点。**
+
+E8 踩过这个坑：页起点用含留白的口径，每页晚 0.4s，到 P7 累计 **+9.6s（288 帧）**——
+抽 P7 的帧看到的是 **P8 的内容**，8 个验收代理里 5 个报"槽位空字"，看起来像渲染失败，
+**实际是看错了页**。（E8 `DELIVERY.md` v2 记录）
+
+E9 又踩了相反方向的坑：把 `_meta.json` 的 `bounds`（纯音频累加）当成 `Series` 的页边界，
+P4 处差 **144 帧**，照它抽帧会渲到**前一页的尾巴**。症状同样是"槽位缺字"，
+**换任何帧号都不补齐**——误查了 `pageDur`/`anchor`/数组截断/缓存/坐标错位五个方向。
+
+**终态帧 = 页起点（纯音频累加）+ 该页纯音频时长**，不能取"纯音频末 − 0.5s"——
 末项进场按 anchor 铺满，取更早会漏（E9 P6 的 `compass` 实测页内 842 帧才出现）。
 
 ---
 
-## 8. 验收：程序化，不靠肉眼
+## 10. 验收：程序化，不靠肉眼
 
-### 8.1 槽位完整性
+### 10.1 槽位完整性
 
 肉眼数"几个框"会漏（窄高槽位如 640×60 常被误判）。**按槽位矩形逐个测底板像素占比**：
 
@@ -399,13 +425,13 @@ miss = [] if card[y0:y1, x0:x1].mean() > 0.5 else [slot_id]
 
 `tag` 型槽位无 backing，不计入统计。8 页一遍跑完约 17s。
 
-### 8.2 探针片
+### 10.2 探针片
 
 板面不全时**不要等配额**——用纯米色占位图填满缺失页，先渲一版把不占配额的环节全验完。
 白底让"该有字却没字"一眼可见（E9 因此提前挖出 3 类缺陷）。
 ⚠ 派验收代理时**必须写明"白底是故意占位，不是缺陷"**。
 
-### 8.3 视觉验收代理的误报要敢于否掉
+### 10.3 视觉验收代理的误报要敢于否掉
 
 - **形近字**：「忏悔讵赖」被读成「忏梅迁赖」→ grep 源码确认
 - **宽框数成两个**：`span_mid`(520px) 被当成两个时间标记
@@ -416,7 +442,7 @@ miss = [] if card[y0:y1, x0:x1].mean() > 0.5 else [slot_id]
 
 ---
 
-## 9. 交付检查
+## 11. 交付检查
 
 ```bash
 ffmpeg -v error -i out/x.mp4 -af "silencedetect=noise=-35dB:d=1.2" -f null - 2>&1 | grep silence_
@@ -428,38 +454,53 @@ ffmpeg -v error -i out/x.mp4 -af "silencedetect=noise=-35dB:d=1.2" -f null - 2>&
 
 ---
 
-## 10. 已知坑速查
+## 12. 已知坑速查
+
+> **「真因」列只写已验证的根因。** 猜错的归因曾经把 `canvas 遮挡`、
+> `时序竞争`、`React 受控框` 写进这里，害我绕了十几轮——
+> 真正的根因只是 `tab.run` 的 `args` 传参坏了。
+> 归因不确定时，宁可写"未定位"，也别写一个像样的猜测。
 
 | 症状 | 真因 |
 |---|---|
-| 发出去是 `[object Object]` | `tab.run` 的 `args` 传参坏了 → 零参数调用 |
+| 发出去是 `[object Object]` | **`tab.run` 的 `args` 传参坏了**（连数字都中招）→ 零参数调用 |
 | 清空输入框后又有内容 | 选中了隐藏的旧 `ProseMirror` → 用 `offsetParent !== null` |
 | `sent len=15` 但没发出去 | `sent` 不代表成功，15 是回填值 → 整页复核特征串 |
 | 点发送但按钮是"停止" | 正在响应中 → 先轮询等就绪 |
-| `tab.click` 报 covered by | 同上，选中隐藏元素位置全为 0 → 用 `page.focus` |
-| 槽位"缺字"且换帧号不补齐 | 终态帧口径错，渲到前一页尾巴 → 用 `PAGE_DURATIONS_SEC` 累加 |
-| 槽位被字幕条压住 | 字幕条不是槽位，矩形检测看不见 → 加第三层检测 |
+| `slotcheck.py` 对空 design.md 报"通过" | 解析不到槽位时守卫不生效 → **已加总量断言，exit 1** |
+| 断点续跑把 `p1` 判成已完成 | `"${key}*.wav"` 前缀 glob 命中了 `p10.wav` → 精确匹配两个候选名 |
+| 旁白 JSON 损坏仍报 DONE | 重定向先把 TSV 截断，退出码没检查 → **已改临时文件 + mv + 查退出码** |
+| bash: `X?: unbound variable` | `$VAR` 紧跟中文标点，bash 把标点并进变量名 → 一律用 `${VAR}` |
+| Python 版本探测永远失败 | `sys.version_info[:2] == 3.10` 比的是 float，恒为 False → 比 tuple `(3,10)` |
+| 槽位"缺字"且换帧号不补齐 | **页起点口径错**（两套口径混用，见 §9） |
+| 槽位被字幕条压住 | 字幕条不是槽位，矩形检测看不见 → 加字幕带检测层 |
 | 板面零汉字但整版作废 | 语义编码画反 → 逐格核对图例与事实 |
-| 插入后字符乱码 | Python 源码里的中文弯引号 `''""` → 改直引号 |
-| 脚本 SyntaxError: Unexpected EOF | 嵌套模板字面量 `${}` 冲突 → HTML 用 `str.format` 生成 |
+| 插入后字符乱码 | Python 源码里的中文弯引号 → 改直引号 |
+| 脚本 SyntaxError: Unexpected EOF | 嵌套模板字面量 `${}` 冲突 → 用 `str.format` 或拼数组 |
 | emoji 在 headless 渲染成方框 | 字体缺失 → 改用单字母占位或装字体 |
 | 图像配额用尽 | 真限制，等重置；ChatGPT 会拒绝冒充 |
+| 多标签并发后突然发不出图 | 触发「检测到可疑活动」账户锁 → 关掉多余标签、串行发送 |
 
 ---
 
-## 11. 新开一集的最短路径
+## 13. 新开一集的最短路径
 
 ```bash
-cp -r <上一集目录> <新集目录> && cd <新集目录>
-# 1. 写 research.md → 送 GPT 闸门 → 逐条核实 → 定 v2
+mkdir -p <集名>_video/{boards,prompts,narration} && cd <集名>_video
+# 1. 写 research.md → 送 GPT 闸门 → **逐条独立核实** → 定 v2
 # 2. 写 design.md（立论 + 八页 + 槽位 + 红线）
-# 3. python3 slotcheck.py            # 必须零冲突
-# 4. node make_prompts.js            # 生成 8 份 prompt
-# 5. 改 /tmp/ldc_send.js 里的 N，逐页发送 + 取图 + 视觉验收
-# 6. 配音：改 gen_tts_*.sh 的 texts，跑（断点续跑）
-# 7. 写 timeline.json（音频秒数 × 30）+ composition.json
-# 8. 终态帧逐页程序化验收
-# 9. npx remotion render … && ffmpeg silencedetect
+# 3. python3 slotcheck.py            # 必须零冲突（解析不到槽位会 exit 1）
+# 4. node make_prompts.js            # 生成 8 份 prompt（坐标自动读，不手抄）
+# 5. 写 narration/all.json（键名 p01…p08）
+# 6. 配音：cd .. && ./gen_tts.sh <集名>        # 断点续跑
+# 7. 装配：cp -r remotion-template <工程>，改 4 处（见其 README）
+# 8. python3 <集名>_video/build_remotion_data.py   # 生成槽位数据，不手写
+# 9. python3 scripts/qa_page.py    # 逐页程序化验收
+# 10. npm run render && ffmpeg silencedetect
+
+# 送图：改 scripts/send_board_prompt.js 里的 N / EP 两行，
+#       设 BOARD_ROOT 环境变量指向项目根（脚本是 eval 进 tab runtime 的，
+#       读不到自己的路径，只能靠环境变量或 cwd）
 ```
 
 **最容易跳过、也最该做的一步是第 3 步。** 它零成本，能省掉 1–2 轮白渲染。
