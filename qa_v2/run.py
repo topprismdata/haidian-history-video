@@ -90,11 +90,16 @@ def run_episode(name: str, use_ocr: bool = False, full: bool = False) -> List[Fi
             findings += check_l4b(page, ocr, names)
             # 负控制：证明 L3/L4 不是恒真
             missed = assert_negative_control(page, ocr)
-            if missed:
+            if missed.not_caught > 0:
                 findings.append(Finding(
                     "L3", page.number, None, "fail", "NEGATIVE_CONTROL_FAIL",
                     "负控制失败：%d 个槽位平移后仍判有文本，判据恒真"
-                    % missed))
+                    % missed.not_caught))
+            elif missed.untestable > 0:
+                findings.append(Finding(
+                    "L3", page.number, None, "info", "NEGATIVE_CONTROL_SKIPPED",
+                    "负控制跳过：%d 个槽位密集无法构造空白平移矩形"
+                    % missed.untestable))
     if use_ocr:
         findings += check_l4c(ep, ocr_by_page)
     return findings

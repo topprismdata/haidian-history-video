@@ -72,6 +72,53 @@ def test_l4a_arrow_separated_numbers_match():
     o = _ocr(p, {"title": ["1799 → 1800 → 1801"]})
     assert [f for f in check_l4a(p, o) if f.code == "NUMBER_MISMATCH"] == []
 
+def test_l4a_catches_appended_zero_not_glue():
+    """文案 1485 ↔ OCR 14850：真错值，不能被当成粘连放过。"""
+    p = _page([_ti("r1_total", "1485")])
+    fs = [f for f in check_l4a(p, _ocr(p, {"r1_total": ["14850"]}))
+          if f.level == "fail"]
+    assert len(fs) == 1 and fs[0].code == "NUMBER_MISMATCH"
+
+
+def test_l4a_resolves_vertical_glue_multiline():
+    """纵向粘连：单元格内多行数字 [39, 26] 被 OCR 读成 3926，判定为粘连放过。"""
+    p = _page([_ti("r8_hall", "39\n26")])
+    fs = [f for f in check_l4a(p, _ocr(p, {"r8_hall": ["3926"]}))
+          if f.level == "fail"]
+    assert len(fs) == 0
+
+
+def test_l4a_resolves_horizontal_glue_neighbor():
+    """横向粘连：本格 [65] OCR 串入邻格 [39] 读成 6539，判定为粘连放过。"""
+    p = _page([_ti("r7_hall", "65"), _ti("r8_hall", "39\n26")])
+    # r7_hall 读回 6539（与邻格 39 粘连），r8_hall 正常读回 39 与 26
+    fs = [f for f in check_l4a(p, _ocr(p, {"r7_hall": ["6539"], "r8_hall": ["39", "26"]}))
+          if f.level == "fail"]
+    assert len(fs) == 0
+
+def test_l4a_real_e11_p3_last_row_passes():
+    """E11 P3 真实数据验证：镶白旗最后一行两行数字粘连不误报 fail。"""
+    items = [
+        _ti("r7_hall", "65"),
+        _ti("r7_officer", "1485"),
+        _ti("r7_total", "1550"),
+        _ti("r8_hall", "39\n26"),
+        _ti("r8_officer", "1167\n315"),
+        _ti("r8_total", "1206\n341"),
+    ]
+    p = _page(items)
+    # 模拟真实 OCR 读回：r7 发生横向粘连，r8 发生纵向粘连
+    ocr_map = {
+        "r7_hall": ["6539"],
+        "r7_officer": ["14851167"],
+        "r7_total": ["15501206"],
+        "r8_hall": ["3926"],
+        "r8_officer": ["1167315"],
+        "r8_total": ["1206341"],
+    }
+    fs = [f for f in check_l4a(p, _ocr(p, ocr_map)) if f.level == "fail"]
+    assert fs == []
+
 
 def test_l4a_no_numbers_is_trivially_ok():
     p = _page([_ti("title", "一个村子，三重身份")])

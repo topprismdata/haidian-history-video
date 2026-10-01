@@ -152,7 +152,8 @@ def assert_negative_control(
     1. 平移落点与所有真槽及自身原矩形不相交。若撞了就换方向/加大位移；
     2. 实在无法构造的槽，跳过并计入 untestable（不计入 not_caught）；
     3. 负控制路径上 text_at 的 pad 置 0；
-    4. 继承 int，兼容 if missed: 与 == 0 判断。
+    4. 继承 int，兼容 if missed: 与 == 0 判断；
+    5. 负控制判定应与 L3 正向存在性判定标准对称，忽略置信低于 LOW_CONFIDENCE 的背景插画噪点。
     """
     assert shift > 0, "负控制的平移量必须 > 0，否则等于没验证"
     not_caught = 0
@@ -165,7 +166,8 @@ def assert_negative_control(
             untestable += 1
             continue
         rect = plate_to_canvas(page.plate, cand[0], cand[1], cand[2], cand[3])
-        if text_at(ocr, rect, pad=0):
+        found = [f for f in text_at(ocr, rect, pad=0) if f[2] >= LOW_CONFIDENCE]
+        if found:
             not_caught += 1
     return NegativeControlResult(not_caught=not_caught, untestable=untestable)
 

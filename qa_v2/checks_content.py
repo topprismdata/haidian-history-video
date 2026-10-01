@@ -62,9 +62,70 @@ def _ocr_text_for(page: Page, ocr: OcrResult, slot_id: str) -> str:
     return "".join(t for t, _, _ in text_at(ocr, rect))
 
 
+def _can_decompose_glued(target: str, pieces: List[str]) -> bool:
+    """判断目标数字字符串是否可以完全由候选数字拼块按顺序无缝拼接组成（至少两个拼块）。
+
+    边界权衡与判定原则（详见 check_l4a 文档）：
+    - 必须完全由候选拼块精确拼合（如 '3926' 由 '39' + '26' 拼出，'6539' 由 '65' + '39' 拼出）；
+    - 绝不允许任意子串匹配或前后缀通配：
+      例如文案 '1485' 而 OCR 读回 '14850' 或 '1486' 时，因为无法由合法数字拼块精确还原整串，
+      严禁判定为粘连，必须判定为真错值报 fail；
+    - 单个拼块（即自身相等）由外层 got 集合直接匹配，此处必须由 >= 2 个拼块组合。
+    """
+    memo: Dict[str, bool] = {}
+
+    def dfs(rem: str, depth: int) -> bool:
+        if not rem:
+            return depth >= 2
+        if rem in memo:
+            return memo[rem]
+        for p in pieces:
+            if rem.startswith(p):
+                if dfs(rem[len(p):], depth + 1):
+                    memo[rem] = True
+                    return True
+        memo[rem] = False
+        return False
+
+    return dfs(target, 0)
+
+
 def check_l4a(page: Page, ocr: OcrResult) -> List[Finding]:
-    """数字严格：原文里的每个数字都必须出现在 OCR 读回里。"""
+    """数字严格：原文里的每个数字都必须出现在 OCR 读回里。
+
+    粘连判据设计与边界权衡：
+    -------------------------------------------------------------------------
+    1. 现象与成因：
+       OCR 在密集排版（如明细表格 P3）中经常发生两类结构性数字粘连：
+       - 纵向粘连（多行单元格）：如同一格内多行数字 [39, 26] 读回为 3926，
+         [1167, 315] 读回为 1167315，[1206, 341] 读回为 1206341；
+       - 横向粘连（邻格串字）：如 [65] 读回为 6539（与邻格 39 粘连），
+         [1485] 读回为 14851167，[1550] 读回为 15501206。
+    2. 核心红线（禁止降级）：
+       - 绝不使用「只要期望数字是读回数字的子串就放过」的粗暴判据！
+       - 区分 1485 ↔ 14850 与 1485 ↔ 1486：
+         - 1485 ↔ 1486：字形错误，无任何粘连拼接证据，必须报 NUMBER_MISMATCH；
+         - 1485 ↔ 14850：尾随多出 0，但 0 不是该页排版中的合法数字拼块，
+           无法被精确分解为 [1485, 0]，必须报 NUMBER_MISMATCH；
+         - 1485 ↔ 14851167：14851167 能够被整除/精确分解为当前页面的真值拼块
+           ['1485', '1167']，属于可解释的结构性粘连，予以豁免。
+    3. 判定算法：
+       - 收集当前页面所有合法文案中出现过的数字字符串作为拼块候选集合；
+       - 当某期望数字 w 未在 got 中直接命中时，检查 got 中是否存在包含 w 的读回数字 g；
+       - 若 g 能够被候选拼块集合精确无缝拼接（深度 >= 2），则判定 w 属于粘连成功匹配；
+       - 否则保留为 missing 报 fail。
+    -------------------------------------------------------------------------
+    """
     out = []
+    # 收集当前页面所有合法文案中提取出的数字，作为候选拼块
+    page_numbers: Set[int] = set()
+    for it in page.items:
+        if not it.is_tag:
+            page_numbers.update(extract_numbers(it.text))
+    # 拼块按长度降序排序，过滤单字符 0 以免意外充当通配符
+    candidate_pieces = sorted([str(n) for n in page_numbers if n > 0],
+                              key=lambda s: len(s), reverse=True)
+
     for item in page.items:
         if item.is_tag:
             continue
@@ -84,12 +145,24 @@ def check_l4a(page: Page, ocr: OcrResult) -> List[Finding]:
 
         missing = sorted(want - got)
         if missing:
-            out.append(Finding(
-                "L4-a", page.number, item.slot_id, "fail",
-                "NUMBER_MISMATCH",
-                "数字对不上：期望 %s，读回 %s"
-                % (missing, sorted(got)),
-                {"expect": item.text[:50], "ocr": got_raw[:50]}))
+            # 检查是否有结构性粘连
+            glued_found = set()
+            for w in missing:
+                w_str = str(w)
+                for g in got:
+                    g_str = str(g)
+                    if w_str in g_str and g_str != w_str:
+                        if _can_decompose_glued(g_str, candidate_pieces):
+                            glued_found.add(w)
+                            break
+            real_missing = sorted(set(missing) - glued_found)
+            if real_missing:
+                out.append(Finding(
+                    "L4-a", page.number, item.slot_id, "fail",
+                    "NUMBER_MISMATCH",
+                    "数字对不上：期望 %s，读回 %s"
+                    % (real_missing, sorted(got)),
+                    {"expect": item.text[:50], "ocr": got_raw[:50]}))
     return out
 
 
