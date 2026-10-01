@@ -8,6 +8,17 @@
 
 **Tech Stack:** Python 3.9.6、pytest 8.4.2、numpy、Pillow、PaddleOCR 3.7（PP-OCRv6 medium）。
 
+## 路径与包名（实现前必读）
+
+- **包名是 `qa_v2`，不是 `qa`**。`/tmp/chemistry-video/qa/` 已被 E6–E10 的
+  QA 截图缓存占用（`auto/`、`dzs/`、`glq/`、`ldc/`…），不能覆盖。
+- **代码真实位置在 git 仓库**：`/Volumes/macstudio/video-projects/qa_v2/` 与
+  `.../tests/`。工程副本 `/tmp/chemistry-video/` 下有同名软链接，
+  因此在 `/tmp/chemistry-video` 里跑 `python3 -m pytest tests/` 与
+  `python3 -m qa_v2.run` 都能工作，但 `git add` 必须在
+  `/Volumes/macstudio/video-projects` 里执行。
+- 计划正文中出现的 `git add` / `git commit` 命令**都在 video-projects 仓库**执行。
+
 ## Global Constraints
 
 以下约束**每个 task 都适用**，不再逐条重复：
@@ -17,7 +28,7 @@
 - **坐标空间有两套，必须显式区分**：
   - 板面空间（`slots.json` 的 `x/y/w/h`），尺寸见各页 `plate` 字段（1672×941 或 1920×1080）
   - 画布空间（渲染帧像素），恒为 1920×1080
-  - 换算函数唯一入口：`qa/geometry.py::plate_to_canvas()`
+  - 换算函数唯一入口：`qa_v2/geometry.py::plate_to_canvas()`
   - **OCR 的 `rec_boxes` 已经是画布空间，禁止再乘缩放**
 - **`slots.json` 顶层键是 `p01..p08`**，没有集名外层
 - **`pages.config.ts` 的文案在 `items` 数组内**，每项含 `slotId` 与 `text`
@@ -31,18 +42,18 @@
 
 | 文件 | 职责 |
 |---|---|
-| `qa/__init__.py` | 空包标记 |
-| `qa/geometry.py` | 坐标换算、槽位矩形运算（重叠/越界/尺寸） |
-| `qa/normalize.py` | 标点归一化、中文数字→阿拉伯数字 |
-| `qa/data.py` | 加载 `slots.json` / `pages.config.ts` / `narration/all.json` / 页长 |
-| `qa/frames.py` | 抽帧（`remotion still`）、OCR 结果缓存 |
-| `qa/checks_data.py` | L1 数据一致性、L2 几何可行性 |
-| `qa/checks_render.py` | L3 渲染存在性、L5 溢出、L6 tag 槽 |
-| `qa/checks_content.py` | L4 内容闭环（数字/专名/字幕交叉） |
-| `qa/names.txt` | 专名表 |
-| `qa/report.py` | Finding 定义与汇总输出（终端 / JSON） |
-| `qa/run.py` | 统一入口，CLI 开关 |
-| `qa_all.py` | 保留为薄壳，转调 `qa/run.py`（保持历史命令可用） |
+| `qa_v2/__init__.py` | 空包标记 |
+| `qa_v2/geometry.py` | 坐标换算、槽位矩形运算（重叠/越界/尺寸） |
+| `qa_v2/normalize.py` | 标点归一化、中文数字→阿拉伯数字 |
+| `qa_v2/data.py` | 加载 `slots.json` / `pages.config.ts` / `narration/all.json` / 页长 |
+| `qa_v2/frames.py` | 抽帧（`remotion still`）、OCR 结果缓存 |
+| `qa_v2/checks_data.py` | L1 数据一致性、L2 几何可行性 |
+| `qa_v2/checks_render.py` | L3 渲染存在性、L5 溢出、L6 tag 槽 |
+| `qa_v2/checks_content.py` | L4 内容闭环（数字/专名/字幕交叉） |
+| `qa_v2/names.txt` | 专名表 |
+| `qa_v2/report.py` | Finding 定义与汇总输出（终端 / JSON） |
+| `qa_v2/run.py` | 统一入口，CLI 开关 |
+| `qa_all.py` | 保留为薄壳，转调 `qa_v2/run.py`（保持历史命令可用） |
 | `tests/test_geometry.py` | 坐标换算与矩形运算 |
 | `tests/test_normalize.py` | 标点与数字归一 |
 | `tests/test_data.py` | 数据加载 |
@@ -56,8 +67,8 @@
 ## Task 1: 坐标换算与矩形运算
 
 **Files:**
-- Create: `qa/__init__.py`
-- Create: `qa/geometry.py`
+- Create: `qa_v2/__init__.py`
+- Create: `qa_v2/geometry.py`
 - Create: `tests/conftest.py`
 - Create: `tests/test_geometry.py`
 
@@ -82,7 +93,7 @@
 P5 采到的是插画上的香炉（墨像素 32062）而不是文字（2229），判据恒真。
 本文件的 E11 实测锚点就是为防这个 bug 回归。
 """
-from qa.geometry import (
+from qa_v2.geometry import (
     CANVAS, scale_of, plate_to_canvas, overlap_ratio, out_of_bounds,
 )
 
@@ -169,9 +180,9 @@ Expected: FAIL —— `ModuleNotFoundError: No module named 'qa'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/__init__.py`（空文件）。
+`qa_v2/__init__.py`（空文件）。
 
-`qa/geometry.py`：
+`qa_v2/geometry.py`：
 
 ```python
 """坐标换算与槽位矩形运算。
@@ -256,7 +267,7 @@ E11 实测锚点已写成回归测试。"
 ## Task 2: 标点与数字归一化
 
 **Files:**
-- Create: `qa/normalize.py`
+- Create: `qa_v2/normalize.py`
 - Create: `tests/test_normalize.py`
 
 **Interfaces:**
@@ -282,7 +293,7 @@ E11 用 PaddleOCR 3.7 跑完 8 页，平均置信 0.989，噪声**只有标点**
 """
 import pytest
 
-from qa.normalize import (
+from qa_v2.normalize import (
     normalize_punct, to_int, extract_numbers, number_unknown_rate,
 )
 
@@ -346,11 +357,11 @@ def test_number_unknown_rate_flags_garbage():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_normalize.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.normalize'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.normalize'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/normalize.py`：
+`qa_v2/normalize.py`：
 
 ```python
 """文本归一化：标点剥离 + 中文数字转阿拉伯数字。
@@ -476,11 +487,11 @@ to_int 支持三种写法：阿拉伯、带单位（一千二百五十）、纯�
 ## Task 3: 数据加载层
 
 **Files:**
-- Create: `qa/data.py`
+- Create: `qa_v2/data.py`
 - Create: `tests/test_data.py`
 
 **Interfaces:**
-- Consumes: `qa/geometry.py`（Task 1）
+- Consumes: `qa_v2/geometry.py`（Task 1）
 - Produces:
   - `class Slot: id: str; x: int; y: int; w: int; h: int`
   - `class TextItem: slot_id: str; text: str; size: int; backing: Any; kind: Optional[str]`
@@ -504,7 +515,7 @@ E10 与 E11 的导出类型不同（any vs TextItem），但 items 结构一致�
 import json
 import pathlib
 
-from qa.data import parse_pages_config, load_episode, narration_text
+from qa_v2.data import parse_pages_config, load_episode, narration_text
 
 E11_PC = '''
 const INK = "#3a3226";
@@ -584,11 +595,11 @@ def test_narration_text_missing_returns_empty():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_data.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.data'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.data'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/data.py`：
+`qa_v2/data.py`：
 
 ```python
 """加载每集的槽位几何、文案、页长与口播稿。
@@ -847,7 +858,7 @@ git commit -m "feat(qa): 数据加载层（槽位/文案/页长/口播稿）
 ## Task 4: Finding 与报告输出
 
 **Files:**
-- Create: `qa/report.py`
+- Create: `qa_v2/report.py`
 - Create: `tests/test_report.py`
 
 **Interfaces:**
@@ -864,7 +875,7 @@ git commit -m "feat(qa): 数据加载层（槽位/文案/页长/口播稿）
 `tests/test_report.py`：
 
 ```python
-from qa.report import Finding, summarize, render_text, render_json
+from qa_v2.report import Finding, summarize, render_text, render_json
 
 
 def test_summarize_counts_by_level():
@@ -908,11 +919,11 @@ def test_finding_defaults():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_report.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.report'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.report'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/report.py`：
+`qa_v2/report.py`：
 
 ```python
 """验收结论的表示与输出。
@@ -1016,11 +1027,11 @@ skip 表示判据因缺前置数据未执行，不等于通过 —— 专名表�
 ## Task 5: L1 数据一致性
 
 **Files:**
-- Create: `qa/checks_data.py`
+- Create: `qa_v2/checks_data.py`
 - Create: `tests/test_checks_data.py`
 
 **Interfaces:**
-- Consumes: `qa/data.py`（Task 3）、`qa/geometry.py`（Task 1）、`qa/report.py`（Task 4）
+- Consumes: `qa_v2/data.py`（Task 3）、`qa_v2/geometry.py`（Task 1）、`qa_v2/report.py`（Task 4）
 - Produces:
   - `check_l1(ep: Episode) -> List[Finding]`
   - 判据常量：`OVERLAP_FAIL_RATIO = 0.05`、`MIN_SLOT_W = 40`、`MIN_SLOT_H = 20`
@@ -1033,8 +1044,8 @@ skip 表示判据因缺前置数据未执行，不等于通过 —— 专名表�
 """L1 数据一致性：纯数据检查，不渲帧，<0.1s/页。"""
 import pytest
 
-from qa.data import Episode, Page, Slot, TextItem
-from qa.checks_data import (
+from qa_v2.data import Episode, Page, Slot, TextItem
+from qa_v2.checks_data import (
     check_l1, OVERLAP_FAIL_RATIO, MIN_SLOT_W, MIN_SLOT_H,
 )
 
@@ -1116,7 +1127,7 @@ def test_page_count_matches_layout():
 
 def test_real_shucun_passes_l1():
     """E11 实测：93 槽位，重叠 0、越界 0、双向一致。"""
-    from qa.data import load_episode
+    from qa_v2.data import load_episode
     fs = check_l1(load_episode("shucun"))
     assert [f for f in fs if f.level == "fail"] == []
 ```
@@ -1124,11 +1135,11 @@ def test_real_shucun_passes_l1():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_checks_data.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.checks_data'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.checks_data'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/checks_data.py`：
+`qa_v2/checks_data.py`：
 
 ```python
 """L1 数据一致性 + L2 几何可行性。纯数据，不渲帧，<0.2s/页。
@@ -1140,8 +1151,8 @@ boxOf 找不到槽位却静默返回 10×10 兜底框。
 """
 from typing import List
 
-from qa.geometry import overlap_ratio, out_of_bounds
-from qa.report import Finding
+from qa_v2.geometry import overlap_ratio, out_of_bounds
+from qa_v2.report import Finding
 
 # 交叠面积占较小者的比例超过此值算 fail（边框相邻不算叠）
 OVERLAP_FAIL_RATIO = 0.05
@@ -1223,11 +1234,11 @@ E11 实测踩中 badge→evidence_tag 改名后文案侧漏改，boxOf 静默返
 ## Task 6: L2 几何可行性（渲染前预检）
 
 **Files:**
-- Modify: `qa/checks_data.py`（追加 `check_l2`）
+- Modify: `qa_v2/checks_data.py`（追加 `check_l2`）
 - Modify: `tests/test_checks_data.py`（追加测试）
 
 **Interfaces:**
-- Consumes: `qa/data.py`、`qa/report.py`
+- Consumes: `qa_v2/data.py`、`qa_v2/report.py`
 - Produces:
   - `check_l2(ep: Episode) -> List[Finding]`
   - `estimate_lines(text: str, slot_w: float, size: int) -> int`
@@ -1238,7 +1249,7 @@ E11 实测踩中 badge→evidence_tag 改名后文案侧漏改，boxOf 静默返
 追加到 `tests/test_checks_data.py`：
 
 ```python
-from qa.checks_data import check_l2, estimate_lines, OVERFLOW_TOLERANCE
+from qa_v2.checks_data import check_l2, estimate_lines, OVERFLOW_TOLERANCE
 
 
 def test_estimate_lines_respects_manual_breaks():
@@ -1281,7 +1292,7 @@ def test_l2_uses_tolerance():
 
 
 def test_real_shucun_passes_l2():
-    from qa.data import load_episode
+    from qa_v2.data import load_episode
     fs = check_l2(load_episode("shucun"))
     assert [f for f in fs if f.level == "fail"] == []
 ```
@@ -1293,7 +1304,7 @@ Expected: FAIL —— `ImportError: cannot import name 'check_l2'`
 
 - [ ] **Step 3: 写最小实现**
 
-追加到 `qa/checks_data.py`：
+追加到 `qa_v2/checks_data.py`：
 
 ```python
 # ── L2 几何可行性（渲染前预检）────────────────────────────────────────
@@ -1375,11 +1386,11 @@ E11 P4/P5 各有一处超框（当时目视发现，QA 全绿）。
 ## Task 7: 抽帧与 OCR 缓存
 
 **Files:**
-- Create: `qa/frames.py`
+- Create: `qa_v2/frames.py`
 - Create: `tests/test_frames.py`
 
 **Interfaces:**
-- Consumes: `qa/data.py`、`qa/geometry.py`
+- Consumes: `qa_v2/data.py`、`qa_v2/geometry.py`
 - Produces:
   - `class OcrResult: texts: List[str]; boxes: List[Rect]; scores: List[float]` —— `boxes` 是 `[x1,y1,x2,y2]` 画布坐标
   - `def render_frame(composition: str, frame: int, out: Path) -> Path` —— composition 传 Remotion 注册名（如 `ShucunCourse`），**不要从集名拼**（`gaoliangqiao`.capitalize() → `Gaoliangqiao`，与实际 `GaoLiangQiaoCourse` 不符）
@@ -1394,7 +1405,7 @@ E11 P4/P5 各有一处超框（当时目视发现，QA 全绿）。
 `tests/test_frames.py`（**不调 PaddleOCR 与 remotion**，用合成 OcrResult 测几何部分）：
 
 ```python
-from qa.frames import OcrResult, text_at
+from qa_v2.frames import OcrResult, text_at
 
 
 def _r(x1, y1, x2, y2, t, s=0.99):
@@ -1433,11 +1444,11 @@ def test_text_at_returns_scores():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_frames.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.frames'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.frames'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/frames.py`：
+`qa_v2/frames.py`：
 
 ```python
 """抽帧与 OCR。
@@ -1458,8 +1469,8 @@ import pathlib
 import subprocess
 from typing import Any, List, Optional, Tuple
 
-from qa.data import Episode, Slot
-from qa.geometry import CANVAS, Rect
+from qa_v2.data import Episode, Slot
+from qa_v2.geometry import CANVAS, Rect
 
 CACHE = pathlib.Path("/tmp/qa_cache")
 ROOT = pathlib.Path("/tmp/chemistry-video")
@@ -1602,11 +1613,11 @@ text_at 用中心点判定而非四角全含，E11 实测槽与文字框有细�
 ## Task 8: L3 渲染存在性 + 负控制
 
 **Files:**
-- Create: `qa/checks_render.py`
+- Create: `qa_v2/checks_render.py`
 - Create: `tests/test_checks_render.py`
 
 **Interfaces:**
-- Consumes: `qa/frames.py`、`qa/data.py`、`qa/geometry.py`、`qa/report.py`
+- Consumes: `qa_v2/frames.py`、`qa_v2/data.py`、`qa_v2/geometry.py`、`qa_v2/report.py`
 - Produces:
   - `check_l3(page: Page, ocr: OcrResult) -> List[Finding]`
   - `NEGATIVE_CONTROL_SHIFT = 300` —— 负控制平移量（px）
@@ -1625,9 +1636,9 @@ E11 实测：随手挑的「空白区」有 583 墨像素被误判通过。
 """
 import pytest
 
-from qa.data import Page, Slot
-from qa.frames import OcrResult
-from qa.checks_render import (
+from qa_v2.data import Page, Slot
+from qa_v2.frames import OcrResult
+from qa_v2.checks_render import (
     check_l3, assert_negative_control, NEGATIVE_CONTROL_SHIFT,
 )
 
@@ -1688,11 +1699,11 @@ def test_negative_control_detects_always_true_detector():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_checks_render.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.checks_render'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.checks_render'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/checks_render.py`：
+`qa_v2/checks_render.py`：
 
 ```python
 """L3 渲染存在性、L5 溢出、L6 tag 槽。需渲染帧，不用 OCR（L6 除外）。
@@ -1703,10 +1714,10 @@ Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.checks_render'`
 """
 from typing import List
 
-from qa.data import Page, Slot
-from qa.frames import OcrResult, text_at
-from qa.geometry import plate_to_canvas
-from qa.report import Finding
+from qa_v2.data import Page, Slot
+from qa_v2.frames import OcrResult, text_at
+from qa_v2.geometry import plate_to_canvas
+from qa_v2.report import Finding
 
 TAG_IDS = {"evidence_tag"}
 
@@ -1784,11 +1795,11 @@ assert_negative_control 证明判据非恒真，这是旧 QA 缺的东西。
 ## Task 9: L5 溢出检测
 
 **Files:**
-- Modify: `qa/checks_render.py`（追加 `check_l5`）
+- Modify: `qa_v2/checks_render.py`（追加 `check_l5`）
 - Modify: `tests/test_checks_render.py`（追加测试）
 
 **Interfaces:**
-- Consumes: `qa/frames.py`、`qa/data.py`、`qa/geometry.py`、`qa/report.py`
+- Consumes: `qa_v2/frames.py`、`qa_v2/data.py`、`qa_v2/geometry.py`、`qa_v2/report.py`
 - Produces:
   - `check_l5(page: Page, png: Path) -> List[Finding]`
   - `text_bbox_in_slot(a_g: np.ndarray, rect: Rect) -> Optional[Rect]` —— 槽内文字外接框（`x,y,w,h`），找不到返回 None
@@ -1802,7 +1813,7 @@ assert_negative_control 证明判据非恒真，这是旧 QA 缺的东西。
 import numpy as np
 import pytest
 from PIL import Image
-from qa.checks_render import check_l5, text_bbox_in_slot, TOUCH_MARGIN
+from qa_v2.checks_render import check_l5, text_bbox_in_slot, TOUCH_MARGIN
 
 
 def _slot_img(w, h, text_rows, pad_x=30, pad_y=20, size=28):
@@ -1869,7 +1880,7 @@ Expected: FAIL —— `ImportError: cannot import name 'check_l5'`
 
 - [ ] **Step 3: 写最小实现**
 
-追加到 `qa/checks_render.py`：
+追加到 `qa_v2/checks_render.py`：
 
 ```python
 # ── L5 溢出检测 ──────────────────────────────────────────────────────
@@ -1974,7 +1985,7 @@ E11 实测溢出与否两个版本量出完全相同的数（恒差 28px），�
 ## Task 10: L6 tag 槽判据
 
 **Files:**
-- Modify: `qa/checks_render.py`（追加 `check_l6`）
+- Modify: `qa_v2/checks_render.py`（追加 `check_l6`）
 - Modify: `tests/test_checks_render.py`（追加测试）
 
 **Interfaces:**
@@ -1988,7 +1999,7 @@ E11 实测溢出与否两个版本量出完全相同的数（恒差 28px），�
 追加到 `tests/test_checks_render.py`：
 
 ```python
-from qa.checks_render import check_l6, WHITE_MIN, WHITE_MAX_RATIO
+from qa_v2.checks_render import check_l6, WHITE_MIN, WHITE_MAX_RATIO
 
 
 def test_l6_passes_when_white_text_on_dark():
@@ -2022,12 +2033,12 @@ def test_l6_flags_all_white_slab():
 
 
 def test_real_shucun_passes_l6():
-    from qa.data import load_episode
+    from qa_v2.data import load_episode
     import pathlib
     ep = load_episode("shucun")
     outdir = pathlib.Path("/tmp/qa_shucun_frames")
     outdir.mkdir(parents=True, exist_ok=True)
-    from qa.frames import render_frame
+    from qa_v2.frames import render_frame
     for p in ep.pages:
         png = outdir / ("p%02d.png" % p.number)
         if not png.exists():
@@ -2054,7 +2065,7 @@ Expected: FAIL —— `ImportError: cannot import name 'check_l6'`
 
 - [ ] **Step 3: 写最小实现**
 
-追加到 `qa/checks_render.py`：
+追加到 `qa_v2/checks_render.py`：
 
 ```python
 # ── L6 tag 槽 ────────────────────────────────────────────────────────
@@ -2125,12 +2136,12 @@ E11 实测 8 个 evidence_tag 槽全部有值，判据可用。"
 ## Task 11: L4 内容闭环 —— 数字严格
 
 **Files:**
-- Create: `qa/names.txt`
-- Create: `qa/checks_content.py`
+- Create: `qa_v2/names.txt`
+- Create: `qa_v2/checks_content.py`
 - Create: `tests/test_checks_content.py`
 
 **Interfaces:**
-- Consumes: `qa/normalize.py`、`qa/frames.py`、`qa/data.py`、`qa/geometry.py`、`qa/report.py`
+- Consumes: `qa_v2/normalize.py`、`qa_v2/frames.py`、`qa_v2/data.py`、`qa_v2/geometry.py`、`qa_v2/report.py`
 - Produces:
   - `load_names(path: Path = NAMES) -> Set[str]` —— 读专名表
   - `NAMES = Path(__file__).with_name("names.txt")`
@@ -2151,9 +2162,9 @@ P8 口播写「各占了一处」后又说树村占两处，算术自相矛盾 �
 """
 import pytest
 
-from qa.data import Page, Slot, TextItem
-from qa.frames import OcrResult
-from qa.checks_content import check_l4a, check_l4b, load_names
+from qa_v2.data import Page, Slot, TextItem
+from qa_v2.frames import OcrResult
+from qa_v2.checks_content import check_l4a, check_l4b, load_names
 
 PLATE = (1920, 1080)
 
@@ -2256,11 +2267,11 @@ def test_names_file_loads():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_checks_content.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.checks_content'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.checks_content'`
 
 - [ ] **Step 3: 建专名表**
 
-`qa/names.txt`（每行一个，`#` 开头为注释；E11 专名，E12 起追加）：
+`qa_v2/names.txt`（每行一个，`#` 开头为注释；E11 专名，E12 起追加）：
 
 ```
 # 专名表：L4-b 内容校验用
@@ -2302,7 +2313,7 @@ Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.checks_content'`
 
 - [ ] **Step 4: 写最小实现**
 
-`qa/checks_content.py`：
+`qa_v2/checks_content.py`：
 
 ```python
 """L4 内容闭环：槽里的字，对不对。
@@ -2321,12 +2332,12 @@ L4 分三子层，任一不过即该槽 fail：
 import pathlib
 from typing import List, Set
 
-from qa.data import Page
-from qa.frames import OcrResult
-from qa.normalize import (
+from qa_v2.data import Page
+from qa_v2.frames import OcrResult
+from qa_v2.normalize import (
     extract_numbers, normalize_punct, number_unknown_rate,
 )
-from qa.report import Finding
+from qa_v2.report import Finding
 
 NAMES = pathlib.Path(__file__).with_name("names.txt")
 
@@ -2350,8 +2361,8 @@ def load_names(path=None):
 
 def _ocr_text_for(page, ocr, slot_id):
     """取该槽内的 OCR 读回文本。"""
-    from qa.frames import text_at
-    from qa.geometry import plate_to_canvas
+    from qa_v2.frames import text_at
+    from qa_v2.geometry import plate_to_canvas
     slot = page.slot(slot_id)
     if slot is None:
         return ""
@@ -2396,7 +2407,7 @@ def check_l4b(page, ocr, names):
     if not names:
         out.append(Finding(
             "L4-b", None, None, "skip", "NO_NAMES_TABLE",
-            "专名表为空，L4-b 未执行（不算通过）。新集需维护 qa/names.txt"))
+            "专名表为空，L4-b 未执行（不算通过）。新集需维护 qa_v2/names.txt"))
         return out
     for item in page.items:
         if item.is_tag:
@@ -2424,7 +2435,7 @@ Expected: PASS —— 14 passed
 
 ```bash
 cd /tmp/chemistry-video
-git add qa/names.txt qa/checks_content.py tests/test_checks_content.py
+git add qa_v2/names.txt qa/checks_content.py tests/test_checks_content.py
 git commit -m "feat(qa): L4 内容闭环（数字严格 + 专名严格）
 
 旧 QA 查不出「1485 写成 1486」。E11 真实发生过 P8 算术自相矛盾
@@ -2438,11 +2449,11 @@ git commit -m "feat(qa): L4 内容闭环（数字严格 + 专名严格）
 ## Task 12: L4-c 字幕交叉
 
 **Files:**
-- Modify: `qa/checks_content.py`（追加 `check_l4c`）
+- Modify: `qa_v2/checks_content.py`（追加 `check_l4c`）
 - Modify: `tests/test_checks_content.py`（追加测试）
 
 **Interfaces:**
-- Consumes: `qa/data.py::narration_text`、`qa/normalize.py`
+- Consumes: `qa_v2/data.py::narration_text`、`qa_v2/normalize.py`
 - Produces:
   - `check_l4c(ep: Episode, ocr_by_page: Dict[int, OcrResult]) -> List[Finding]`
 
@@ -2451,18 +2462,18 @@ git commit -m "feat(qa): L4 内容闭环（数字严格 + 专名严格）
 追加到 `tests/test_checks_content.py`：
 
 ```python
-from qa.checks_content import check_l4c
+from qa_v2.checks_content import check_l4c
 
 
 def test_l4c_skips_when_narration_missing():
-    from qa.data import Episode
+    from qa_v2.data import Episode
     ep = Episode("__none__", [_page([_ti("a", "1485")], 1)], [(0, 660)])
     assert any(f.code == "NO_NARRATION" for f in check_l4c(ep, {1: _ocr(_page([]), {})}))
 
 
 def test_l4c_passes_when_number_in_narration():
     """真实数据：E11 P3 口播含「1485」。"""
-    from qa.data import Episode, Page, Slot, TextItem
+    from qa_v2.data import Episode, Page, Slot, TextItem
     pg = Page(3, PLATE, [Slot("r3_total", 0, 0, 300, 60)],
               [TextItem("r3_total", "1485", 20, True, None)])
     ep = Episode("shucun", [pg], [(0, 660)])
@@ -2473,7 +2484,7 @@ def test_l4c_passes_when_number_in_narration():
 
 def test_l4c_flags_number_absent_from_narration():
     """两边都错的情况：文案写 1485，口播里根本没有这个数。"""
-    from qa.data import Episode, Page, Slot, TextItem
+    from qa_v2.data import Episode, Page, Slot, TextItem
     pg = Page(3, PLATE, [Slot("r3_total", 0, 0, 300, 60)],
               [TextItem("r3_total", "1485", 20, True, None)])
     ep = Episode("shucun", [pg], [(0, 660)])
@@ -2490,7 +2501,7 @@ Expected: FAIL —— `ImportError: cannot import name 'check_l4c'`
 
 - [ ] **Step 3: 写最小实现**
 
-追加到 `qa/checks_content.py`：
+追加到 `qa_v2/checks_content.py`：
 
 ```python
 def check_l4c(ep, ocr_by_page):
@@ -2505,7 +2516,7 @@ def check_l4c(ep, ocr_by_page):
     这是三路交叉里最弱的一路：口播与文案本就不要求逐字一致，
     所以只对**数字**交叉，叙述性文字不查。
     """
-    from qa.data import narration_text
+    from qa_v2.data import narration_text
     out = []
     narration = getattr(ep, "narration", None)
     if narration is None:
@@ -2578,9 +2589,9 @@ git commit -m "feat(qa): L4-c 口播稿交叉
 ## Task 13: 统一入口与 CLI
 
 **Files:**
-- Create: `qa/run.py`
+- Create: `qa_v2/run.py`
 - Create: `tests/test_run.py`
-- Modify: `qa_all.py`（改为薄壳，转调 `qa/run.py`）
+- Modify: `qa_all.py`（改为薄壳，转调 `qa_v2/run.py`）
 
 **Interfaces:**
 - Consumes: 全部 check 模块
@@ -2597,7 +2608,7 @@ git commit -m "feat(qa): L4-c 口播稿交叉
 import json
 import pathlib
 
-from qa.run import parse_args, exit_code, COMPOSITION_OVERRIDES
+from qa_v2.run import parse_args, exit_code, COMPOSITION_OVERRIDES
 
 
 def test_parse_args_defaults():
@@ -2619,13 +2630,13 @@ def test_parse_args_multiple_episodes():
 
 
 def test_exit_code_zero_when_no_fail():
-    from qa.report import Finding
+    from qa_v2.report import Finding
     assert exit_code([Finding("L1", 1, "a", "warn", "X", "m")]) == 0
     assert exit_code([Finding("L1", 1, "a", "skip", "X", "m")]) == 0
 
 
 def test_exit_code_one_on_fail():
-    from qa.report import Finding
+    from qa_v2.report import Finding
     assert exit_code([Finding("L1", 1, "a", "fail", "X", "m")]) == 1
 
 
@@ -2654,19 +2665,19 @@ def test_composition_overrides_covers_all_registered_episodes():
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd /tmp/chemistry-video && python3 -m pytest tests/test_run.py -v`
-Expected: FAIL —— `ModuleNotFoundError: No module named 'qa.run'`
+Expected: FAIL —— `ModuleNotFoundError: No module named 'qa_v2.run'`
 
 - [ ] **Step 3: 写最小实现**
 
-`qa/run.py`：
+`qa_v2/run.py`：
 
 ```python
 """统一入口：跑一集的七层验收。
 
-    python3 -m qa.run shucun            # L1/L2/L3/L5/L6（快，~2s/页）
-    python3 -m qa.run shucun --ocr      # 加 L4（~2min/页，8 页约 2 分钟）
-    python3 -m qa.run shucun --full     # 全开
-    python3 -m qa.run shucun --json     # 机读输出
+    python3 -m qa_v2.run shucun            # L1/L2/L3/L5/L6（快，~2s/页）
+    python3 -m qa_v2.run shucun --ocr      # 加 L4（~2min/页，8 页约 2 分钟）
+    python3 -m qa_v2.run shucun --full     # 全开
+    python3 -m qa_v2.run shucun --json     # 机读输出
 
 只有 fail 阻塞退出码（spec §10.2）：历史集的 warn 噪声不应淹没真问题。
 """
@@ -2675,14 +2686,14 @@ import pathlib
 import sys
 from typing import Dict, List
 
-from qa.checks_content import check_l4a, check_l4b, check_l4c, load_names
-from qa.checks_data import check_l1, check_l2
-from qa.checks_render import (
+from qa_v2.checks_content import check_l4a, check_l4b, check_l4c, load_names
+from qa_v2.checks_data import check_l1, check_l2
+from qa_v2.checks_render import (
     check_l3, check_l5, check_l6, assert_negative_control,
 )
-from qa.data import load_episode
-from qa.frames import ocr_cached, render_frame
-from qa.report import Finding, render_json, render_text
+from qa_v2.data import load_episode
+from qa_v2.frames import ocr_cached, render_frame
+from qa_v2.report import Finding, render_json, render_text
 
 ROOT = pathlib.Path("/tmp/chemistry-video")
 FRAME_DIR = pathlib.Path("/tmp/qa_frames")
@@ -2756,7 +2767,7 @@ def run_episode(name, use_ocr=False, full=False):
 
 def parse_args(argv):
     p = argparse.ArgumentParser(
-        prog="qa.run", description="七层验收")
+        prog="qa_v2.run", description="七层验收")
     p.add_argument("episodes", nargs="+")
     p.add_argument("--ocr", action="store_true",
                    help="开启 L4 内容闭环（慢，约 2 分钟/集）")
@@ -2768,7 +2779,7 @@ def parse_args(argv):
 
 
 def exit_code(findings):
-    from qa.report import summarize
+    from qa_v2.report import summarize
     return 1 if summarize(findings).get("fail") else 0
 
 
@@ -2804,7 +2815,7 @@ Expected: PASS —— 5 passed
 
 - [ ] **Step 5: 端到端验证（E11 快档）**
 
-Run: `cd /tmp/chemistry-video && python3 -m qa.run shucun`
+Run: `cd /tmp/chemistry-video && python3 -m qa_v2.run shucun`
 Expected:
 ```
 === shucun ===
@@ -2818,10 +2829,10 @@ Expected:
 
 ```bash
 cd /tmp/chemistry-video
-git add qa/run.py tests/test_run.py
+git add qa_v2/run.py tests/test_run.py
 git commit -m "feat(qa): 统一入口与 CLI
 
-python3 -m qa.run <集> [--ocr] [--full] [--json]
+python3 -m qa_v2.run <集> [--ocr] [--full] [--json]
 默认快档（~2s/页），--ocr 开内容闭环（~2min/集）。
 只有 fail 阻塞退出码。"
 ```
@@ -2834,16 +2845,16 @@ python3 -m qa.run <集> [--ocr] [--full] [--json]
 #!/usr/bin/env python3
 """qa_all.py — 保留为薄壳，转调 qa.run。
 
-新的七层验收在 qa/ 包里（见 docs/superpowers/specs/2026-10-01-qa-v2-design.md）。
-本文件保留只为兼容历史命令；新代码请加到 qa/ 下。
+新的七层验收在 qa_v2/ 包里（见 docs/superpowers/specs/2026-10-01-qa-v2-design.md）。
+本文件保留只为兼容历史命令；新代码请加到 qa_v2/ 下。
 
 用法：
-    python3 qa_all.py shucun          # 等价 python3 -m qa.run shucun
+    python3 qa_all.py shucun          # 等价 python3 -m qa_v2.run shucun
     python3 qa_all.py shucun --ocr    # 开启内容闭环
 """
 import sys
 
-from qa.run import main, COMPOSITION_OVERRIDES
+from qa_v2.run import main, COMPOSITION_OVERRIDES
 
 if __name__ == "__main__":
     sys.exit(main())
@@ -2876,7 +2887,7 @@ git commit -m "refactor(qa): qa_all.py 改薄壳，转调 qa.run
 
 ```bash
 cd /tmp/chemistry-video
-python3 -m qa.run shucun --full 2>&1 | tee /tmp/qa_e11_full.txt
+python3 -m qa_v2.run shucun --full 2>&1 | tee /tmp/qa_e11_full.txt
 ```
 
 - [ ] **Step 2: 故意破坏，验证判据能抓**
@@ -2891,7 +2902,7 @@ p = pathlib.Path("src/shucun/data/pages.config.ts")
 s = p.read_text(encoding="utf-8")
 p.write_text(s.replace('"1485"', '"1486"', 1), encoding="utf-8")
 PY
-python3 -m qa.run shucun --ocr 2>&1 | grep -E "NUMBER_MISMATCH|判定"
+python3 -m qa_v2.run shucun --ocr 2>&1 | grep -E "NUMBER_MISMATCH|判定"
 # 期望：出现 NUMBER_MISMATCH，判定：不通过
 ```
 
@@ -2917,7 +2928,7 @@ for x in s:
         x["x"] = s[[y["id"] for y in s].index("note_left")]["x"]
 p.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
 PY
-python3 -m qa.run shucun 2>&1 | grep -E "SLOT_OVERLAP|判定"
+python3 -m qa_v2.run shucun 2>&1 | grep -E "SLOT_OVERLAP|判定"
 # 期望：出现 SLOT_OVERLAP，判定：不通过
 git checkout src/shucun/data/slots.json
 ```
@@ -2937,7 +2948,7 @@ Expected: 全部 PASS
 # QA v2 在 E11《树村》上的验收报告
 
 日期：2026-10-01
-命令：`python3 -m qa.run shucun --full`
+命令：`python3 -m qa_v2.run shucun --full`
 
 ## 结果
 
@@ -3013,7 +3024,7 @@ git commit -m "test(qa): E11 端到端验收 + 负控制留证
 - `check_l1(ep)` / `check_l2(ep)` 返回 `List[Finding]` —— Task 5/6 定义，Task 13 使用 ✓
 - `run_episode(name, use_ocr, full)` 返回 `List[Finding]` —— Task 13 定义 ✓
 
-**Self-Review 发现并已修复的一处**：`qa/run.py` 的 `_frame_for` 原先调用
+**Self-Review 发现并已修复的一处**：`qa_v2/run.py` 的 `_frame_for` 原先调用
 `render_frame(ep, ...)`，而 Task 7 的 `render_frame` 内部用
 `"%sCourse" % ep.capitalize()` 拼 Composition 名。`shucun`/`dazhongsi` 等恰好对，
 但 `gaoliangqiao` → `Gaoliangqiao`，实际注册名是 `GaoLiangQiaoCourse`
