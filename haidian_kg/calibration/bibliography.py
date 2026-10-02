@@ -125,6 +125,34 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
     ),
 
     HistoricalSource(
+        id="src_ccvg", title="CCVG 中国数字村庄数据（Chinese Village Data）",
+        category=SourceCategory.LOCAL_GAZETTEER,
+        issuing_body="匹兹堡大学图书馆系统东亚馆",
+        edition_note="2,601 行政村数据（2022-11，源 2,701 部村志）CSV 批量下载，"
+                     "开放数据。用途：古今夹逼裁决档——历史地名查 TGAZ 政区归属、"
+                     "当代村名在 CCVG 验证存续；两源皆命中→高置信；"
+                     "仅 CCVG 命中→提示近代/当代新名（海淀村落粒度唯一可得源）",
+    ),
+    HistoricalSource(
+        id="src_dila", title="DILA/DDBC 地名规范资料库",
+        category=SourceCategory.LOCAL_GAZETTEER,
+        issuing_body="法鼓文理学院 DILA（台湾）",
+        edition_note="佛典相关中国历史地名（寺/山/政区/佛迹）权威档，"
+                     "带经纬度，秦至今；Web Services API + KML + 开放下载，"
+                     "站点自述 open-sourced。用途：异源裁决档——宗教/文献视角"
+                     "与 CHGIS 完全独立，对寺/庙/山/泉类海淀地名有独立考证价值"
+                     "（大钟寺/万寿寺/大觉寺类词条直接受益）",
+    ),
+    HistoricalSource(
+        id="src_ccts", title="CCTS 中华文明之时空基础架构",
+        category=SourceCategory.GEOGRAPHICAL_TREATISE,
+        issuing_body="中研院人社中心 GIS 专题中心（台湾）",
+        edition_note="先秦至清代/当代，谭其骧图集为本；政区+聚落点+明清驿站图层；"
+                     "地名整合检索 API + OGC WMTS，学术使用授权。"
+                     "用途：同源确认档——与 TGAZ 同宗谭图但独立实现，"
+                     "TGAZ 命中后的二次确认（裁决增量小于 DILA/CCVG）",
+    ),
+    HistoricalSource(
         id="src_tgaz", title="TGAZ 时空地名辞典（Temporal Gazetteer）",
         category=SourceCategory.LOCAL_GAZETTEER,
         issuing_body="哈佛燕京学社 × 复旦大学历史地理研究中心（CHGIS 项目）",

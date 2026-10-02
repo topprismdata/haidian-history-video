@@ -139,7 +139,7 @@ class SourceMiner:
     def mine(self, source_id, division_id, facts) -> List[ToponymOccurrence]
 ```
 
-- **ToponymMiner v2（已实现）**：混合策略——
+- **ToponymMiner v3（已实现，MINER_VERSION="v3"）**：混合策略——
   - A. 提示词模式（「為」「曰」「有」「坐落」「跨其上」）
   - B. 通名后缀扫描——「专名+通名」结构（树「村」、安河「橋」、七里「泊」），
     召回无线索词地名
@@ -159,8 +159,13 @@ class SourceMiner:
 - **FullTextMiner（接口预留）**：接入维基文库/ctext 全文。
   ⚠️ 转录本≠校勘本；edition_id 必须区分，verbatim_quote 走 G9 校勘声明。
 - **候选裁决外部依据**：TGAZ/CHGIS（已登记书目表）。
-  命中→置信 mid→high；未命中不否决。
+  命中→置信 mid→high；未命中不否决（CHGIS 收政区级，
+  樹村实测 0 条——小村落未收录）。
   词库 `is_citable_for_verbatim=False`。
+  ✅ API 已验证（2026-10-02，官方文档 indexAPI.html）：
+  搜索 `GET /tgaz/placename?fmt=json&n=<UTF8名>`（前缀 LIKE，繁简均收），
+  精准 `GET /tgaz/placename/json/hvd_<id>`，license CC BY-NC 4.0。
+  接入须按 §六 缓存 lookup 结果，provider 故障不阻塞。
 
 ### 2.5 纪律（不可妥协）
 

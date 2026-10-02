@@ -31,6 +31,45 @@ def _accessed(tag="dr_checked"):
 
 RESOURCES: List[DigitalResource] = [
     # ---------- 专业历史地名词库（候选裁决权威依据）----------
+    # 多源调研结论(.superpowers/sdd/gazetteer-survey.md)三档架构:
+    #   古今夹逼(CCVG+TGAZ) / 异源裁决(DILA) / 同源确认(CCTS)
+    DigitalResource(
+        id="dr_ccvg_data",
+        source_id="src_ccvg",
+        kind=DigitalResourceKind.CATALOG,
+        platform="匹兹堡大学 Chinese Village Data",
+        url="https://www.chinesevillagedata.library.pitt.edu/",
+        accessed_at=_accessed(),
+        reliability_note="2,601 行政村 CSV（2022-11，源 2,701 村志），开放数据；"
+                         "无 API，CSV 批量下载（Pitt D-Scholarship 存档）；"
+                         "接入方式：一次性下载建本地倒排索引（零 API 成本）；"
+                         "当代村志与 TGAZ 历史政区构成古今夹逼裁决",
+        is_citable_for_verbatim=False,
+    ),
+    DigitalResource(
+        id="dr_dila_place",
+        source_id="src_dila",
+        kind=DigitalResourceKind.CATALOG,
+        platform="法鼓文理学院 DILA authority",
+        url="https://authority.dila.edu.tw/place",
+        accessed_at=_accessed(),
+        reliability_note="佛典地名权威档，Web Services API + KML + 开放下载，"
+                         "免注册；与 CHGIS 视角完全独立（异源裁决），"
+                         "寺庙/山泉类地名有独立考证价值",
+        is_citable_for_verbatim=False,
+    ),
+    DigitalResource(
+        id="dr_ccts_api",
+        source_id="src_ccts",
+        kind=DigitalResourceKind.GIS_DATASET,
+        platform="中研院 CCTS",
+        url="https://ccts.sinica.edu.tw",
+        accessed_at=_accessed(),
+        reliability_note="地名整合检索 API + OGC WMTS（depositar.io 托管）；"
+                         "与 TGAZ 同宗谭图、独立实现——同源确认档；"
+                         "endpoint 公开程度与授权细节接入前须再核",
+        is_citable_for_verbatim=False,
+    ),
     DigitalResource(
         id="dr_tgaz_api",
         source_id="src_tgaz",
@@ -41,10 +80,13 @@ RESOURCES: List[DigitalResource] = [
         reliability_note="学术权威时空地名库（CHGIS 项目），"
                          "用于候选地名裁决：命中即获独立书目佐证；"
                          "仅作书目与时空定位参考，不替代一手书证的逐字引文。"
-                         "⚠️ API 端点待人工核验：网络检索给出的 "
-                         "/tgaz/placename/{id}.json 实测 404（2026-10-02），"
-                         "接入代码前必须先用浏览器确认真实接口，"
-                         "不得对未验证的 API 契约写代码",
+                         "✅ API 已验证可用（2026-10-02，官方文档 "
+                         "tgaz.fudan.edu.cn/tgaz/indexAPI.html）："
+                         "搜索 GET /tgaz/placename?fmt=json&n=<UTF8名>，"
+                         "精准 GET /tgaz/placename/json/hvd_<id>；"
+                         "前缀 LIKE 匹配，繁简均收，license CC BY-NC 4.0。"
+                         "实测：萬壽寺 1 命中、西山 19 命中、樹村 0 "
+                         "（CHGIS 收政区级，小村落未收录——未命中不否决）",
         is_citable_for_verbatim=False,
     ),
     DigitalResource(
