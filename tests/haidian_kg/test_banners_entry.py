@@ -169,6 +169,47 @@ class TestChronology:
         assert k.state_at("ent_shucun_xun", 1700).id == "st_xun_pre1781"
 
 
+class TestBannersGateIsNotConstantTrue:
+    """八旗词条的闸门必须能抓住本词条特有的错误"""
+
+    def test_scope_mixing_blocked(self, kb):
+        """口径混说：把增建后的 1550 挂到初建年份"""
+        rep = QAGate("banners", kb, adversarial=ADV).run()
+        assert rep.passed, rep.render()
+        r = audit_script(kb, "镶黄旗营房在雍正二年已有1550间。")
+        assert r[0].verdict == AuditVerdict.BLOCK
+
+    def test_chronology_inversion_blocked(self, kb):
+        """时序倒错：把嘉庆六年的移驻挂到更早年份"""
+        r = audit_script(kb, "副将在康熙年间就移驻树村。")
+        assert r[0].verdict != AuditVerdict.PASS, \
+            "康熙年间无副将移驻记录，不得判通过"
+
+    def test_camp_before_1724_blocked(self, kb):
+        """雍正二年前不得有营房状态"""
+        assert kb.state_at("ent_camp_xianghuang", 1700) is None
+        r = audit_script(kb, "镶黄旗营房在1700年已有1250间。")
+        assert r[0].verdict != AuditVerdict.PASS
+
+    def test_gate_catches_removed_fact(self, kb):
+        """抽掉一条引文后闸门必须失败"""
+        from copy import deepcopy
+        kb2 = KnowledgeBase(
+            sources=list(kb.sources.values()), divisions=list(kb.divisions.values()),
+            facts=list(kb.facts.values()),
+            entities=list(kb.entities.values()), states=list(kb.states.values()),
+            identities=kb.identities,
+            appellations=list(kb.appellations.values()), references=kb.references,
+            transformations=list(kb.transformations.values()),
+            propositions=list(kb.propositions.values()),
+            adoptions=list(kb.adoptions.values()),
+            aggregates=list(kb.aggregates.values()),
+            people=list(kb.people.values()), resources=kb.resources)
+        kb2.facts.pop("tf_bqtz116_yuanzheng")
+        rep = QAGate("banners-broken", kb2, adversarial=ADV).run()
+        assert not rep.passed, "抽掉引文后闸门仍通过 = 闸门恒真"
+
+
 # ==================================================================
 # 空间格局
 # ==================================================================
