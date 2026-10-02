@@ -1,0 +1,113 @@
+第 1 轮独立复审结论
+裁决：修改后通过。
+但这里的“修改后”不是润色字段，而是有 4 个 P0 级本体结构问题必须在正式大规模灌库前解决。你们的方向——CIDOC CRM 的事件/活动建模、CHGIS 的历史实例切片、来源分层、负控制、防视频时代错置——是成立的，而且明显比普通历史地名数据库高一个层级。
+问题在于：当前 v2.0 已经具备一个很好的“历史研究应用 schema”，但还没有达到一个语义严格、可与 CIDOC CRM 对齐的历史时空本体。
+尤其要注意，目前 ISO 21127:2023 对应的是 CIDOC CRM 7.1.3；CIDOC 网站上更新的 7.3/7.4 仍标为 draft，因此 BHKG 的规范映射基线以 ISO 21127:2023 / CRM 7.1.3 最稳妥。
+ISO
++2
+一、先给最重要的四个 P0 问题
+只要这四项不改，我不建议把 v2.0 宣布为 frozen schema。
+二、你们对 CIDOC CRM 的第一处理论误读：不能把它简化成“万事皆事件”
+你们写：
+人类对空间的命名、割裂、合并、筑造与废弃，本质上全是由具体的历史事件所驱动。
+作为设计口号可以理解，但如果作为本体公理，我会要求删除。
+CIDOC CRM 并不是“所有事实都必须变成 Event”。
+它同时明确区分：
+E2 Temporal Entity
+E5 Event
+E7 Activity
+E18 Physical Thing
+E26 Physical Feature
+E27 Site
+E41 Appellation
+E52 Time-Span
+E53 Place
+E73 Information Object
+特别关键的是，E53 Place 被明确规定为纯空间意义上的 extent，与发生于其中的时间现象和物质本身相独立。CRMgeo 又进一步区分 SP2 Phenomenal Place 和 SP6 Declarative Place。
+CIDOC CRM
++1
+因此更准确的 BHKG 顶层哲学应该是：
+持续实体（Persistent Entities）在时空中存在；时间实体（Temporal Entities）描述变化；Appellation 描述称谓；Place 描述空间；文献和研究活动产生关于这些对象的命题。
+而不是：
+一切由 HistoricalEvent 驱动。
+原因很简单：
+“乾隆下旨更名”可能真的是一个离散事件。
+但：
+“高梁 → 高粱”的俗写传播、语音讹变、某一名称逐渐退出日常使用、河道缓慢淤塞、村落范围逐渐扩展——这些未必存在一个可以确定日期的“事件”。
+它们更适合建模成 Period / Process / State transition hypothesis。
+三、最大的概念错误：SpatialEntity 必须拆
+这是当前 schema 最严重的问题。
+你们现在这样定义：
+然后又放：
+这里至少混了四种完全不同的东西。
+1. 河流不是 Place
+CIDOC CRM 把河流之类现实物理地物放在 Physical Thing / Physical Feature 语义范围，而 Place 是那个地物所占据或定义的空间位置。
+CRM 7.1.3甚至直接以 rivers 作为 E18/E26 类现实地物语境的例子；桥梁、宫殿等人造建筑则可属于 E24 Physical Human-Made Thing。
+CIDOC CRM
++1
+因此：
+和：
+不能是同一实体。
+2. 桥也不是 Place
+“高梁桥”至少可以同时对应：
+目前 v2.0 基本把这几个身份压进一个 SpatialEntity。
+这恰恰是未来产生“同名异物”“桥名变地名”“旧桥亡而地点仍在”等逻辑错误的根源。
+四、你们声称采用 CHGIS 冻结实例，但实际上还没有真正实现
+CHGIS 对 Historical Instance 的定义非常清楚：
+在某一有效时间段内，placename、feature type、associated spatial object 均保持不变；任何一个发生变化，就创建新的 historical instance。
+CHGIS
++1
+例如 CHGIS 中，同一个行政单位即使名称没变，只要管辖范围改变，也会创建新的 historical instance。
+CHGIS
+而你们目前实际上是：
+这只是 Toponym 冻结。
+没有做到 Historical Place Instance 冻结。
+我建议增加一个真正的核心类
+其意义是：
+而 CHGIS 本身也有 Main Table / Part Of Table / Preceded By / GIS Info 等结构；这种“历史实例链”正是它解决时态 GIS 的核心。
+CHGIS
++1
+五、part_of 是目前最危险的一条关系
+你们现在：
+是不够的。
+因为 part_of 至少被混用了五种语义：
+这些性质完全不一样。
+例如：
+与：
+不是同一种关系。
+更重要的是，CHGIS 的 Part Of 本身就是带时间的关系。CHGIS 文档专门指出，父级行政单位和子级单位可以异步变化，因此同一个 child historical instance 在其生命周期内可能对应多个不同的 parent historical instances。
+CHGIS
+所以必须改成：
+例如：
+而不是：
+六、adjacent_to、upstream_of 同样必须时态化
+adjacent_to 看起来简单，其实也是历史关系。
+例如两个村：
+只有当：
+两者同时存在；
+两者当时的空间范围相邻；
+关系才成立。
+若 A 后来扩张、B 消失：
+也随之结束。
+upstream_of 更明显。
+水利史中：
+开渠；
+截流；
+改道；
+闸坝建设；
+河道废弃；
+都可能改变水力连通关系。
+所以不要把它作为 SpatialEntity 永久属性。
+七、空间拓扑建议直接与 GeoSPARQL 对齐
+不要自己只发明：
+至少应该兼容 GeoSPARQL 1.1 已标准化的：
+GeoSPARQL 1.1 已正式定义这些 Simple Features topology relations；CRMgeo 2.0.1 也已经显式与 GeoSPARQL 建立模型关系。
+Open Geospatial Consortium
++1
+BHKG 自己再扩展历史关系即可：
+八、ChronologicalPoint 应该拆成三个对象
+这个类名称实际上已经暴露问题：
+却包含：
+它根本不是 Point，而是：
+时间范
+
