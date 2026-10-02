@@ -366,7 +366,7 @@ STATES: List[HistoricalFeatureState] = [
         time_span=_ts(1767, 1911, "ts_qzm_standing"),
         geometry="普润殿供龙神，后为枢光阁；庙内外淙泉二十八处赐嘉名立石（大沙泉、小沙泉、沸泉等）",
         material="官式殿宇、缭垣",
-        function="祀万泉庄泉群水神、祈雨泽资灌溉的皇家祠庙（庙依泉立，泉在庙中）",
+        function="祀万泉庄泉群水神的皇家祠庙（庙依泉立，泉在庙中；引文仅证祀泉/礼泉神与水利资灌，「祈雨」无一手明文,降为现代功能解释——GPT审3-11）",
         evidence_fact_ids=["tf_qzm_gui_zhi", "tf_qzm_28quan", "tf_qzm_jianan_28"],
     ),
     # ---- 海淀（海淀镇） ----
@@ -375,15 +375,15 @@ STATES: List[HistoricalFeatureState] = [
         time_span=_ts(1260, 1368, "ts_hd_yuan"),
         geometry="大都城西北约二十里道侧水畔聚落（书证作「海店」）",
         material=None,
-        function="淀泊畔大道聚落；1260年为现存最早书证下限，非建村年代",
+        function="1260年「海店」为现存最早地名书证下限（原句只证地名与里程,「淀泊畔聚落」系推读——GPT审3-12），非建村年代",
         evidence_fact_ids=["tf_zt_haidian", "tf_hd_gov_etym"],
     ),
     HistoricalFeatureState(
         id="st_hd_ming", entity_id="ent_haidian",
         time_span=_ts(1368, 1644, "ts_hd_ming"),
-        geometry="淀分南北：北海淀、南海淀两聚落带（高梁桥西北十里，平地泉四出）",
+        geometry="明人所记为南/北海淀水域地望（高梁桥西北十里，平地泉四出）；「两聚落带」之聚落定性另待户籍坊里市集类书证（GPT审3-12）",
         material=None,
-        function="淀泊畔聚落，京西名胜",
+        function="京西名胜之地（明人记水域地望；聚落属性另证——GPT审3-12）",
         evidence_fact_ids=["tf_ckh_beihaidian", "tf_dian_qianquan"],
     ),
     HistoricalFeatureState(

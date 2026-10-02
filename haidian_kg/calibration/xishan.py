@@ -309,7 +309,7 @@ FACTS: List[TextualFact] = [
                        "惟一妃别葬金山睿皇后钱氏合葬裕陵诸妃一葬绵山余葬金山"
                        "宪庙废后吴氏坟葬金山",
         attested_string="金山",
-        translator_note="转引《明嘉靖祀典》；明制妃嫔不入天寿山正陵的制度背景"
+        translator_note="转引《明嘉靖祀典》；「妃嫔不入天寿山」制度系现代制度史归纳(从祀典个案体例推出,官书无明文条款——GPT审3-3)"
                         "即见此条体例"),
     TextualFact(
         id="tf_xs_js_wubei", division_id="div_xs_rxjwkc100_jinshan",
@@ -329,8 +329,9 @@ FACTS: List[TextualFact] = [
     TextualFact(
         id="tf_xs_js_jtl_xianzhuang", division_id="div_xs_wjbz_jingtailing",
         verbatim_quote="景泰陵（金山口）于2001年6月25日列入第五批全国重点"
-                       "文物保护单位；金山陵区地面建筑明清易代后多毁废，域内"
-                       "今为公墓区。",
+                       "文物保护单位；金山南麓现划定「金山地下文物埋藏区」，周边另有"
+                       "万安公墓、金山陵园等现代墓园（地面建筑毁废程度未经逐墓调查，"
+                       "不作比例性判断——GPT审3-4）。",
         attested_string="景泰陵",
         source_year=_dt(2001, "dt_xs_js2"),
         translator_note="机构公开资料记录式陈述；现状单独核查层"),
@@ -381,7 +382,7 @@ STATES: List[HistoricalFeatureState] = [
     HistoricalFeatureState(
         id="st_xs_djs_liao", entity_id="ent_xs_dajuesi",
         time_span=_ts(1068, 1189, "ts_xs_djs_a"),
-        geometry="旸台山麓，依山而建坐西朝东；院内有泉",
+        geometry="旸台山麓，依山而建；院内有泉（「坐西朝东」系现存建筑测绘层描述,辽代格局无考古/图志依据,不挂辽碑——GPT审3-1）",
         function="辽代清水院：信士邓从贵等舍钱葺僧舍、印大藏经五百七十九帙"
                  "创内外藏龛措之（寺之前身，建置下限以辽碑为准）",
         evidence_fact_ids=["tf_xs_liaobei_zhuanji", "tf_xs_liaobei_yinzang",
@@ -586,14 +587,14 @@ STATES: List[HistoricalFeatureState] = [
                  "娘娘府、董四墓等聚落与园寝在其域内（两实体由 settlements "
                  "模块建模，本条为陵区总名，非重复建模）",
         function="明代妃嫔皇子葬地：仁宗三妃、宣宗一妃别葬金山，英宗以降诸妃"
-                 "多葬此，悼恭太子等皇子亦葬金山；明制妃嫔不入天寿山正陵；"
+                 "多葬此，悼恭太子等皇子亦葬金山；「妃嫔不入天寿山」为现代制度史归纳(官书无明文——GPT审3-3)；"
                  "金代帝陵（金陵）在房山大房山，与本地无涉（见命题层）",
         evidence_fact_ids=["tf_xs_js_feipin", "tf_xs_js_jingtailin",
                            "tf_xs_js_wubei", "tf_xs_js_huangzi"]),
     HistoricalFeatureState(
         id="st_xs_js_1912", entity_id="ent_xs_jinshan",
         time_span=_ts(1912, 2026, "ts_xs_js_b"),
-        geometry="陵区地面建筑明清易代后多毁废；域内今为公墓区（万安公墓一带）；"
+        geometry="地面建筑毁废状况未经逐墓调查；金山南麓划定地下文物埋藏区，周边另有万安公墓、金山陵园（GPT审3-4）；"
                  "景泰陵存",
         function="古葬区遗址；景泰陵2001年列第五批全国重点文物保护单位"
                  "（现状2026-10单独核查）",

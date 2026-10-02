@@ -323,12 +323,17 @@ class TestSanshiwuyuanConcept:
 # ==================================================================
 
 class TestHouhuAndCuiwei:
-    def test_houhu_unsubstantiated_with_provenance(self, kb):
-        for aid in ("app_houhu", "app_hxh_houhu"):
-            ref = [r for r in kb.references if r.appellation_id == aid][0]
-            assert ref.status == EpistemicStatus.UNSUBSTANTIATED
-            assert ref.provenance, aid
-            assert ref.referent_entity_id == "ent_houxihe"
+    def test_houhu_bare_name_not_appellation(self, kb):
+        """GPT审3-7：裸名「后湖」两指（静明园内后湖 卷85 / 万寿山后溪河带
+        今通称），不得作为 ent_houxihe 的 appellation——防名称链揉合两实体。
+        限定名「万寿山后湖」(app_hxh_houhu) 保留，标 UNSUBSTANTIATED。"""
+        assert "app_houhu" not in set(kb.appellations), "裸名「后湖」不得复为 appellation"
+        refs = [r for r in kb.references if r.appellation_id == "app_houhu"]
+        assert refs == [], "裸名「后湖」不得挂 ent_houxihe 指称断言"
+        ref = [r for r in kb.references if r.appellation_id == "app_hxh_houhu"][0]
+        assert ref.status == EpistemicStatus.UNSUBSTANTIATED
+        assert ref.provenance
+        assert ref.referent_entity_id == "ent_houxihe"
 
     def test_cuiwei_mountain_is_not_xiangshan_alias(self, kb):
         """翠微山非香山别名（翠微山=平坡山，今石景山八大处）；

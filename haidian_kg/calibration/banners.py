@@ -439,7 +439,7 @@ ADOPTIONS: List[BeliefAdoption] = [
 # - 立营年代双源：《钦定日下旧闻考》卷102载乾隆十四年(1749,己巳)御制实胜寺碑记
 #   「合成功之旅立為健銳雲梯營」+《清史稿》卷130兵志「乾隆十四年，設雲梯兵一營」。
 #   乾隆十三年(1748)是选锋演云梯之年，与立营之年分属两年，不可混说。
-# - 营制归属：《清史稿》卷130将设云梯兵列于京营「兵衛之制」，
+# - 营制归属：《清史稿》卷130将设云梯兵列于京营「兵衛之制」（注意：《清史稿》民国纂修,标[后世修史];「特设营制非八旗驻防」系据其篇章结构的[现代研究判断],不得与乾隆御制碑记同列「清代一手」——GPT审3-14，
 #   八旗驻防另立「畿辅/东三省/各直省/籓部」四类——健锐营属禁旅特设营制，
 #   非八旗驻防；与圆明园八旗护军营同卷并列员额（本模块 banners 的驻防体系
 #   是并立关系，不是隶属关系）。
@@ -851,9 +851,9 @@ _JRY_APPELLATIONS: List[Appellation] = [
     Appellation(id="app_jry_tuancheng", label="团城演武厅",
                 kind=AppellationKind.OFFICIAL, valid_time_span=_ts(1749, 2026, "ts_jn6"),
                 attesting_fact_ids=["tf_wjbz_tcywt_jianzhu"]),
-    Appellation(id="app_jry_kancheng", label="看城",
-                kind=AppellationKind.VULGAR, valid_time_span=_ts(1749, 2026, "ts_jn7"),
-                attesting_fact_ids=["tf_wjbz_tuancheng"]),
+    # app_jry_kancheng「看城」已移除（GPT审3-16）：管理处原文「团城，也称看城」——
+    # 看城指团城这一城池构件，不是健锐营演武厅建筑群的俗名；建筑群/团城/演武厅单体
+    # 待拆为多实体后，看城挂团城实体。参考文献 tf_wjbz_tuancheng 保留。
     Appellation(id="app_jry_diaolou", label="碉楼",
                 kind=AppellationKind.VULGAR, valid_time_span=_ts(1749, 2026, "ts_jn8"),
                 attesting_fact_ids=["tf_rxjwkc102_diao67"]),
@@ -898,11 +898,7 @@ _JRY_REFERENCES: List[ReferentialAssertion] = [
         referent_entity_id="ent_jry_tuancheng",
         time_span=_ts(1749, 2026, "ts_jr6"),
         evidence_fact_ids=["tf_wjbz_tcywt_jianzhu"]),
-    ReferentialAssertion(
-        id="rr_jry_kancheng", appellation_id="app_jry_kancheng",
-        referent_entity_id="ent_jry_tuancheng",
-        time_span=_ts(1749, 2026, "ts_jr7"),
-        evidence_fact_ids=["tf_wjbz_tuancheng"]),
+    # rr_jry_kancheng 随 app_jry_kancheng 一并移除（GPT审3-16）
     ReferentialAssertion(
         id="rr_jry_diaolou", appellation_id="app_jry_diaolou",
         referent_entity_id="ent_jry_diaolou",

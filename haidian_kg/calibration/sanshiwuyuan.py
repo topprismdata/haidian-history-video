@@ -29,15 +29,14 @@ haidian_kg/calibration/sanshiwuyuan.py
    - 清漪园「成于辛巳(1761)」：御制《万寿山清漪园记》自述——建园、题额、
      告成分属 1750/1751/1761 三个年份，严禁混写为一年。
 2. 两源冲突不取区间值、采用权威现行口径：
-   - 颐和园开放 1924（海淀区政府/机构口径）与 1928（接管完善说）并存，
-     本库采 1924 为正式开放节点，1928 说留命题层。
+   - 颐和园开放三层并存（GPT审3-6）：1914 售票；1924 收归国有/向社会开放（一型机构口径）；1928 市政接管并「正式辟为公园」（另一现行官方口径,北京市科委2024）。不再单采 1924，制度节点保持 CONTESTED。
 3. 「功能」与「场所功能」分开：玉泉趵突（泉）与静明园（园）分属两层；
    乾隆昆明湖「水操」是湖的功能记录，不等于健锐营建制沿革。
 4. 多阶段模型与概念性合称标注为现代/后世观点：
    -「三山五园」清代官方仅有「三山」建制（嘉庆会典事例），咸丰十年鲍源深
      「五园三山」为最早近形连称，光绪间舆图始题「三山五园」，固定语序为
      后世（现代学界）概括——实体层仅建集合与概念条目，命题层标 [后世分析]。
-5. 现状单独核查：香山公园 1956 开放（现开放）；颐和园 1924 开放（现开放）；
+5. 现状单独核查：香山 1956「开辟为人民公园」/1957-05-01「正式开放」两种机构口径并存（GPT审3-5）；颐和园 1914售票/1924收归国有·向社会开放之一口径/1928市政接管·正式辟园另一现行口径——三层并存,精确制度节点 CONTESTED（GPT审3-6）；
    玉泉山静明园旧址不对外开放；畅春园仅存恩佑寺/恩慕寺两山门
    （2021 年第九批北京市文保单位）。
 6. 「澄心园改畅春园」说判 DISPROVEN：官书明载畅春园本李伟清华园故址
@@ -383,7 +382,7 @@ FACTS: List[TextualFact] = [
         id="tf_jmy_jin_xinggong", division_id="div_rxjwkc85_jmy",
         verbatim_quote="宛平有玉泉山行宫",
         attested_string="玉泉山行宫",
-        translator_note="卷85原引《金史·地理志》——金代玉泉山行宫的正史一手明文",
+        translator_note="卷85原引《金史·地理志》——金代玉泉山行宫明文；《金史》系元代官修前代史，证据层标[后世官修正史/追述]而非「正史一手」（GPT审3-8）",
     ),
     TextualFact(
         id="tf_jmy_jin_zhangzong", division_id="div_rxjwkc85_jmy",
@@ -462,7 +461,7 @@ FACTS: List[TextualFact] = [
         verbatim_quote="大定二十六年三月香山寺成幸其寺賜名大永安寺給田二千畆栗七十株錢二萬貫",
         attested_string="香山寺",
         translator_note="卷87原引《金史·世宗纪》（四库转录字形作「记」,规范书目层作「纪」,GPT审2-4）——金大定二十六年(1186)香山寺成"
-                        "赐名大永安寺，正史一手",
+                        "赐名大永安寺（[后世官修正史]，《金史》元修——GPT审3-8）",
     ),
     TextualFact(
         id="tf_xss_jin_early", division_id="div_rxjwkc87_jyy2",
@@ -1220,11 +1219,9 @@ APPELLATIONS: List[Appellation] = [
                                          open_begin=True, begin=None,
                                          end=_dt(2026, "ts_n_hxh_hh_e")),
                 attesting_fact_ids=[]),
-    Appellation(id="app_houhu", label="后湖", kind=AppellationKind.VULGAR,
-                valid_time_span=TimeSpan(id="ts_n_hh", label="现代通称",
-                                         open_begin=True, begin=None,
-                                         end=_dt(2026, "ts_n_hh_e")),
-                attesting_fact_ids=[]),
+    # app_houhu「后湖」裸名已移除（GPT审3-7）：裸名两指（静明园内后湖 卷85/
+    # 万寿山后溪河带今通称），不得作为 ent_houxihe appellation；限定名
+    # 「万寿山后湖」(app_hxh_houhu) 保留。检索遇裸用必须带山名前缀消歧。
     Appellation(id="app_yqs", label="玉泉山", kind=AppellationKind.OFFICIAL,
                 valid_time_span=TimeSpan(id="ts_n_yqs", label="金代以来-今",
                                          open_begin=True, begin=None,
@@ -1318,17 +1315,7 @@ REFERENCES: List[ReferentialAssertion] = [
                          status=EpistemicStatus.UNSUBSTANTIATED,
                          provenance="「万寿山后湖」为现代通称（颐和园后山后溪河带），"
                                     "未检得一手书证；仅按现代口语指称挂接"),
-    ReferentialAssertion(id="rr_houhu", appellation_id="app_houhu",
-                         referent_entity_id="ent_houxihe",
-                         time_span=TimeSpan(id="ts_r_hh", label="现代通称",
-                                            open_begin=True, begin=None,
-                                            end=_dt(2026, "ts_r_hh_e")),
-                         evidence_fact_ids=[],
-                         status=EpistemicStatus.UNSUBSTANTIATED,
-                         provenance="裸名「后湖」存在两指：静明园内亦有后湖"
-                                    "（卷85「廓然大公之北临后湖」）；本断言按"
-                                    "现代颐和园语境挂万寿山后溪河，检索与口播"
-                                    "遇裸用必须带山名前缀消歧"),
+    # rr_houhu 随 app_houhu 一并移除（GPT审3-7）
     ReferentialAssertion(id="rr_yqs", appellation_id="app_yqs",
                          referent_entity_id="ent_yuquanshan",
                          time_span=TimeSpan(id="ts_r_yqs", label="金代以来-今",

@@ -208,8 +208,11 @@ class TestJianruiTuancheng:
         ent = kb.entities["ent_jry_tuancheng"]
         assert ent.canonical_label == "团城演武厅"
         apps = {a.label: a for a in kb.appellations_of("ent_jry_tuancheng")}
-        assert "演武厅" in apps and "团城演武厅" in apps and "看城" in apps
+        assert "演武厅" in apps and "团城演武厅" in apps
         assert "演武㕔" in apps["演武厅"].script_variants
+        # GPT审3-16：看城指团城构件（管理处原文「团城，也称看城」），不是
+        # 建筑群俗名——负向钉：不得挂到建筑群实体；团城/演武厅单体待拆
+        assert "看城" not in apps, "「看城」不得揉合进建筑群实体别名表"
 
     def test_gunqiang_yanwuchang_not_an_entity(self, kb):
         """「枪炮演武场」是描述性短语，不设实体"""
