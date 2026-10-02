@@ -1,0 +1,1498 @@
+@prefix hd: <http://history.haidian.gov.cn/resource/> .
+@prefix hhto: <http://history.haidian.gov.cn/ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+hhto: a owl:Ontology ;
+    rdfs:label "海淀历史地名知识图谱本体 (HHTO)"@zh ;
+    rdfs:comment "面向海淀区全域历史地理、地名演变、史料考订与认识论分层的领域本体模型"@zh ;
+    owl:versionInfo "1.0.0" .
+
+hhto:attestedIn a owl:ObjectProperty ;
+    rdfs:label "见载书证于"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:PlaceAttestation .
+
+hhto:competesWith a owl:ObjectProperty ;
+    rdfs:label "竞争互斥假说"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:CompetingHypothesis .
+
+hhto:coordinatesWGS84 a owl:DatatypeProperty ;
+    rdfs:label "WGS84经纬度"@zh ;
+    rdfs:domain hhto:PhysicalFeature ;
+    rdfs:range xsd:string .
+
+hhto:disprovenBy a owl:ObjectProperty ;
+    rdfs:label "由该史料证据证伪"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:PlaceAttestation .
+
+hhto:epistemicStatus a owl:DatatypeProperty ;
+    rdfs:label "认识论确证状态"@zh ;
+    rdfs:comment "VERIFIED (确证), CONTESTED (争议), FOLK_LEGEND (传说), DISPROVEN (证伪)"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:evidenceLevel a owl:DatatypeProperty ;
+    rdfs:label "六级证据层级"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:evolutionTriggeredBy a owl:ObjectProperty ;
+    rdfs:label "由该事件触发"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:ToponymEvolutionEvent .
+
+hhto:evolvedFrom a owl:ObjectProperty ;
+    rdfs:label "承袭演变自"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:Toponym .
+
+hhto:fromSource a owl:ObjectProperty ;
+    rdfs:label "文献出处为"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range hhto:SourceDocument .
+
+hhto:locatedAtFeature a owl:ObjectProperty ;
+    rdfs:label "物理空间坐落于"@zh ;
+    rdfs:domain hhto:AdministrativeUnit ;
+    rdfs:range hhto:PhysicalFeature .
+
+hhto:namedAs a owl:ObjectProperty ;
+    rdfs:label "定名为"@zh ;
+    rdfs:domain hhto:AdministrativeUnit ;
+    rdfs:range hhto:Toponym .
+
+hhto:originalQuote a owl:DatatypeProperty ;
+    rdfs:label "史料原始引文"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:phoneticPinyin a owl:DatatypeProperty ;
+    rdfs:label "汉语拼音读音"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range xsd:string .
+
+hhto:recordedYear a owl:DatatypeProperty ;
+    rdfs:label "书证记录公元年份"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:integer .
+
+hhto:sourceToponym a owl:ObjectProperty ;
+    rdfs:label "演变前源地名"@zh ;
+    rdfs:domain hhto:ToponymEvolutionEvent ;
+    rdfs:range hhto:Toponym .
+
+hhto:standardForm a owl:DatatypeProperty ;
+    rdfs:label "标准书写形式"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range xsd:string .
+
+hhto:supportedBy a owl:ObjectProperty ;
+    rdfs:label "由该书证支持"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:PlaceAttestation .
+
+hhto:targetToponym a owl:ObjectProperty ;
+    rdfs:label "演变后目标地名"@zh ;
+    rdfs:domain hhto:ToponymEvolutionEvent ;
+    rdfs:range hhto:Toponym .
+
+hd:feat_guangyuanzha_site a hhto:HydraulicFacility,
+        hhto:PhysicalFeature ;
+    rdfs:label "广源闸水利遗址"@zh ;
+    hhto:coordinatesWGS84 "116.31,39.94"^^xsd:string ;
+    rdfs:comment "元至元二十六年通惠河头闸，郭守敬主持修建之节制水柜水闸"@zh .
+
+hd:feat_longbeicun_weir a hhto:HydraulicFacility,
+        hhto:PhysicalFeature ;
+    rdfs:label "白浮堰龙背村段古水利遗构"@zh ;
+    hhto:coordinatesWGS84 "116.27,40.03"^^xsd:string ;
+    rdfs:comment "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存"@zh .
+
+hd:feat_yuquanshan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "玉泉山山体与泉源"@zh ;
+    hhto:coordinatesWGS84 "116.25,39.99"^^xsd:string ;
+    rdfs:comment "天下第一泉玉泉水源地，金代芙蓉殿、清代静明园所在地"@zh .
+
+hd:top_baijiatuan a hhto:Toponym ;
+    rdfs:label "白家疃"@zh ;
+    hhto:attestedIn hd:attest_baijiatuan_caoxueqin ;
+    hhto:phoneticPinyin "bái jiā tuǎn"^^xsd:string ;
+    hhto:standardForm "白家疃"^^xsd:string .
+
+hd:top_guajiatun a hhto:Toponym ;
+    rdfs:label "挂甲屯"@zh ;
+    hhto:attestedIn hd:attest_guajiatun_chenyuan ;
+    hhto:phoneticPinyin "guà jiǎ tún"^^xsd:string ;
+    hhto:standardForm "挂甲屯"^^xsd:string .
+
+hd:top_guangyuanzha a hhto:Toponym ;
+    rdfs:label "广源闸"@zh ;
+    hhto:attestedIn hd:attest_guangyuanzha_stele ;
+    hhto:phoneticPinyin "guǎng yuán zhá"^^xsd:string ;
+    hhto:standardForm "广源闸"^^xsd:string .
+
+hd:top_huangzhuang a hhto:Toponym ;
+    rdfs:label "黄庄"@zh ;
+    hhto:attestedIn hd:attest_huangzhuang_hunt ;
+    hhto:phoneticPinyin "huáng zhuāng"^^xsd:string ;
+    hhto:standardForm "黄庄"^^xsd:string .
+
+hd:top_longbeicun a hhto:Toponym ;
+    rdfs:label "龙背村"@zh ;
+    hhto:attestedIn hd:attest_longbeicun_weir_site ;
+    hhto:phoneticPinyin "lóng bèi cūn"^^xsd:string ;
+    hhto:standardForm "龙背村"^^xsd:string .
+
+hd:top_taizhouwu a hhto:Toponym ;
+    rdfs:label "太舟坞"@zh ;
+    hhto:attestedIn hd:attest_taizhouwu_dock_study ;
+    hhto:evolvedFrom hd:top_daizhou_name ;
+    hhto:hasHypothesis hd:hypo_taizhouwu_dock,
+        hd:hypo_taizhouwu_tang ;
+    hhto:phoneticPinyin "tài zhōu wù"^^xsd:string ;
+    hhto:standardForm "太舟坞"^^xsd:string .
+
+hd:top_wanshoushan hhto:attestedIn hd:attest_wanshoushan_rixia .
+
+hd:top_xiangshan hhto:attestedIn hd:attest_xiangshan_jinshi .
+
+hd:top_yuquanshan hhto:attestedIn hd:attest_yuquanshan_jinshi .
+
+hd:top_zhongguantun a hhto:Toponym ;
+    rdfs:label "中官屯"@zh ;
+    hhto:attestedIn hd:attest_zhongguantun_map ;
+    hhto:evolvedFrom hd:top_zhongguancun_eunuch ;
+    hhto:phoneticPinyin "zhōng guān tún"^^xsd:string ;
+    hhto:standardForm "中官屯"^^xsd:string .
+
+hd:unit_cas_zhongguancun a hhto:AdministrativeUnit,
+        hhto:ModernInstitution ;
+    rdfs:label "中国科学院中关村科学城科研园区"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:validTimeStart 1953 ;
+    rdfs:comment "1953年新中国政务院确定之全国最高科学学术中心驻地，近代中国科学第一城"@zh .
+
+hd:unit_changchunyuan a hhto:AdministrativeUnit,
+        hhto:ImperialGarden ;
+    rdfs:label "清康熙畅春园"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:validTimeEnd 1860 ;
+    hhto:validTimeStart 1687 ;
+    rdfs:comment "清圣祖康熙避喧听政之首座皇家御园，咸丰十年遭英法联军焚毁"@zh .
+
+hd:unit_cishousi_temple a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "明代慈寿寺与八里庄玲珑塔"@zh ;
+    hhto:locatedAtFeature hd:feat_changhe ;
+    hhto:namedAs hd:top_cishousi ;
+    hhto:validTimeStart 1576 ;
+    rdfs:comment "明神宗圣母慈圣皇太后出资敕建，京西八里庄地标性密檐塔"@zh .
+
+hd:unit_daizhou_garrison a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "唐代羁縻带州孤竹县侨置区"@zh ;
+    hhto:locatedAtFeature hd:feat_taizhouwu_dock ;
+    hhto:namedAs hd:top_daizhou_name ;
+    hhto:validTimeEnd 755 ;
+    hhto:validTimeStart 705 ;
+    rdfs:comment "唐神龙元年安置东北降户与突厥部众之羁縻州，天宝间寄治昌平县清水店"@zh .
+
+hd:unit_dayouzhuang_village a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "大有庄（清代改名村落）"@zh ;
+    hhto:locatedAtFeature hd:feat_wanshoushan ;
+    hhto:namedAs hd:top_qiongbajia ;
+    hhto:validTimeStart 1750 ;
+    rdfs:comment "乾隆御赐名农耕村落，前身为清初贫民合居之‘穷八家’"@zh .
+
+hd:unit_dazhongsi_temple a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "清雍正觉生寺（大钟寺）"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_jueshengsi ;
+    hhto:validTimeStart 1733 ;
+    rdfs:comment "雍正十一年敕建祈雨行宫禅寺，乾隆十六年将万寿寺永乐大钟移置于此"@zh .
+
+hd:unit_dongsimu_tomb a hhto:AdministrativeUnit,
+        hhto:BurialGround ;
+    rdfs:label "明代董四墓皇室茔地"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:namedAs hd:top_dongsimu ;
+    hhto:validTimeStart 1500 ;
+    rdfs:comment "明代皇室墓地，后演变为看坟户聚居村落并盛产贡御之桃"@zh .
+
+hd:unit_haidian_town a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "元代海店驿路商贸聚落"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:namedAs hd:top_haidian_dian1 ;
+    hhto:validTimeStart 1260 ;
+    rdfs:comment "元大都城西北二十里通往居庸关大道的驿路水滨客商聚落"@zh .
+
+hd:unit_jianruiying_garrison a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "香山健锐营八旗云梯特种部队"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:validTimeStart 1749 ;
+    rdfs:comment "乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼"@zh .
+
+hd:unit_jicheng_suburb a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "蓟城西北郊农耕水利鄙野"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_gaolianghe ;
+    hhto:validTimeStart -1046 ;
+    rdfs:comment "先秦战国燕国蓟城西北部，沿高梁河水系分布的古农耕原野"@zh .
+
+hd:unit_landianchang_town a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "蓝靛厂街市与外火器营"@zh ;
+    hhto:locatedAtFeature hd:feat_changhe ;
+    hhto:namedAs hd:top_landianchang_dye ;
+    hhto:validTimeStart 1770 ;
+    rdfs:comment "明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之四千间兵营市镇"@zh .
+
+hd:unit_niangniangfu_tomb a hhto:AdministrativeUnit,
+        hhto:BurialGround ;
+    rdfs:label "明代翠微山一溜边山七十二府妃嫔陵区"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:namedAs hd:top_niangniangfu ;
+    hhto:validTimeEnd 1644 ;
+    hhto:validTimeStart 1420 ;
+    rdfs:comment "明代历代帝王非正宫皇贵妃、妃嫔专属金山香山长眠之园寝聚落"@zh .
+
+hd:unit_niulanzhuang_village a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "明代宛平西乡牛栏庄"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:namedAs hd:top_niulanzhuang ;
+    hhto:validTimeEnd 1644 ;
+    hhto:validTimeStart 1400 ;
+    rdfs:comment "明代宛平县西北乡村，官民蓄养马牛之栏圈围聚成村"@zh .
+
+hd:unit_qinghe_transit_town a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "元代清河驿路重镇"@zh ;
+    hhto:locatedAtFeature hd:feat_qinghe ;
+    hhto:namedAs hd:top_qinghezhen ;
+    hhto:validTimeStart 1271 ;
+    rdfs:comment "京北陆路与北运漕渠之水陆枢纽，元代通塞北关防之北门咽喉"@zh .
+
+hd:unit_qinglongqiao_market a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "青龙桥御道水陆重镇"@zh ;
+    hhto:locatedAtFeature hd:feat_anheqiao_site ;
+    hhto:namedAs hd:top_anheqiao_wood,
+        hd:top_qinglongqiao ;
+    hhto:validTimeStart 1644 ;
+    rdfs:comment "三山五园环抱之御道集镇，通往香山、静明园与圆明园必经水旱关卡"@zh .
+
+hd:unit_qingshui_court a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "金代西山八院之清水院"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:namedAs hd:top_dajuesi ;
+    hhto:validTimeEnd 1234 ;
+    hhto:validTimeStart 1190 ;
+    rdfs:comment "金章宗西山八大行宫水院之一，后明代重修为大觉寺"@zh .
+
+hd:unit_suzhoujie_market a hhto:AdministrativeUnit,
+        hhto:ImperialGarden ;
+    rdfs:label "清漪园万寿山后湖苏州街买卖街"@zh ;
+    hhto:locatedAtFeature hd:feat_wanshoushan ;
+    hhto:namedAs hd:top_suzhoujie ;
+    hhto:validTimeEnd 1860 ;
+    hhto:validTimeStart 1761 ;
+    rdfs:comment "乾隆二十六年为崇庆皇太后七十寿辰仿苏州山塘街建造之水上集市宫宛"@zh .
+
+hd:unit_tsinghua_academy a hhto:AdministrativeUnit,
+        hhto:ModernInstitution ;
+    rdfs:label "清华学堂与清华大学"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:validTimeStart 1911 ;
+    rdfs:comment "庚子赔款退款建立之留美预备学堂，选址清华园康熙皇三子胤祉赐园遗址"@zh .
+
+hd:unit_wanshousi_palace a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "明清万寿寺长河行宫与禅刹"@zh ;
+    hhto:locatedAtFeature hd:feat_changhe ;
+    hhto:namedAs hd:top_wanshousi ;
+    hhto:validTimeStart 1577 ;
+    rdfs:comment "明万历五年为皇太后祝寿敕建，清康乾两代水上巡幸必宿行宫"@zh .
+
+hd:unit_weiwu_village a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "元代畏吾村（畏兀儿聚落）"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_weiwucun ;
+    hhto:validTimeStart 1280 ;
+    rdfs:comment "元相廉希宪家族墓茔及内迁高昌畏兀儿贵族、守墓家眷形成的西域特色聚落"@zh .
+
+hd:unit_wenquan_village a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "温泉古村落"@zh ;
+    hhto:locatedAtFeature hd:feat_wenquan_spring ;
+    hhto:namedAs hd:top_wenquan ;
+    hhto:validTimeStart 1150 ;
+    rdfs:comment "辽金时期依地热温泉形成的天然疗养与山乡聚落"@zh .
+
+hd:unit_xianghuangqi_camp a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "圆明园护军营镶黄旗营房（树村西）"@zh ;
+    hhto:locatedAtFeature hd:feat_baifu_wengshan_he ;
+    hhto:namedAs hd:top_shucun ;
+    hhto:validTimeStart 1724 ;
+    rdfs:comment "雍正二年设立，驻树村以西，与树村村落紧邻共生"@zh .
+
+hd:unit_xierqi_garrison a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "明代西二旗小旗军屯"@zh ;
+    hhto:locatedAtFeature hd:feat_qinghe ;
+    hhto:namedAs hd:top_xierqi ;
+    hhto:validTimeEnd 1644 ;
+    hhto:validTimeStart 1368 ;
+    rdfs:comment "明代京卫卫所小旗编制军屯，与西三旗一脉相承"@zh .
+
+hd:unit_xisanqi_garrison a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "明代西三旗小旗军屯"@zh ;
+    hhto:locatedAtFeature hd:feat_qinghe ;
+    hhto:namedAs hd:top_xisanqi ;
+    hhto:validTimeEnd 1644 ;
+    hhto:validTimeStart 1368 ;
+    rdfs:comment "明代京卫卫所军屯体系中十人编制之‘小旗’编号屯田哨所，绝非满洲八旗"@zh .
+
+hd:unit_yimuyuan_fields a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "一亩园御田与庙会"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:namedAs hd:top_yimuyuan ;
+    hhto:validTimeStart 1723 ;
+    rdfs:comment "圆明园大宫门外皇帝躬耕演礼之籍田与京西著名娘娘庙会所在地"@zh .
+
+hd:unit_yuanmingyuan a hhto:AdministrativeUnit,
+        hhto:ImperialGarden ;
+    rdfs:label "清代圆明园"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:validTimeEnd 1860 ;
+    hhto:validTimeStart 1707 ;
+    rdfs:comment "万园之园，康乾嘉道咸五朝清廷夏秋理政与帝国权力中枢"@zh .
+
+hd:unit_zgc_hightech_zone a hhto:AdministrativeUnit,
+        hhto:ModernInstitution ;
+    rdfs:label "北京市新技术产业开发试验区（中关村高新区）"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:validTimeStart 1988 ;
+    rdfs:comment "国务院正式批准设立的全国第一个国家级高新技术产业开发区"@zh .
+
+hd:unit_zhengbaiqi_camp a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "圆明园护军营正白旗营房（树村东）"@zh ;
+    hhto:locatedAtFeature hd:feat_baifu_wengshan_he ;
+    hhto:validTimeStart 1724 ;
+    rdfs:comment "雍正二年设立，驻树村以东，长春园东北"@zh .
+
+hd:unit_zhenghuangqi_camp a hhto:AdministrativeUnit,
+        hhto:MilitaryGarrison ;
+    rdfs:label "圆明园护军营正黄旗营房（肖家河村北）"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:namedAs hd:top_xiaojiahe ;
+    hhto:validTimeStart 1724 ;
+    rdfs:comment "雍正二年设立之圆明园八旗护卫营房，驻扎肖家河村北，拱卫园门西北"@zh .
+
+hd:unit_zhongguan_cemetery a hhto:AdministrativeUnit,
+        hhto:BurialGround ;
+    rdfs:label "明清中官村太监义地"@zh ;
+    hhto:locatedAtFeature hd:feat_wanquanhe ;
+    hhto:namedAs hd:top_zhongguancun_eunuch ;
+    hhto:validTimeEnd 1949 ;
+    hhto:validTimeStart 1600 ;
+    rdfs:comment "明清两代内廷宦官（中官）合资购置的合葬义冢与看坟守地营房"@zh .
+
+hhto:CreationEvent a owl:Class ;
+    rdfs:label "创名立村事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:FolkAppropriationEvent a owl:Class ;
+    rdfs:label "民间传说附会重塑事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:SourceDocument a owl:Class ;
+    rdfs:label "史料文献源"@zh ;
+    rdfs:comment "一手碑刻、官修实录、正史地理志、方志地契等文献出处"@zh .
+
+hhto:SpatialExtinctionEvent a owl:Class ;
+    rdfs:label "实体消失与地名化石存续事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:Wetland a owl:Class ;
+    rdfs:label "湖泊沼泽水洼"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hd:attest_anhe_republic_record a hhto:PlaceAttestation ;
+    rdfs:label "安河桥"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "安河桥在青龙桥东，因水流安恬、桥跨御河，俗名遂改作‘安河桥’"@zh ;
+    hhto:recordedYear 1934 ;
+    rdfs:comment "断代: 民国二十三年 | 来源: 《北平地名通志》"@zh .
+
+hd:attest_anheqiao_stone_tablet a hhto:PlaceAttestation ;
+    rdfs:label "安和桥"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "桥成，改木为石，额曰‘安和桥’，取安和景泰之义"@zh ;
+    hhto:recordedYear 1781 ;
+    rdfs:comment "断代: 清代（乾隆四十六年） | 来源: 《安和桥额石题字》"@zh .
+
+hd:attest_anheqiao_wood_c14 a hhto:PlaceAttestation ;
+    rdfs:label "罗锅桥木桩BA10291"@zh ;
+    hhto:epistemicNotes "全海淀水利古桥最强考古硬证据"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "在安和桥旧桥台下清理出密集柏木地钉，标本BA10291碳十四定年测定为明代，证实该处明代已建有大型木构拱桥跨水枢纽"@zh ;
+    hhto:recordedYear 2009 ;
+    rdfs:comment "断代: 明代（经碳十四测定为明代中晚期原桩） | 来源: 《安河桥古水利遗址考古发掘报告》"@zh .
+
+hd:attest_baijiatuan_caoxueqin a hhto:PlaceAttestation ;
+    rdfs:label "白家疃"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "白家疃为明洪武屯田移民聚落，清代怡亲王胤祥有祠邸于此，曹雪芹晚年曾徙居西山白家疃著书行医"@zh ;
+    hhto:recordedYear 1978 ;
+    rdfs:comment "断代: 现代学术专著 | 来源: 《白家疃怡亲王交辉园题记与曹雪芹行迹考》"@zh .
+
+hd:attest_chengfu_shunzhi a hhto:PlaceAttestation ;
+    rdfs:label "成府"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "成府旧称陈府，相传明末崇祯田贵妃戚畹陈氏别墅所在地，村落早废而路名犹存"@zh ;
+    hhto:recordedYear 1930 ;
+    rdfs:comment "断代: 民国十九年 | 来源: 《燕都丛考卷四》"@zh .
+
+hd:attest_chengfulu_gazetteer a hhto:PlaceAttestation ;
+    rdfs:label "成府路"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "成府路东起五道口，西至清华大学西门南，因原成府村得名，现为中关村主干道"@zh ;
+    hhto:recordedYear 1992 ;
+    rdfs:comment "断代: 现代 | 来源: 《北京市海淀区地名志》"@zh .
+
+hd:attest_cishousi_dijing a hhto:PlaceAttestation ;
+    rdfs:label "慈寿寺"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "慈寿寺在阜成门外八里庄，神宗生母李太后建，浮屠十三级，巍峨插天，京师地标也"@zh ;
+    hhto:recordedYear 1635 ;
+    rdfs:comment "断代: 明崇祯八年 | 来源: 《帝京景物略卷五》"@zh .
+
+hd:attest_daizhou_tang_record a hhto:PlaceAttestation ;
+    rdfs:label "带州"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "带州，神龙元年置，寄治昌平县清水店，领孤竹一县"@zh ;
+    hhto:recordedYear 705 ;
+    rdfs:comment "断代: 唐代（神龙元年） | 来源: 《旧唐书·地理志二》"@zh .
+
+hd:attest_dajuesi_liao_stele a hhto:PlaceAttestation ;
+    rdfs:label "清水院契丹碑"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "大辽大安四年，西山清水院重构佛殿，刻石纪事"@zh ;
+    hhto:recordedYear 1088 ;
+    rdfs:comment "断代: 辽代（大安四年） | 来源: 《大辽大安四年石碑》"@zh .
+
+hd:attest_dajuesi_stele a hhto:PlaceAttestation ;
+    rdfs:label "大觉寺"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "大觉禅寺，金章宗清水院故址也，重修弘开法筵"@zh ;
+    hhto:recordedYear 1428 ;
+    rdfs:comment "断代: 明宣德三年 | 来源: 《大觉寺宣德重修碑记》"@zh .
+
+hd:attest_dazhongsi_bell_stele a hhto:PlaceAttestation ;
+    rdfs:label "御制觉生寺碑文"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨"@zh ;
+    hhto:recordedYear 1733 ;
+    rdfs:comment "断代: 清代（雍正十一年） | 来源: 《大清实录·世宗实录》"@zh .
+
+hd:attest_dongsimu_record a hhto:PlaceAttestation ;
+    rdfs:label "董四墓"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "明代皇室墓地，后形成看坟户村落，以董姓第四代守墓人得名董四墓，曾以御桃闻名"@zh ;
+    hhto:recordedYear 1992 ;
+    rdfs:comment "断代: 现代志书 | 来源: 《海淀区地名志》"@zh .
+
+hd:attest_gaolianghe_shuijingzhu a hhto:PlaceAttestation ;
+    rdfs:label "高梁水"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "高梁水出蓟县西北平地，东南流经蓟城北，水色清莹，草木丰茂"@zh ;
+    hhto:recordedYear 527 ;
+    rdfs:comment "断代: 北魏正光至孝昌年间 | 来源: 《水经注卷十三》"@zh .
+
+hd:attest_guajiatun_chenyuan a hhto:PlaceAttestation ;
+    rdfs:label "挂甲屯"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "挂甲屯在海淀西北，世传吴应熊额驸府第遗址在此，俗亦称额驸城"@zh ;
+    hhto:recordedYear 1788 ;
+    rdfs:comment "断代: 清乾隆五十三年 | 来源: 《宸垣识略卷十三》"@zh .
+
+hd:attest_guangyuanzha_stele a hhto:PlaceAttestation ;
+    rdfs:label "广源闸"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "广源闸者，长河上游巨闸也，通漕蓄水以济都城，乃元至元旧制"@zh ;
+    hhto:recordedYear 1577 ;
+    rdfs:comment "断代: 明代（万历五年） | 来源: 《广源闸重修碑记》"@zh .
+
+hd:attest_haidian_1260 a hhto:PlaceAttestation ;
+    rdfs:label "海店"@zh ;
+    hhto:epistemicNotes "海淀区名文献最早确凿出处"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "六日丁卯，午憩海店，距京城廿里"@zh ;
+    hhto:recordedYear 1260 ;
+    rdfs:comment "断代: 元代（中统元年） | 来源: 《中堂事记》"@zh .
+
+hd:attest_hourenzhi_haidian a hhto:PlaceAttestation ;
+    rdfs:label "海淀湿地水文考"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "海淀一带在地质历史上为万泉河水系冲积形成的潜水浅洼，故名‘淀’，王恽所见之‘海店’正乃水泊边缘之驿站"@zh ;
+    hhto:recordedYear 1980 ;
+    rdfs:comment "断代: 现代 | 来源: 《北京历史地理与城市水系研究》"@zh .
+
+hd:attest_huangzhuang_hunt a hhto:PlaceAttestation ;
+    rdfs:label "黄庄"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "海淀南二里黄庄，明时或为皇庄之讹，或以黄土高阜得名，志家存疑"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代 | 来源: 《日下旧闻考卷一百》"@zh .
+
+hd:attest_huoqiying_record a hhto:PlaceAttestation ;
+    rdfs:label "外火器营"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八》"@zh .
+
+hd:attest_jingxi_map_1913 a hhto:PlaceAttestation ;
+    rdfs:label "中关村"@zh ;
+    hhto:epistemicNotes "推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落"@zh ;
+    hhto:recordedYear 1913 ;
+    rdfs:comment "断代: 民国二年 | 来源: 《实测北京四郊图（京西图）》"@zh .
+
+hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
+    rdfs:label "玲珑宝塔"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "八里庄有慈寿寺舍利宝塔，雕饰玲珑秀出，京师游人呼为玲珑宝塔"@zh ;
+    hhto:recordedYear 1623 ;
+    rdfs:comment "断代: 明天启三年 | 来源: 《燕都游览志卷三》"@zh .
+
+hd:attest_liulang_legend a hhto:PlaceAttestation ;
+    rdfs:label "六郎庄杨家将驻军传说"@zh ;
+    hhto:epistemicNotes "纯民间传说，历史地理学已考实六郎庄系牛栏庄-柳浪庄音转附会而来"@zh ;
+    hhto:epistemicStatus "FOLK_LEGEND"^^xsd:string ;
+    hhto:evidenceLevel "Level 5 (民间口碑传说)"^^xsd:string ;
+    hhto:originalQuote "相传宋辽对峙时，杨六郎在此屯兵抵御辽军，放马饮泉，故村名六郎庄"@zh ;
+    hhto:recordedYear 1988 ;
+    rdfs:comment "断代: 现代采录民间传说 | 来源: 《海淀区民间故事集成》"@zh .
+
+hd:attest_longbeicun_weir_site a hhto:PlaceAttestation ;
+    rdfs:label "白浮堰龙背村引水残段"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "龙背村段现存白浮堰古堤为郭守敬引水渠仅存之地面实物实体，条石固堤痕迹昭然"@zh ;
+    hhto:recordedYear 1983 ;
+    rdfs:comment "断代: 元代（至元二十九年遗构） | 来源: 《京密引水渠沿线古水利工程勘察报告》"@zh .
+
+hd:attest_niangniangfu_gazetteer a hhto:PlaceAttestation ;
+    rdfs:label "娘娘府"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "金山之麓，明代诸妃茔墓列峙，俗呼一溜边山七十二府，今娘娘府其遗地也"@zh ;
+    hhto:recordedYear 1885 ;
+    rdfs:comment "断代: 清光绪十一年 | 来源: 《光绪顺天府志·古迹志》"@zh .
+
+hd:attest_qinghe_tianfu a hhto:PlaceAttestation ;
+    rdfs:label "清河"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "清河镇去德胜门二十里，有石梁跨河，为往昌平、居庸关第一大驿"@zh ;
+    hhto:recordedYear 1660 ;
+    rdfs:comment "断代: 清初 | 来源: 《天府广记卷二十》"@zh .
+
+hd:attest_qinglongqiao_rixia a hhto:PlaceAttestation ;
+    rdfs:label "青龙桥"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "青龙桥在玉泉山之阴，跨长河水，石闸下注通惠河，水陆要冲，商旅云集"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
+
+hd:attest_rixia_dayouzhuang a hhto:PlaceAttestation ;
+    rdfs:label "大有庄"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "大有庄旧名穷八家，高宗纯皇帝临幸，以其名不协吉卜，赐名大有庄"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
+
+hd:attest_rixia_landianchang a hhto:PlaceAttestation ;
+    rdfs:label "蓝靛厂"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "蓝靛厂在西顶庙旁，居民借植蓼蓝造青靛为业，因名。乾隆三十五年徙外火器营于此"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十八》"@zh .
+
+hd:attest_rixia_shucun a hhto:PlaceAttestation ;
+    rdfs:label "树村"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "树村在圆明园后，镶黄旗护军营驻其西，正白旗护军营驻其东"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
+
+hd:attest_shucun_shishi a hhto:PlaceAttestation ;
+    rdfs:label "树村"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "嘉庆六年四月，圆明园副将营房移驻园北树村西，以固后防"@zh ;
+    hhto:recordedYear 1801 ;
+    rdfs:comment "断代: 清嘉庆六年 | 来源: 《圆明园史事编年》"@zh .
+
+hd:attest_suzhoujie_qianlong_poem a hhto:PlaceAttestation ;
+    rdfs:label "万寿山买卖街"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "水木依稀姑苏肆，市廛宛转入楼台"@zh ;
+    hhto:recordedYear 1761 ;
+    rdfs:comment "断代: 清代（乾隆二十六年） | 来源: 《御制诗三集》"@zh .
+
+hd:attest_wanping_niulanzhuang a hhto:PlaceAttestation ;
+    rdfs:label "牛栏庄"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "宛平县城外西乡牛栏庄，地滨泉源，居民引水种稻"@zh ;
+    hhto:recordedYear 1593 ;
+    rdfs:comment "断代: 明代（万历二十一年） | 来源: 《宛平县志·舆地志》"@zh .
+
+hd:attest_wanshoushan_rixia a hhto:PlaceAttestation ;
+    rdfs:label "瓮山"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "万寿山旧名瓮山，其形如瓮，前抱瓮山泊，元郭守敬引白浮泉聚水于此"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷八十四》"@zh .
+
+hd:attest_wanshousi_mingshi a hhto:PlaceAttestation ;
+    rdfs:label "万寿寺"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "万历五年三月，敕建万寿寺于都城西直门外高梁河畔，为圣母祝寿之所"@zh ;
+    hhto:recordedYear 1577 ;
+    rdfs:comment "断代: 明万历五年 | 来源: 《明史·神宗本纪》"@zh .
+
+hd:attest_weiwucun_yuanshi a hhto:PlaceAttestation ;
+    rdfs:label "畏吾村"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "恒阳王廉希宪卒，葬于大都城西高梁河畔，族人环墓而居，号畏吾村"@zh ;
+    hhto:recordedYear 1370 ;
+    rdfs:comment "断代: 明代修元史（记元代事） | 来源: 《元史·廉希宪传》"@zh .
+
+hd:attest_wenquan_dijing a hhto:PlaceAttestation ;
+    rdfs:label "温泉"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所"@zh ;
+    hhto:recordedYear 1635 ;
+    rdfs:comment "断代: 明代 | 来源: 《帝京景物略卷五》"@zh .
+
+hd:attest_wutasi_beiping a hhto:PlaceAttestation ;
+    rdfs:label "五塔寺"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "真觉寺金刚宝座有五方佛塔，世称五塔寺，西直门外名刹也"@zh ;
+    hhto:recordedYear 1935 ;
+    rdfs:comment "断代: 民国二十四年 | 来源: 《北平名胜景物记》"@zh .
+
+hd:attest_xiangshan_jinshi a hhto:PlaceAttestation ;
+    rdfs:label "香山大永安寺"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "大定二十六年三月，世宗幸西山，驻跸香山大永安寺，为西山名胜之冠"@zh ;
+    hhto:recordedYear 1186 ;
+    rdfs:comment "断代: 金大定二十六年 | 来源: 《金史·世宗本纪》"@zh .
+
+hd:attest_xiaojiahe_daqing a hhto:PlaceAttestation ;
+    rdfs:label "肖家河"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "圆明园护军营正黄旗营房在肖家河村北，营房八百间，设翼长防守"@zh ;
+    hhto:recordedYear 1818 ;
+    rdfs:comment "断代: 清嘉庆二十三年 | 来源: 《大清会典事例·兵部·护军营》"@zh .
+
+hd:attest_xierqi_shuntian a hhto:PlaceAttestation ;
+    rdfs:label "西二旗"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "西二旗在宛平县北，相传明代卫所小旗分屯之地，次于三旗"@zh ;
+    hhto:recordedYear 1885 ;
+    rdfs:comment "断代: 清光绪十一年 | 来源: 《光绪顺天府志·地理志》"@zh .
+
+hd:attest_yimuyuan_qianlong a hhto:PlaceAttestation ;
+    rdfs:label "一亩园"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "圆明园前置一亩园，仿先农坛躬耕籍田之礼，以示重本抑末"@zh ;
+    hhto:recordedYear 1745 ;
+    rdfs:comment "断代: 清乾隆十年 | 来源: 《清高宗御制文二集》"@zh .
+
+hd:attest_yuquanshan_jinshi a hhto:PlaceAttestation ;
+    rdfs:label "玉泉山芙蓉殿"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "大兴府宛平县有玉泉山，金世宗、章宗两朝建芙蓉殿及行宫于此，御泉甘冽"@zh ;
+    hhto:recordedYear 1344 ;
+    rdfs:comment "断代: 元代修金史 | 来源: 《金史·地理志》"@zh .
+
+hd:attest_zaojunmiao_record a hhto:PlaceAttestation ;
+    rdfs:label "皂君庙"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "皂君庙者，实祀灶神，民间方言轻读俗转作皂，遂沿为街名"@zh ;
+    hhto:recordedYear 1886 ;
+    rdfs:comment "断代: 清光绪十二年 | 来源: 《京师坊巷志稿》"@zh .
+
+hd:attest_zgc_1953_decision a hhto:PlaceAttestation ;
+    rdfs:label "中关村科学院园区"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "政务院批准文委与科学院关于选定海淀中关村为科研基地的方案，近代第一座科学城破土动工"@zh ;
+    hhto:recordedYear 1953 ;
+    rdfs:comment "断代: 现代新中国 | 来源: 《中国科学院院史资料汇编》"@zh .
+
+hd:attest_zgc_1980_seed a hhto:PlaceAttestation ;
+    rdfs:label "中关村第一粒种子"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "1980年10月陈春先创办北京等离子体学会先进技术服务部，开启中关村科技街创业大幕"@zh ;
+    hhto:recordedYear 1980 ;
+    rdfs:comment "断代: 现代改革开放 | 来源: 《陈春先与北京硅谷破冰史》"@zh .
+
+hd:attest_zgc_1988_zone a hhto:PlaceAttestation ;
+    rdfs:label "北京市新技术产业开发试验区"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "同意以中关村为中心建立北京市新技术产业开发试验区，实行十八条扶持政策"@zh ;
+    hhto:recordedYear 1988 ;
+    rdfs:comment "断代: 现代改革开放 | 来源: 《国务院国函〔1988〕74号文》"@zh .
+
+hd:attest_zhenjuesi_shilu a hhto:PlaceAttestation ;
+    rdfs:label "真觉寺金刚宝座"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "成化九年冬十一月，真觉寺金刚宝座塔成，赐名大觉金刚宝座"@zh ;
+    hhto:recordedYear 1473 ;
+    rdfs:comment "断代: 明成化九年 | 来源: 《明宪宗实录卷一百二十》"@zh .
+
+hd:attest_zhongguan_eunuch_stele a hhto:PlaceAttestation ;
+    rdfs:label "中官村刚炳祠堂碑"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "中官村地多太监兆域，内廷诸中官合祀刚炳为神，建祠村东，置义地数百亩"@zh ;
+    hhto:recordedYear 1900 ;
+    rdfs:comment "断代: 清末光绪二十六年 | 来源: 《北京历代太监墓石刻考》"@zh .
+
+hd:attest_zhongguantun_map a hhto:PlaceAttestation ;
+    rdfs:label "中官屯"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "海淀镇东门外二里，标示‘中官屯’，为太监守茔户聚集之聚落"@zh ;
+    hhto:recordedYear 1908 ;
+    rdfs:comment "断代: 清光绪三十四年 | 来源: 《顺天府宛平县保甲全图》"@zh .
+
+hd:evt_anhe_imperial a hhto:ImperialNamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "乾隆帝改修石拱桥，御题‘安和桥’石额"@zh ;
+    hhto:recordedYear 1781 ;
+    hhto:sourceToponym hd:top_anheqiao_wood ;
+    hhto:targetToponym hd:top_anheqiao_peace ;
+    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+
+hd:evt_anhe_river_drift a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "民间望文生义，因桥跨清河而俗写同音为‘安河桥’"@zh ;
+    hhto:sourceToponym hd:top_anheqiao_peace ;
+    hhto:targetToponym hd:top_anheqiao_river .
+
+hd:evt_chengfu_extinction a hhto:SpatialExtinctionEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "原成府村落随高校园区扩建全部拆迁，地名作为‘成府路’道路专名永久存续"@zh ;
+    hhto:recordedYear 1990 ;
+    hhto:sourceToponym hd:top_chengfu ;
+    hhto:targetToponym hd:top_chengfulu .
+
+hd:evt_cishou_linglong_drift a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "慈寿寺建筑毁于清末大火仅存舍利塔，民间因塔身玲珑秀丽俗称玲珑塔，演化为区域地标"@zh ;
+    hhto:sourceToponym hd:top_cishousi ;
+    hhto:targetToponym hd:top_linglongta .
+
+hd:evt_dajuesi_rename a hhto:ImperialNamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "明宣宗宣德皇帝重修金代清水院行宫禅刹，赐额大觉寺"@zh ;
+    hhto:recordedYear 1428 ;
+    hhto:targetToponym hd:top_dajuesi ;
+    hhto:triggeringPerson "明宣宗朱瞻基"@zh .
+
+hd:evt_dazhongsi_relocate_bell a hhto:ImperialNamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "乾隆帝将万寿寺永乐大钟移悬觉生寺，民间遂以大钟代称寺名，俗称大钟寺并演变为现代地铁站地名"@zh ;
+    hhto:recordedYear 1751 ;
+    hhto:sourceToponym hd:top_jueshengsi ;
+    hhto:targetToponym hd:top_dazhongsi ;
+    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+
+hd:evt_gaoliang_gate_to_bridge a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "元代高梁闸桥闸合一，明代漕运衰退后民众逐渐以桥名统称，演化为高梁桥"@zh ;
+    hhto:sourceToponym hd:top_gaoliangzha ;
+    hhto:targetToponym hd:top_gaoliangqiao .
+
+hd:evt_haidian_creation a hhto:CreationEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "元初通往塞北古道边浅水湖泊聚落形成，称‘海店’"@zh ;
+    hhto:recordedYear 1260 ;
+    hhto:targetToponym hd:top_haidian_dian1 .
+
+hd:evt_haidian_dian2 a hhto:EuphemisticRenamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "明代文人雅化为海甸，借用‘甸’字郊野王畿之义"@zh ;
+    hhto:sourceToponym hd:top_haidian_dian1 ;
+    hhto:targetToponym hd:top_haidian_dian2 .
+
+hd:evt_haidian_final a hhto:EuphemisticRenamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "文人因其万泉汇聚、水草丰茂，正式改从水旁作‘海淀’"@zh ;
+    hhto:sourceToponym hd:top_haidian_dian2 ;
+    hhto:targetToponym hd:top_haidian .
+
+hd:evt_landian_huoqi_shift a hhto:AdministrativeShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "乾隆三十五年外火器营四千间兵营自城内迁驻蓝靛厂，市镇与兵营空间复合"@zh ;
+    hhto:recordedYear 1770 ;
+    hhto:sourceToponym hd:top_landianchang_dye ;
+    hhto:targetToponym hd:top_huoqiying ;
+    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+
+hd:evt_liulang_to_general a hhto:FolkAppropriationEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "民间借谐音附会宋将杨六郎抗辽驻兵之英雄传说，遂讹写作六郎庄"@zh ;
+    hhto:sourceToponym hd:top_liulangzhuang_willow ;
+    hhto:targetToponym hd:top_liulangzhuang_general .
+
+hd:evt_niulan_to_liulang_willow a hhto:EuphemisticRenamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "牛栏庄因地处万泉河下流，柳荫蔽日、垂柳成浪，雅化改称柳浪庄"@zh ;
+    hhto:sourceToponym hd:top_niulanzhuang ;
+    hhto:targetToponym hd:top_liulangzhuang_willow .
+
+hd:evt_qiongbajia_to_dayouzhuang a hhto:ImperialNamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "乾隆帝巡幸见‘穷八家’村名不吉，取《周易》大有卦‘丰盛富庶’之义御赐改名大有庄"@zh ;
+    hhto:recordedYear 1750 ;
+    hhto:sourceToponym hd:top_qiongbajia ;
+    hhto:targetToponym hd:top_dayouzhuang ;
+    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+
+hd:evt_shucun_garrison_shift a hhto:AdministrativeShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "清世宗置圆明园八旗护军营，镶黄旗驻树村西，正白旗驻树村东，树村演化为八旗兵民共生村"@zh ;
+    hhto:recordedYear 1724 ;
+    hhto:targetToponym hd:top_shucun .
+
+hd:evt_suzhoujie_imperial_build a hhto:ImperialNamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "乾隆帝为母后祝寿仿苏州水肆建买卖街，民间与后世统称为苏州街"@zh ;
+    hhto:recordedYear 1761 ;
+    hhto:sourceToponym hd:top_maimaijie ;
+    hhto:targetToponym hd:top_suzhoujie ;
+    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+
+hd:evt_weiwu_to_weigong a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "‘畏吾村’经数百年方言口传音转为‘畏兀村’、‘魏家村’，民国四年《实测四郊图》谐音定名‘魏公村’"@zh ;
+    hhto:recordedYear 1915 ;
+    hhto:sourceToponym hd:top_weiwucun ;
+    hhto:targetToponym hd:top_weigongcun .
+
+hd:evt_xiaojiahe_garrison_shift a hhto:AdministrativeShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "圆明园护军营正黄旗营房设于肖家河村北，形成军政护卫要冲"@zh ;
+    hhto:recordedYear 1724 ;
+    hhto:targetToponym hd:top_xiaojiahe .
+
+hd:evt_zaojunmiao_drift a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "灶君庙因北京方言灶、皂同音混用，官牌与地名志遂写作皂君庙"@zh ;
+    hhto:targetToponym hd:top_zaojunmiao .
+
+hd:evt_zhenjue_wuta_drift a hhto:PhoneticShiftEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "真觉寺因金刚宝座上有五座密檐小塔，民间俗称五塔寺，后寺废名存沿为村名与地标"@zh ;
+    hhto:sourceToponym hd:top_zhenjuesi ;
+    hhto:targetToponym hd:top_wutasi .
+
+hd:evt_zhongguan_euphemism a hhto:EuphemisticRenamingEvent,
+        hhto:ToponymEvolutionEvent ;
+    rdfs:label "中官村太监义地因新式学堂进驻，文人与测地局避忌‘中官（宦官）’嫌称，雅化为‘中关村’"@zh ;
+    hhto:recordedYear 1913 ;
+    hhto:sourceToponym hd:top_zhongguancun_eunuch ;
+    hhto:targetToponym hd:top_zhongguancun_modern .
+
+hd:feat_anheqiao_site a hhto:HydraulicFacility,
+        hhto:PhysicalFeature ;
+    rdfs:label "安和桥下古长河桥涵遗址"@zh ;
+    hhto:coordinatesWGS84 "116.27,40.01"^^xsd:string ;
+    rdfs:comment "2009年出土明代碳十四定年木桩BA10291的水利枢纽节点"@zh .
+
+hd:feat_taizhouwu_dock a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "太舟坞古泊船凹岸台地"@zh ;
+    hhto:coordinatesWGS84 "116.18,40.04"^^xsd:string ;
+    rdfs:comment "西山山麓山前坡水地带，元代白浮引水河道附近之船坞台地"@zh .
+
+hd:feat_wenquan_spring a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "温泉地热出露带"@zh ;
+    hhto:coordinatesWGS84 "116.17,40.03"^^xsd:string ;
+    rdfs:comment "西山断裂带地热水出露点，辽金温泉疗养古地"@zh .
+
+hd:hypo_gaoliangqiao_979 a hhto:CompetingHypothesis ;
+    rdfs:label "高梁桥宋辽高梁河之战战场桥说（伪说）"@zh ;
+    hhto:disprovenBy hd:attest_gaoliangzha_1292 ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:supportedBy hd:attest_gaoliangqiao_979_myth ;
+    rdfs:comment "民间小说演义赵光义于高梁桥下乘驴车败逃"@zh .
+
+hd:hypo_taizhouwu_dock a hhto:CompetingHypothesis ;
+    rdfs:label "太舟坞源于元代白浮引水河道船坞说"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:supportedBy hd:attest_taizhouwu_dock_study ;
+    rdfs:comment "太舟坞地处元代白浮瓮山河漕运停泊带，‘太舟坞’实为大船泊坞之地形实录"@zh .
+
+hd:hypo_taizhouwu_tang a hhto:CompetingHypothesis ;
+    rdfs:label "太舟坞源于唐代羁縻带州音转说"@zh ;
+    hhto:disprovenBy hd:attest_taizhouwu_dock_study ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    rdfs:comment "唐神龙元年置羁縻带州，天宝间寄治昌平县清水店，太舟坞即带州之长久音转"@zh .
+
+hd:hypo_xisanqi_manchu a hhto:CompetingHypothesis ;
+    rdfs:label "西三旗源自清代满洲八旗驻防说（伪说）"@zh ;
+    hhto:disprovenBy hd:attest_shuntian_xisanqi ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:supportedBy hd:attest_xisanqi_manchu_myth ;
+    rdfs:comment "坊间传闻西三旗为满洲上三旗驻军兵营"@zh .
+
+hd:top_anheqiao_river a hhto:Toponym ;
+    rdfs:label "安河桥"@zh ;
+    hhto:attestedIn hd:attest_anhe_republic_record ;
+    hhto:evolutionTriggeredBy hd:evt_anhe_river_drift ;
+    hhto:evolvedFrom hd:top_anheqiao_peace ;
+    hhto:phoneticPinyin "ān hé qiáo"^^xsd:string ;
+    hhto:standardForm "安河桥"^^xsd:string .
+
+hd:top_chengfulu a hhto:Toponym ;
+    rdfs:label "成府路"@zh ;
+    hhto:attestedIn hd:attest_chengfulu_gazetteer ;
+    hhto:evolutionTriggeredBy hd:evt_chengfu_extinction ;
+    hhto:evolvedFrom hd:top_chengfu ;
+    hhto:phoneticPinyin "chéng fǔ lù"^^xsd:string ;
+    hhto:standardForm "成府路"^^xsd:string .
+
+hd:top_dayouzhuang a hhto:Toponym ;
+    rdfs:label "大有庄"@zh ;
+    hhto:attestedIn hd:attest_rixia_dayouzhuang ;
+    hhto:evolutionTriggeredBy hd:evt_qiongbajia_to_dayouzhuang ;
+    hhto:evolvedFrom hd:top_qiongbajia ;
+    hhto:phoneticPinyin "dà yǒu zhuāng"^^xsd:string ;
+    hhto:standardForm "大有庄"^^xsd:string .
+
+hd:top_dazhongsi a hhto:Toponym ;
+    rdfs:label "大钟寺"@zh ;
+    hhto:evolutionTriggeredBy hd:evt_dazhongsi_relocate_bell ;
+    hhto:evolvedFrom hd:top_jueshengsi ;
+    hhto:phoneticPinyin "dà zhōng sì"^^xsd:string ;
+    hhto:standardForm "大钟寺"^^xsd:string .
+
+hd:top_dongsimu a hhto:Toponym ;
+    rdfs:label "董四墓"@zh ;
+    hhto:attestedIn hd:attest_dongsimu_record ;
+    hhto:phoneticPinyin "dǒng sì mù"^^xsd:string ;
+    hhto:standardForm "董四墓"^^xsd:string .
+
+hd:top_gaolianghe a hhto:Toponym ;
+    rdfs:label "高梁河"@zh ;
+    hhto:attestedIn hd:attest_gaolianghe_shuijingzhu ;
+    hhto:phoneticPinyin "gāo liáng hé"^^xsd:string ;
+    hhto:standardForm "高梁河"^^xsd:string .
+
+hd:top_gaoliangqiao a hhto:Toponym ;
+    rdfs:label "高梁桥"@zh ;
+    hhto:attestedIn hd:attest_gaoliangqiao_979_myth ;
+    hhto:evolutionTriggeredBy hd:evt_gaoliang_gate_to_bridge ;
+    hhto:evolvedFrom hd:top_gaoliangzha ;
+    hhto:hasHypothesis hd:hypo_gaoliangqiao_979 ;
+    hhto:phoneticPinyin "gāo liáng qiáo"^^xsd:string ;
+    hhto:standardForm "高梁桥"^^xsd:string .
+
+hd:top_haidian a hhto:Toponym ;
+    rdfs:label "海淀"@zh ;
+    hhto:attestedIn hd:attest_hourenzhi_haidian ;
+    hhto:evolutionTriggeredBy hd:evt_haidian_final ;
+    hhto:evolvedFrom hd:top_haidian_dian2 ;
+    hhto:phoneticPinyin "hǎi diàn"^^xsd:string ;
+    hhto:standardForm "海淀"^^xsd:string .
+
+hd:top_huoqiying a hhto:Toponym ;
+    rdfs:label "火器营"@zh ;
+    hhto:attestedIn hd:attest_huoqiying_record ;
+    hhto:evolutionTriggeredBy hd:evt_landian_huoqi_shift ;
+    hhto:evolvedFrom hd:top_landianchang_dye ;
+    hhto:phoneticPinyin "huǒ qì yíng"^^xsd:string ;
+    hhto:standardForm "火器营"^^xsd:string .
+
+hd:top_linglongta a hhto:Toponym ;
+    rdfs:label "玲珑塔"@zh ;
+    hhto:attestedIn hd:attest_linglongta_yandu ;
+    hhto:evolutionTriggeredBy hd:evt_cishou_linglong_drift ;
+    hhto:evolvedFrom hd:top_cishousi ;
+    hhto:phoneticPinyin "líng lóng tǎ"^^xsd:string ;
+    hhto:standardForm "玲珑塔"^^xsd:string .
+
+hd:top_liulangzhuang_general a hhto:Toponym ;
+    rdfs:label "六郎庄"@zh ;
+    hhto:attestedIn hd:attest_liulang_legend ;
+    hhto:evolutionTriggeredBy hd:evt_liulang_to_general ;
+    hhto:evolvedFrom hd:top_liulangzhuang_willow ;
+    hhto:phoneticPinyin "liù láng zhuāng"^^xsd:string ;
+    hhto:standardForm "六郎庄"^^xsd:string .
+
+hd:top_niangniangfu a hhto:Toponym ;
+    rdfs:label "娘娘府"@zh ;
+    hhto:attestedIn hd:attest_niangniangfu_gazetteer ;
+    hhto:phoneticPinyin "niáng niang fǔ"^^xsd:string ;
+    hhto:standardForm "娘娘府"^^xsd:string .
+
+hd:top_qinghezhen a hhto:Toponym ;
+    rdfs:label "清河镇"@zh ;
+    hhto:attestedIn hd:attest_qinghe_tianfu ;
+    hhto:phoneticPinyin "qīng hé zhèn"^^xsd:string ;
+    hhto:standardForm "清河镇"^^xsd:string .
+
+hd:top_qinglongqiao a hhto:Toponym ;
+    rdfs:label "青龙桥"@zh ;
+    hhto:attestedIn hd:attest_qinglongqiao_rixia ;
+    hhto:phoneticPinyin "qīng lóng qiáo"^^xsd:string ;
+    hhto:standardForm "青龙桥"^^xsd:string .
+
+hd:top_wanshousi a hhto:Toponym ;
+    rdfs:label "万寿寺"@zh ;
+    hhto:attestedIn hd:attest_wanshousi_mingshi ;
+    hhto:phoneticPinyin "wàn shòu sì"^^xsd:string ;
+    hhto:standardForm "万寿寺"^^xsd:string .
+
+hd:top_weigongcun a hhto:Toponym ;
+    rdfs:label "魏公村"@zh ;
+    hhto:evolutionTriggeredBy hd:evt_weiwu_to_weigong ;
+    hhto:evolvedFrom hd:top_weiwucun,
+        hd:top_weiwuer_cun ;
+    hhto:phoneticPinyin "wèi gōng cūn"^^xsd:string ;
+    hhto:standardForm "魏公村"^^xsd:string .
+
+hd:top_weiwuer_cun a hhto:Toponym ;
+    rdfs:label "畏兀村"@zh ;
+    hhto:evolvedFrom hd:top_weiwucun ;
+    hhto:phoneticPinyin "wèi wù cūn"^^xsd:string ;
+    hhto:standardForm "畏兀村"^^xsd:string .
+
+hd:top_wenquan a hhto:Toponym ;
+    rdfs:label "温泉"@zh ;
+    hhto:attestedIn hd:attest_wenquan_dijing ;
+    hhto:phoneticPinyin "wēn quán"^^xsd:string ;
+    hhto:standardForm "温泉"^^xsd:string .
+
+hd:top_wutasi a hhto:Toponym ;
+    rdfs:label "五塔寺"@zh ;
+    hhto:attestedIn hd:attest_wutasi_beiping ;
+    hhto:evolutionTriggeredBy hd:evt_zhenjue_wuta_drift ;
+    hhto:evolvedFrom hd:top_zhenjuesi ;
+    hhto:phoneticPinyin "wǔ tǎ sì"^^xsd:string ;
+    hhto:standardForm "五塔寺"^^xsd:string .
+
+hd:top_xierqi a hhto:Toponym ;
+    rdfs:label "西二旗"@zh ;
+    hhto:attestedIn hd:attest_xierqi_shuntian ;
+    hhto:phoneticPinyin "xī èr qí"^^xsd:string ;
+    hhto:standardForm "西二旗"^^xsd:string .
+
+hd:top_xisanqi a hhto:Toponym ;
+    rdfs:label "西三旗"@zh ;
+    hhto:attestedIn hd:attest_shuntian_xisanqi,
+        hd:attest_xisanqi_manchu_myth ;
+    hhto:hasHypothesis hd:hypo_xisanqi_manchu ;
+    hhto:phoneticPinyin "xī sān qí"^^xsd:string ;
+    hhto:standardForm "西三旗"^^xsd:string .
+
+hd:top_yimuyuan a hhto:Toponym ;
+    rdfs:label "一亩园"@zh ;
+    hhto:attestedIn hd:attest_yimuyuan_qianlong ;
+    hhto:phoneticPinyin "yī mǔ yuán"^^xsd:string ;
+    hhto:standardForm "一亩园"^^xsd:string .
+
+hd:top_zaojunmiao a hhto:Toponym ;
+    rdfs:label "皂君庙"@zh ;
+    hhto:attestedIn hd:attest_zaojunmiao_record ;
+    hhto:evolutionTriggeredBy hd:evt_zaojunmiao_drift ;
+    hhto:phoneticPinyin "zào jūn miào"^^xsd:string ;
+    hhto:standardForm "皂君庙"^^xsd:string .
+
+hd:top_zhongguancun_modern a hhto:Toponym ;
+    rdfs:label "中关村"@zh ;
+    hhto:attestedIn hd:attest_jingxi_map_1913,
+        hd:attest_zgc_1953_decision,
+        hd:attest_zgc_1980_seed,
+        hd:attest_zgc_1988_zone ;
+    hhto:evolutionTriggeredBy hd:evt_zhongguan_euphemism ;
+    hhto:evolvedFrom hd:top_zhongguancun_eunuch ;
+    hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
+    hhto:standardForm "中关村"^^xsd:string .
+
+hd:attest_gaoliangqiao_979_myth a hhto:PlaceAttestation ;
+    rdfs:label "宋太宗中箭之高梁桥说"@zh ;
+    hhto:epistemicNotes "时空错乱：979年高梁河之战时该处仅有古河道与野渡，高梁桥系元至元二十九年（1292）郭守敬所建，晚了313年"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
+    hhto:originalQuote "讲宋太宗赵光义高梁河惨败，于高梁桥下乘驴车仓皇南逃"@zh ;
+    hhto:recordedYear 1950 ;
+    rdfs:comment "断代: 现代通俗评书 | 来源: 《通俗演义小说附会》"@zh .
+
+hd:attest_gaoliangzha_1292 a hhto:PlaceAttestation ;
+    rdfs:label "高梁闸"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "又于高梁河创设水闸，节水利漕，赐名通惠河"@zh ;
+    hhto:recordedYear 1292 ;
+    rdfs:comment "断代: 元代（至元二十九年） | 来源: 《元史·郭守敬传》"@zh .
+
+hd:attest_shuntian_xisanqi a hhto:PlaceAttestation ;
+    rdfs:label "西三旗"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "宛平北乡有西三旗、西二旗，相传明代卫所小旗分屯之地"@zh ;
+    hhto:recordedYear 1885 ;
+    rdfs:comment "断代: 清代（光绪十一年） | 来源: 《光绪顺天府志·地理志》"@zh .
+
+hd:attest_xisanqi_manchu_myth a hhto:PlaceAttestation ;
+    rdfs:label "西三旗源自满洲八旗三旗说"@zh ;
+    hhto:epistemicNotes "严重史实错误：清代八旗驻防体系中绝无‘西三旗’之军制建置，一手顺天府志明确记载为明代卫所小旗军屯"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
+    hhto:originalQuote "俗传西三旗为清代正黄、正白、正蓝上三旗驻军之地"@zh ;
+    hhto:recordedYear 1980 ;
+    rdfs:comment "断代: 现代通俗读物 | 来源: 《北京地名通俗民间讲义（错误说）》"@zh .
+
+hd:feat_baifu_wengshan_he a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "白浮瓮山河故道"@zh ;
+    hhto:coordinatesWGS84 "116.28,40.02"^^xsd:string ;
+    rdfs:comment "元代郭守敬开凿引白浮泉至瓮山泊的绕山大渠，元代通惠河上游生命线"@zh .
+
+hd:feat_wanshoushan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "瓮山与瓮山泊（万寿山·昆明湖）"@zh ;
+    hhto:coordinatesWGS84 "116.27,39.99"^^xsd:string ;
+    rdfs:comment "元代郭守敬引水水柜汇聚地，乾隆拓建为昆明湖与万寿山"@zh .
+
+hd:top_chengfu a hhto:Toponym ;
+    rdfs:label "成府"@zh ;
+    hhto:attestedIn hd:attest_chengfu_shunzhi ;
+    hhto:phoneticPinyin "chéng fǔ"^^xsd:string ;
+    hhto:standardForm "成府"^^xsd:string .
+
+hd:top_daizhou_name a hhto:Toponym ;
+    rdfs:label "带州"@zh ;
+    hhto:attestedIn hd:attest_daizhou_tang_record ;
+    hhto:phoneticPinyin "dài zhōu"^^xsd:string ;
+    hhto:standardForm "带州"^^xsd:string .
+
+hd:top_dajuesi a hhto:Toponym ;
+    rdfs:label "大觉寺"@zh ;
+    hhto:attestedIn hd:attest_dajuesi_liao_stele,
+        hd:attest_dajuesi_stele ;
+    hhto:evolutionTriggeredBy hd:evt_dajuesi_rename ;
+    hhto:phoneticPinyin "dà jué sì"^^xsd:string ;
+    hhto:standardForm "大觉寺"^^xsd:string .
+
+hd:top_gaoliangzha a hhto:Toponym ;
+    rdfs:label "高梁闸"@zh ;
+    hhto:attestedIn hd:attest_gaoliangzha_1292 ;
+    hhto:phoneticPinyin "gāo liáng zhá"^^xsd:string ;
+    hhto:standardForm "高梁闸"^^xsd:string .
+
+hd:top_maimaijie a hhto:Toponym ;
+    rdfs:label "买卖街"@zh ;
+    hhto:phoneticPinyin "mǎi mài jiē"^^xsd:string ;
+    hhto:standardForm "买卖街"^^xsd:string .
+
+hd:top_shucun a hhto:Toponym ;
+    rdfs:label "树村"@zh ;
+    hhto:attestedIn hd:attest_rixia_shucun,
+        hd:attest_shucun_shishi ;
+    hhto:evolutionTriggeredBy hd:evt_shucun_garrison_shift ;
+    hhto:phoneticPinyin "shù cūn"^^xsd:string ;
+    hhto:standardForm "树村"^^xsd:string .
+
+hd:top_suzhoujie a hhto:Toponym ;
+    rdfs:label "苏州街"@zh ;
+    hhto:attestedIn hd:attest_suzhoujie_qianlong_poem ;
+    hhto:evolutionTriggeredBy hd:evt_suzhoujie_imperial_build ;
+    hhto:evolvedFrom hd:top_maimaijie ;
+    hhto:phoneticPinyin "sū zhōu jiē"^^xsd:string ;
+    hhto:standardForm "苏州街"^^xsd:string .
+
+hd:top_xiaojiahe a hhto:Toponym ;
+    rdfs:label "肖家河"@zh ;
+    hhto:attestedIn hd:attest_xiaojiahe_daqing ;
+    hhto:evolutionTriggeredBy hd:evt_xiaojiahe_garrison_shift ;
+    hhto:phoneticPinyin "xiāo jiā hé"^^xsd:string ;
+    hhto:standardForm "肖家河"^^xsd:string .
+
+hd:top_zhenjuesi a hhto:Toponym ;
+    rdfs:label "真觉寺"@zh ;
+    hhto:attestedIn hd:attest_zhenjuesi_shilu ;
+    hhto:phoneticPinyin "zhēn jué sì"^^xsd:string ;
+    hhto:standardForm "真觉寺"^^xsd:string .
+
+hhto:AdministrativeShiftEvent a owl:Class ;
+    rdfs:label "政区拆分合并与移治事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:BurialGround a owl:Class ;
+    rdfs:label "陵寝墓茔与义地"@zh ;
+    rdfs:comment "如金山一溜边山七十二府妃嫔墓、太监义地"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hhto:HydraulicFacility a owl:Class ;
+    rdfs:label "水利工程设施"@zh ;
+    rdfs:comment "古代蓄水、分水、引水与调节水利工程，如水闸、堰、堤、池"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hhto:ImperialGarden a owl:Class ;
+    rdfs:label "皇家园林宫禁"@zh ;
+    rdfs:comment "三山五园及其周边离宫附属建制"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hhto:ModernInstitution a owl:Class ;
+    rdfs:label "近现代科研教育机构与高新区"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hd:attest_taizhouwu_dock_study a hhto:PlaceAttestation ;
+    rdfs:label "太舟坞地名源流考"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "太舟坞紧邻元代白浮瓮山河引水线，‘坞’字自古专指船坞水港，太舟坞实为元代运石泊舟之官坞"@zh ;
+    hhto:recordedYear 1995 ;
+    rdfs:comment "断代: 现代 | 来源: 《北京水利史志研究》"@zh .
+
+hd:feat_changhe a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "长河皇家水道"@zh ;
+    hhto:coordinatesWGS84 "116.32,39.94"^^xsd:string ;
+    rdfs:comment "高梁河上游长河段，明清两代通往西山御园的水上御路"@zh .
+
+hd:feat_gaolianghe a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "高梁河水系古道"@zh ;
+    hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
+    rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
+
+hd:feat_qinghe a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "清河干流古河道"@zh ;
+    hhto:coordinatesWGS84 "116.34,40.04"^^xsd:string ;
+    rdfs:comment "北京北郊横贯水系，古代通往塞北长城要隘的重要军事水障与漕运支线"@zh .
+
+hd:top_anheqiao_peace a hhto:Toponym ;
+    rdfs:label "安和桥"@zh ;
+    hhto:attestedIn hd:attest_anheqiao_stone_tablet ;
+    hhto:evolutionTriggeredBy hd:evt_anhe_imperial ;
+    hhto:evolvedFrom hd:top_anheqiao_wood ;
+    hhto:phoneticPinyin "ān hé qiáo"^^xsd:string ;
+    hhto:standardForm "安和桥"^^xsd:string .
+
+hd:top_anheqiao_wood a hhto:Toponym ;
+    rdfs:label "罗锅桥"@zh ;
+    hhto:attestedIn hd:attest_anheqiao_wood_c14 ;
+    hhto:phoneticPinyin "luó guō qiáo"^^xsd:string ;
+    hhto:standardForm "罗锅桥"^^xsd:string .
+
+hd:top_cishousi a hhto:Toponym ;
+    rdfs:label "慈寿寺"@zh ;
+    hhto:attestedIn hd:attest_cishousi_dijing ;
+    hhto:phoneticPinyin "cí shòu sì"^^xsd:string ;
+    hhto:standardForm "慈寿寺"^^xsd:string .
+
+hd:top_haidian_dian2 a hhto:Toponym ;
+    rdfs:label "海甸"@zh ;
+    hhto:evolutionTriggeredBy hd:evt_haidian_dian2 ;
+    hhto:evolvedFrom hd:top_haidian_dian1 ;
+    hhto:phoneticPinyin "hǎi diàn"^^xsd:string ;
+    hhto:standardForm "海甸"^^xsd:string .
+
+hd:top_jueshengsi a hhto:Toponym ;
+    rdfs:label "觉生寺"@zh ;
+    hhto:attestedIn hd:attest_dazhongsi_bell_stele ;
+    hhto:phoneticPinyin "jué shēng sì"^^xsd:string ;
+    hhto:standardForm "觉生寺"^^xsd:string .
+
+hd:top_landianchang_dye a hhto:Toponym ;
+    rdfs:label "蓝靛厂"@zh ;
+    hhto:attestedIn hd:attest_rixia_landianchang ;
+    hhto:phoneticPinyin "lán diàn chǎng"^^xsd:string ;
+    hhto:standardForm "蓝靛厂"^^xsd:string .
+
+hd:top_liulangzhuang_willow a hhto:Toponym ;
+    rdfs:label "柳浪庄"@zh ;
+    hhto:evolutionTriggeredBy hd:evt_niulan_to_liulang_willow ;
+    hhto:evolvedFrom hd:top_niulanzhuang ;
+    hhto:phoneticPinyin "liǔ làng zhuāng"^^xsd:string ;
+    hhto:standardForm "柳浪庄"^^xsd:string .
+
+hd:top_niulanzhuang a hhto:Toponym ;
+    rdfs:label "牛栏庄"@zh ;
+    hhto:attestedIn hd:attest_wanping_niulanzhuang ;
+    hhto:phoneticPinyin "niú lán zhuāng"^^xsd:string ;
+    hhto:standardForm "牛栏庄"^^xsd:string .
+
+hd:top_qiongbajia a hhto:Toponym ;
+    rdfs:label "穷八家"@zh ;
+    hhto:phoneticPinyin "qióng bā jiā"^^xsd:string ;
+    hhto:standardForm "穷八家"^^xsd:string .
+
+hhto:EuphemisticRenamingEvent a owl:Class ;
+    rdfs:label "文人雅化避嫌更名事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:ReligiousSite a owl:Class ;
+    rdfs:label "宗教寺观"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hhto:Watercourse a owl:Class ;
+    rdfs:label "水系河道"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hd:feat_xiangshan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "香山与金山翠微山麓"@zh ;
+    hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
+    rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
+
+hd:top_haidian_dian1 a hhto:Toponym ;
+    rdfs:label "海店"@zh ;
+    hhto:attestedIn hd:attest_haidian_1260 ;
+    hhto:evolutionTriggeredBy hd:evt_haidian_creation ;
+    hhto:phoneticPinyin "hǎi diàn"^^xsd:string ;
+    hhto:standardForm "海店"^^xsd:string .
+
+hd:top_weiwucun a hhto:Toponym ;
+    rdfs:label "畏吾村"@zh ;
+    hhto:attestedIn hd:attest_weiwucun_yuanshi ;
+    hhto:phoneticPinyin "wèi wú cūn"^^xsd:string ;
+    hhto:standardForm "畏吾村"^^xsd:string .
+
+hd:top_zhongguancun_eunuch a hhto:Toponym ;
+    rdfs:label "中官村"@zh ;
+    hhto:attestedIn hd:attest_zhongguan_eunuch_stele ;
+    hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
+    hhto:standardForm "中官村"^^xsd:string .
+
+hhto:HistoricalEntity a owl:Class ;
+    rdfs:label "历史实体"@zh ;
+    rdfs:comment "所有历史时空要素的顶层抽象基类"@zh .
+
+hhto:ImperialNamingEvent a owl:Class ;
+    rdfs:label "官方赐名改名事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:TerrainElevation a owl:Class ;
+    rdfs:label "山峦台地"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hhto:PhoneticShiftEvent a owl:Class ;
+    rdfs:label "语音流变与方言通假事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:CompetingHypothesis a owl:Class ;
+    rdfs:label "竞争假说"@zh ;
+    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
+
+hhto:MilitaryGarrison a owl:Class ;
+    rdfs:label "军事驻防与军屯"@zh ;
+    rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hhto:Settlement a owl:Class ;
+    rdfs:label "自然聚落与市镇"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
+hd:feat_wanquanhe a hhto:PhysicalFeature,
+        hhto:Wetland ;
+    rdfs:label "万泉河湿地水网"@zh ;
+    hhto:coordinatesWGS84 "116.3,39.98"^^xsd:string ;
+    rdfs:comment "西山山麓泉群汇聚形成的万泉河浅水洼地与湖泊沼泽区"@zh .
+
+hhto:PhysicalFeature a owl:Class ;
+    rdfs:label "物理空间地物"@zh ;
+    rdfs:comment "具有相对稳定地质、水文特征的客观自然地理底座 (Phenomenal Place)"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
+hhto:ToponymEvolutionEvent a owl:Class ;
+    rdfs:label "地名演变事件"@zh ;
+    rdfs:comment "触发地名更替、改字、升降或消亡的历史事件"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
+hhto:AdministrativeUnit a owl:Class ;
+    rdfs:label "建置与制度实体"@zh ;
+    rdfs:comment "具有制度身份、赋税职能或社群建制的历史组织单元 (Declarative Place)"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
+hhto:Toponym a owl:Class ;
+    rdfs:label "地名称号实体"@zh ;
+    rdfs:comment "作为语言符号、社会称谓而存在的专有地名字符串与名号 (Appellation)"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
+hhto:PlaceAttestation a owl:Class ;
+    rdfs:label "史料书证凭证"@zh ;
+    rdfs:comment "具体史料文本在特定断代对该地名的一次实证用例 (Attestation as a First-class Node)"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
