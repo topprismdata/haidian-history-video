@@ -373,7 +373,9 @@ class TestMinerContract:
         """v5：后缀 墓/街/房 + 边界垃圾前缀表（holdout run3 裁决落地）；
         版本进 SourceVisitKey，bump 即视为全部篇卷没挖过"""
         assert MINER_VERSION == "v5"
-        assert RULE_PROFILE_VERSION == "rp-v5"
+        # rp-v6(2026-10-02):回溯边界字 +原詣製/空格——holdout v2 run7/run8
+        # 侵蚀归因;版本 bump 即全部篇卷视为没挖过(run9 重挖)
+        assert RULE_PROFILE_VERSION == "rp-v6"
 
 
 class TestV4KnownMentionChannel:
@@ -669,3 +671,53 @@ class TestV5LeadingStopPrefixes:
         occ = [o for o in miner.mine("src_v5n", "div_v5n", [f])
                if o.surface_form == "六郎庄"][0]
         assert "讹写作" in occ.note, "剥前缀必须写进 note: %s" % occ.note
+
+
+# ==================================================================
+# rp-v6 span 左侵蚀钉(holdout v2 run7/run8 归因,2026-10-02)
+# ==================================================================
+
+class TestWalkBackErosion:
+    """后缀扫描左回溯侵蚀:v2 原典域主导失败类。三个真实案例 + 一个
+    既有边界字负控制(防修复单向漂移)。"""
+
+    def test_yuan_gaoliangqiao(self):
+        """run8 案例:「原髙梁橋」——原(副词)必须截停,span 从 髙 起。"""
+        m = ToponymMiner()
+        window = "北枕原髙梁橋而流"
+        assert m._walk_back(window, 5) == 3
+
+    def test_yuzhi_yi_changchunyuan(self):
+        """run7 案例:「御製詣暢春園」——詣(动 词)必须截停。"""
+        m = ToponymMiner()
+        window = "遂御製詣暢春園問安"
+        assert m._walk_back(window, 6) == 4
+
+    def test_ideographic_space_boundary(self):
+        """run7 案例:全角空格是硬边界,回溯不得越过(「　暢春園」)。"""
+        m = ToponymMiner()
+        window = "居于\u3000暢春園問安"
+        assert m._walk_back(window, 5) == 3
+        window2 = "居于 暢春園問安"
+        assert m._walk_back(window2, 5) == 3
+
+    def test_boundary_chars_still_stop(self):
+        """既有边界字负控制:今/名/建/的 仍截停(防新表挤掉旧语义)。"""
+        m = ToponymMiner()
+        assert m._walk_back("即今大觉寺", 4) == 2      # 今(寺=4,名头=大)
+        assert m._walk_back("名娘娘府", 4) == 1        # 名
+        assert m._walk_back("的万寿山", 4) == 1        # 的
+
+    def test_stop_chars_absent_from_kb_names(self):
+        """【负控制】新增停字不得出现在任何 KB 顶名内部(否则截断真名)。"""
+        from haidian_kg.expansion import _STOP_CHARS
+        mods = ("banners", "bridges", "dazhongsi", "gaoliang", "settlements",
+                "suburbs", "urban", "yuanmingyuan", "xishan",
+                "sanshiwuyuan", "pingyuan")
+        new_stops = set("原詣製　 ")
+        import importlib
+        for name in mods:
+            mod = importlib.import_module("haidian_kg.calibration." + name)
+            for e in mod.ENTITIES:
+                hit = new_stops & set(e.canonical_label)
+                assert not hit, "%s 含新停字 %s" % (e.canonical_label, hit)
