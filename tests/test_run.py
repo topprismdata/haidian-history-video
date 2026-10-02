@@ -52,7 +52,7 @@ def test_composition_overrides_covers_all_registered_episodes():
         assert comp != "%sCourse" % ep.capitalize() or ep in (
             "shucun", "dazhongsi", "xisanqi", "yimuyuan", "niangniangfu",
             "landianchang", "suzhoujie", "zhongguancun",
-            "changchunyuan", "wanshou",
+            "changchunyuan", "wanshou", "changhe",
         ), "%s 的映射是 capitalize() 拼的，需人工确认" % ep
 
 
