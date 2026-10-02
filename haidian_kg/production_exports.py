@@ -27,6 +27,27 @@ from .ontology.video_contracts import (
 )
 
 
+#: 开放区间的哨兵值：早于一切有纪年的时间
+OPEN_BEGIN = -(10 ** 9)
+
+
+def _span_start_key(state_or_span) -> int:
+    """
+    TimeSpan 的起始排序键，容忍开放端。
+
+    「树村汛 1781 年前已存」这类状态的 begin 为 None（开放起始），
+    若直接取 begin.gregorian.year 会抛 AttributeError。
+    统一在此处理：开放起始返回最小哨兵值，BP 年代换算为公历。
+    """
+    span = getattr(state_or_span, "time_span", state_or_span)
+    b = span.begin
+    if b is None or b.gregorian is None:
+        if b is not None and b.bp_years is not None:
+            return 2026 - b.bp_years
+        return OPEN_BEGIN
+    return b.gregorian.year
+
+
 class KnowledgeBase:
     """轻量内存图谱：按 id 索引各类节点"""
 
@@ -72,15 +93,31 @@ class KnowledgeBase:
     # ---------- 基础查询 ----------
 
     def states_of(self, entity_id: str) -> List[HistoricalFeatureState]:
+        """
+        按时间排序返回该实体的全部状态。
+
+        排序键必须容忍开放起始（begin=None）与无公历的 DatePoint，
+        否则「1781年前已存」这类开放区间会直接抛 AttributeError。
+        """
         out = [s for s in self.states.values() if s.entity_id == entity_id]
-        return sorted(out, key=lambda s: s.time_span.begin.gregorian.year)
+        return sorted(out, key=_span_start_key)
 
     def state_at(self, entity_id: str, year: int) -> Optional[HistoricalFeatureState]:
-        """命中该年份的状态；无命中返回 None（不得静默回退到最近状态）"""
-        for s in self.states_of(entity_id):
-            if s.time_span.contains(year):
-                return s
-        return None
+        """
+        命中该年份的状态；无命中返回 None（不得静默回退到最近状态）。
+
+        【v2.1 修正·真 bug】
+        必须取【起始最晚】的命中状态，而非首个命中。
+        原因：开放起始区间（如「树村汛 1781 年前已存」，begin 无公历）
+        在时间轴上覆盖 -∞，若按列表顺序取首个，
+        它会永远压过后来的具体区间，导致 1801 年反而取到「1781 年前」的状态。
+        """
+        if year is None:
+            return None
+        hits = [s for s in self.states_of(entity_id) if s.time_span.contains(year)]
+        if not hits:
+            return None
+        return max(hits, key=_span_start_key)
 
     def appellations_of(self, entity_id: str) -> List[Appellation]:
         ref_ids = {r.appellation_id for r in self.references
@@ -354,6 +391,69 @@ def _has_verified_continuity(kb: KnowledgeBase, entity_id: str,
     return any(s.time_span.begin.gregorian.year > year for s in kb.states_of(entity_id))
 
 
+#: 中文数字与阿拉伯数字统一
+_CN_DIGIT = {"零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
+             "六": 6, "七": 7, "八": 8, "九": 9}
+
+
+def _numbers_in(text: str) -> List[int]:
+    """抽取句中所有数字（阿拉伯与中文均转 int），供口径比对"""
+    out = [int(x) for x in re.findall(r"\d{2,5}", text)]
+    for seg in re.findall(r"[零一二两三四五六七八九十百千]+", text):
+        seg = seg.replace("两", "二")
+        if seg in ("一", "二", "三", "四", "五", "六", "七", "八", "九"):
+            out.append(_CN_DIGIT[seg])
+            continue
+        total, section, number = 0, 0, 0
+        for ch in seg:
+            if ch in _CN_DIGIT:
+                number = _CN_DIGIT[ch]
+            elif ch == "十":
+                section += (number or 1) * 10
+                number = 0
+            elif ch == "百":
+                section += (number or 1) * 100
+                number = 0
+            elif ch == "千":
+                section += (number or 1) * 1000
+                number = 0
+        val = total + section + number
+        if val:
+            out.append(val)
+    return out
+
+
+def _check_numeric_conflict(text: str, st) -> Optional[str]:
+    """
+    口径分离判据（审计层）：句中数字必须与该状态记录一致。
+
+    真实事故：雍正二年初建每处 1250 间，乾隆十二年增建后 1550 楹。
+    脚本若说「雍正二年已有 1550 间」——命中了正确的状态，
+    但断言内容与状态记录矛盾，属口径混说，必须阻断。
+
+    只在句中出现"数量单位"（间/楹/所/处/名/人）时比对，
+    避免把「圆明园四十景」这类名称数字误判为数量。
+    """
+    units = ("间", "楹", "所", "处", "座", "名", "人", "房")
+    if not any(u in text for u in units):
+        return None
+    claim_nums = {n for n in _numbers_in(text) if n >= 10}
+    if not claim_nums:
+        return None
+    state_blob = " ".join(filter(None, [
+        st.geometry or "", st.material or "", st.function or "",
+        st.admin_status or ""]))
+    state_nums = {n for n in _numbers_in(state_blob) if n >= 10}
+    if not state_nums:
+        return None
+    extra = claim_nums - state_nums
+    if extra and not (claim_nums & state_nums):
+        return ("句中数字 %s 与该年份状态记录（%s：%s）不符；"
+                "初建与增建、各阶段规模分属不同年份，不可混说"
+                % (sorted(extra), st.time_span.label, sorted(state_nums)))
+    return None
+
+
 def audit_script(kb: KnowledgeBase, script: str,
                  known_appellation_labels: Optional[List[str]] = None) -> List[AuditResult]:
     """
@@ -535,6 +635,25 @@ def audit_script(kb: KnowledgeBase, script: str,
                 reason=("句中断言该地点『不复存在』，但本库已确证其在%d年之后仍持续存在"
                         "（1860焚毁后有残存建筑与禁园，1928接管，1988遗址公园开放）；"
                         "毁损≠消亡，不得判通过" % year),
+                evidence_fact_ids=st.evidence_fact_ids,
+                conflicting_state_id=st.id,
+            ))
+            continue
+
+        # 【口径分离·审计层】命中状态不等于断言正确。
+        # 脚本若在句中给出具体数字，必须与该状态记录的数字一致。
+        # 雍正二年初建 1250 间，乾隆十二年增建后 1550 楹 ——
+        # 两个数字分属两个年份，混说即为硬伤。
+        num_conflict = _check_numeric_conflict(text, st)
+        if num_conflict:
+            claim = ParsedClaim(
+                claim_text=text, claim_type=ClaimType.ATTRIBUTE, year=year,
+                resolved_appellation_id=app.id, resolved_entity_id=ent_id,
+                disambiguation_confidence=conf,
+            )
+            results.append(AuditResult(
+                claim=claim, verdict=AuditVerdict.BLOCK,
+                reason=num_conflict,
                 evidence_fact_ids=st.evidence_fact_ids,
                 conflicting_state_id=st.id,
             ))

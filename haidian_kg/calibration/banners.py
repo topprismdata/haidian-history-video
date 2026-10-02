@@ -31,6 +31,7 @@ from ..ontology.epistemic import (
     BeliefAdoption, EpistemicStatus, HistoricalSource, Proposition,
     SourceCategory, SourceDivision, TextualFact,
 )
+from .bibliography import source_by_title
 from ..ontology.spatiotemporal import (
     Appellation, AppellationKind, DiachronicIdentityAssertion,
     HistoricalFeatureState, IdentityRelation, PersistentSpatialEntity,
@@ -61,39 +62,26 @@ def _ts(y1, y2, tag):
 # ==================================================================
 
 SOURCES: List[HistoricalSource] = [
-    HistoricalSource(id="src_bqtz_116", title="钦定八旗通志",
-                     category=SourceCategory.OFFICIAL_HISTORY,
-                     version_description="四库全书本，卷116营建志"),
-    HistoricalSource(id="src_rxjwkc_72", title="钦定日下旧闻考",
-                     category=SourceCategory.OFFICIAL_HISTORY,
-                     version_description="四库全书本，卷72官署门引《八旗册》"),
-    HistoricalSource(id="src_rxjwkc_99", title="钦定日下旧闻考",
-                     category=SourceCategory.OFFICIAL_HISTORY,
-                     version_description="四库全书本，卷99郊坰西九"),
-    HistoricalSource(id="src_rizhi_46", title="清仁宗睿皇帝实录",
-                     category=SourceCategory.OFFICIAL_HISTORY,
-                     version_description="卷46，嘉庆四年六月初二日谕"),
-    HistoricalSource(id="src_rizhi_76", title="清仁宗睿皇帝实录",
-                     category=SourceCategory.OFFICIAL_HISTORY,
-                     version_description="卷76，嘉庆五年十一月十七日谕"),
-    HistoricalSource(id="src_zyztj", title="竹叶亭杂记",
-                     category=SourceCategory.LITERARY_COLLECTION,
-                     version_description="姚元之撰，卷一"),
+    # v2.1：一律取自统一书目表，一书一条，禁止在此另建
+    source_by_title("钦定八旗通志"),
+    source_by_title("钦定日下旧闻考"),
+    source_by_title("清仁宗睿皇帝实录"),
+    source_by_title("竹叶亭杂记"),
 ]
 
 
 DIVISIONS: List[SourceDivision] = [
-    SourceDivision(id="div_bqtz116_yingjian", source_id="src_bqtz_116",
+    SourceDivision(id="div_bqtz116_yingjian", source_id="src_bqtz",
                    volume_number="卷116", section_title="营建志"),
-    SourceDivision(id="div_bqtz34_zhuoshu", source_id="src_bqtz_116",
+    SourceDivision(id="div_bqtz34_zhuoshu", source_id="src_bqtz",
                    volume_number="卷34", section_title="驻防"),
-    SourceDivision(id="div_rxjwkc72_baqi", source_id="src_rxjwkc_72",
+    SourceDivision(id="div_rxjwkc72_baqi", source_id="src_rxjwkc",
                    volume_number="卷72", section_title="官署门引《八旗册》"),
-    SourceDivision(id="div_rxjwkc99_jiaojiong", source_id="src_rxjwkc_99",
+    SourceDivision(id="div_rxjwkc99_jiaojiong", source_id="src_rxjwkc",
                    volume_number="卷99", section_title="郊坰西九"),
-    SourceDivision(id="div_rizhi46_yu", source_id="src_rizhi_46",
+    SourceDivision(id="div_rizhi46_yu", source_id="src_rizhi",
                    volume_number="卷46", section_title="嘉庆四年六月初二日谕"),
-    SourceDivision(id="div_rizhi76_yu", source_id="src_rizhi_76",
+    SourceDivision(id="div_rizhi76_yu", source_id="src_rizhi",
                    volume_number="卷76", section_title="嘉庆五年十一月十七日谕"),
     SourceDivision(id="div_zyztj1", source_id="src_zyztj",
                    volume_number="卷一", section_title="圆明园驻防"),
@@ -141,7 +129,7 @@ FACTS: List[TextualFact] = [
         attested_string="五聖菴",
     ),
     TextualFact(
-        id="tf_rizhi76_yizhu", division_id="div_rizhi76_yu",
+        id="tf_rizhi76_yu", division_id="div_rizhi76_yu",
         verbatim_quote="定左翼總兵駐正陽門外、右翼總兵駐圓明園，所有圓明園副將，著移駐樹村。",
         attested_string="著移駐樹村",
     ),
@@ -225,13 +213,12 @@ STATES: List[HistoricalFeatureState] = [
         function="八旗护军营房（镶黄旗），额兵增后规模",
         evidence_fact_ids=["tf_qianlong12_zeng", "tf_bq72_huangqi"],
     ),
-    # 树村汛：1781之前已存在
+    # 树村汛：1781之前已存在（卷73「三汛仍旧」）
+    # 开放起始必须用 begin=None，不得伪造一个无公历的 DatePoint
     HistoricalFeatureState(
         id="st_xun_pre1781", entity_id="ent_shucun_xun",
-        time_span=TimeSpan(id="ts_x1", label="1781年前已存", open_begin=True,
-                           begin=DatePoint(id="ts_x1b", label="早", precision="century",
-                                           bp_years=None),
-                           end=_dt(1780, "ts_x1e")),
+        time_span=TimeSpan(id="ts_x1", label="1781年前已存",
+                           open_begin=True, begin=None, end=_dt(1780, "ts_x1e")),
         geometry="树村汛设守备署，署在树村南",
         material="汛署房舍",
         function="巡捕五营之一汛（卷73称三汛仍旧，表明1781前已存）",
@@ -254,6 +241,15 @@ STATES: List[HistoricalFeatureState] = [
         material="寺庵砖木",
         function="庙宇聚落（万历二十八年铁磬、天启六年铁钟为证）",
         evidence_fact_ids=["tf_rx99_wushengan"],
+    ),
+    # 圆明园母体：八旗驻防的依托园林
+    HistoricalFeatureState(
+        id="st_ymy_parent_1724", entity_id="ent_yuanmingyuan_parent",
+        time_span=_ts(1724, 1911, "ts_yp"),
+        geometry="皇家离宫园林（此处仅记其作为八旗驻防依托的空间母体）",
+        material="园林宫殿（形制详见圆明园词条）",
+        function="八旗驻防的空间母体，营房环其分布",
+        evidence_fact_ids=["tf_bqtz116_yuanzheng", "tf_bqtz116_fangwei"],
     ),
 ]
 
@@ -327,6 +323,9 @@ APPELLATIONS: List[Appellation] = [
     Appellation(id="app_beianqiao_mis", label="北安河桥",
                 kind=AppellationKind.MISPLACED_LEGEND, valid_time_span=_ts(1900, 2026, "ts_n5"),
                 attesting_fact_ids=[]),
+    Appellation(id="app_ymy_banners", label="圆明园八旗驻防",
+                kind=AppellationKind.OFFICIAL, valid_time_span=_ts(1724, 1911, "ts_n7"),
+                attesting_fact_ids=["tf_bqtz116_yuanzheng"]),
     Appellation(id="app_shucun_name", label="树村",
                 kind=AppellationKind.STANDARD if hasattr(AppellationKind, "STANDARD")
                 else AppellationKind.OFFICIAL,
@@ -345,6 +344,13 @@ REFERENCES: List[ReferentialAssertion] = [
         id="rr_shucunxun", appellation_id="app_shucun_xun",
         referent_entity_id="ent_shucun_xun", time_span=_ts(1700, 1911, "ts_r2"),
         evidence_fact_ids=["tf_rizhi76_yu"],
+    ),
+    # 「圆明园八旗驻防」指向集合母体（圆明园），营房为其下属
+    ReferentialAssertion(
+        id="rr_ymy_banners", appellation_id="app_ymy_banners",
+        referent_entity_id="ent_yuanmingyuan_parent",
+        time_span=_ts(1724, 1911, "ts_r3"),
+        evidence_fact_ids=["tf_bqtz116_yuanzheng", "tf_bqtz116_fangwei"],
     ),
 ]
 
