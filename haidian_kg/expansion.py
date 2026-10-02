@@ -43,8 +43,20 @@ from .ontology.epistemic import TextualFact
 #:      单字边界（今/名/记）——holdout run1 逐条归因的 P0 修复；
 #:   3) 纯地名条目（圆明园/万寿山/昆明湖等）移出 _STOPWORDS：它们是地点不
 #:      是噪声，「已知名不冒充新发现」改由 expander 的 known 集合路由保证。
-MINER_VERSION = "v4"
-RULE_PROFILE_VERSION = "rp-v4"
+#: v5（2026-10-02，holdout run3 闸门裁决）：
+#:   1) 通名后缀 +墓/街/房（复合 营房/營房 走旗名穿越）——run3 R 侧 8 条
+#:      FN（董四墓×3 / 苏州街×2 / 三旗营房×3）的直接病因：通名不在表，
+#:      「专名+通名」双通道同时不可达（suffix-and-cue-missing）；
+#:   2) 边界垃圾前缀表 LEADING_STOP_PREFIXES：提取面以非地名成分开头
+#:      （的/将/按/建/刹/俗呼/讹写作/俗称/居民/皇家/十处/后世/枪炮/
+#:      香山公园/海淀…）→ 剥离前缀后重验证「专名+通名」，剥后不合格
+#:      整面拒绝——run3 P 侧 ~10 条垃圾 coverage-gap FP 的共同面头
+#:      （的金代行宫园/刹碧云寺/讹写作六郎庄/按八旗/十处天然泉…）；
+#:   3) 回溯边界字 +的将將按建依刹（长编层现代汉语功能词；文言官书
+#:      低频，回溯不许越过）；旗制集合噪声词 +八旗（建满蒙八旗/按八旗
+#:      类子串拦截，整词防不住——正黄旗营房 必须放行）。
+MINER_VERSION = "v5"
+RULE_PROFILE_VERSION = "rp-v5"
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +82,7 @@ _TRAD_TO_SIMP = {
     "賜": "赐", "謂": "谓", "從": "从", "與": "与", "並": "并",
     "則": "则", "數": "数", "築": "筑", "設": "设", "為": "为",
     "於": "于", "諸": "诸",
+    "蘇": "苏",   # v5：苏州街（E12）入 KB 后的繁体引文字形
 }
 
 
@@ -113,6 +126,10 @@ _STOPWORDS = {
     "北牧馬場", "北牧马场",
     # 文言虚词/量词短语（模式误切的典型产物）
     "一萬間", "一千二百五十間", "四丁未", "六年", "十年",
+    # v5 泛指建筑/街市词（「房/街」通道负控制）：正房/厢房/营房/步行街
+    # 单独出现是建筑称谓或现代街市，不是地名；复合地名「正黄旗营房」
+    # 不受影响——_is_noise 是整词成员判定，不是子串
+    "营房", "營房", "正房", "廂房", "厢房", "步行街",
 }
 
 
@@ -216,9 +233,16 @@ SourceVisitKey = Tuple[str, str, str, str, str, str]
 
 #: 中文地名通名后缀表（专名+通名结构：树「村」、安河「桥」、七里「泊」）
 #: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训）
+#:
+#: v5（holdout run3）：+墓（董四墓）/街（苏州街）/房（通用，复合结构走
+#: 营房/營房 二字形）——墓/街/房 繁简同形，无需双写；营房/營房 是
+#: 「旗名+营房」八旗驻防建置的复合通名，走 _walk_back 的旗名穿越通道
+#: （正黄旗营房 整体成词），单字 房 仍受旗边界约束（「X旗房」不裂）。
 PLACE_SUFFIXES = (
     # 聚落
     "村", "莊", "庄", "屯", "營", "营", "旗", "府", "坊", "胡同",
+    # 聚落·v5 通名补收（holdout run3 R 侧 8 条 FN 的直接病因）
+    "墓", "街", "房", "营房", "營房",
     # 水利
     "河", "橋", "桥", "泊", "泉", "閘", "闸", "堰", "渠", "湖", "海",
     # 宗教
@@ -229,11 +253,70 @@ PLACE_SUFFIXES = (
 )
 _SUFFIX_SET = frozenset(PLACE_SUFFIXES)
 
+#: 复合建筑通名（旗名穿越通道，v5）：这些二字后缀命中时允许回溯越过
+#: 「旗」边界——「正黄旗营房」是八旗驻防建置地名，旗名是专名头的一部分；
+#: rp-v3 的旗边界只保护单字 营/旗 通名（「鑲黄旗營」不许裂成 X旗營）
+_CROSS_FLAG_SUFFIXES = frozenset(("营房", "營房"))
+
 #: 方位后缀（「樹村西邊」须剥离为「樹村」）
 DIRECTION_SUFFIXES = ("西邊", "東邊", "南邊", "北邊",
                       "西边", "东边", "南边", "北边",
                       "之西", "之東", "之东", "之南", "之北",
                       "西北", "東北", "东北", "西南", "東南", "东南")
+
+#: v5 边界垃圾前缀表（holdout run3 P 侧归因）：提取面以这些成分开头 =
+#: 句法杂缀/俗语引导/通用集合名词，不是地名头。规则：剥离前缀后重验证
+#: 「专名+通名」，剥后不合格整面拒绝（strip_leading_stop_prefix）。
+#: run3 实证垃圾面：的金代行宫园 / 俗呼一溜边山 / 建满蒙八旗（建 在
+#: 边界字表，此处兜 cue 窗口）/ 按八旗 / 十处天然泉 / 皇家宫廷内湖 /
+#: 讹写作六郎庄 / 刹碧云寺 / 海淀温泉 / 海淀区三里河 / 海淀凤凰岭 /
+#: 后世三山五园 / 枪炮演武场 / 香山公园香山。
+#: 繁简双字形（將）——G6/G7 硬性规定；最长前缀优先排序
+#: （海淀公园/海淀区 → 海淀：先剥短的会产出「公园香山」「区三里河」
+#: 类二次垃圾）。剥后余量 <2 字不剥：真名「海淀」「海淀镇」不误伤
+#: （「步行街」类整词通用词走 _STOPWORDS 整词拦截）。
+LEADING_STOP_PREFIXES = (
+    # 通用名词/区划前缀
+    "香山公园", "海淀公园", "海淀区", "海淀",
+    # 俗语/讹写引导
+    "讹写作", "俗称", "俗呼",
+    # 通用集合名词开头
+    "居民", "皇家", "十处", "后世", "枪炮",
+    # 结构助词/动词/介词（与 _STOP_CHARS 同源；此处兜 cue 窗口路径的面头）
+    "的", "将", "將", "按", "建", "依", "刹",
+)
+_LEADING_PREFIXES_SORTED = tuple(
+    sorted(LEADING_STOP_PREFIXES, key=len, reverse=True))
+
+
+def strip_leading_stop_prefix(name):
+    """剥面头的非地名前缀并重验证；返回 (剥离后名, 剥离链)。
+
+    - 无前缀命中：原样返回（「剥不动」≠「拒绝」，交还调用方噪声判定）。
+    - 剥离余量必须 ≥2 字：余量不足不剥（「海淀」「海淀镇」类真名不误伤）。
+    - 剥过 → 重验证：长度 2–6、仍以通名后缀收尾、头不得是回溯边界字
+      （「居民依墓」剥出「依墓」，头 依 是动词边界 → 整面拒绝）；
+      任一不过返回 (None, peeled)，调用方整面拒绝。
+    """
+    cur = name
+    peeled = []
+    while True:
+        for p in _LEADING_PREFIXES_SORTED:
+            if cur.startswith(p) and len(cur) - len(p) >= 2:
+                peeled.append(p)
+                cur = cur[len(p):]
+                break
+        else:
+            break
+    if not peeled:
+        return name, peeled
+    if not (2 <= len(cur) <= 6):
+        return None, peeled
+    if not any(cur.endswith(s) for s in PLACE_SUFFIXES):
+        return None, peeled
+    if cur[0] in _STOP_CHARS:
+        return None, peeled
+    return cur, peeled
 
 #: 繁简双字形的机构/建筑通名单字（单独成词时不是专名，但作为后缀合法）
 GENERIC_SINGLE = set("村莊庄屯營营府河橋桥泊泉閘闸堰渠湖山園园廠厂場场倉仓窯窑店铺關关嶺岭峪")
@@ -267,6 +350,11 @@ _STOP_CHARS = set(
 #: 名（名娘娘府/名健锐营）、记（卷九十八记外火器营）——专名头不可能
 #: 越过它们；不收 北/三/西（lexicalized 方位头：西三旗/北安河 先例）
 _STOP_CHARS |= set("今名记")
+#: rp-v5 单字边界（holdout run3 归因）：长编层现代汉语功能词——
+#: 的（的金代行宫园）、将（将万寿山后湖）、按（按八旗）、建（建满蒙八旗，
+#: 兼保「敕建泉宗庙」类被截断书证的干净回溯）、依（居民依墓成村）、
+#: 刹（名刹碧云寺）。文言官书低频（將 并收），回溯不许越过它们
+_STOP_CHARS |= set("的将將按建依刹")
 
 
 class SourceMiner(Protocol):
@@ -281,8 +369,10 @@ class SourceMiner(Protocol):
 _REIGN_PREFIXES = ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
                    "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国")
 #: 官职/机构模式（繁简）——同上共用
+#: v5：+八旗（旗制集合词）：「建满蒙八旗」「按八旗」类回溯产物整词不在
+#: 停用词表，只能子串拦；「正黄旗营房」不含 八旗 子串，不受影响
 _NOISE_KEYWORDS = ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
-                   "御道", "倉署", "仓署", "碾房", "都督")
+                   "御道", "倉署", "仓署", "碾房", "都督", "八旗")
 
 
 class ToponymMiner(object):
@@ -363,10 +453,15 @@ class ToponymMiner(object):
             return hits
         # 无通名后缀的线索词命名：生僻通名（水礳）靠这条保住（spec §2.4）
         name, stripped = self._strip_direction(window)
-        if not (2 <= len(name) <= 6) or self._is_noise(name):
+        # v5：面头非地名前缀剥离 + 重验证（剥后不合格整面拒绝）
+        name, peeled = strip_leading_stop_prefix(name)
+        if name is None or not (2 <= len(name) <= 6) or self._is_noise(name):
             return []
+        note = "提示词「%s」窗口「%s」" % (marker, window)
+        if peeled:
+            note += "←剥前缀「%s」" % "+".join(peeled)
         return [self._emit(name, fact, source_id, method="cue:%s" % marker,
-                           note="提示词「%s」窗口「%s」" % (marker, window),
+                           note=note,
                            conf="mid", span=marker + window, stripped=stripped)]
 
     def _phrase_hits(self, text: str, fact: TextualFact,
@@ -395,19 +490,28 @@ class ToponymMiner(object):
                 suffix = window[start:k + 1]
                 if len(suffix) != size or suffix not in _SUFFIX_SET:
                     continue
-                head = self._walk_back(window, start)
+                head = self._walk_back(
+                    window, start,
+                    cross_flags=suffix in _CROSS_FLAG_SUFFIXES)
                 name = window[head:k + 1]   # 专名头 + 通名后缀本身
                 if not (2 <= len(name) <= 6):
                     break               # 该命中作废，扫下一个后缀字
                 if self._is_noise(name):
                     break
+                # v5：面头非地名前缀剥离 + 重验证（剥后不合格整面拒绝）
+                cleaned, peeled = strip_leading_stop_prefix(name)
+                if cleaned is None:
+                    break
                 if any(head < e and k + 1 > s for s, e in taken):
                     break               # 与已采纳命中重叠（子词命中）
                 taken.append((head, k + 1))
+                note = "%s「%s」" % ("提示词回溯" if cue else "后缀扫描",
+                                    window[max(0, head - 2):k + 1])
+                if peeled:
+                    note += "←剥前缀「%s」" % "+".join(peeled)
                 out.append(self._emit(
-                    name, fact, source_id, method=method,
-                    note="%s「%s」" % ("提示词回溯" if cue else "后缀扫描",
-                                      window[max(0, head - 2):k + 1]),
+                    cleaned, fact, source_id, method=method,
+                    note=note,
                     conf="high" if cue else "mid",
                     span=window, stripped=None))
                 break
@@ -415,11 +519,24 @@ class ToponymMiner(object):
         return out
 
     @staticmethod
-    def _walk_back(window: str, suffix_start: int) -> int:
-        """从后缀起点向左回溯到标点/锚点词/虚词边界，返回专名头下标（M3）"""
+    def _walk_back(window: str, suffix_start: int,
+                   cross_flags: bool = False) -> int:
+        """从后缀起点向左回溯到标点/锚点词/虚词边界，返回专名头下标（M3）。
+
+        cross_flags（v5）：营房类复合建筑通名允许穿越「旗」边界——
+        「正黄旗营房」是八旗驻防建置地名，旗名是专名头的一部分；穿越后
+        继续按边界字回溯（「建满蒙八旗营房」在建 处截停 → 7 字超长作废）。
+        rp-v3 的旗边界语义不变：单字 营/旗 通名仍不许穿越（「鑲黄旗營」
+        不得裂出 X旗營/旗營）。
+        """
         j = suffix_start
         while j > 0 and window[j - 1] not in _STOP_CHARS:
             j -= 1
+        if cross_flags:
+            while j > 0 and window[j - 1] == "旗":
+                j -= 1
+                while j > 0 and window[j - 1] not in _STOP_CHARS:
+                    j -= 1
         return j
 
     def _clip(self, seg: str) -> Optional[str]:

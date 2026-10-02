@@ -317,10 +317,13 @@ class TestAttribution:
         assert "护军" in why
 
     def test_miss_suffix_and_cue_missing(self):
-        g = gm("s", 3, "董四墓")
-        text = "今香山董四墓附近"
+        # rp-v5 对齐：墓/街/房 已收录（v5 正是为此扩表），改钉 真未收录
+        # 通名「院」（清水院类；README §7 后缀表缺收清单的遗留项），
+        # 判据本义不变：后缀缺失 + 无线索词 → 双通道不可达
+        g = gm("s", 0, "清水院")
+        text = "清水院遗址"
         cls, why = attribute_miss(g, [], text)
-        assert cls == "suffix-and-cue-missing", "「墓」非收录后缀且无线索词"
+        assert cls == "suffix-and-cue-missing", "「院」非收录后缀且无线索词"
 
     def test_miss_cue_window_narrow(self):
         g = gm("s", 2, "清水院")
@@ -329,8 +332,11 @@ class TestAttribution:
         assert cls == "cue-window-narrow", "「院」非收录后缀，仅曰窗可达"
 
     def test_miss_walkback_overrun(self):
-        g = gm("s", 10, "长春园")
-        text = "圣皇太后六十寿辰拓建长春园"
+        # rp-v5 对齐：原用例「拓建长春园」因 建 收进边界字改为干净命中，
+        # 换 无边界字的超长回溯用例（重修/年间 均非边界字）——
+        # 归因类目本身是评估器镜像，类目保留，仅换可达实例
+        g = gm("s", 9, "长春园")
+        text = "乾隆年间皇太后重修长春园"
         cls, why = attribute_miss(g, [], text)
         assert cls == "walkback-overrun"
         assert "6" in why
