@@ -125,6 +125,25 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
     ),
 
     HistoricalSource(
+        id="src_tgaz", title="TGAZ 时空地名辞典（Temporal Gazetteer）",
+        category=SourceCategory.LOCAL_GAZETTEER,
+        issuing_body="哈佛燕京学社 × 复旦大学历史地理研究中心（CHGIS 项目）",
+        edition_note="基于 CHGIS 的历史地名时空数据库，覆盖秦至清(前221-1911)，"
+                     "提供地名/年代/类型检索与 API；用途：闭包候选的权威裁决依据——"
+                     "候选地名若能在 TGAZ 命中，即有独立书目佐证，"
+                     "置信度从 mid 升 high；未命中不否决（地方性小地名可能未收录）",
+    ),
+    HistoricalSource(
+        id="src_chgis", title="CHGIS 中国历史地理信息系统",
+        category=SourceCategory.GEOGRAPHICAL_TREATISE,
+        issuing_body="哈佛燕京学社 × 复旦大学历史地理研究中心",
+        base_edition="GIS数据集",
+        edition_note="秦至清连续政区边界与居民点时空序列（Shapefile/KML/DBF），"
+                     "V6 为最新版；学术免费使用（CC BY-NC 类），商用需授权；"
+                     "引用规范：CHGIS, Version 6. Cambridge: Harvard Yenching "
+                     "Institute and Fudan Center for Historical Geography",
+    ),
+    HistoricalSource(
         id="src_ymy_sijifang", title="圆明园四十景图咏",
         category=SourceCategory.LITERARY_COLLECTION,
         author_person_id="person_qianlong",

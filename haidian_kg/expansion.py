@@ -25,6 +25,7 @@ haidian_kg/expansion.py
   无需改动引擎。
 """
 from dataclasses import dataclass, field
+import re
 from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from .production_exports import KnowledgeBase
@@ -32,23 +33,8 @@ from .qa_gate import QAGate, QAReport
 from .ontology.epistemic import TextualFact
 
 
-@dataclass
-class CandidateName:
-    """从书里挖出的候选地名（尚未建档）"""
-    name: str
-    from_source_id: str
-    from_division_id: Optional[str]
-    evidence_fact_id: str          # 哪条引文里出现了它
-    note: str = ""
-
-
-# ---------------------------------------------------------------------------
-# 挖书器
-# ---------------------------------------------------------------------------
-
 #: 已知「非地名」的干扰词：出现在引文里但不是我们要的地名
-#: 注意：官书引文是繁体，口语档案是简体——**两种字形都要收录**，
-#: 否则停用词过滤只在半边生效（与 G6 繁简异体同一教训）
+#: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训）
 _STOPWORDS = {
     # 简体
     "皇帝", "天子", "朝廷", "官书", "内务府", "中科院", "考古所",
@@ -63,79 +49,193 @@ _STOPWORDS = {
     # 泛指词（模式命中但非专名）
     "八處", "御道", "倉署", "兩個小旗駐點", "三個小旗駐點",
     "圓明園副將", "都督河北諸軍事",
+    # 文言虚词/量词短语（模式误切的典型产物）
+    "一萬間", "一千二百五十間", "四丁未", "六年", "十年",
 }
 
 
-class QuoteCorpusMiner(object):
+@dataclass
+class CandidateName:
+    """从书里挖出的候选地名（尚未建档）"""
+    name: str
+    from_source_id: str
+    from_division_id: Optional[str]
+    evidence_fact_id: str          # 哪条引文里出现了它
+    note: str = ""
+    confidence: str = "low"        # high: 提示词+通名双证 / mid: 单证 / low: 仅模式
+    stripped_suffix: Optional[str] = None  # 被剥离的方位后缀
+
+
+#: 中文地名通名后缀表（专名+通名结构：树「村」、安河「桥」、七里「泊」）
+#: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训）
+PLACE_SUFFIXES = (
+    # 聚落
+    "村", "莊", "庄", "屯", "營", "营", "旗", "府", "坊", "胡同",
+    # 水利
+    "河", "橋", "桥", "泊", "泉", "閘", "闸", "堰", "渠", "湖", "海",
+    # 宗教
+    "寺", "菴", "庵", "觀", "观", "廟", "庙", "塔", "殿",
+    # 其他
+    "山", "墳", "坟", "園", "园", "廠", "厂", "場", "场", "倉", "仓",
+    "窯", "窑", "店", "口", "關", "关", "嶺", "岭", "峪", "澱", "淀",
+)
+
+#: 方位后缀（「樹村西邊」须剥离为「樹村」）
+DIRECTION_SUFFIXES = ("西邊", "東邊", "南邊", "北邊",
+                      "西边", "东边", "南边", "北边",
+                      "之西", "之東", "之东", "之南", "之北",
+                      "西北", "東北", "东北", "西南", "東南", "东南")
+
+#: 繁简双字形的机构/建筑通名单字（单独成词时不是专名，但作为后缀合法）
+GENERIC_SINGLE = set("村莊庄屯營营府河橋桥泊泉閘闸堰渠湖山園园廠厂場场倉仓窯窑店铺關关嶺岭峪")
+
+
+class ToponymMiner(object):
     """
-    从已有引文原文里挖候选地名。
+    混合策略地名挖掘器 v2：
+      A. 提示词模式（為/曰/有/坐落…）——旧行为，召回有线索词的
+      B. 通名后缀扫描——召回无线索词但符合「专名+通名」结构的
+      C. 方位后缀剥离——樹村西邊 → 樹村
+      D. 置信度分级替代二元过滤——high/mid/low，人工审阅从高往低
 
-    策略（保守、可解释）：
-      1. 取每条引文的原文
-      2. 用「…为X」「…曰X」「X坐落/坐落X」「跨其上」等地名提示模式定位
-      3. 排除停用词（朝代/官职/皇家园林这些不是我们找的村落地名）
-      4. 输出 CandidateName，带来源引文 id（可溯源）
-
-    这是能立即闭环的最小实现。升级路径：
-      FullTextMiner 接入维基文库/ctext 全文后，
-      mine() 换实现即可，引擎与闸门不用动。
+    为什么不直接上 jieba/HanLP：
+      文言文分词/NER 在现代语料模型上误切率高（实测风险），
+      而「专名+通名」是中文地名强结构，后缀词典便宜、可解释、可控。
+      分词框架留给现代文本（方志/档案）的 FullTextMiner 升级路径。
     """
 
-    # 地名提示模式：'为X' / '曰X' / '有X' / '坐落X' / 'X跨其上'
-    _PATTERNS = [
-        "為", "曰", "為", "坐落", "跨其上", "即", "有",
-    ]
+    def __init__(self, known_names: Optional[Set[str]] = None):
+        self.known_names = set(known_names or [])
+        self._stopwords = set(_STOPWORDS)
+
+    # ---------- 公共 ----------
 
     def mine(self, source_id: str, division_id: str,
              facts: List[TextualFact]) -> List[CandidateName]:
         out: List[CandidateName] = []
+        seen_in_call = set()
         for f in facts:
             if f.division_id != division_id:
                 continue
             text = f.verbatim_quote
-            # 逐段扫「X为Y」「有Y」「坐落Y」类模式
-            for marker in self._PATTERNS:
+            # A. 提示词模式
+            for marker in ("為", "曰", "有", "坐落", "跨其上", "即"):
                 start = 0
                 while True:
                     i = text.find(marker, start)
                     if i < 0:
                         break
                     seg = text[i + len(marker): i + len(marker) + 12]
-                    name = self._clip(seg)
-                    if name and self._plausible(name):
-                        out.append(CandidateName(
-                            name=name, from_source_id=source_id,
-                            from_division_id=division_id,
-                            evidence_fact_id=f.id,
-                            note="模式「%s」命中" % marker,
-                        ))
+                    cand = self._make_candidate(seg, f, "提示词「%s」" % marker,
+                                                has_cue=True)
+                    if cand and cand.name not in seen_in_call:
+                        seen_in_call.add(cand.name)
+                        out.append(cand)
                     start = i + len(marker)
+            # B. 通名后缀扫描（无线索词也能召回）
+            for cand in self._suffix_scan(text, f):
+                if cand.name not in seen_in_call:
+                    seen_in_call.add(cand.name)
+                    out.append(cand)
         return out
 
+    # ---------- 内部 ----------
+
     def _clip(self, seg: str) -> Optional[str]:
-        """截到标点为止，取 2-6 字的候选"""
         for j, ch in enumerate(seg):
             if ch in "，。、；：！？「」『』（）":
                 seg = seg[:j]
                 break
-        seg = seg.strip()
-        if 2 <= len(seg) <= 6:
-            return seg
-        return None
+        return seg.strip() or None
 
-    def _plausible(self, name: str) -> bool:
-        if name in _STOPWORDS:
-            return False
-        if any(w in name for w in _STOPWORDS):
-            return False
-        # 排除纯数字/纪年
+    def _strip_direction(self, name: str) -> Tuple[str, Optional[str]]:
+        for suf in DIRECTION_SUFFIXES:
+            if name.endswith(suf) and len(name) > len(suf):
+                return name[:-len(suf)], suf
+        return name, None
+
+    def _has_place_suffix(self, name: str) -> bool:
+        return any(name.endswith(s) for s in PLACE_SUFFIXES)
+
+    def _make_candidate(self, seg: str, fact: TextualFact,
+                        note: str, has_cue: bool) -> Optional[CandidateName]:
+        raw = self._clip(seg)
+        if not raw:
+            return None
+        name, stripped = self._strip_direction(raw)
+        if not (2 <= len(name) <= 6):
+            return None
+        if self._is_noise(name):
+            return None
+        suffix_ok = self._has_place_suffix(name) or (
+            stripped and self._has_place_suffix(stripped))
+        # 置信度分级：双证 high，单证 mid
+        if has_cue and suffix_ok:
+            conf = "high"
+        elif has_cue or suffix_ok:
+            conf = "mid"
+        else:
+            conf = "low"
+        return CandidateName(
+            name=name, from_source_id="", from_division_id=fact.division_id,
+            evidence_fact_id=fact.id,
+            note=note + ("；剥离方位「%s」" % stripped if stripped else ""),
+            confidence=conf, stripped_suffix=stripped,
+        )
+
+    def _suffix_scan(self, text: str, fact: TextualFact) -> List[CandidateName]:
+        """B. 通名后缀扫描：按标点切短语，短语尾部符合专名+通名即候选"""
+        out = []
+        for phrase in re.split(r"[，。、；：！？「」『』（）]", text):
+            phrase = phrase.strip()
+            if not (3 <= len(phrase) <= 12):
+                continue
+            # 取短语尾部 2-6 字窗口，找以通名结尾的子串
+            for size in (2, 3, 4, 5, 6):
+                if len(phrase) < size:
+                    break
+                tail = phrase[-size:]
+                if not self._has_place_suffix(tail):
+                    continue
+                head = phrase[:-size]
+                # 头部若是动词/虚词开头，才可能是「X+地名」结构
+                if head and head[-1] in "於在自從从往到":
+                    name, stripped = self._strip_direction(tail)
+                    if self._is_noise(name):
+                        break
+                    conf = "mid" if len(name) >= 2 else "low"
+                    out.append(CandidateName(
+                        name=name, from_source_id="",
+                        from_division_id=fact.division_id,
+                        evidence_fact_id=fact.id,
+                        note="后缀扫描「…%s%s」" % (head[-1], tail),
+                        confidence=conf, stripped_suffix=stripped))
+                    break
+        return out
+
+    def _is_noise(self, name: str) -> bool:
+        if name in self._stopwords or self.known_names:
+            if name in self._stopwords:
+                return True
+        if name in self.known_names:
+            return True
         if any(ch.isdigit() for ch in name):
-            return False
-        # 排除常见非地名结尾
-        bad_ends = ("庵", "寺", "庙", "场", "廠", "厂")  # 这些单独成词时是建筑/机构
-        if name.endswith(bad_ends):
-            return False
-        return True
+            return True
+        # 纪年/帝号模式（繁简）
+        for reign in ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
+                      "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国"):
+            if name.startswith(reign):
+                return True
+        # 官职/机构模式（繁简）
+        for kw in ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
+                   "御道", "倉署", "仓署", "碾房", "都督"):
+            if kw in name:
+                return True
+        return False
+
+
+# 向后兼容别名
+QuoteCorpusMiner = ToponymMiner
 
 
 # ---------------------------------------------------------------------------

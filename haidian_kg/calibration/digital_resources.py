@@ -30,6 +30,34 @@ def _accessed(tag="dr_checked"):
 
 
 RESOURCES: List[DigitalResource] = [
+    # ---------- 专业历史地名词库（候选裁决权威依据）----------
+    DigitalResource(
+        id="dr_tgaz_api",
+        source_id="src_tgaz",
+        kind=DigitalResourceKind.CATALOG,
+        platform="复旦大学 TGAZ（CHGIS 时空地名辞典）",
+        url="https://tgaz.fudan.edu.cn/",
+        accessed_at=_accessed(),
+        reliability_note="学术权威时空地名库（CHGIS 项目），"
+                         "用于候选地名裁决：命中即获独立书目佐证；"
+                         "仅作书目与时空定位参考，不替代一手书证的逐字引文。"
+                         "⚠️ API 端点待人工核验：网络检索给出的 "
+                         "/tgaz/placename/{id}.json 实测 404（2026-10-02），"
+                         "接入代码前必须先用浏览器确认真实接口，"
+                         "不得对未验证的 API 契约写代码",
+        is_citable_for_verbatim=False,
+    ),
+    DigitalResource(
+        id="dr_chgis_data",
+        source_id="src_chgis",
+        kind=DigitalResourceKind.GIS_DATASET,
+        platform="哈佛 CHGIS 官方数据区",
+        url="https://chgis.fas.harvard.edu/",
+        accessed_at=_accessed(),
+        reliability_note="GIS 政区边界与居民点数据集，学术免费（CC BY-NC 类）；"
+                         "用于空间对齐与断代核查，不作为文字引文依据",
+        is_citable_for_verbatim=False,
+    ),
     # ---------- 维基文库（四库全书本转录）----------
     DigitalResource(
         id="dr_bqtz_ws_root",
