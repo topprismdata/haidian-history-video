@@ -22,7 +22,7 @@ from haidian_kg.calibration import gaoliang as G, yuanmingyuan as Y, banners as 
 from haidian_kg.calibration.people import PEOPLE
 from haidian_kg.calibration.digital_resources import RESOURCES
 from haidian_kg.production_exports import KnowledgeBase
-from haidian_kg.expansion import ClosureExpander, QuoteCorpusMiner
+from haidian_kg.expansion import ClosureExpander, ToponymMiner
 
 
 def build(mod):
@@ -79,12 +79,42 @@ class TestClosureEngine:
 
 class TestMinerDiscipline:
     def test_stopwords_filtered(self):
-        m = QuoteCorpusMiner()
-        assert not m._plausible("雍正二年"), "纪年不得作为地名"
-        assert not m._plausible("護軍校"), "官职不得作为地名"
-        assert not m._plausible("圓明園"), "皇家园林已在库里，不是村落地名"
+        """纪年/官职/皇家园林不得作为候选（繁简双字形）"""
+        m = ToponymMiner()
+        for noise in ("雍正二年", "護軍校", "圓明園", "乾隆十六年"):
+            assert m._is_noise(noise), "%s 应被判为噪声" % noise
 
-    def test_clip_respects_punctuation(self):
-        m = QuoteCorpusMiner()
-        assert m._clip("大有莊，莊前為御道") == "大有莊"
-        assert m._clip("青龍橋。") == "青龍橋"
+    def test_direction_suffix_stripped(self):
+        """方位后缀剥离：樹村西邊 → 樹村"""
+        
+        miner = ToponymMiner()
+        name, stripped = miner._strip_direction("樹村西邊")
+        assert name == "樹村" and stripped == "西邊"
+        name2, stripped2 = miner._strip_direction("藍靛廠西邊")
+        assert name2 == "藍靛廠" and stripped2 == "西邊"
+        # 无方位后缀则原样返回
+        name3, stripped3 = miner._strip_direction("蕭家河")
+        assert name3 == "蕭家河" and stripped3 is None
+
+    def test_confidence_grading(self):
+        """置信分级：提示词+通名双证=high，单证=mid"""
+        from haidian_kg.ontology.epistemic import TextualFact
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_x", division_id="div_x",
+                        verbatim_quote="測試句：營房坐落蕭家河，廨舍若干楹。",
+                        attested_string="蕭家河")
+        cands = miner.mine("src_x", "div_x", [f])
+        by_name = {c.name: c for c in cands}
+        assert "蕭家河" in by_name
+        assert by_name["蕭家河"].confidence == "high"  # 坐落(提示词)+河(通名)双证
+
+    def test_suffix_scan_finds_cueless_names(self):
+        """后缀扫描召回无线索词地名——提示词法的盲区"""
+        from haidian_kg.ontology.epistemic import TextualFact
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_y", division_id="div_y",
+                        verbatim_quote="水流自永定河入西山。",
+                        attested_string="永定河")
+        cands = miner.mine("src_y", "div_y", [f])
+        names = {c.name for c in cands}
+        assert any("永定河" in n for n in names), "后缀扫描应召回永定河"
