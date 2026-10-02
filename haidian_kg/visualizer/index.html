@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>海淀历史地名知识图谱 (HHTO) 交互式看板</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="./d3.v7.min.js"></script>
+  <script>
+    if (typeof d3 === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"><\/script>');
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #0f141c;
+      --panel-bg: rgba(22, 30, 44, 0.92);
+      --border: #28374d;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --gold: #fbbf24;
+      --purple: #c084fc;
+      --green: #4ade80;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+    }
+    #main-container {
+      flex: 1;
+      height: 100vh;
+      position: relative;
+    }
+    #graph-svg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+    #graph-svg:active { cursor: grabbing; }
+
+    /* 控制顶栏 */
+    .header-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+    .search-input {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: var(--text);
+      font-size: 13px;
+      width: 180px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    /* 底部时间轴浮动滑块 */
+    .timeline-slider-card {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 24px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 620px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+    }
+    .timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .timeline-range {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .timeline-current {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gold);
+    }
+
+    /* 右侧详情抽屉 */
+    #sidebar-drawer {
+      width: 380px;
+      height: 100vh;
+      background: var(--panel-bg);
+      border-left: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease;
+    }
+    .drawer-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-toponym { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
+    .badge-feature { background: rgba(74, 222, 128, 0.2); color: var(--green); }
+    .badge-unit { background: rgba(192, 132, 252, 0.2); color: var(--purple); }
+    .badge-attestation { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
+    .badge-event { background: rgba(248, 113, 113, 0.2); color: var(--red); }
+    .badge-disproven { background: rgba(239, 68, 68, 0.3); color: #fca5a5; border: 1px solid #ef4444; }
+
+    .drawer-section {
+      background: #141c2b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .section-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .quote-box {
+      border-left: 3px solid var(--gold);
+      padding-left: 10px;
+      font-style: italic;
+      color: #cbd5e1;
+      margin-top: 6px;
+    }
+
+    /* 图例卡片 */
+    .legend-card {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-container">
+    <div class="header-bar">
+      <div class="header-title">🏛 海淀历史地名知识图谱 (HHTO)</div>
+      <input type="text" class="search-input" id="search-box" placeholder="搜索地名 (如 六郎庄)...">
+      <div style="font-size:12px; color:var(--text-muted);" id="stats-counter">统计加载中...</div>
+    </div>
+
+    <svg id="graph-svg"></svg>
+
+    <div class="legend-card">
+      <div class="legend-item"><div class="legend-dot" style="background:#38bdf8;"></div>地名称号实体 (Toponym)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ade80;"></div>物理地物环境 (PhysicalFeature)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c084fc;"></div>建制制度单元 (AdministrativeUnit)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div>史料书证用例 (Attestation)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171;"></div>地名演变事件 (EvolutionEvent)</div>
+    </div>
+
+    <div class="timeline-slider-card">
+      <div class="timeline-current" id="timeline-label">当前地层：全量历史时空 (先秦 — 当代)</div>
+      <input type="range" class="timeline-range" id="time-slider" min="0" max="8" value="8" step="1">
+      <div class="timeline-labels">
+        <span>先秦</span>
+        <span>唐</span>
+        <span>辽金</span>
+        <span>元</span>
+        <span>明</span>
+        <span>清初</span>
+        <span>清盛</span>
+        <span>民国</span>
+        <span>当代</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="sidebar-drawer">
+    <div class="drawer-title">
+      <span id="detail-name">点击节点检视详情</span>
+      <span class="badge" id="detail-badge">HHTO</span>
+    </div>
+    <div class="drawer-section">
+      <div class="section-label">实体类别与定义</div>
+      <div id="detail-type" style="color:var(--accent);">请在左侧力导向图中选择任意节点</div>
+    </div>
+    <div class="drawer-section" id="detail-quote-section" style="display:none;">
+      <div class="section-label">史料书证原始引文</div>
+      <div class="quote-box" id="detail-quote"></div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:6px;" id="detail-source"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="section-label">考据与时空背景</div>
+      <div id="detail-desc" style="color:#cbd5e1;">知识图谱包含实体、属性、书证与演变因果链。</div>
+    </div>
+    <div class="drawer-section" id="detail-evidence-section" style="display:none;">
+      <div class="section-label">认识论确证状态与证据分层</div>
+      <div id="detail-level" style="font-weight:600; color:var(--gold);"></div>
+    </div>
+  </div>
+
+  <script>
+    const graphData = {"nodes": [{"id": "feat_gaolianghe", "label": "高梁河水系古道", "group": "PhysicalFeature", "category": "Watercourse", "description": "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道", "coordinates": [116.35, 39.95], "year": -1000}, {"id": "feat_wanquanhe", "label": "万泉河湿地水网", "group": "PhysicalFeature", "category": "Wetland", "description": "西山山麓泉群汇聚形成的万泉河浅水洼地与湖泊沼泽区", "coordinates": [116.3, 39.98], "year": -1000}, {"id": "feat_yuquanshan", "label": "玉泉山山体与泉源", "group": "PhysicalFeature", "category": "TerrainElevation", "description": "天下第一泉玉泉水源地，金代芙蓉殿、清代静明园所在地", "coordinates": [116.25, 39.99], "year": -1000}, {"id": "feat_wanshoushan", "label": "瓮山与瓮山泊（万寿山·昆明湖）", "group": "PhysicalFeature", "category": "TerrainElevation", "description": "元代郭守敬引水水柜汇聚地，乾隆拓建为昆明湖与万寿山", "coordinates": [116.27, 39.99], "year": -1000}, {"id": "feat_xiangshan", "label": "香山与金山翠微山麓", "group": "PhysicalFeature", "category": "TerrainElevation", "description": "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地", "coordinates": [116.19, 39.99], "year": -1000}, {"id": "feat_changhe", "label": "长河皇家水道", "group": "PhysicalFeature", "category": "Watercourse", "description": "高梁河上游长河段，明清两代通往西山御园的水上御路", "coordinates": [116.32, 39.94], "year": -1000}, {"id": "feat_qinghe", "label": "清河干流古河道", "group": "PhysicalFeature", "category": "Watercourse", "description": "北京北郊横贯水系，古代通往塞北长城要隘的重要军事水障与漕运支线", "coordinates": [116.34, 40.04], "year": -1000}, {"id": "feat_baifu_wengshan_he", "label": "白浮瓮山河故道", "group": "PhysicalFeature", "category": "Watercourse", "description": "元代郭守敬开凿引白浮泉至瓮山泊的绕山大渠，元代通惠河上游生命线", "coordinates": [116.28, 40.02], "year": -1000}, {"id": "feat_wenquan_spring", "label": "温泉地热出露带", "group": "PhysicalFeature", "category": "TerrainElevation", "description": "西山断裂带地热水出露点，辽金温泉疗养古地", "coordinates": [116.17, 40.03], "year": -1000}, {"id": "feat_guangyuanzha_site", "label": "广源闸水利遗址", "group": "PhysicalFeature", "category": "HydraulicFacility", "description": "元至元二十六年通惠河头闸，郭守敬主持修建之节制水柜水闸", "coordinates": [116.31, 39.94], "year": -1000}, {"id": "feat_anheqiao_site", "label": "安和桥下古长河桥涵遗址", "group": "PhysicalFeature", "category": "HydraulicFacility", "description": "2009年出土明代碳十四定年木桩BA10291的水利枢纽节点", "coordinates": [116.27, 40.01], "year": -1000}, {"id": "feat_longbeicun_weir", "label": "白浮堰龙背村段古水利遗构", "group": "PhysicalFeature", "category": "HydraulicFacility", "description": "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存", "coordinates": [116.27, 40.03], "year": -1000}, {"id": "feat_taizhouwu_dock", "label": "太舟坞古泊船凹岸台地", "group": "PhysicalFeature", "category": "TerrainElevation", "description": "西山山麓山前坡水地带，元代白浮引水河道附近之船坞台地", "coordinates": [116.18, 40.04], "year": -1000}, {"id": "unit_jicheng_suburb", "label": "蓟城西北郊农耕水利鄙野", "group": "AdministrativeUnit", "category": "Settlement", "description": "先秦战国燕国蓟城西北部，沿高梁河水系分布的古农耕原野", "year": -1046}, {"id": "unit_daizhou_garrison", "label": "唐代羁縻带州孤竹县侨置区", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "唐神龙元年安置东北降户与突厥部众之羁縻州，天宝间寄治昌平县清水店", "year": 705}, {"id": "unit_qingshui_court", "label": "金代西山八院之清水院", "group": "AdministrativeUnit", "category": "ReligiousSite", "description": "金章宗西山八大行宫水院之一，后明代重修为大觉寺", "year": 1190}, {"id": "unit_wenquan_village", "label": "温泉古村落", "group": "AdministrativeUnit", "category": "Settlement", "description": "辽金时期依地热温泉形成的天然疗养与山乡聚落", "year": 1150}, {"id": "unit_haidian_town", "label": "元代海店驿路商贸聚落", "group": "AdministrativeUnit", "category": "Settlement", "description": "元大都城西北二十里通往居庸关大道的驿路水滨客商聚落", "year": 1260}, {"id": "unit_weiwu_village", "label": "元代畏吾村（畏兀儿聚落）", "group": "AdministrativeUnit", "category": "Settlement", "description": "元相廉希宪家族墓茔及内迁高昌畏兀儿贵族、守墓家眷形成的西域特色聚落", "year": 1280}, {"id": "unit_qinghe_transit_town", "label": "元代清河驿路重镇", "group": "AdministrativeUnit", "category": "Settlement", "description": "京北陆路与北运漕渠之水陆枢纽，元代通塞北关防之北门咽喉", "year": 1271}, {"id": "unit_xisanqi_garrison", "label": "明代西三旗小旗军屯", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "明代京卫卫所军屯体系中十人编制之‘小旗’编号屯田哨所，绝非满洲八旗", "year": 1368}, {"id": "unit_xierqi_garrison", "label": "明代西二旗小旗军屯", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "明代京卫卫所小旗编制军屯，与西三旗一脉相承", "year": 1368}, {"id": "unit_niulanzhuang_village", "label": "明代宛平西乡牛栏庄", "group": "AdministrativeUnit", "category": "Settlement", "description": "明代宛平县西北乡村，官民蓄养马牛之栏圈围聚成村", "year": 1400}, {"id": "unit_niangniangfu_tomb", "label": "明代翠微山一溜边山七十二府妃嫔陵区", "group": "AdministrativeUnit", "category": "BurialGround", "description": "明代历代帝王非正宫皇贵妃、妃嫔专属金山香山长眠之园寝聚落", "year": 1420}, {"id": "unit_dongsimu_tomb", "label": "明代董四墓皇室茔地", "group": "AdministrativeUnit", "category": "BurialGround", "description": "明代皇室墓地，后演变为看坟户聚居村落并盛产贡御之桃", "year": 1500}, {"id": "unit_zhongguan_cemetery", "label": "明清中官村太监义地", "group": "AdministrativeUnit", "category": "BurialGround", "description": "明清两代内廷宦官（中官）合资购置的合葬义冢与看坟守地营房", "year": 1600}, {"id": "unit_wanshousi_palace", "label": "明清万寿寺长河行宫与禅刹", "group": "AdministrativeUnit", "category": "ReligiousSite", "description": "明万历五年为皇太后祝寿敕建，清康乾两代水上巡幸必宿行宫", "year": 1577}, {"id": "unit_cishousi_temple", "label": "明代慈寿寺与八里庄玲珑塔", "group": "AdministrativeUnit", "category": "ReligiousSite", "description": "明神宗圣母慈圣皇太后出资敕建，京西八里庄地标性密檐塔", "year": 1576}, {"id": "unit_dazhongsi_temple", "label": "清雍正觉生寺（大钟寺）", "group": "AdministrativeUnit", "category": "ReligiousSite", "description": "雍正十一年敕建祈雨行宫禅寺，乾隆十六年将万寿寺永乐大钟移置于此", "year": 1733}, {"id": "unit_changchunyuan", "label": "清康熙畅春园", "group": "AdministrativeUnit", "category": "ImperialGarden", "description": "清圣祖康熙避喧听政之首座皇家御园，咸丰十年遭英法联军焚毁", "year": 1687}, {"id": "unit_yuanmingyuan", "label": "清代圆明园", "group": "AdministrativeUnit", "category": "ImperialGarden", "description": "万园之园，康乾嘉道咸五朝清廷夏秋理政与帝国权力中枢", "year": 1707}, {"id": "unit_dayouzhuang_village", "label": "大有庄（清代改名村落）", "group": "AdministrativeUnit", "category": "Settlement", "description": "乾隆御赐名农耕村落，前身为清初贫民合居之‘穷八家’", "year": 1750}, {"id": "unit_yimuyuan_fields", "label": "一亩园御田与庙会", "group": "AdministrativeUnit", "category": "Settlement", "description": "圆明园大宫门外皇帝躬耕演礼之籍田与京西著名娘娘庙会所在地", "year": 1723}, {"id": "unit_qinglongqiao_market", "label": "青龙桥御道水陆重镇", "group": "AdministrativeUnit", "category": "Settlement", "description": "三山五园环抱之御道集镇，通往香山、静明园与圆明园必经水旱关卡", "year": 1644}, {"id": "unit_suzhoujie_market", "label": "清漪园万寿山后湖苏州街买卖街", "group": "AdministrativeUnit", "category": "ImperialGarden", "description": "乾隆二十六年为崇庆皇太后七十寿辰仿苏州山塘街建造之水上集市宫宛", "year": 1761}, {"id": "unit_landianchang_town", "label": "蓝靛厂街市与外火器营", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之四千间兵营市镇", "year": 1770}, {"id": "unit_jianruiying_garrison", "label": "香山健锐营八旗云梯特种部队", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼", "year": 1749}, {"id": "unit_zhenghuangqi_camp", "label": "圆明园护军营正黄旗营房（肖家河村北）", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "雍正二年设立之圆明园八旗护卫营房，驻扎肖家河村北，拱卫园门西北", "year": 1724}, {"id": "unit_xianghuangqi_camp", "label": "圆明园护军营镶黄旗营房（树村西）", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "雍正二年设立，驻树村以西，与树村村落紧邻共生", "year": 1724}, {"id": "unit_zhengbaiqi_camp", "label": "圆明园护军营正白旗营房（树村东）", "group": "AdministrativeUnit", "category": "MilitaryGarrison", "description": "雍正二年设立，驻树村以东，长春园东北", "year": 1724}, {"id": "unit_tsinghua_academy", "label": "清华学堂与清华大学", "group": "AdministrativeUnit", "category": "ModernInstitution", "description": "庚子赔款退款建立之留美预备学堂，选址清华园康熙皇三子胤祉赐园遗址", "year": 1911}, {"id": "unit_cas_zhongguancun", "label": "中国科学院中关村科学城科研园区", "group": "AdministrativeUnit", "category": "ModernInstitution", "description": "1953年新中国政务院确定之全国最高科学学术中心驻地，近代中国科学第一城", "year": 1953}, {"id": "unit_zgc_hightech_zone", "label": "北京市新技术产业开发试验区（中关村高新区）", "group": "AdministrativeUnit", "category": "ModernInstitution", "description": "国务院正式批准设立的全国第一个国家级高新技术产业开发区", "year": 1988}, {"id": "top_gaolianghe", "label": "高梁河", "group": "Toponym", "category": "standard", "pinyin": "gāo liáng hé", "year": 1200}, {"id": "top_gaoliangzha", "label": "高梁闸", "group": "Toponym", "category": "official", "pinyin": "gāo liáng zhá", "year": 1200}, {"id": "top_gaoliangqiao", "label": "高梁桥", "group": "Toponym", "category": "standard", "pinyin": "gāo liáng qiáo", "year": 1200}, {"id": "top_haidian_dian1", "label": "海店", "group": "Toponym", "category": "vulgar", "pinyin": "hǎi diàn", "year": 1200}, {"id": "top_haidian_dian2", "label": "海甸", "group": "Toponym", "category": "euphemistic", "pinyin": "hǎi diàn", "year": 1200}, {"id": "top_haidian", "label": "海淀", "group": "Toponym", "category": "standard", "pinyin": "hǎi diàn", "year": 1200}, {"id": "top_weiwucun", "label": "畏吾村", "group": "Toponym", "category": "standard", "pinyin": "wèi wú cūn", "year": 1200}, {"id": "top_weiwuer_cun", "label": "畏兀村", "group": "Toponym", "category": "vulgar", "pinyin": "wèi wù cūn", "year": 1200}, {"id": "top_weigongcun", "label": "魏公村", "group": "Toponym", "category": "standard", "pinyin": "wèi gōng cūn", "year": 1200}, {"id": "top_xisanqi", "label": "西三旗", "group": "Toponym", "category": "standard", "pinyin": "xī sān qí", "year": 1200}, {"id": "top_xierqi", "label": "西二旗", "group": "Toponym", "category": "standard", "pinyin": "xī èr qí", "year": 1200}, {"id": "top_niulanzhuang", "label": "牛栏庄", "group": "Toponym", "category": "vulgar", "pinyin": "niú lán zhuāng", "year": 1200}, {"id": "top_liulangzhuang_willow", "label": "柳浪庄", "group": "Toponym", "category": "euphemistic", "pinyin": "liǔ làng zhuāng", "year": 1200}, {"id": "top_liulangzhuang_general", "label": "六郎庄", "group": "Toponym", "category": "folk", "pinyin": "liù láng zhuāng", "year": 1200}, {"id": "top_qiongbajia", "label": "穷八家", "group": "Toponym", "category": "vulgar", "pinyin": "qióng bā jiā", "year": 1200}, {"id": "top_dayouzhuang", "label": "大有庄", "group": "Toponym", "category": "official", "pinyin": "dà yǒu zhuāng", "year": 1200}, {"id": "top_zhongguancun_eunuch", "label": "中官村", "group": "Toponym", "category": "vulgar", "pinyin": "zhōng guān cūn", "year": 1200}, {"id": "top_zhongguantun", "label": "中官屯", "group": "Toponym", "category": "vulgar", "pinyin": "zhōng guān tún", "year": 1200}, {"id": "top_zhongguancun_modern", "label": "中关村", "group": "Toponym", "category": "standard", "pinyin": "zhōng guān cūn", "year": 1200}, {"id": "top_anheqiao_wood", "label": "罗锅桥", "group": "Toponym", "category": "vulgar", "pinyin": "luó guō qiáo", "year": 1200}, {"id": "top_anheqiao_peace", "label": "安和桥", "group": "Toponym", "category": "official", "pinyin": "ān hé qiáo", "year": 1200}, {"id": "top_anheqiao_river", "label": "安河桥", "group": "Toponym", "category": "standard", "pinyin": "ān hé qiáo", "year": 1200}, {"id": "top_qinglongqiao", "label": "青龙桥", "group": "Toponym", "category": "standard", "pinyin": "qīng lóng qiáo", "year": 1200}, {"id": "top_landianchang_dye", "label": "蓝靛厂", "group": "Toponym", "category": "vulgar", "pinyin": "lán diàn chǎng", "year": 1200}, {"id": "top_huoqiying", "label": "火器营", "group": "Toponym", "category": "official", "pinyin": "huǒ qì yíng", "year": 1200}, {"id": "top_shucun", "label": "树村", "group": "Toponym", "category": "standard", "pinyin": "shù cūn", "year": 1200}, {"id": "top_xiaojiahe", "label": "肖家河", "group": "Toponym", "category": "standard", "pinyin": "xiāo jiā hé", "year": 1200}, {"id": "top_longbeicun", "label": "龙背村", "group": "Toponym", "category": "standard", "pinyin": "lóng bèi cūn", "year": 1200}, {"id": "top_suzhoujie", "label": "苏州街", "group": "Toponym", "category": "standard", "pinyin": "sū zhōu jiē", "year": 1200}, {"id": "top_maimaijie", "label": "买卖街", "group": "Toponym", "category": "official", "pinyin": "mǎi mài jiē", "year": 1200}, {"id": "top_jueshengsi", "label": "觉生寺", "group": "Toponym", "category": "official", "pinyin": "jué shēng sì", "year": 1200}, {"id": "top_dazhongsi", "label": "大钟寺", "group": "Toponym", "category": "vulgar", "pinyin": "dà zhōng sì", "year": 1200}, {"id": "top_yimuyuan", "label": "一亩园", "group": "Toponym", "category": "standard", "pinyin": "yī mǔ yuán", "year": 1200}, {"id": "top_niangniangfu", "label": "娘娘府", "group": "Toponym", "category": "standard", "pinyin": "niáng niang fǔ", "year": 1200}, {"id": "top_dongsimu", "label": "董四墓", "group": "Toponym", "category": "standard", "pinyin": "dǒng sì mù", "year": 1200}, {"id": "top_daizhou_name", "label": "带州", "group": "Toponym", "category": "official", "pinyin": "dài zhōu", "year": 1200}, {"id": "top_taizhouwu", "label": "太舟坞", "group": "Toponym", "category": "standard", "pinyin": "tài zhōu wù", "year": 1200}, {"id": "top_wenquan", "label": "温泉", "group": "Toponym", "category": "standard", "pinyin": "wēn quán", "year": 1200}, {"id": "top_qinghezhen", "label": "清河镇", "group": "Toponym", "category": "standard", "pinyin": "qīng hé zhèn", "year": 1200}, {"id": "top_wanshousi", "label": "万寿寺", "group": "Toponym", "category": "official", "pinyin": "wàn shòu sì", "year": 1200}, {"id": "top_cishousi", "label": "慈寿寺", "group": "Toponym", "category": "official", "pinyin": "cí shòu sì", "year": 1200}, {"id": "top_linglongta", "label": "玲珑塔", "group": "Toponym", "category": "vulgar", "pinyin": "líng lóng tǎ", "year": 1200}, {"id": "top_zhenjuesi", "label": "真觉寺", "group": "Toponym", "category": "official", "pinyin": "zhēn jué sì", "year": 1200}, {"id": "top_wutasi", "label": "五塔寺", "group": "Toponym", "category": "vulgar", "pinyin": "wǔ tǎ sì", "year": 1200}, {"id": "top_dajuesi", "label": "大觉寺", "group": "Toponym", "category": "official", "pinyin": "dà jué sì", "year": 1200}, {"id": "top_guangyuanzha", "label": "广源闸", "group": "Toponym", "category": "official", "pinyin": "guǎng yuán zhá", "year": 1200}, {"id": "top_chengfu", "label": "成府", "group": "Toponym", "category": "standard", "pinyin": "chéng fǔ", "year": 1200}, {"id": "top_chengfulu", "label": "成府路", "group": "Toponym", "category": "standard", "pinyin": "chéng fǔ lù", "year": 1200}, {"id": "top_baijiatuan", "label": "白家疃", "group": "Toponym", "category": "standard", "pinyin": "bái jiā tuǎn", "year": 1200}, {"id": "top_guajiatun", "label": "挂甲屯", "group": "Toponym", "category": "standard", "pinyin": "guà jiǎ tún", "year": 1200}, {"id": "top_huangzhuang", "label": "黄庄", "group": "Toponym", "category": "standard", "pinyin": "huáng zhuāng", "year": 1200}, {"id": "top_zaojunmiao", "label": "皂君庙", "group": "Toponym", "category": "standard", "pinyin": "zào jūn miào", "year": 1200}, {"id": "attest_anheqiao_wood_c14", "label": "罗锅桥木桩BA10291", "group": "PlaceAttestation", "evidence_level": "Level 1 (考古硬证据)", "epistemic_status": "VERIFIED", "quote": "在安和桥旧桥台下清理出密集柏木地钉，标本BA10291碳十四定年测定为明代，证实该处明代已建有大型木构拱桥跨水枢纽", "source_title": "安河桥古水利遗址考古发掘报告", "source_author": "北京市文物研究所", "dynasty": "明代（经碳十四测定为明代中晚期原桩）", "notes": "全海淀水利古桥最强考古硬证据", "year": 2009}, {"id": "attest_longbeicun_weir_site", "label": "白浮堰龙背村引水残段", "group": "PlaceAttestation", "evidence_level": "Level 1 (考古硬证据)", "epistemic_status": "VERIFIED", "quote": "龙背村段现存白浮堰古堤为郭守敬引水渠仅存之地面实物实体，条石固堤痕迹昭然", "source_title": "京密引水渠沿线古水利工程勘察报告", "source_author": "北京市水利古籍整理小组", "dynasty": "元代（至元二十九年遗构）", "notes": null, "year": 1983}, {"id": "attest_haidian_1260", "label": "海店", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "六日丁卯，午憩海店，距京城廿里", "source_title": "中堂事记", "source_author": "王恽", "dynasty": "元代（中统元年）", "notes": "海淀区名文献最早确凿出处", "year": 1260}, {"id": "attest_gaoliangzha_1292", "label": "高梁闸", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "又于高梁河创设水闸，节水利漕，赐名通惠河", "source_title": "元史·郭守敬传", "source_author": "宋濂等", "dynasty": "元代（至元二十九年）", "notes": null, "year": 1292}, {"id": "attest_guangyuanzha_stele", "label": "广源闸", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "广源闸者，长河上游巨闸也，通漕蓄水以济都城，乃元至元旧制", "source_title": "广源闸重修碑记", "source_author": "明万历工部", "dynasty": "明代（万历五年）", "notes": null, "year": 1577}, {"id": "attest_dazhongsi_bell_stele", "label": "御制觉生寺碑文", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨", "source_title": "大清实录·世宗实录", "source_author": "清世宗雍正帝", "dynasty": "清代（雍正十一年）", "notes": null, "year": 1733}, {"id": "attest_suzhoujie_qianlong_poem", "label": "万寿山买卖街", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "水木依稀姑苏肆，市廛宛转入楼台", "source_title": "御制诗三集", "source_author": "清高宗乾隆帝", "dynasty": "清代（乾隆二十六年）", "notes": null, "year": 1761}, {"id": "attest_anheqiao_stone_tablet", "label": "安和桥", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "桥成，改木为石，额曰‘安和桥’，取安和景泰之义", "source_title": "安和桥额石题字", "source_author": "清高宗乾隆帝", "dynasty": "清代（乾隆四十六年）", "notes": null, "year": 1781}, {"id": "attest_rixia_dayouzhuang", "label": "大有庄", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "大有庄旧名穷八家，高宗纯皇帝临幸，以其名不协吉卜，赐名大有庄", "source_title": "日下旧闻考卷九十九", "source_author": "于敏中等", "dynasty": "清代（乾隆三十九年）", "notes": null, "year": 1774}, {"id": "attest_rixia_shucun", "label": "树村", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "树村在圆明园后，镶黄旗护军营驻其西，正白旗护军营驻其东", "source_title": "日下旧闻考卷九十九", "source_author": "于敏中等", "dynasty": "清代（乾隆三十九年）", "notes": null, "year": 1774}, {"id": "attest_rixia_landianchang", "label": "蓝靛厂", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "蓝靛厂在西顶庙旁，居民借植蓼蓝造青靛为业，因名。乾隆三十五年徙外火器营于此", "source_title": "日下旧闻考卷九十八", "source_author": "于敏中等", "dynasty": "清代（乾隆三十九年）", "notes": null, "year": 1774}, {"id": "attest_shuntian_xisanqi", "label": "西三旗", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "宛平北乡有西三旗、西二旗，相传明代卫所小旗分屯之地", "source_title": "光绪顺天府志·地理志", "source_author": "缪荃孙等", "dynasty": "清代（光绪十一年）", "notes": null, "year": 1885}, {"id": "attest_wanping_niulanzhuang", "label": "牛栏庄", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "宛平县城外西乡牛栏庄，地滨泉源，居民引水种稻", "source_title": "宛平县志·舆地志", "source_author": "沈榜", "dynasty": "明代（万历二十一年）", "notes": null, "year": 1593}, {"id": "attest_weiwucun_yuanshi", "label": "畏吾村", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "恒阳王廉希宪卒，葬于大都城西高梁河畔，族人环墓而居，号畏吾村", "source_title": "元史·廉希宪传", "source_author": "宋濂", "dynasty": "明代修元史（记元代事）", "notes": null, "year": 1370}, {"id": "attest_jingxi_map_1913", "label": "中关村", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落", "source_title": "实测北京四郊图（京西图）", "source_author": "民国北洋陆军测地局", "dynasty": "民国二年", "notes": "推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说", "year": 1913}, {"id": "attest_hourenzhi_haidian", "label": "海淀湿地水文考", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "VERIFIED", "quote": "海淀一带在地质历史上为万泉河水系冲积形成的潜水浅洼，故名‘淀’，王恽所见之‘海店’正乃水泊边缘之驿站", "source_title": "北京历史地理与城市水系研究", "source_author": "侯仁之", "dynasty": "现代", "notes": null, "year": 1980}, {"id": "attest_taizhouwu_dock_study", "label": "太舟坞地名源流考", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "CONTESTED", "quote": "太舟坞紧邻元代白浮瓮山河引水线，‘坞’字自古专指船坞水港，太舟坞实为元代运石泊舟之官坞", "source_title": "北京水利史志研究", "source_author": "北京市水利学会", "dynasty": "现代", "notes": null, "year": 1995}, {"id": "attest_liulang_legend", "label": "六郎庄杨家将驻军传说", "group": "PlaceAttestation", "evidence_level": "Level 5 (民间口碑传说)", "epistemic_status": "FOLK_LEGEND", "quote": "相传宋辽对峙时，杨六郎在此屯兵抵御辽军，放马饮泉，故村名六郎庄", "source_title": "海淀区民间故事集成", "source_author": "海淀区文化馆", "dynasty": "现代采录民间传说", "notes": "纯民间传说，历史地理学已考实六郎庄系牛栏庄-柳浪庄音转附会而来", "year": 1988}, {"id": "attest_qinglongqiao_rixia", "label": "青龙桥", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "青龙桥在玉泉山之阴，跨长河水，石闸下注通惠河，水陆要冲，商旅云集", "source_title": "日下旧闻考卷九十九", "source_author": "于敏中等", "dynasty": "清代（乾隆三十九年）", "notes": null, "year": 1774}, {"id": "attest_xiaojiahe_daqing", "label": "肖家河", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "圆明园护军营正黄旗营房在肖家河村北，营房八百间，设翼长防守", "source_title": "大清会典事例·兵部·护军营", "source_author": "清官修", "dynasty": "清嘉庆二十三年", "notes": null, "year": 1818}, {"id": "attest_shucun_shishi", "label": "树村", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "嘉庆六年四月，圆明园副将营房移驻园北树村西，以固后防", "source_title": "圆明园史事编年", "source_author": "清宫档案整理组", "dynasty": "清嘉庆六年", "notes": null, "year": 1801}, {"id": "attest_wanshousi_mingshi", "label": "万寿寺", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "万历五年三月，敕建万寿寺于都城西直门外高梁河畔，为圣母祝寿之所", "source_title": "明史·神宗本纪", "source_author": "张廷玉等", "dynasty": "明万历五年", "notes": null, "year": 1577}, {"id": "attest_cishousi_dijing", "label": "慈寿寺", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "慈寿寺在阜成门外八里庄，神宗生母李太后建，浮屠十三级，巍峨插天，京师地标也", "source_title": "帝京景物略卷五", "source_author": "刘侗、于奕正", "dynasty": "明崇祯八年", "notes": null, "year": 1635}, {"id": "attest_guajiatun_chenyuan", "label": "挂甲屯", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "挂甲屯在海淀西北，世传吴应熊额驸府第遗址在此，俗亦称额驸城", "source_title": "宸垣识略卷十三", "source_author": "吴长元", "dynasty": "清乾隆五十三年", "notes": null, "year": 1788}, {"id": "attest_baijiatuan_caoxueqin", "label": "白家疃", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "VERIFIED", "quote": "白家疃为明洪武屯田移民聚落，清代怡亲王胤祥有祠邸于此，曹雪芹晚年曾徙居西山白家疃著书行医", "source_title": "白家疃怡亲王交辉园题记与曹雪芹行迹考", "source_author": "红楼梦研究所", "dynasty": "现代学术专著", "notes": null, "year": 1978}, {"id": "attest_wenquan_dijing", "label": "温泉", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所", "source_title": "帝京景物略卷五", "source_author": "刘侗", "dynasty": "明代", "notes": null, "year": 1635}, {"id": "attest_qinghe_tianfu", "label": "清河", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "清河镇去德胜门二十里，有石梁跨河，为往昌平、居庸关第一大驿", "source_title": "天府广记卷二十", "source_author": "孙承泽", "dynasty": "清初", "notes": null, "year": 1660}, {"id": "attest_zhenjuesi_shilu", "label": "真觉寺金刚宝座", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "成化九年冬十一月，真觉寺金刚宝座塔成，赐名大觉金刚宝座", "source_title": "明宪宗实录卷一百二十", "source_author": "明官修", "dynasty": "明成化九年", "notes": null, "year": 1473}, {"id": "attest_dajuesi_stele", "label": "大觉寺", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "大觉禅寺，金章宗清水院故址也，重修弘开法筵", "source_title": "大觉寺宣德重修碑记", "source_author": "明宣德官刻", "dynasty": "明宣德三年", "notes": null, "year": 1428}, {"id": "attest_yimuyuan_qianlong", "label": "一亩园", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "圆明园前置一亩园，仿先农坛躬耕籍田之礼，以示重本抑末", "source_title": "清高宗御制文二集", "source_author": "清高宗乾隆帝", "dynasty": "清乾隆十年", "notes": null, "year": 1745}, {"id": "attest_niangniangfu_gazetteer", "label": "娘娘府", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "金山之麓，明代诸妃茔墓列峙，俗呼一溜边山七十二府，今娘娘府其遗地也", "source_title": "光绪顺天府志·古迹志", "source_author": "缪荃孙", "dynasty": "清光绪十一年", "notes": null, "year": 1885}, {"id": "attest_dongsimu_record", "label": "董四墓", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "VERIFIED", "quote": "明代皇室墓地，后形成看坟户村落，以董姓第四代守墓人得名董四墓，曾以御桃闻名", "source_title": "海淀区地名志", "source_author": "海淀区地名办公室", "dynasty": "现代志书", "notes": null, "year": 1992}, {"id": "attest_chengfu_shunzhi", "label": "成府", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "VERIFIED", "quote": "成府旧称陈府，相传明末崇祯田贵妃戚畹陈氏别墅所在地，村落早废而路名犹存", "source_title": "燕都丛考卷四", "source_author": "陈宗蕃", "dynasty": "民国十九年", "notes": null, "year": 1930}, {"id": "attest_huangzhuang_hunt", "label": "黄庄", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "CONTESTED", "quote": "海淀南二里黄庄，明时或为皇庄之讹，或以黄土高阜得名，志家存疑", "source_title": "日下旧闻考卷一百", "source_author": "于敏中", "dynasty": "清代", "notes": null, "year": 1774}, {"id": "attest_zaojunmiao_record", "label": "皂君庙", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "皂君庙者，实祀灶神，民间方言轻读俗转作皂，遂沿为街名", "source_title": "京师坊巷志稿", "source_author": "朱一新", "dynasty": "清光绪十二年", "notes": null, "year": 1886}, {"id": "attest_zgc_1953_decision", "label": "中关村科学院园区", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "政务院批准文委与科学院关于选定海淀中关村为科研基地的方案，近代第一座科学城破土动工", "source_title": "中国科学院院史资料汇编", "source_author": "中科院院史馆", "dynasty": "现代新中国", "notes": null, "year": 1953}, {"id": "attest_zgc_1980_seed", "label": "中关村第一粒种子", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "1980年10月陈春先创办北京等离子体学会先进技术服务部，开启中关村科技街创业大幕", "source_title": "陈春先与北京硅谷破冰史", "source_author": "科学时报", "dynasty": "现代改革开放", "notes": null, "year": 1980}, {"id": "attest_zgc_1988_zone", "label": "北京市新技术产业开发试验区", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "同意以中关村为中心建立北京市新技术产业开发试验区，实行十八条扶持政策", "source_title": "国务院国函〔1988〕74号文", "source_author": "中华人民共和国国务院", "dynasty": "现代改革开放", "notes": null, "year": 1988}, {"id": "attest_dajuesi_liao_stele", "label": "清水院契丹碑", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "大辽大安四年，西山清水院重构佛殿，刻石纪事", "source_title": "大辽大安四年石碑", "source_author": "辽燕京宛平县清水院", "dynasty": "辽代（大安四年）", "notes": null, "year": 1088}, {"id": "attest_daizhou_tang_record", "label": "带州", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "带州，神龙元年置，寄治昌平县清水店，领孤竹一县", "source_title": "旧唐书·地理志二", "source_author": "刘昫等", "dynasty": "唐代（神龙元年）", "notes": null, "year": 705}, {"id": "attest_xierqi_shuntian", "label": "西二旗", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "西二旗在宛平县北，相传明代卫所小旗分屯之地，次于三旗", "source_title": "光绪顺天府志·地理志", "source_author": "缪荃孙", "dynasty": "清光绪十一年", "notes": null, "year": 1885}, {"id": "attest_zhongguan_eunuch_stele", "label": "中官村刚炳祠堂碑", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "中官村地多太监兆域，内廷诸中官合祀刚炳为神，建祠村东，置义地数百亩", "source_title": "北京历代太监墓石刻考", "source_author": "北京石刻博物馆", "dynasty": "清末光绪二十六年", "notes": null, "year": 1900}, {"id": "attest_zhongguantun_map", "label": "中官屯", "group": "PlaceAttestation", "evidence_level": "Level 2 (一手官刻金石)", "epistemic_status": "VERIFIED", "quote": "海淀镇东门外二里，标示‘中官屯’，为太监守茔户聚集之聚落", "source_title": "顺天府宛平县保甲全图", "source_author": "顺天府宛平县衙", "dynasty": "清光绪三十四年", "notes": null, "year": 1908}, {"id": "attest_anhe_republic_record", "label": "安河桥", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "安河桥在青龙桥东，因水流安恬、桥跨御河，俗名遂改作‘安河桥’", "source_title": "北平地名通志", "source_author": "北平特别市政府", "dynasty": "民国二十三年", "notes": null, "year": 1934}, {"id": "attest_huoqiying_record", "label": "外火器营", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场", "source_title": "日下旧闻考卷九十八", "source_author": "于敏中", "dynasty": "清乾隆三十九年", "notes": null, "year": 1774}, {"id": "attest_linglongta_yandu", "label": "玲珑宝塔", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "八里庄有慈寿寺舍利宝塔，雕饰玲珑秀出，京师游人呼为玲珑宝塔", "source_title": "燕都游览志卷三", "source_author": "孙国敉", "dynasty": "明天启三年", "notes": null, "year": 1623}, {"id": "attest_wutasi_beiping", "label": "五塔寺", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "真觉寺金刚宝座有五方佛塔，世称五塔寺，西直门外名刹也", "source_title": "北平名胜景物记", "source_author": "张爵", "dynasty": "民国二十四年", "notes": null, "year": 1935}, {"id": "attest_chengfulu_gazetteer", "label": "成府路", "group": "PlaceAttestation", "evidence_level": "Level 4 (近代学界考订)", "epistemic_status": "VERIFIED", "quote": "成府路东起五道口，西至清华大学西门南，因原成府村得名，现为中关村主干道", "source_title": "北京市海淀区地名志", "source_author": "海淀区地名办", "dynasty": "现代", "notes": null, "year": 1992}, {"id": "attest_gaolianghe_shuijingzhu", "label": "高梁水", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "高梁水出蓟县西北平地，东南流经蓟城北，水色清莹，草木丰茂", "source_title": "水经注卷十三", "source_author": "郦道元", "dynasty": "北魏正光至孝昌年间", "notes": null, "year": 527}, {"id": "attest_yuquanshan_jinshi", "label": "玉泉山芙蓉殿", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "大兴府宛平县有玉泉山，金世宗、章宗两朝建芙蓉殿及行宫于此，御泉甘冽", "source_title": "金史·地理志", "source_author": "脱脱等", "dynasty": "元代修金史", "notes": null, "year": 1344}, {"id": "attest_wanshoushan_rixia", "label": "瓮山", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "万寿山旧名瓮山，其形如瓮，前抱瓮山泊，元郭守敬引白浮泉聚水于此", "source_title": "日下旧闻考卷八十四", "source_author": "于敏中", "dynasty": "清乾隆三十九年", "notes": null, "year": 1774}, {"id": "attest_xiangshan_jinshi", "label": "香山大永安寺", "group": "PlaceAttestation", "evidence_level": "Level 3 (正史方志纪实)", "epistemic_status": "VERIFIED", "quote": "大定二十六年三月，世宗幸西山，驻跸香山大永安寺，为西山名胜之冠", "source_title": "金史·世宗本纪", "source_author": "脱脱", "dynasty": "金大定二十六年", "notes": null, "year": 1186}, {"id": "attest_xisanqi_manchu_myth", "label": "西三旗源自满洲八旗三旗说", "group": "PlaceAttestation", "evidence_level": "Level 6 (明确证伪伪说)", "epistemic_status": "DISPROVEN", "quote": "俗传西三旗为清代正黄、正白、正蓝上三旗驻军之地", "source_title": "北京地名通俗民间讲义（错误说）", "source_author": "民间地名作者", "dynasty": "现代通俗读物", "notes": "严重史实错误：清代八旗驻防体系中绝无‘西三旗’之军制建置，一手顺天府志明确记载为明代卫所小旗军屯", "year": 1980}, {"id": "attest_gaoliangqiao_979_myth", "label": "宋太宗中箭之高梁桥说", "group": "PlaceAttestation", "evidence_level": "Level 6 (明确证伪伪说)", "epistemic_status": "DISPROVEN", "quote": "讲宋太宗赵光义高梁河惨败，于高梁桥下乘驴车仓皇南逃", "source_title": "通俗演义小说附会", "source_author": "通俗历史评书", "dynasty": "现代通俗评书", "notes": "时空错乱：979年高梁河之战时该处仅有古河道与野渡，高梁桥系元至元二十九年（1292）郭守敬所建，晚了313年", "year": 1950}, {"id": "evt_haidian_creation", "label": "CreationEvent", "group": "EvolutionEvent", "category": "CreationEvent", "description": "元初通往塞北古道边浅水湖泊聚落形成，称‘海店’", "dynasty": "金末元初", "year": 1260}, {"id": "evt_haidian_dian2", "label": "EuphemisticRenamingEvent", "group": "EvolutionEvent", "category": "EuphemisticRenamingEvent", "description": "明代文人雅化为海甸，借用‘甸’字郊野王畿之义", "dynasty": "明代中叶", "year": 1600}, {"id": "evt_haidian_final", "label": "EuphemisticRenamingEvent", "group": "EvolutionEvent", "category": "EuphemisticRenamingEvent", "description": "文人因其万泉汇聚、水草丰茂，正式改从水旁作‘海淀’", "dynasty": "明万历至清初", "year": 1600}, {"id": "evt_niulan_to_liulang_willow", "label": "EuphemisticRenamingEvent", "group": "EvolutionEvent", "category": "EuphemisticRenamingEvent", "description": "牛栏庄因地处万泉河下流，柳荫蔽日、垂柳成浪，雅化改称柳浪庄", "dynasty": "清康熙年间", "year": 1600}, {"id": "evt_liulang_to_general", "label": "FolkAppropriationEvent", "group": "EvolutionEvent", "category": "FolkAppropriationEvent", "description": "民间借谐音附会宋将杨六郎抗辽驻兵之英雄传说，遂讹写作六郎庄", "dynasty": "清中晚期", "year": 1600}, {"id": "evt_qiongbajia_to_dayouzhuang", "label": "ImperialNamingEvent", "group": "EvolutionEvent", "category": "ImperialNamingEvent", "description": "乾隆帝巡幸见‘穷八家’村名不吉，取《周易》大有卦‘丰盛富庶’之义御赐改名大有庄", "dynasty": "清乾隆年间", "year": 1750}, {"id": "evt_weiwu_to_weigong", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "‘畏吾村’经数百年方言口传音转为‘畏兀村’、‘魏家村’，民国四年《实测四郊图》谐音定名‘魏公村’", "dynasty": "民国初年", "year": 1915}, {"id": "evt_zhongguan_euphemism", "label": "EuphemisticRenamingEvent", "group": "EvolutionEvent", "category": "EuphemisticRenamingEvent", "description": "中官村太监义地因新式学堂进驻，文人与测地局避忌‘中官（宦官）’嫌称，雅化为‘中关村’", "dynasty": "清末民初", "year": 1913}, {"id": "evt_anhe_imperial", "label": "ImperialNamingEvent", "group": "EvolutionEvent", "category": "ImperialNamingEvent", "description": "乾隆帝改修石拱桥，御题‘安和桥’石额", "dynasty": "清乾隆四十六年", "year": 1781}, {"id": "evt_anhe_river_drift", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "民间望文生义，因桥跨清河而俗写同音为‘安河桥’", "dynasty": "清末民初", "year": 1600}, {"id": "evt_chengfu_extinction", "label": "SpatialExtinctionEvent", "group": "EvolutionEvent", "category": "SpatialExtinctionEvent", "description": "原成府村落随高校园区扩建全部拆迁，地名作为‘成府路’道路专名永久存续", "dynasty": "当代", "year": 1990}, {"id": "evt_gaoliang_gate_to_bridge", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "元代高梁闸桥闸合一，明代漕运衰退后民众逐渐以桥名统称，演化为高梁桥", "dynasty": "明代", "year": 1600}, {"id": "evt_dazhongsi_relocate_bell", "label": "ImperialNamingEvent", "group": "EvolutionEvent", "category": "ImperialNamingEvent", "description": "乾隆帝将万寿寺永乐大钟移悬觉生寺，民间遂以大钟代称寺名，俗称大钟寺并演变为现代地铁站地名", "dynasty": "清乾隆十六年", "year": 1751}, {"id": "evt_suzhoujie_imperial_build", "label": "ImperialNamingEvent", "group": "EvolutionEvent", "category": "ImperialNamingEvent", "description": "乾隆帝为母后祝寿仿苏州水肆建买卖街，民间与后世统称为苏州街", "dynasty": "清乾隆二十六年", "year": 1761}, {"id": "evt_cishou_linglong_drift", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "慈寿寺建筑毁于清末大火仅存舍利塔，民间因塔身玲珑秀丽俗称玲珑塔，演化为区域地标", "dynasty": "清代中后期", "year": 1600}, {"id": "evt_zhenjue_wuta_drift", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "真觉寺因金刚宝座上有五座密檐小塔，民间俗称五塔寺，后寺废名存沿为村名与地标", "dynasty": "清代", "year": 1600}, {"id": "evt_dajuesi_rename", "label": "ImperialNamingEvent", "group": "EvolutionEvent", "category": "ImperialNamingEvent", "description": "明宣宗宣德皇帝重修金代清水院行宫禅刹，赐额大觉寺", "dynasty": "明宣德三年", "year": 1428}, {"id": "evt_landian_huoqi_shift", "label": "AdministrativeShiftEvent", "group": "EvolutionEvent", "category": "AdministrativeShiftEvent", "description": "乾隆三十五年外火器营四千间兵营自城内迁驻蓝靛厂，市镇与兵营空间复合", "dynasty": "清乾隆三十五年", "year": 1770}, {"id": "evt_shucun_garrison_shift", "label": "AdministrativeShiftEvent", "group": "EvolutionEvent", "category": "AdministrativeShiftEvent", "description": "清世宗置圆明园八旗护军营，镶黄旗驻树村西，正白旗驻树村东，树村演化为八旗兵民共生村", "dynasty": "清雍正二年", "year": 1724}, {"id": "evt_xiaojiahe_garrison_shift", "label": "AdministrativeShiftEvent", "group": "EvolutionEvent", "category": "AdministrativeShiftEvent", "description": "圆明园护军营正黄旗营房设于肖家河村北，形成军政护卫要冲", "dynasty": "清雍正二年", "year": 1724}, {"id": "evt_zaojunmiao_drift", "label": "PhoneticShiftEvent", "group": "EvolutionEvent", "category": "PhoneticShiftEvent", "description": "灶君庙因北京方言灶、皂同音混用，官牌与地名志遂写作皂君庙", "dynasty": "清代中叶", "year": 1600}], "links": [{"source": "unit_jicheng_suburb", "target": "feat_gaolianghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_daizhou_garrison", "target": "feat_taizhouwu_dock", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_qingshui_court", "target": "feat_xiangshan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_wenquan_village", "target": "feat_wenquan_spring", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_haidian_town", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_weiwu_village", "target": "feat_gaolianghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_qinghe_transit_town", "target": "feat_qinghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_xisanqi_garrison", "target": "feat_qinghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_xierqi_garrison", "target": "feat_qinghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_niulanzhuang_village", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_niangniangfu_tomb", "target": "feat_xiangshan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_dongsimu_tomb", "target": "feat_xiangshan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_zhongguan_cemetery", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_wanshousi_palace", "target": "feat_changhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_cishousi_temple", "target": "feat_changhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_dazhongsi_temple", "target": "feat_gaolianghe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_changchunyuan", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_yuanmingyuan", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_dayouzhuang_village", "target": "feat_wanshoushan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_yimuyuan_fields", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_qinglongqiao_market", "target": "feat_anheqiao_site", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_suzhoujie_market", "target": "feat_wanshoushan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_landianchang_town", "target": "feat_changhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_jianruiying_garrison", "target": "feat_xiangshan", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_zhenghuangqi_camp", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_xianghuangqi_camp", "target": "feat_baifu_wengshan_he", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_zhengbaiqi_camp", "target": "feat_baifu_wengshan_he", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_tsinghua_academy", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_cas_zhongguancun", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_zgc_hightech_zone", "target": "feat_wanquanhe", "type": "locatedAt", "label": "地理坐落于"}, {"source": "unit_jicheng_suburb", "target": "top_gaolianghe", "type": "namedAs", "label": "建制定名为"}, {"source": "top_gaoliangzha", "target": "top_gaoliangqiao", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_haidian_town", "target": "top_haidian_dian1", "type": "namedAs", "label": "建制定名为"}, {"source": "top_haidian_dian1", "target": "top_haidian_dian2", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_haidian_dian2", "target": "top_haidian", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_weiwu_village", "target": "top_weiwucun", "type": "namedAs", "label": "建制定名为"}, {"source": "top_weiwucun", "target": "top_weiwuer_cun", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_weiwuer_cun", "target": "top_weigongcun", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_xisanqi_garrison", "target": "top_xisanqi", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_xierqi_garrison", "target": "top_xierqi", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_niulanzhuang_village", "target": "top_niulanzhuang", "type": "namedAs", "label": "建制定名为"}, {"source": "top_niulanzhuang", "target": "top_liulangzhuang_willow", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_liulangzhuang_willow", "target": "top_liulangzhuang_general", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_dayouzhuang_village", "target": "top_qiongbajia", "type": "namedAs", "label": "建制定名为"}, {"source": "top_qiongbajia", "target": "top_dayouzhuang", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_zhongguan_cemetery", "target": "top_zhongguancun_eunuch", "type": "namedAs", "label": "建制定名为"}, {"source": "top_zhongguancun_eunuch", "target": "top_zhongguantun", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_zhongguancun_eunuch", "target": "top_zhongguancun_modern", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_qinglongqiao_market", "target": "top_anheqiao_wood", "type": "namedAs", "label": "建制定名为"}, {"source": "top_anheqiao_wood", "target": "top_anheqiao_peace", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_anheqiao_peace", "target": "top_anheqiao_river", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_qinglongqiao_market", "target": "top_qinglongqiao", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_landianchang_town", "target": "top_landianchang_dye", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_xianghuangqi_camp", "target": "top_shucun", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_zhenghuangqi_camp", "target": "top_xiaojiahe", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_suzhoujie_market", "target": "top_suzhoujie", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_dazhongsi_temple", "target": "top_jueshengsi", "type": "namedAs", "label": "建制定名为"}, {"source": "top_jueshengsi", "target": "top_dazhongsi", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_yimuyuan_fields", "target": "top_yimuyuan", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_niangniangfu_tomb", "target": "top_niangniangfu", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_dongsimu_tomb", "target": "top_dongsimu", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_daizhou_garrison", "target": "top_daizhou_name", "type": "namedAs", "label": "建制定名为"}, {"source": "top_daizhou_name", "target": "top_taizhouwu", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_wenquan_village", "target": "top_wenquan", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_qinghe_transit_town", "target": "top_qinghezhen", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_wanshousi_palace", "target": "top_wanshousi", "type": "namedAs", "label": "建制定名为"}, {"source": "unit_cishousi_temple", "target": "top_cishousi", "type": "namedAs", "label": "建制定名为"}, {"source": "top_zhenjuesi", "target": "top_wutasi", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "unit_qingshui_court", "target": "top_dajuesi", "type": "namedAs", "label": "建制定名为"}, {"source": "top_chengfu", "target": "top_chengfulu", "type": "evolvedFrom", "label": "历史演变自"}, {"source": "top_anheqiao_wood", "target": "attest_anheqiao_wood_c14", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_longbeicun", "target": "attest_longbeicun_weir_site", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_haidian_dian1", "target": "attest_haidian_1260", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_gaoliangzha", "target": "attest_gaoliangzha_1292", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_guangyuanzha", "target": "attest_guangyuanzha_stele", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_jueshengsi", "target": "attest_dazhongsi_bell_stele", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_suzhoujie", "target": "attest_suzhoujie_qianlong_poem", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_anheqiao_peace", "target": "attest_anheqiao_stone_tablet", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_dayouzhuang", "target": "attest_rixia_dayouzhuang", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_shucun", "target": "attest_rixia_shucun", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_landianchang_dye", "target": "attest_rixia_landianchang", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_xisanqi", "target": "attest_shuntian_xisanqi", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_niulanzhuang", "target": "attest_wanping_niulanzhuang", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_weiwucun", "target": "attest_weiwucun_yuanshi", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguancun_modern", "target": "attest_jingxi_map_1913", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_haidian", "target": "attest_hourenzhi_haidian", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_taizhouwu", "target": "attest_taizhouwu_dock_study", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_liulangzhuang_general", "target": "attest_liulang_legend", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_qinglongqiao", "target": "attest_qinglongqiao_rixia", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_xiaojiahe", "target": "attest_xiaojiahe_daqing", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_shucun", "target": "attest_shucun_shishi", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_wanshousi", "target": "attest_wanshousi_mingshi", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_cishousi", "target": "attest_cishousi_dijing", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_guajiatun", "target": "attest_guajiatun_chenyuan", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_baijiatuan", "target": "attest_baijiatuan_caoxueqin", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_wenquan", "target": "attest_wenquan_dijing", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_qinghezhen", "target": "attest_qinghe_tianfu", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhenjuesi", "target": "attest_zhenjuesi_shilu", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_dajuesi", "target": "attest_dajuesi_stele", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_yimuyuan", "target": "attest_yimuyuan_qianlong", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_niangniangfu", "target": "attest_niangniangfu_gazetteer", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_dongsimu", "target": "attest_dongsimu_record", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_chengfu", "target": "attest_chengfu_shunzhi", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_huangzhuang", "target": "attest_huangzhuang_hunt", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zaojunmiao", "target": "attest_zaojunmiao_record", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguancun_modern", "target": "attest_zgc_1953_decision", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguancun_modern", "target": "attest_zgc_1980_seed", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguancun_modern", "target": "attest_zgc_1988_zone", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_dajuesi", "target": "attest_dajuesi_liao_stele", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_daizhou_name", "target": "attest_daizhou_tang_record", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_xierqi", "target": "attest_xierqi_shuntian", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguancun_eunuch", "target": "attest_zhongguan_eunuch_stele", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_zhongguantun", "target": "attest_zhongguantun_map", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_anheqiao_river", "target": "attest_anhe_republic_record", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_huoqiying", "target": "attest_huoqiying_record", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_linglongta", "target": "attest_linglongta_yandu", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_wutasi", "target": "attest_wutasi_beiping", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_chengfulu", "target": "attest_chengfulu_gazetteer", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_gaolianghe", "target": "attest_gaolianghe_shuijingzhu", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_xisanqi", "target": "attest_xisanqi_manchu_myth", "type": "attestedIn", "label": "见载书证于"}, {"source": "top_gaoliangqiao", "target": "attest_gaoliangqiao_979_myth", "type": "attestedIn", "label": "见载书证于"}, {"source": "evt_haidian_creation", "target": "top_haidian_dian1", "type": "eventTarget", "label": "演变生成"}, {"source": "top_haidian_dian1", "target": "evt_haidian_dian2", "type": "eventSource", "label": "演变前源"}, {"source": "evt_haidian_dian2", "target": "top_haidian_dian2", "type": "eventTarget", "label": "演变生成"}, {"source": "top_haidian_dian2", "target": "evt_haidian_final", "type": "eventSource", "label": "演变前源"}, {"source": "evt_haidian_final", "target": "top_haidian", "type": "eventTarget", "label": "演变生成"}, {"source": "top_niulanzhuang", "target": "evt_niulan_to_liulang_willow", "type": "eventSource", "label": "演变前源"}, {"source": "evt_niulan_to_liulang_willow", "target": "top_liulangzhuang_willow", "type": "eventTarget", "label": "演变生成"}, {"source": "top_liulangzhuang_willow", "target": "evt_liulang_to_general", "type": "eventSource", "label": "演变前源"}, {"source": "evt_liulang_to_general", "target": "top_liulangzhuang_general", "type": "eventTarget", "label": "演变生成"}, {"source": "top_qiongbajia", "target": "evt_qiongbajia_to_dayouzhuang", "type": "eventSource", "label": "演变前源"}, {"source": "evt_qiongbajia_to_dayouzhuang", "target": "top_dayouzhuang", "type": "eventTarget", "label": "演变生成"}, {"source": "top_weiwucun", "target": "evt_weiwu_to_weigong", "type": "eventSource", "label": "演变前源"}, {"source": "evt_weiwu_to_weigong", "target": "top_weigongcun", "type": "eventTarget", "label": "演变生成"}, {"source": "top_zhongguancun_eunuch", "target": "evt_zhongguan_euphemism", "type": "eventSource", "label": "演变前源"}, {"source": "evt_zhongguan_euphemism", "target": "top_zhongguancun_modern", "type": "eventTarget", "label": "演变生成"}, {"source": "top_anheqiao_wood", "target": "evt_anhe_imperial", "type": "eventSource", "label": "演变前源"}, {"source": "evt_anhe_imperial", "target": "top_anheqiao_peace", "type": "eventTarget", "label": "演变生成"}, {"source": "top_anheqiao_peace", "target": "evt_anhe_river_drift", "type": "eventSource", "label": "演变前源"}, {"source": "evt_anhe_river_drift", "target": "top_anheqiao_river", "type": "eventTarget", "label": "演变生成"}, {"source": "top_chengfu", "target": "evt_chengfu_extinction", "type": "eventSource", "label": "演变前源"}, {"source": "evt_chengfu_extinction", "target": "top_chengfulu", "type": "eventTarget", "label": "演变生成"}, {"source": "top_gaoliangzha", "target": "evt_gaoliang_gate_to_bridge", "type": "eventSource", "label": "演变前源"}, {"source": "evt_gaoliang_gate_to_bridge", "target": "top_gaoliangqiao", "type": "eventTarget", "label": "演变生成"}, {"source": "top_jueshengsi", "target": "evt_dazhongsi_relocate_bell", "type": "eventSource", "label": "演变前源"}, {"source": "evt_dazhongsi_relocate_bell", "target": "top_dazhongsi", "type": "eventTarget", "label": "演变生成"}, {"source": "top_maimaijie", "target": "evt_suzhoujie_imperial_build", "type": "eventSource", "label": "演变前源"}, {"source": "evt_suzhoujie_imperial_build", "target": "top_suzhoujie", "type": "eventTarget", "label": "演变生成"}, {"source": "top_cishousi", "target": "evt_cishou_linglong_drift", "type": "eventSource", "label": "演变前源"}, {"source": "evt_cishou_linglong_drift", "target": "top_linglongta", "type": "eventTarget", "label": "演变生成"}, {"source": "top_zhenjuesi", "target": "evt_zhenjue_wuta_drift", "type": "eventSource", "label": "演变前源"}, {"source": "evt_zhenjue_wuta_drift", "target": "top_wutasi", "type": "eventTarget", "label": "演变生成"}, {"source": "evt_dajuesi_rename", "target": "top_dajuesi", "type": "eventTarget", "label": "演变生成"}, {"source": "top_landianchang_dye", "target": "evt_landian_huoqi_shift", "type": "eventSource", "label": "演变前源"}, {"source": "evt_landian_huoqi_shift", "target": "top_huoqiying", "type": "eventTarget", "label": "演变生成"}, {"source": "evt_shucun_garrison_shift", "target": "top_shucun", "type": "eventTarget", "label": "演变生成"}, {"source": "evt_xiaojiahe_garrison_shift", "target": "top_xiaojiahe", "type": "eventTarget", "label": "演变生成"}, {"source": "evt_zaojunmiao_drift", "target": "top_zaojunmiao", "type": "eventTarget", "label": "演变生成"}]};
+
+    const ERA_MILESTONES = [
+      { name: "先秦 / 汉代 (蓟城原野)", maxYear: -200 },
+      { name: "唐代 (羁縻带州 705)", maxYear: 900 },
+      { name: "辽金时期 (大觉寺/温泉 1150)", maxYear: 1234 },
+      { name: "元代 (王恽海店/郭守敬 1260-1292)", maxYear: 1367 },
+      { name: "明代 (卫所军屯/万寿寺 1368-1643)", maxYear: 1643 },
+      { name: "清代前期 (畅春园/八旗营 1644-1735)", maxYear: 1735 },
+      { name: "清代鼎盛 (大有庄/苏州街 1750-1860)", maxYear: 1860 },
+      { name: "清末民初 (京西图/清华 1861-1948)", maxYear: 1948 },
+      { name: "现代与当代 (科学城/高新区 1949-至今)", maxYear: 2026 }
+    ];
+
+    document.getElementById("stats-counter").innerText =
+      `实体数: ${graphData.nodes.length} | 关联边: ${graphData.links.length}`;
+
+    const width = window.innerWidth - 380;
+    const height = window.innerHeight;
+
+    const svg = d3.select("#graph-svg")
+      .attr("viewBox", [0, 0, width, height]);
+
+    const gContainer = svg.append("g");
+
+    // 缩放
+    const zoom = d3.zoom()
+      .scaleExtent([0.2, 4])
+      .on("zoom", (e) => gContainer.attr("transform", e.transform));
+    svg.call(zoom);
+
+    // 颜色比例尺
+    const colorMap = {
+      Toponym: "#38bdf8",
+      PhysicalFeature: "#4ade80",
+      AdministrativeUnit: "#c084fc",
+      PlaceAttestation: "#fbbf24",
+      EvolutionEvent: "#f87171"
+    };
+
+    // 力导向仿真
+    const simulation = d3.forceSimulation(graphData.nodes)
+      .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(d => {
+        if (d.type === "evolvedFrom") return 70;
+        if (d.type === "attestedIn") return 50;
+        return 90;
+      }))
+      .force("charge", d3.forceManyBody().strength(-220))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(22));
+
+    // 箭头定义
+    svg.append("defs").selectAll("marker")
+      .data(["evolvedFrom", "namedAs", "locatedAt", "attestedIn", "eventTarget"])
+      .join("marker")
+      .attr("id", d => `arrow-${d}`)
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 18)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("fill", d => d === "evolvedFrom" ? "#c084fc" : "#64748b")
+      .attr("d", "M0,-5L10,0L0,5");
+
+    // 边
+    const link = gContainer.append("g")
+      .attr("stroke-opacity", 0.6)
+      .selectAll("line")
+      .data(graphData.links)
+      .join("line")
+      .attr("stroke", d => d.type === "evolvedFrom" ? "#c084fc" : (d.type === "attestedIn" ? "#fbbf24" : "#475569"))
+      .attr("stroke-width", d => d.type === "evolvedFrom" ? 2.5 : 1.2)
+      .attr("stroke-dasharray", d => d.type === "attestedIn" ? "3,3" : "none")
+      .attr("marker-end", d => `url(#arrow-${d.type})`);
+
+    // 节点
+    const node = gContainer.append("g")
+      .selectAll("g")
+      .data(graphData.nodes)
+      .join("g")
+      .call(d3.drag()
+        .on("start", (e, d) => {
+          if (!e.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on("end", (e, d) => {
+          if (!e.active) simulation.alphaTarget(0);
+          d.fx = null; d.fy = null;
+        }));
+
+    node.append("circle")
+      .attr("r", d => d.group === "Toponym" ? 10 : (d.group === "PlaceAttestation" ? 6 : 8))
+      .attr("fill", d => {
+        if (d.epistemic_status === "DISPROVEN") return "#ef4444";
+        return colorMap[d.group] || "#94a3b8";
+      })
+      .attr("stroke", "#0f172a")
+      .attr("stroke-width", 2);
+
+    node.append("text")
+      .text(d => d.label)
+      .attr("x", 12)
+      .attr("y", 4)
+      .attr("fill", "#cbd5e1")
+      .attr("font-size", "11px")
+      .style("pointer-events", "none");
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+      node.attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    // 节点点击事件
+    node.on("click", (e, d) => {
+      document.getElementById("detail-name").innerText = d.label;
+      const badge = document.getElementById("detail-badge");
+      badge.className = `badge badge-${d.group.toLowerCase()}`;
+      if (d.epistemic_status === "DISPROVEN") badge.className = "badge badge-disproven";
+      badge.innerText = d.group;
+
+      document.getElementById("detail-type").innerText = `${d.group} (${d.category || d.pinyin || ''})`;
+
+      const quoteSec = document.getElementById("detail-quote-section");
+      if (d.quote) {
+        quoteSec.style.display = "block";
+        document.getElementById("detail-quote").innerText = `“${d.quote}”`;
+        document.getElementById("detail-source").innerText = `出处: ${d.source_title} (${d.dynasty || ''})`;
+      } else {
+        quoteSec.style.display = "none";
+      }
+
+      document.getElementById("detail-desc").innerText = d.description || d.notes || "实体关联已建立";
+
+      const evSec = document.getElementById("detail-evidence-section");
+      if (d.evidence_level) {
+        evSec.style.display = "block";
+        document.getElementById("detail-level").innerText =
+          `${d.evidence_level} [${d.epistemic_status}]`;
+      } else {
+        evSec.style.display = "none";
+      }
+
+      // 高亮邻接节点
+      node.selectAll("circle").attr("opacity", n => (n === d ? 1 : 0.3));
+      link.attr("opacity", l => (l.source.id === d.id || l.target.id === d.id ? 1 : 0.1));
+    });
+
+    // 背景点击取消高亮
+    svg.on("click", (e) => {
+      if (e.target.tagName === "svg") {
+        node.selectAll("circle").attr("opacity", 1);
+        link.attr("opacity", 0.6);
+      }
+    });
+
+    // 搜索过滤
+    document.getElementById("search-box").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) {
+        node.selectAll("circle").attr("opacity", 1);
+        link.attr("opacity", 0.6);
+        return;
+      }
+      node.selectAll("circle").attr("opacity", d => d.label.toLowerCase().includes(q) ? 1 : 0.1);
+      link.attr("opacity", 0.1);
+    });
+
+    // 时间轴过滤
+    const slider = document.getElementById("time-slider");
+    slider.addEventListener("input", (e) => {
+      const idx = parseInt(e.target.value);
+      const milestone = ERA_MILESTONES[idx];
+      document.getElementById("timeline-label").innerText = `当前地层：${milestone.name}`;
+
+      node.style("display", d => d.year <= milestone.maxYear ? "block" : "none");
+      link.style("display", l => {
+        const sVisible = l.source.year <= milestone.maxYear;
+        const tVisible = l.target.year <= milestone.maxYear;
+        return sVisible && tVisible ? "block" : "none";
+      });
+    });
+  </script>
+</body>
+</html>
