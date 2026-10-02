@@ -108,9 +108,11 @@ PEOPLE: List[HistoricalPerson] = [
     HistoricalPerson(
         id="person_tuotuo", name="脱脱",
         dynasty="元代", primary_role=PersonRole.SCHOLAR_WRITER,
-        authored_source_ids=["src_yuanshi"],
+        authored_source_ids=["src_yuanshi", "src_jinshi"],
         official_titles=["御史大夫", "中书右丞相"],
-        haidian_relevance="至正三年领修《元史》",
+        haidian_relevance="至正三年(1343)领修《元史》；至正间又领修辽、金、宋三史，"
+                          "《金史》所载承安三年(1198)「勿毀高梁河閘，從民灌溉」"
+                          "为金代高梁河已有人工水闸的一手记录",
     ),
     HistoricalPerson(
         id="person_guoshoujing", name="郭守敬",
@@ -235,5 +237,23 @@ PEOPLE: List[HistoricalPerson] = [
         haidian_relevance="雍正十一年(1733)正月敕建觉生寺于西直门外曾家庄，十二年(1734)冬"
                           "告成、御制碑文赐名「觉生寺」；十一年四月已允内务府移钟之奏",
         note="开工(1733)与赐名(1734)分属两年，碑文载选址与取名依据，不得混写同年",
+    ),
+    # ---------- E8高梁桥 / E2安河桥 桥类词条（2026-10-02 入库） ----------
+    HistoricalPerson(
+        id="person_zhangwei", name="张暐",
+        dynasty="金代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["礼部尚书"],
+        authored_source_ids=["src_dajinjili"],
+        haidian_relevance="主持进呈《大金集礼》（明昌六年，1195），金代官修礼制典章总集；"
+                          "与《金史》互证金代高梁河水系官营管理制度背景",
+        note="生卒不详，故不填；纂修起于大定间一说并存",
+    ),
+    HistoricalPerson(
+        id="person_zhou_sun", name="周损",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_dijingjingwulue"],
+        haidian_relevance="《帝京景物略》编辑成书者（刘侗、于奕正同撰，周损编辑）；"
+                          "书载「歲清明……都人踏青高梁橋」，为高梁桥明清踏青盛况一手明录",
+        note="E8复查红线：《帝京景物略》不得说成刘侗一人所撰；生卒不详，故不填",
     ),
 ]

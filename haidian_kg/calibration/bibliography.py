@@ -284,10 +284,12 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         id="src_dijingjingwulue", title="帝京景物略",
         category=SourceCategory.LITERARY_COLLECTION,
         author_person_id="person_liudong",
-        compiler_person_ids=["person_yuyizheng"],
+        compiler_person_ids=["person_yuyizheng", "person_zhou_sun"],
         base_edition=SISHU,
-        edition_note="刘侗、于奕正合撰（刘侗属文、于奕正采辑）。记大钟「向藏漢經廠」"
-                     "「日供六僧擊之」，为钟履历链的两处一手明录。"
+        edition_note="刘侗、于奕正合撰（刘侗属文、于奕正采辑），周损编辑成书"
+                     "（E8复查红线：不得说刘侗一人所撰）。记大钟「向藏漢經廠」"
+                     "「日供六僧擊之」，为钟履历链的两处一手明录；"
+                     "又记「歲清明……都人踏青高梁橋」为高梁桥踏青盛况一手明录。"
                      "引文按原刻繁体字形（漢經廠），卷次待核、不得臆标",
     ),
     HistoricalSource(
@@ -377,6 +379,99 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
                      "「纠正非祈雨不鸣讹传」结论的公开出处。属机构公开资料(L2/L3)，"
                      "与古籍逐字引文分挂不同篇卷，不得互冒",
     ),
+    # ---------- E8高梁桥 / E2安河桥 桥类词条入库（2026-10-02） ----------
+    # 每书作者/机构必填；引文一律按原刻本繁体字形逐字核对，不得以简体转写冒充原文。
+    # 机构名录/档案用官书类目登记并写明责任机构；地方文史口碑类用口述访谈类目，与档案分层。
+    HistoricalSource(
+        id="src_jinshi", title="金史",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        author_person_id="person_tuotuo",
+        total_volumes=135,
+        base_edition=ZHONGHUA,
+        edition_note="元至正间脱脱领修。载金代高梁河闸灌溉事：承安三年(1198)"
+                     "「命勿毀高梁河閘，從民灌溉」——金代此河段已有人工水闸的一手记录，"
+                     "堵「1292年是这条河第一道闸」误说。引文逐字核对以中华书局点校本为准；"
+                     "志内篇次卷次待核、不得臆标",
+    ),
+    HistoricalSource(
+        id="src_dajinjili", title="大金集礼",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        author_person_id="person_zhangwei",
+        total_volumes=40,
+        base_edition=SISHU,
+        edition_note="金代官修礼制典章总集，明昌六年(1195)礼部尚书张暐等进呈"
+                     "（纂修起于大定间一说并存），清四库馆自《永乐大典》辑出。"
+                     "与《金史》互证金代高梁河水系官营管理制度背景。"
+                     "本词条登记篇卷备核，具体引文待核原典后补，不得预支结论",
+    ),
+    HistoricalSource(
+        id="src_lidaizhiguangbiao", title="钦定历代职官表",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="清高宗敕撰（四库全书馆）",
+        total_volumes=72,
+        base_edition=SISHU,
+        edition_note="乾隆朝敕撰官书。卷八《户部仓场衙门表》载丰益仓："
+                     "在德胜门外安河桥，雍正七年(1729)建，供守卫圆明园八旗官军俸饷。"
+                     "引文以维基文库/识典古籍转录本定位，逐字句以原刻本核对后方可引用",
+    ),
+    HistoricalSource(
+        id="src_minglu_2", title="三山五园地区传统地名保护名录（第二批）",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="北京市规划和自然资源委员会、北京市海淀区人民政府",
+        edition_note="政府正式名录（官书类，非个人撰述）：2024-11-13公布，"
+                     "批准文件落款2025-06-20，2025年10月由市规划自然资源委网站公开发布。"
+                     "「高梁桥」列入，标准用字为木字底「梁」（字形纠偏）；"
+                     "「安河桥村」地名出现年代列为明代，并载村界四至（东、南至清河，"
+                     "西至京密引水渠，北至正红旗村）。名录证地名出现年代，"
+                     "不直接等同考古意义上的聚落形成",
+    ),
+    HistoricalSource(
+        id="src_bma_1929", title="北平市工务局郊区桥梁档案",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="北平市工务局（1929年调查）",
+        edition_note="安河桥桥史「系统B」出处：始建于元代以前；明正统十四年(1449)重修；"
+                     "康熙五十九年(1720)重建石拱桥；光绪十二年(1886)再修。"
+                     "本库经研究论文（香港中文大学《历史人类学学刊》系）转引使用，"
+                     "L1转引→暂按L2；1929年原档扫描件未目验前，"
+                     "不得宣布「元以前始建」为新定论，与「系统A」两说并存不裁决",
+    ),
+    HistoricalSource(
+        id="src_wjbz_open", title="北京市文物局公开文保资料",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="北京市文物局",
+        version_description="文保单位公开沿革与现状口径",
+        edition_note="记录式陈述（非古籍引文）：1980年代初展宽高梁桥路时重修（约1980—1982）；"
+                     "2003年古桥南北各建公路桥、不再供道路通行；界桥（桥南西城区展览路街道、"
+                     "桥北海淀区北下关街道）；2013年「高粱闸」（文保名录沿用米字底）列为大运河"
+                     "北京段第七批国保遗产点；桥上置闸称高梁闸（又称西城闸）、该闸已毁。"
+                     "与古籍逐字引文分挂不同篇卷，不得互冒",
+    ),
+    HistoricalSource(
+        id="src_hd_gov_open", title="海淀区人民政府公开史地沿革资料",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="北京市海淀区人民政府",
+        edition_note="政府公开沿革（记录式陈述）：乾隆十六年(1751)长河通航、桥西建倚虹堂"
+                     "（南岸另有船坞，两建筑分列）；高梁桥为今长河与转河衔接点"
+                     "（桥西至白石桥为长河、桥东往积水潭为转河）；1965年因修京密引水渠于"
+                     "青龙桥东北约0.5公里另址新建安河新桥；安河桥一带1990—2000年代多轮改造",
+    ),
+    HistoricalSource(
+        id="src_anheqiao_xiaoshi", title="安河桥小史（老北京网）",
+        category=SourceCategory.ORAL_TRADITION,
+        issuing_body="老北京网（地方文史）",
+        edition_note="安河桥桥史「系统A」出处（L3/L4，口播须软化）：雍正二年(1724)始建木桥、"
+                     "乾隆年间改建单孔石拱；单孔石拱桥面隆起俗称「罗锅桥」（两系统兼容）；"
+                     "石额刻「安和桥」旧料、近现代通行写「安河桥」；民国时安河桥村为"
+                     "青龙桥镇域内较大聚落。与1929档案「系统B」正面冲突，两说并存不裁决",
+    ),
+    HistoricalSource(
+        id="src_sxwj", title="三山五园水系变迁",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="公开出版研究（2026年出版，出版机构待核；经北京新闻报导核验）",
+        edition_note="2009年清河河底施工时安河桥下出土明代木桩，本书刊布实物图（L2）。"
+                     "木料年代区间之说属项目内部检测资料（L5，原始报告未公开），"
+                     "不入库、口播禁用；木桩「桥基」身份存疑，只说「出土的明代木桩」",
+    ),
 ]
 
 #: 常见简称 → 规范书名 归一表
@@ -393,6 +488,11 @@ TITLE_ALIASES: Dict[str, str] = {
     "高宗御制诗文集": "清高宗御制诗文集",
     "袁宏道集": "袁中郎全集",
     "大钟寺博物馆馆史资料": "大钟寺古钟博物馆馆史资料",
+    # E8/E2 桥类词条新补
+    "历代职官表": "钦定历代职官表",
+    "北平工务局桥梁档案": "北平市工务局郊区桥梁档案",
+    "第二批名录": "三山五园地区传统地名保护名录（第二批）",
+    "三山五园名录（第二批）": "三山五园地区传统地名保护名录（第二批）",
 }
 
 

@@ -43,6 +43,10 @@ class PhysicalThingKind(str, Enum):
     # 依据 CIDOC CRM E18 Physical Thing 下属 E22 Human-Made Object 划出：
     HUMAN_MADE_ARTIFACT = "人工器物"            # 可移动人工器物（E22），如永乐大钟
     IMPERIAL_WORKSHOP = "皇家厂坊"              # 御用厂坊机构及其占地，如汉经厂、铸钟厂
+    # E8高梁桥/E2安河桥词条入库新增：古战场与官仓此前无对应类别，
+    # 把979高梁河之战战场地望错挂"聚落占地"、把丰益仓错挂"皇家厂坊"都会污染 kind 语义。
+    HISTORIC_BATTLEFIELD = "古战场"             # 历史战役战场地望，如979年高梁河之战（与后世桥闸分属不同实体）
+    STATE_GRANARY = "官仓"                      # 国家/八旗仓储机构及其占地，如丰益仓
 
 
 class PersistentSpatialEntity(BaseModel):
