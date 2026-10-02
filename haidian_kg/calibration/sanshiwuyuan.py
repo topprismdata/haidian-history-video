@@ -155,7 +155,7 @@ DIVISIONS: List[SourceDivision] = [
     SourceDivision(id="div_hd_yqs", source_id="src_hd_gov_open",
                    volume_number="公开沿革",
                    section_title="静明园·玉泉山沿革与现状条（记录式转录，"
-                                 "澄心园/静明园年份为多机构一致口径）"),
+                                 "澄心园/静明园年份为多家现代机构同口径(可能同源,非独立多源;一手实录待核)"),
     SourceDivision(id="div_hd_ccy", source_id="src_hd_gov_open",
                    volume_number="公开沿革",
                    section_title="畅春园遗址条（恩佑寺恩慕寺山门现状与2021市保）"),
@@ -279,7 +279,7 @@ FACTS: List[TextualFact] = [
         id="tf_qyy_1761", division_id="div_rxjwkc84_qyy",
         verbatim_quote="萬壽山清漪園成於辛巳",
         attested_string="清漪園",
-        translator_note="御制《万寿山清漪园记》：辛巳=乾隆二十六年(1761)园成——"
+        translator_note="御制《万寿山清漪园记》：辛巳=乾隆二十六年(1761)园成——御制自述层；现代文保/园史口径另有全园工程至乾隆二十九年(1764)竣工说，两层不得互冒（GPT审003/009）——"
                         "与1750命名、1751建寺分属三个年份，严禁混写一年",
     ),
     TextualFact(
@@ -468,7 +468,7 @@ FACTS: List[TextualFact] = [
         id="tf_xss_jin_early", division_id="div_rxjwkc87_jyy2",
         verbatim_quote="天會間大軍下河北胡礪為軍士所掠行至燕亡匿香山寺",
         attested_string="香山寺",
-        translator_note="卷87原引《金史》本传——天会间(1123-1135)香山寺已存在，"
+        translator_note="卷87原引《金史》本传——天会间(1123-1137)香山寺已存在，"
                         "寺之始建早于大定",
     ),
     TextualFact(
@@ -572,7 +572,7 @@ FACTS: List[TextualFact] = [
         id="tf_hd_jmy", division_id="div_hd_yqs",
         verbatim_quote="康熙十九年（1680年）于玉泉山建澄心园，康熙三十一年（1692年）改称静明园。",
         attested_string="澄心园",
-        translator_note="记录式转录——1680/1692为多机构一致口径（维基百科/海淀"
+        translator_note="记录式转录——1680/1692为多家现代机构同口径(同源风险,非独立多源;维基百科/海淀"
                         "图书馆/人大清史研究院）；一手实录出处待核，"
                         "年份置信以机构口径为限",
     ),
