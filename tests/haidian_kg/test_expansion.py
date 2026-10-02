@@ -29,6 +29,7 @@ from haidian_kg.expansion import (
     ToponymOccurrence, CandidatePlaceHypothesis,
     MINER_VERSION, RULE_PROFILE_VERSION,
     normalize_form, _STOPWORDS,
+    LEADING_STOP_PREFIXES, strip_leading_stop_prefix,
 )
 
 
@@ -68,7 +69,8 @@ class TestClosureEngine:
         assert len(report.seeds) >= 20, "种子词条收集不全"
 
     def test_sources_mined(self, report):
-        assert len(report.sources_mined) == 20, "应挖遍全部篇卷"
+        # 篇卷全集：原 20 卷 + 健锐营词条追加的 5 卷（banners 2026-10-02）
+        assert len(report.sources_mined) == 25, "应挖遍全部篇卷"
 
     def test_finds_e1_e2_topics(self, report):
         """【核心】引擎必须自己发现 E1（萧家河）与 E2（安河桥）的主题。
@@ -368,10 +370,10 @@ class TestMinerContract:
         assert len(hyps) == 1 and len(hyps[0].occurrences) == 1
 
     def test_version_constants(self):
-        """v4：known-mention 通道 + rp-v4 记号/边界表（holdout run1 裁决落地）；
+        """v5：后缀 墓/街/房 + 边界垃圾前缀表（holdout run3 裁决落地）；
         版本进 SourceVisitKey，bump 即视为全部篇卷没挖过"""
-        assert MINER_VERSION == "v4"
-        assert RULE_PROFILE_VERSION == "rp-v4"
+        assert MINER_VERSION == "v5"
+        assert RULE_PROFILE_VERSION == "rp-v5"
 
 
 class TestV4KnownMentionChannel:
@@ -458,3 +460,203 @@ class TestV4KnownMentionChannel:
         rep = ClosureExpander(seed_kbs=[kb]).expand()
         assert rep.revisited_visits == 0
         assert len(rep.sources_mined) == len(S.DIVISIONS)
+
+
+# ---------------------------------------------------------------------------
+# v5（holdout run3 裁决落地）：通名后缀 墓/街/房 + 边界垃圾前缀表
+# ---------------------------------------------------------------------------
+
+class TestV5SuffixChannels:
+    """【v5】通名后缀 墓/街/房（含复合 营房/營房）。
+
+    正控制：run3 R 侧 8 条 FN 面（董四墓×3 / 苏州街×2 / 三旗营房×3）
+    在合成书证上必须命中；负控制：每条通道构造会过触发的文本，
+    证明通道不是恒真（detector-needs-negative-control 纪律）。
+    墓/街/房 繁简同形（无独立繁体字形），复合 营房/營房 双写。"""
+
+    @staticmethod
+    def _faces(quote):
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_v5", division_id="div_v5",
+                        verbatim_quote=quote, attested_string="")
+        return [o.surface_form for o in miner.mine("src_v5", "div_v5", [f])]
+
+    # ---------- 正控制：run3 FN 面 ----------
+
+    def test_mu_suffix_recalls_dongsimu_three_contexts(self):
+        """墓 通道：董四墓×3 种书证语境（篇目头/赐名句/水院地望）"""
+        for quote in ("董四墓：明代皇室茔地，守茔董姓第四子于此。",
+                      "明亡后看茔户聚居，名董四墓，曾以贡桃闻名。",
+                      "泉水院在董四墓附近。"):
+            faces = self._faces(quote)
+            assert "董四墓" in faces, "「%s」应命中 董四墓，实得 %s" % (quote, faces)
+
+    def test_jie_suffix_recalls_suzhoujie_simp_and_trad(self):
+        """街 通道：苏州街×2（简体俗称语境 + 繁体官书引文，归一形收敛）"""
+        faces = self._faces("俗称苏州街。")
+        assert "苏州街" in faces, "简体侧应命中 苏州街，实得 %s" % faces
+        trad = self._faces("居人稱為蘇州街。")
+        assert "蘇州街" in trad, "繁体官书引文应命中 蘇州街，实得 %s" % trad
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_v5_szj", division_id="div_v5",
+                        verbatim_quote="居人稱為蘇州街。", attested_string="")
+        occ = [o for o in miner.mine("src_v5", "div_v5", [f])
+               if o.surface_form == "蘇州街"][0]
+        assert occ.normalized_form == "苏州街", "蘇→苏 必须入归一映射（聚类同形）"
+
+    def test_yingfang_compound_recalls_three_banner_camps(self):
+        """营房 复合通道：旗名穿越回溯，三旗营房整词出面（run3 各 1 条 FN）"""
+        assert "正黄旗营房" in self._faces("正黄旗营房驻肖家河村北。")
+        assert "镶黄旗营房" in self._faces("镶黄旗营房驻树村西。")
+        assert "鑲黄旗營房" in self._faces("鑲黄旗營房在树村西。")
+        assert "正白旗营房" in self._faces("正白旗营房坐落树村东。")
+
+    def test_banner_camp_end_to_end_candidate_and_mention(self):
+        """引擎级：无该词条的 KB 里三旗营房书证产出候选；
+        已建词条 KB（banners）里则走 KnownMention，不冒充新发现"""
+        extra = TextualFact(id="tf_v5_yf", division_id="div_ymy_sj",
+                            verbatim_quote="正黄旗营房驻肖家河村北。",
+                            attested_string="正黄旗营房")
+        rep = ClosureExpander(
+            seed_kbs=[build_with_facts(Y, [extra])]).expand()
+        assert "正黄旗营房" in {h.normalized_form
+                               for h in rep.candidates_found}, \
+            "营房复合通道在引擎层断裂（候选未产出）"
+        rep_b = ClosureExpander(seed_kbs=[build(B)]).expand()
+        assert "正黄旗营房" in {k.normalized_form for k in rep_b.known_mentions}, \
+            "已建词条字形命中必须走 KnownMention 通道"
+
+    # ---------- 负控制：通道不得恒真 ----------
+
+    def test_mu_channel_negative_control(self):
+        """墓 通道负控制：「居民依墓而居」不得因 墓 命中成地名；
+        run3 垃圾面「居民依墓成村」「居民依墓」不得再出面。
+        已知残留（记录在案）：「墓成村」——依 收进边界字后村通道的
+        clause 尾窗，形合「专名+通名」无廉价判据可拒，留人工审。"""
+        faces = self._faces("守茔户与居民依墓成村，名娘娘府。")
+        for junk in ("居民依墓成村", "居民依墓"):
+            assert junk not in faces, "垃圾面「%s」仍在: %s" % (junk, faces)
+        leftover = self._faces("居民依墓而居。")
+        assert leftover == [], "纯动宾结构不得因 墓 后缀出面: %s" % leftover
+
+    def test_fang_channel_negative_control(self):
+        """房 通道负控制：正房/厢房 类通用建筑词、整词 营房 不得成地名；
+        复合名「正黄旗营房」不受停用词影响（整词成员判定非子串）"""
+        for quote in ("正房三间，厢房两座。", "营房四千余间。"):
+            faces = self._faces(quote)
+            for junk in ("正房", "厢房", "营房", "營房"):
+                assert junk not in faces, "「%s」在「%s」不得出面: %s" % (
+                    junk, quote, faces)
+        miner = ToponymMiner()
+        for generic in ("正房", "厢房", "廂房", "营房", "營房", "步行街"):
+            assert miner._is_noise(generic), "%s 应判为噪声" % generic
+        assert not miner._is_noise("正黄旗营房"), "复合地名不得被整词噪声误伤"
+
+    def test_jie_channel_negative_control(self):
+        """街 通道负控制：步行街 不得因 街 命中成地名"""
+        faces = self._faces("此段为步行街。")
+        assert "步行街" not in faces, "步行街 不得出面: %s" % faces
+
+    def test_flag_boundary_guard_unchanged(self):
+        """rp-v3 旗边界不回归：单字 营/旗 通名仍不许穿越旗名
+        （「鑲黄旗營」不得裂出 X旗營/旗營/黄旗营）"""
+        faces = self._faces("鑲黄旗營驻树村。")
+        for junk in ("鑲黄旗營", "黄旗營", "旗營"):
+            assert junk not in faces, "旗名穿越守卫失效: %s" % junk
+
+
+class TestV5LeadingStopPrefixes:
+    """【v5】边界垃圾前缀表：run3 P 侧垃圾面逐类正/负控制。
+    语义：面头命中前缀 → 剥离后重验证「专名+通名」，剥后不合格整面拒绝；
+    剥后合法 → 以干净面出面（不断言实体存在，实体由词条层负责）。"""
+
+    @staticmethod
+    def _faces(quote):
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_v5p", division_id="div_v5p",
+                        verbatim_quote=quote, attested_string="")
+        return [o.surface_form for o in miner.mine("src_v5p", "div_v5p", [f])]
+
+    def test_table_covers_run3_categories(self):
+        """表必须覆盖 run3 归因的四类成分（结构助词/动介/俗语引导/通用名词）"""
+        for required in ("的", "将", "按", "建", "依", "刹",
+                         "俗呼", "讹写作", "俗称",
+                         "居民", "皇家", "十处", "后世", "枪炮",
+                         "香山公园", "海淀公园", "海淀"):
+            assert required in LEADING_STOP_PREFIXES, \
+                "前缀表缺 run3 成分「%s」" % required
+
+    def test_structural_particle_de(self):
+        """结构助词 的：「的金代行宫园」拒绝（的 已入回溯边界字，面不再成形）"""
+        faces = self._faces("著名的金代行宫园。")
+        assert "的金代行宫园" not in faces
+        assert "金代行宫园" in faces, "剥后合法面应出面: %s" % faces
+
+    def test_verb_prefixes_jiang_an_jian_yi(self):
+        """动词/介词 将/按/建/依：四类 run3 垃圾面全部拒绝"""
+        faces = self._faces("将万寿山后湖。")
+        assert "将万寿山后湖" not in faces and "万寿山后湖" in faces
+        faces = self._faces("按八旗翼长驻香山静宜园下。")
+        assert "按八旗" not in faces, "按八旗 不得出面: %s" % faces
+        assert "八旗" not in faces
+        faces = self._faces("建满蒙八旗营房四千余间。")
+        for junk in ("建满蒙八旗", "满蒙八旗", "满蒙八旗营房", "建满蒙八旗营房"):
+            assert junk not in faces, "「%s」不得出面: %s" % (junk, faces)
+        assert self._faces("居民依墓而居。") == []
+
+    def test_colloquial_guides(self):
+        """俗语引导 俗呼/俗称/讹写作：垃圾面拒绝，剥后真名出面"""
+        faces = self._faces("俗呼一溜边山。")
+        assert "俗呼一溜边山" not in faces and "一溜边山" in faces
+        faces = self._faces("讹写作六郎庄。")
+        assert "讹写作六郎庄" not in faces and "六郎庄" in faces, \
+            "剥后 六郎庄 应出面（run3 FP→可命中）: %s" % faces
+
+    def test_generic_noun_leads(self):
+        """通用名词开头 居民/皇家/十处/后世/枪炮：垃圾面拒绝"""
+        faces = self._faces("皇家宫廷内湖。")
+        assert "皇家宫廷内湖" not in faces and "宫廷内湖" in faces
+        faces = self._faces("十处天然泉。")
+        assert "十处天然泉" not in faces and "天然泉" in faces
+        faces = self._faces("设枪炮演武场。")
+        assert "枪炮演武场" not in faces and "枪炮" not in faces
+
+    def test_compound_park_prefix_longest_first(self):
+        """「香山公园香山」复合：剥 香山公园 → 香山（剥后合法即出面，
+        不断言实体存在）；最长优先——「海淀公园香山」不得剥成「公园香山」"""
+        faces = self._faces("圣水院在香山公园香山一带。")
+        assert "香山公园香山" not in faces, "run3 垃圾面必须拒绝"
+        faces = self._faces("海淀公园香山。")
+        assert faces == ["香山"], "最长前缀优先失败: %s" % faces
+        assert "公园香山" not in faces
+
+    def test_haidian_prefix_strips_compound_keeps_bare(self):
+        """海淀 前缀：「海淀温泉」「海淀区三里河」「海淀凤凰岭」剥出真名面；
+        裸「海淀」「海淀镇」余量不足不剥（真名不误伤）"""
+        faces = self._faces("香水院在今海淀温泉镇。")
+        assert "海淀温泉" not in faces and "温泉" in faces, faces
+        faces = self._faces("金代行宫园在海淀区三里河。")
+        assert "海淀区三里河" not in faces and "三里河" in faces, faces
+        faces = self._faces("海淀凤凰岭。")
+        assert "海淀凤凰岭" not in faces and "凤凰岭" in faces, faces
+        faces = self._faces("英法联军进犯，十月五日占海淀镇、圆明园。")
+        assert "海淀镇" in faces, "余量 <2 不剥，「海淀镇」真名不得误伤: %s" % faces
+
+    def test_strip_rejects_when_remainder_invalid(self):
+        """剥后不合格 → 整面拒绝：剥出头是回溯边界字（依墓）、余量不足"""
+        cleaned, peeled = strip_leading_stop_prefix("居民依墓")
+        assert cleaned is None and peeled == ["居民"], \
+            "剥出头 依 是边界字，必须整面拒绝"
+        cleaned, peeled = strip_leading_stop_prefix("海淀温泉")
+        assert cleaned == "温泉" and peeled == ["海淀"]
+        cleaned, peeled = strip_leading_stop_prefix("海淀")
+        assert cleaned == "海淀" and peeled == [], "余量 <2 不剥"
+
+    def test_peel_recorded_in_note(self):
+        """剥离必须留痕：occurrence.note 记剥前缀链（可溯源纪律）"""
+        miner = ToponymMiner()
+        f = TextualFact(id="tf_v5n", division_id="div_v5n",
+                        verbatim_quote="讹写作六郎庄。", attested_string="")
+        occ = [o for o in miner.mine("src_v5n", "div_v5n", [f])
+               if o.surface_form == "六郎庄"][0]
+        assert "讹写作" in occ.note, "剥前缀必须写进 note: %s" % occ.note
