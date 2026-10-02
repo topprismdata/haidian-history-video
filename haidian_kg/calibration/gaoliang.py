@@ -25,6 +25,7 @@ from ..ontology.epistemic import (
     BeliefAdoption, EpistemicStatus, HistoricalSource, Proposition,
     SourceCategory, SourceDivision, TextualFact,
 )
+from .bibliography import source_by_title
 from ..ontology.spatiotemporal import (
     Appellation, AppellationKind, DiachronicIdentityAssertion,
     HistoricalFeatureState, IdentityRelation, PersistentSpatialEntity,
@@ -56,24 +57,11 @@ def _ts(y1, y2, tag):
 # ==================================================================
 
 SOURCES: List[HistoricalSource] = [
-    HistoricalSource(
-        id="src_shuijingzhu", title="水经注",
-        category=SourceCategory.GEOGRAPHICAL_TREATISE,
-        version_description="杨守敬、熊会贞《水经注疏》中华书局点校本",
-    ),
-    HistoricalSource(
-        id="src_yuanshi_hequ", title="元史·河渠志",
-        category=SourceCategory.OFFICIAL_HISTORY,
-        version_description="中华书局点校本",
-    ),
-    HistoricalSource(
-        id="src_liaoshi", title="辽史",
-        category=SourceCategory.OFFICIAL_HISTORY,
-    ),
-    HistoricalSource(
-        id="src_songshi", title="宋史",
-        category=SourceCategory.OFFICIAL_HISTORY,
-    ),
+    # v2.1：一律取自统一书目表，一书一条，禁止在此另建
+    source_by_title("水经注"),
+    source_by_title("元史"),
+    source_by_title("辽史"),
+    source_by_title("宋史"),
 ]
 
 DIVISIONS: List[SourceDivision] = [
@@ -82,7 +70,7 @@ DIVISIONS: List[SourceDivision] = [
                    volume_number="卷十三", section_title="漯水"),
     SourceDivision(id="div_sjz_v14_baqiushui", source_id="src_shuijingzhu",
                    volume_number="卷十四", section_title="鲍丘水"),
-    SourceDivision(id="div_yuanshi_hequ_3", source_id="src_yuanshi_hequ",
+    SourceDivision(id="div_yuanshi_hequ_3", source_id="src_yuanshi",
                    volume_number="河渠志三", section_title="通惠河"),
     SourceDivision(id="div_liaoshi_84", source_id="src_liaoshi",
                    volume_number="卷八十四", section_title="列传第十四·耶律休哥"),

@@ -34,20 +34,125 @@ class SourceCategory(str, Enum):
     ORAL_TRADITION = "口述访谈"                 # 民间口碑（最低等级）
 
 
+class DigitalResourceKind(str, Enum):
+    """
+    数字资源性质（v2.1 新增）。
+
+    关键学术纪律：转录本 ≠ 校勘本。
+    维基文库/中国哲学书电子化计划提供的是【转录文本】，
+    它们可用于「这段话在某转录本里怎么写」，但不能替代
+    中华书局点校本这类【校勘本】的异文判断。
+    混淆二者，等于把「网上抄的」当成「校勘过的」。
+    """
+    TRANSCRIPTION = "转录本"          # 维基文库/cts/cbeta：可用于引文定位
+    COLLATED_EDITION = "校勘本"       # 中华书局点校本：可用于异文判断
+    SCAN = "影印本"                   # 影印图像：有版式与字形信息
+    GIS_DATASET = "地理数据集"         # CHGIS 等
+    CATALOG = "联合目录"               # 仅作书目信息，不作文本依据
+
+
+class DigitalResource(BaseModel):
+    """
+    数字资源记录（v2.1 新增）。
+
+    为什么要独立成类而不是塞进一个 url 字符串：
+    1. 同一部书常有多个数字版本（维基文库 + ctext + 影印），
+       必须分别记录且各带性质标签
+    2. 引文若只录书名卷次而无资源定位，审稿人无法一键复核
+    3. 「转录本」与「校勘本」混用会产生伪校勘结论
+    """
+    id: str = Field(..., description="资源唯一URI")
+    source_id: str = Field(..., description="所属典籍ID")
+    kind: DigitalResourceKind = Field(..., description="资源性质")
+    platform: str = Field(
+        ..., description="承载平台，如：维基文库 / 中国哲学书电子化计划 / 国学大师"
+    )
+    url: str = Field(..., description="可点击定位地址")
+    division_id: Optional[str] = Field(
+        None, description="若该资源只覆盖特定篇卷，则指向具体篇卷"
+    )
+    accessed_at: Optional[DatePoint] = Field(
+        None, description="核验日期（学术引用必填，便于复核者重访）"
+    )
+    reliability_note: str = Field(
+        ...,
+        description=(
+            "可靠性说明（必填）：此资源可否用于异文判断？"
+            "转录本须注明『未校勘，异文以点校本为准』"
+        ),
+    )
+    is_citable_for_verbatim: bool = Field(
+        ..., description="是否可作为逐字引文的正式依据"
+    )
+
+    @model_validator(mode="after")
+    def _transcription_cannot_be_collated(self):
+        """【学术红线】转录本不得被当作异文判断依据"""
+        if self.kind == DigitalResourceKind.TRANSCRIPTION and self.is_citable_for_verbatim:
+            # 允许引文定位，但必须在 note 中显式声明限制
+            if "校勘" not in self.reliability_note and "点校本" not in self.reliability_note:
+                raise ValueError(
+                    "【G9数字资源】转录本若标为可作逐字引文依据，"
+                    "必须在 reliability_note 中声明校勘限制（未校勘，异文以点校本为准）"
+                )
+        return self
+
+
 class HistoricalSource(BaseModel):
-    """文献实体（Level 1）"""
+    """
+    文献实体（Level 1）—— 一部书就是一个节点，不得按篇卷重复建。
+
+    【v2.1 整改】此前《钦定日下旧闻考》因卷72/卷99被建成两条、
+    《清仁宗实录》因卷46/卷76被建成两条，导致：
+      - 无法回答「这部书共有多少卷、成于何时、作者是谁」
+      - 版本信息退化为一串自由文本，无法做版本互校
+    正确做法：一部书 = 一个 HistoricalSource，篇卷挂在 SourceDivision 之下。
+    """
     id: str = Field(..., description="文献唯一URI，如 src_shuijingzhu")
-    title: str = Field(..., description="典籍全名")
+    title: str = Field(..., description="典籍全名（规范书名，不含卷次）")
     category: SourceCategory = Field(..., description="文献类别")
-    author_person_id: Optional[str] = Field(None, description="作者人物ID")
-    compiled_time: Optional[TimeSpan] = Field(None, description="成书/修纂年代")
+    author_person_id: Optional[str] = Field(
+        None, description="作者人物ID（关联 HistoricalPerson 实体）"
+    )
+    compiler_person_ids: List[str] = Field(
+        default_factory=list, description="编者/校订者人物ID列表"
+    )
+    compiled_time: Optional[TimeSpan] = Field(
+        None, description="成书/修纂年代（清官书常多次纂修，须分段表达）"
+    )
+    total_volumes: Optional[int] = Field(
+        None, description="总卷数（未知则留空，不得臆造）"
+    )
     version_description: Optional[str] = Field(
-        None, description="版本说明（如：中华书局点校本《水经注疏》）"
+        None, description="所据版本说明（自由描述）"
     )
-    author_id: Optional[str] = Field(
+    base_edition: Optional[str] = Field(
         None,
-        description="作者人物ID（alias，保留以兼容旧数据；新数据用 author_person_id）",
+        description=(
+            "底本类型：SISHU（四库全书本）/ ZHONGHUA（中华书局点校本）/ "
+            "DAFANG（大藏经）/ 拓本 / 实测图 / 抄本 等"
+        ),
     )
+    edition_note: Optional[str] = Field(
+        None, description="校勘依据与异文说明"
+    )
+    url: Optional[str] = Field(
+        None, description="数字资源地址（如维基文库/中国哲学书电子化计划条目）"
+    )
+
+    @model_validator(mode="after")
+    def _source_needs_identity(self):
+        """文献必须有规范书名与类别，否则无法作为一级实体参与溯源"""
+        if not self.title.strip():
+            raise ValueError("【G1文献】书名不得为空")
+        if "卷" in self.title and any(ch.isdigit() for ch in self.title):
+            # 允许「元史·河渠志」这类含志名的书，但不允许「钦定日下旧闻考卷72」
+            if self.title.count("卷") >= 1 and "·" not in self.title:
+                raise ValueError(
+                    "【G1文献】书名不得含卷次：%s。卷次应归 SourceDivision，"
+                    "一部书只能有一个 HistoricalSource 节点。" % self.title
+                )
+        return self
 
 
 class SourceDivision(BaseModel):

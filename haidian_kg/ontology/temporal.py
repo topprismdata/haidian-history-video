@@ -151,18 +151,37 @@ class TimeSpan(BaseModel):
     open_begin: bool = Field(False, description="起始是否开放（早于最早记录）")
     open_end: bool = Field(False, description="终止是否开放（至今仍存）")
 
+    def _bound_year(self, point, is_begin: bool) -> int:
+        """
+        解析某端为可比年份。开放端返回 ±1e9 哨兵值。
+        注意：DatePoint 可能是 BP 测年（gregorian=None），
+        此时不得抛 TypeError，而应视为"该端不可按公历比较"。
+        """
+        if is_begin and (self.open_begin or point is None):
+            return -10**9
+        if not is_begin and (self.open_end or point is None):
+            return 10**9
+        if point is None:
+            return -10**9 if is_begin else 10**9
+        if point.gregorian is not None:
+            return point.gregorian.year
+        if point.bp_years is not None:
+            # BP 为距今年数，正数年份 = 2026 - bp
+            return 2026 - point.bp_years
+        # 既无公历也无 BP：按开放端处理而非崩溃
+        return -10**9 if is_begin else 10**9
+
     def overlaps(self, other: "TimeSpan") -> bool:
         """两个时间区间是否有重叠（时态检索核心算子）"""
-        a_begin = -10**9 if (self.open_begin or self.begin is None) else self.begin.gregorian.year
-        a_end = 10**9 if (self.open_end or self.end is None) else self.end.gregorian.year
-        b_begin = -10**9 if (other.open_begin or other.begin is None) else other.begin.gregorian.year
-        b_end = 10**9 if (other.open_end or other.end is None) else other.end.gregorian.year
-        return a_begin <= b_end and b_begin <= a_end
+        return (self._bound_year(self.begin, True) <= other._bound_year(other.end, False)
+                and other._bound_year(other.begin, True) <= self._bound_year(self.end, False))
 
-    def contains(self, year: int) -> bool:
-        a_begin = -10**9 if (self.open_begin or self.begin is None) else self.begin.gregorian.year
-        a_end = 10**9 if (self.open_end or self.end is None) else self.end.gregorian.year
-        return a_begin <= year <= a_end
+    def contains(self, year) -> bool:
+        """年份为 None（句中无时间可解析）时返回 False——不得静默视为命中"""
+        if year is None:
+            return False
+        return (self._bound_year(self.begin, True) <= year
+                <= self._bound_year(self.end, False))
 
 
 class TemporalProcess(BaseModel):

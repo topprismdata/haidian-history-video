@@ -32,7 +32,25 @@ class KnowledgeBase:
 
     def __init__(self, sources=(), divisions=(), facts=(), entities=(),
                  states=(), identities=(), appellations=(), references=(),
-                 transformations=(), propositions=(), adoptions=(), aggregates=()):
+                 transformations=(), propositions=(), adoptions=(), aggregates=(),
+                 people=(), resources=(), deep_copy: bool = True):
+        """
+        deep_copy 默认 True —— 必须拷贝。
+
+        校准集是模块级单例（STATES/STATES 里的 Pydantic 对象）。
+        若直接索引而不拷贝，任何一处 `kb.states[...].evidence = []`
+        都会改写模块级对象，导致同进程内后续所有用例被污染。
+        这类污染极难排查：N3/N4 报出一条你没注入过的错误，就是它的症状。
+        """
+        if deep_copy:
+            from copy import deepcopy
+            sources, divisions, facts = deepcopy(list(sources)), deepcopy(list(divisions)), deepcopy(list(facts))
+            entities, states, identities = deepcopy(list(entities)), deepcopy(list(states)), deepcopy(list(identities))
+            appellations, references = deepcopy(list(appellations)), deepcopy(list(references))
+            transformations, propositions = deepcopy(list(transformations)), deepcopy(list(propositions))
+            adoptions, aggregates = deepcopy(list(adoptions)), deepcopy(list(aggregates))
+            people, resources = deepcopy(list(people)), deepcopy(list(resources))
+
         self.sources = {s.id: s for s in sources}
         self.divisions = {d.id: d for d in divisions}
         self.facts = {f.id: f for f in facts}
@@ -41,10 +59,15 @@ class KnowledgeBase:
         self.identities = list(identities)
         self.appellations = {a.id: a for a in appellations}
         self.references = list(references)
+        self.references_by_id = {x.id: x for x in references}
         self.transformations = {t.id: t for t in transformations}
         self.propositions = {p.id: p for p in propositions}
         self.adoptions = {a.proposition_id: a for a in adoptions}
         self.aggregates = {a.id: a for a in aggregates}
+        # v2.1：人物与数字资源（一书一条 + 作者 + 可复核定位）
+        self.people = {p.id: p for p in people}
+        self.person_ids = set(self.people.keys())
+        self.resources = list(resources)
 
     # ---------- 基础查询 ----------
 
