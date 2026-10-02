@@ -147,7 +147,7 @@ def export_visual_constraints(kb: KnowledgeBase, entity_id: str, year: int) -> V
         return VisualPromptConstraints(
             entity_id=entity_id, target_year=year,
             unknown=["该年份无任何有证据支撑的历史状态记录，禁止按其他时期形制推定"],
-            identity_continuity_note=_identity_note(kb, entity_id),
+            identity_continuity_note=_identity_note(kb, entity_id, year),
         )
 
     required: List[VisualStateAssertion] = []
@@ -177,26 +177,41 @@ def export_visual_constraints(kb: KnowledgeBase, entity_id: str, year: int) -> V
         unknown.append("该闸在%d年的具体材质（改石工程分期中，无逐闸确证）" % year)
         coexisting.append("改石工程期间新旧形制可能并存")
 
-    if kb.identities and any(d.status == EpistemicStatus.CONTESTED
-                             and entity_id in d.subject_entity_ids for d in kb.identities):
-        unknown.append("该主体的历时身份连续性存在学术争议，分镜不得默认其为同一对象")
+    disputed_here = [d for d in kb.identities
+                     if d.status == EpistemicStatus.CONTESTED
+                     and entity_id in d.subject_entity_ids
+                     and d.time_span.contains(year)]
+    if disputed_here:
+        unknown.append("该主体在%d年的历时身份连续性存在学术争议，分镜不得默认其为同一对象" % year)
 
     return VisualPromptConstraints(
         entity_id=entity_id, target_year=year,
         state_id=st.id, state_time_span=st.time_span,
         required=required, forbidden=forbidden,
         unknown=unknown, contested=contested, coexisting_forms=coexisting,
-        identity_continuity_note=_identity_note(kb, entity_id),
+        identity_continuity_note=_identity_note(kb, entity_id, year),
     )
 
 
-def _identity_note(kb: KnowledgeBase, entity_id: str) -> Optional[str]:
+def _identity_note(kb: KnowledgeBase, entity_id: str,
+                   year: Optional[int] = None) -> Optional[str]:
+    """
+    身份注记必须按时间区间过滤。
+
+    圆明园在1770年前"长春园是否由圆明园分裂"存疑，
+    但1860年后"同一持续体"已确证——若不过滤，
+    1990年的出图约束也会被贴上"身份存疑"标签，误导导演。
+    """
     notes = []
     for d in kb.identities:
-        if entity_id in d.subject_entity_ids:
-            alts = "；".join(d.alternative_relations)
-            notes.append("身份关系=%s（%s），学界另持：%s"
-                         % (d.relation.value, d.status.value, alts))
+        if entity_id not in d.subject_entity_ids:
+            continue
+        if year is not None and not d.time_span.contains(year):
+            continue
+        alts = "；".join(d.alternative_relations)
+        notes.append("身份关系=%s（%s）%s"
+                     % (d.relation.value, d.status.value,
+                        ("，学界另持：" + alts) if alts else ""))
     return " | ".join(notes) if notes else None
 
 
@@ -287,6 +302,33 @@ def _extract_year(text: str) -> Optional[int]:
     if m:
         return -int(m.group(2))
     return _parse_reign_year(text)
+
+
+# 消亡断言词表：须覆盖繁简两种字形（"不復存在"/"不复存在"）
+_EXTINCTION_MARKERS = (
+    "不复存在", "不復存在", "已毁绝", "已毀絕", "彻底消失", "徹底消失",
+    "荡然无存", "蕩然無存", "从此消失", "從此消失",
+    "化为平地", "化為平地", "湮灭无存", "湮滅無存",
+    "不复存在", "不复存在", "就此绝迹", "就此絕跡",
+)
+
+
+def _has_verified_continuity(kb: KnowledgeBase, entity_id: str,
+                             year: int) -> bool:
+    """
+    该实体在此年之后是否仍有已确证的持续性证据。
+
+    用于阻断"焚毁=消亡"这类硬伤：命中一个残存态状态，
+    不等于"不复存在"这句话是对的。
+    """
+    future = [d for d in kb.identities
+              if entity_id in d.subject_entity_ids
+              and d.status == EpistemicStatus.VERIFIED
+              and d.time_span.contains(year)]
+    if future:
+        return True
+    # 该年之后仍有带证据的历史状态，亦证明地点持续存在
+    return any(s.time_span.begin.gregorian.year > year for s in kb.states_of(entity_id))
 
 
 def audit_script(kb: KnowledgeBase, script: str,
@@ -450,6 +492,27 @@ def audit_script(kb: KnowledgeBase, script: str,
                 reason=("%d年落在改石过渡期(%s)，本闸材质无逐闸确证；"
                         "不得由『%d年始议砖石』推出该年此闸已为砖石"
                         % (year, st.time_span.label, 1311)),
+                conflicting_state_id=st.id,
+            ))
+            continue
+
+        # 【消亡断言检测】"此后不复存在/已毁绝/化为废墟即消亡"这类断言
+        # 若与本体已确证的持续性断言矛盾，必须 BLOCK，不得因"命中了某个状态"就判通过。
+        # 圆明园1860焚毁后仍有残存建筑、禁园、1928接管、1988开放——
+        # 说它"不复存在"是硬伤，命中残存态并不代表这句话正确。
+        extinction_claim = any(k in text for k in _EXTINCTION_MARKERS)
+        if extinction_claim and _has_verified_continuity(kb, ent_id, year):
+            claim = ParsedClaim(
+                claim_text=text, claim_type=ClaimType.EXISTENCE, year=year,
+                resolved_appellation_id=app.id, resolved_entity_id=ent_id,
+                disambiguation_confidence=conf,
+            )
+            results.append(AuditResult(
+                claim=claim, verdict=AuditVerdict.BLOCK,
+                reason=("句中断言该地点『不复存在』，但本库已确证其在%d年之后仍持续存在"
+                        "（1860焚毁后有残存建筑与禁园，1928接管，1988遗址公园开放）；"
+                        "毁损≠消亡，不得判通过" % year),
+                evidence_fact_ids=st.evidence_fact_ids,
                 conflicting_state_id=st.id,
             ))
             continue
