@@ -246,14 +246,40 @@ candidate duplication rate / entity-collision rate。
 
 ---
 
-## 六、外部服务韧性（v3 P1，TGAZ 教训）
+## 六、外部多源权威裁决架构（Authority Federation Resolver）
 
-- TGAZ/CHGIS lookup **必须缓存**：query、timestamp、provider、
-  response/version 全存（machine_observation 层）。
-- provider 不可用 → 闭包**继续**，该候选标 `gazetteer_unchecked`。
-  外部服务故障不得阻塞管线。
-- API 端点未人工核验前**不写接入代码**（2026-10-02 实测 404）。
+不再把单一 `TGAZ/CHGIS` 作为唯一外部候选裁决源（避免因政区收录偏差误判），
+升级为**多源异构联邦裁决架构**：
 
+```
+AuthorityResolver = TGAZ + DILA + CCTS_MHPNAME + MCGD
+```
+
+### 6.1 各 Provider 职责与纪律表
+
+| Provider | 角色与粒度 | 许可证级别 | 接入形态与纪律 |
+|---|---|---|---|
+| **TGAZ (复旦/CHGIS)** | **官方政区与村镇基准**（1820/1911 年层含宛平县西大营等县下村镇） | CC BY-NC 4.0 | REST API 验证可用（`GET /tgaz/placename?fmt=json&n=...`）；前缀 LIKE，繁简均收；未命中不否决 |
+| **DILA (法鼓文理学院)** | **异源微观聚落与寺庙圣地**（实存遯村、大范村、寺院山岳等） | CC BY-SA 3.0 (自建子集) | HTTP/JSON API + 批量下载；**允许建立本地离线镜像索引**（工程风险最低） |
+| **CCTS_MHPNAME (中研院)** | **《读史方舆纪要》明代县下小地名层**（61,685 条村/庄/店/寨/桥/闸/铺等） | 非开放（禁止再发布） | **REFERENCE_ONLY_UNLESS_LICENSED**：仅用于外部匹配留证与 URI 记录，绝不全量复制入公开 KB |
+| **MCGD (Aix-Marseille)** | **近代外文转写与异名消歧**（47.3 万条中西文映射） | Zenodo Open (条款待核) | CSV 批量下载离线检索；用于近代史料外文转写与同名消歧 |
+
+### 6.2 匹配记录元数据模型（AuthorityMatchRecord）
+
+每个 provider 单独记录规范字段并安全持久化于 `machine_observation` 层：
+- `provider_id`: 提供方标识（tgaz / dila / ccts_mhpname / mcgd）
+- `provider_record_id`: 外部权威唯一 ID（如 hvd_141901、PL000000010214）
+- `license_class`: 许可证分类（OPEN_DATA / CC_BY_SA / CC_BY_NC / REFERENCE_ONLY_UNLESS_LICENSED / METADATA_UNSPECIFIED）
+- `granularity`: 地理粒度（PROVINCE_PREFECTURE / COUNTY_LEVEL / SUB_COUNTY_TOWN / MICRO_VILLAGE_SETTLEMENT）
+- `match_method`: 匹配方式（EXACT / PREFIX_LIKE / ALIAS_VARIANT / LOCAL_MIRROR_INDEX）
+- `match_confidence`: 匹配置信度（high / mid / low）
+- `is_reference_only`: 是否受版权限制仅作外部比对留证
+
+### 6.3 韧性与缓存纪律
+
+1. **查询必须带版本缓存**：query、timestamp、provider、response/version 写入 `machine_observation`。
+2. **外部服务故障不阻塞流水线**：provider 不可用时标 `gazetteer_unchecked`，闭包继续运转。
+3. **联合置信度判定**：异源交叉命中（如 TGAZ 政区 + DILA/CCTS 微观聚落）将假说置信度升为 `high`。
 ---
 
 ## 七、实施顺序（P0 先行）

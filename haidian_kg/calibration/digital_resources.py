@@ -71,6 +71,31 @@ RESOURCES: List[DigitalResource] = [
         is_citable_for_verbatim=False,
     ),
     DigitalResource(
+        id="dr_ccts_mhpname",
+        source_id="src_ccts_mhpname",
+        kind=DigitalResourceKind.CATALOG,
+        platform="中研院 CCTS 专题研究",
+        url="https://ccts.sinica.edu.tw/mhpname.html",
+        accessed_at=_accessed(),
+        reliability_note="61,685 个明代县级以下微观地名（村/庄/店/寨/桥/闸/铺/堡等），"
+                         "WMTS 图层 ad1582_10_2s；非开放许可证（用户协议禁止再授权/转让）；"
+                         "纪律：作为 reference-only match 对照（仅存外部匹配证据与 URI），"
+                         "禁止全量复制入可再发布的正式 KB",
+        is_citable_for_verbatim=False,
+    ),
+    DigitalResource(
+        id="dr_mcgd_zenodo",
+        source_id="src_mcgd",
+        kind=DigitalResourceKind.GIS_DATASET,
+        platform="Zenodo (Aix-Marseille / ERC ENP-China)",
+        url="https://zenodo.org/records/14938699",
+        accessed_at=_accessed(),
+        reliability_note="47.3 万条地名与异名记录 CSV 批量下载；"
+                         "优势：中文名与近代外文（英法）历史转写对应同一 Location ID；"
+                         "用于近代西文史料地名消歧与异名归一（正式摄入前核验 License）",
+        is_citable_for_verbatim=False,
+    ),
+    DigitalResource(
         id="dr_tgaz_api",
         source_id="src_tgaz",
         kind=DigitalResourceKind.CATALOG,
@@ -80,13 +105,12 @@ RESOURCES: List[DigitalResource] = [
         reliability_note="学术权威时空地名库（CHGIS 项目），"
                          "用于候选地名裁决：命中即获独立书目佐证；"
                          "仅作书目与时空定位参考，不替代一手书证的逐字引文。"
-                         "✅ API 已验证可用（2026-10-02，官方文档 "
-                         "tgaz.fudan.edu.cn/tgaz/indexAPI.html）："
+                         "✅ REST API 验证可用（tgaz.fudan.edu.cn/tgaz/indexAPI.html）："
                          "搜索 GET /tgaz/placename?fmt=json&n=<UTF8名>，"
                          "精准 GET /tgaz/placename/json/hvd_<id>；"
                          "前缀 LIKE 匹配，繁简均收，license CC BY-NC 4.0。"
-                         "实测：萬壽寺 1 命中、西山 19 命中、樹村 0 "
-                         "（CHGIS 收政区级，小村落未收录——未命中不否决）",
+                         "CHGIS 1820 与 1911 年层包含县级以下聚落（如 1911 宛平县「西大營」，类型「村镇」）；"
+                         "实测：萬壽寺 1 命中、西山 19 命中、樹村 0（未命中不否决）",
         is_citable_for_verbatim=False,
     ),
     DigitalResource(

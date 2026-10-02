@@ -153,6 +153,24 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
                      "TGAZ 命中后的二次确认（裁决增量小于 DILA/CCVG）",
     ),
     HistoricalSource(
+        id="src_ccts_mhpname", title="CCTS《讀史方輿紀要》地名研究资料库",
+        category=SourceCategory.GEOGRAPHICAL_TREATISE,
+        issuing_body="中研院人社中心 GIS 专题中心（台湾）",
+        edition_note="61,685 个明代县级以下历史微观地名，分类包括村、馆、店、庄、"
+                     "寨、场、集、乡、埠、宅，以及寺、墓、桥、闸、井、铺、堡、驿等；"
+                     "WMTS 图层 ad1582_10_2s。非开放许可证（用户协议限制再授权/分发）；"
+                     "纪律：作为 reference-only match 外部对照依据（存 URI/ID 与匹配证据），"
+                     "绝不全量复制入可再发布的正式 KB",
+    ),
+    HistoricalSource(
+        id="src_mcgd", title="MCGD 近代中国时空数据库（Modern China Geospatial Database）",
+        category=SourceCategory.GEOGRAPHICAL_TREATISE,
+        issuing_body="法国艾克斯-马赛大学（Aix-Marseille University / ERC ENP-China）",
+        edition_note="47.3 万条地名与异名记录（Zenodo CSV，持续更新），"
+                     "包含大量中文名、拼音与近代外文（英法等）历史转写对应同一 Location ID；"
+                     "用于近代史料外文转写与异名消歧（正式使用前核验 Zenodo License）",
+    ),
+    HistoricalSource(
         id="src_tgaz", title="TGAZ 时空地名辞典（Temporal Gazetteer）",
         category=SourceCategory.LOCAL_GAZETTEER,
         issuing_body="哈佛燕京学社 × 复旦大学历史地理研究中心（CHGIS 项目）",
