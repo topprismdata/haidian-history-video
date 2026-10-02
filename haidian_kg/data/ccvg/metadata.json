@@ -1,0 +1,45 @@
+{
+  "dataset": "Contemporary Chinese Village Gazetteer Data (CCVG Data)",
+  "downloaded_at": "2026-10-02",
+  "index": {
+    "field_map": {
+      "coordinates": "coords [lon, lat]（WGS84，来自官方地图 KMZ）",
+      "join_key": "gazetteer_code（村志代码）",
+      "province": "province_cn（+province_pinyin）",
+      "village_name": "gazetteer_title / village_name_cn"
+    },
+    "file": "ccvg_index.json",
+    "key_domains": [
+      "村名简体",
+      "村名繁体(保守映射)",
+      "拼音(小写)",
+      "去通名核心名"
+    ]
+  },
+  "item_url": "https://d-scholarship.pitt.edu/37663/",
+  "license_note": "官网声明供学者免费下载；D-Scholarship 权利声明为 Copyright Not Evaluated —— 本地仅作匹配留证（对应 LicenseClass.METADATA_UNSPECIFIED），索引与元数据入库，原始文件不入库不再分发。",
+  "manual_acquisition": "人工获取步骤：\n  1. 浏览器打开 https://www.chinesevillagedata.library.pitt.edu/datasets.html\n  2. 进入 Pitt D-Scholarship 条目 https://d-scholarship.pitt.edu/37663/\n  3. 下载文件 37663_Gazetteer_Information_村志信息.csv，重命名为 Gazetteer_Information_村志信息.csv 放入本目录\n  4. 另存地图 KMZ：https://www.google.com/maps/d/kml?mid=1lP6spRZf8YR_Kgel5AeGxMQ4zZ5hMK0&force=lite，重命名为 ccvg_villages_map.kmz 放入本目录\n  注：/downloads/ 端点有 Cloudflare 校验，curl 需带浏览器 User-Agent，偶发 403 时隔几分钟重试。\n",
+  "provider": "University of Pittsburgh Library System, East Asian Library",
+  "sources": {
+    "Gazetteer_Information_村志信息.csv": {
+      "bytes": 176388,
+      "columns": [
+        "村志代码",
+        "村志书名",
+        "书名-汉语拼音",
+        "出版年",
+        "出版类型"
+      ],
+      "rows": 2601,
+      "sha256": "a373d3df98c41c6ed045502388b48fed56cc9a9f32faf5f361b878e3dd8edf97",
+      "url": "https://d-scholarship.pitt.edu/downloads/9d3a3109-788c-4ee7-a6b3-13f60092e09e?locale=en"
+    },
+    "ccvg_villages_map.kmz": {
+      "bytes": 347721,
+      "note": "官方 Coverage Map（Google MyMaps）的 KML 导出，含村名/省市县/经纬度",
+      "placemarks": 2599,
+      "sha256": "203e70d3570450f25905a043b06eb9795f3cd05dc2979a95e41c406cabed0149",
+      "url": "https://www.google.com/maps/d/kml?mid=1lP6spRZf8YR_Kgel5AeGxMQ4zZ5hMK0&force=lite"
+    }
+  }
+}

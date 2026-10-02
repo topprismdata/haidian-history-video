@@ -1,0 +1,6 @@
+# CCVG 原始大文件不入库（可按 metadata.json 的 manual_acquisition 重新获取）；
+# 入库的只有 build_index.py、ccvg_index.json、metadata.json 与本文件。
+Gazetteer_Information_村志信息.csv
+ccvg_villages_map.kmz
+*.csv
+*.kmz
