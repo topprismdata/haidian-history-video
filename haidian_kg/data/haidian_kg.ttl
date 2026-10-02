@@ -100,6 +100,12 @@ hhto:targetToponym a owl:ObjectProperty ;
     rdfs:domain hhto:ToponymEvolutionEvent ;
     rdfs:range hhto:Toponym .
 
+hd:feat_chexiangqu_canal a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "曹魏车箱渠水利引水古道"@zh ;
+    hhto:coordinatesWGS84 "116.3,39.92"^^xsd:string ;
+    rdfs:comment "公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷"@zh .
+
 hd:feat_donghulin_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "门头沟东胡林人永定河阶地遗址"@zh ;
@@ -117,6 +123,12 @@ hd:feat_longbeicun_weir a hhto:HydraulicFacility,
     rdfs:label "白浮堰龙背村段古水利遗构"@zh ;
     hhto:coordinatesWGS84 "116.27,40.03"^^xsd:string ;
     rdfs:comment "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存"@zh .
+
+hd:feat_qinghe_han_tombs a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "海淀清河汉代墓葬聚落遗址"@zh ;
+    hhto:coordinatesWGS84 "116.34,40.03"^^xsd:string ;
+    rdfs:comment "两汉时期清河古道大型砖室与土坑墓葬群，出土陶壶鼎与五铢钱，证明汉代聚落繁盛"@zh .
 
 hd:feat_shangzhai_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
@@ -160,6 +172,12 @@ hd:top_banquan a hhto:Toponym ;
     hhto:hasHypothesis hd:hypo_banquan_yellow_emperor ;
     hhto:phoneticPinyin "bǎn quán"^^xsd:string ;
     hhto:standardForm "阪泉"^^xsd:string .
+
+hd:top_chexiangqu a hhto:Toponym ;
+    rdfs:label "车箱渠"@zh ;
+    hhto:attestedIn hd:attest_sanguozhi_liujing ;
+    hhto:phoneticPinyin "chē xiāng qú"^^xsd:string ;
+    hhto:standardForm "车箱渠"^^xsd:string .
 
 hd:top_donghulin a hhto:Toponym ;
     rdfs:label "东胡林"@zh ;
@@ -284,6 +302,15 @@ hd:unit_dongsimu_tomb a hhto:AdministrativeUnit,
     hhto:namedAs hd:top_dongsimu ;
     hhto:validTimeStart 1500 ;
     rdfs:comment "明代皇室墓地，后演变为看坟户聚居村落并盛产贡御之桃"@zh .
+
+hd:unit_guangyang_commandery a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "秦汉广阳郡与西汉广阳国蓟县"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_guangyang ;
+    hhto:validTimeEnd 220 ;
+    hhto:validTimeStart -221 ;
+    rdfs:comment "秦汉幽州刺史部监察与统属之都邑核心，海淀平原全境隶属广阳郡蓟县管辖"@zh .
 
 hd:unit_haidian_town a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -704,6 +731,14 @@ hd:attest_niangniangfu_gazetteer a hhto:PlaceAttestation ;
     hhto:recordedYear 1885 ;
     rdfs:comment "断代: 清光绪十一年 | 来源: 《光绪顺天府志·古迹志》"@zh .
 
+hd:attest_qinghe_han_tombs_dig a hhto:PlaceAttestation ;
+    rdfs:label "清河汉墓群发掘简报"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "出土两汉大型砖室墓与土坑墓群，出土泥质灰陶鼎、壶及五铢钱，实证汉代清河沿岸农耕聚落与商旅交通繁盛"@zh ;
+    hhto:recordedYear 100 ;
+    rdfs:comment "断代: 东汉（出土两汉墓葬实物） | 来源: 《北京清河汉代墓葬发掘简报》"@zh .
+
 hd:attest_qinghe_tianfu a hhto:PlaceAttestation ;
     rdfs:label "清河"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -743,6 +778,14 @@ hd:attest_rixia_shucun a hhto:PlaceAttestation ;
     hhto:originalQuote "树村在圆明园后，镶黄旗护军营驻其西，正白旗护军营驻其东"@zh ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
+
+hd:attest_sanguozhi_liujing a hhto:PlaceAttestation ;
+    rdfs:label "魏刘靖筑戾陵堰车箱渠"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "嘉平二年，刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，灌溉蓟城南北四千余顷"@zh ;
+    hhto:recordedYear 250 ;
+    rdfs:comment "断代: 三国曹魏嘉平二年 | 来源: 《三国志·魏书·刘靖传》"@zh .
 
 hd:attest_shandingdong_needle a hhto:PlaceAttestation ;
     rdfs:label "山顶洞人人工骨针与穿孔饰物"@zh ;
@@ -1212,6 +1255,11 @@ hd:top_gaoliangqiao a hhto:Toponym ;
     hhto:phoneticPinyin "gāo liáng qiáo"^^xsd:string ;
     hhto:standardForm "高梁桥"^^xsd:string .
 
+hd:top_guangyang a hhto:Toponym ;
+    rdfs:label "广阳"@zh ;
+    hhto:phoneticPinyin "guǎng yáng"^^xsd:string ;
+    hhto:standardForm "广阳"^^xsd:string .
+
 hd:top_haidian a hhto:Toponym ;
     rdfs:label "海淀"@zh ;
     hhto:attestedIn hd:attest_hourenzhi_haidian ;
@@ -1264,7 +1312,8 @@ hd:top_niangniangfu a hhto:Toponym ;
 
 hd:top_qinghezhen a hhto:Toponym ;
     rdfs:label "清河镇"@zh ;
-    hhto:attestedIn hd:attest_qinghe_tianfu ;
+    hhto:attestedIn hd:attest_qinghe_han_tombs_dig,
+        hd:attest_qinghe_tianfu ;
     hhto:phoneticPinyin "qīng hé zhèn"^^xsd:string ;
     hhto:standardForm "清河镇"^^xsd:string .
 
@@ -1596,16 +1645,6 @@ hhto:ReligiousSite a owl:Class ;
     rdfs:label "宗教寺观"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
 
-hhto:Watercourse a owl:Class ;
-    rdfs:label "水系河道"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
-
-hd:feat_gaolianghe a hhto:PhysicalFeature,
-        hhto:Watercourse ;
-    rdfs:label "高梁河水系古道"@zh ;
-    hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
-    rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
-
 hd:feat_xiangshan a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "香山与金山翠微山麓"@zh ;
@@ -1639,6 +1678,16 @@ hhto:ImperialNamingEvent a owl:Class ;
     rdfs:label "官方赐名改名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
+hhto:Watercourse a owl:Class ;
+    rdfs:label "水系河道"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hd:feat_gaolianghe a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "高梁河水系古道"@zh ;
+    hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
+    rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
+
 hhto:PhoneticShiftEvent a owl:Class ;
     rdfs:label "语音流变与方言通假事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
@@ -1647,10 +1696,6 @@ hhto:MilitaryGarrison a owl:Class ;
     rdfs:label "军事驻防与军屯"@zh ;
     rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
-
-hhto:TerrainElevation a owl:Class ;
-    rdfs:label "山峦台地"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
 
 hd:feat_wanquanhe a hhto:PhysicalFeature,
         hhto:Wetland ;
@@ -1661,6 +1706,10 @@ hd:feat_wanquanhe a hhto:PhysicalFeature,
 hhto:CompetingHypothesis a owl:Class ;
     rdfs:label "竞争假说"@zh ;
     rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
+
+hhto:TerrainElevation a owl:Class ;
+    rdfs:label "山峦台地"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
 
 hhto:Settlement a owl:Class ;
     rdfs:label "自然聚落与市镇"@zh ;

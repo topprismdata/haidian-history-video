@@ -61,6 +61,26 @@
       "description": "西周早期燕国始封之都城遗址，出土克罍、克盉青铜重器，北京三千年建城信史实证地"
     },
     {
+      "id": "feat_qinghe_han_tombs",
+      "label": "海淀清河汉代墓葬聚落遗址",
+      "feature_type": "TerrainElevation",
+      "coordinates": [
+        116.34,
+        40.03
+      ],
+      "description": "两汉时期清河古道大型砖室与土坑墓葬群，出土陶壶鼎与五铢钱，证明汉代聚落繁盛"
+    },
+    {
+      "id": "feat_chexiangqu_canal",
+      "label": "曹魏车箱渠水利引水古道",
+      "feature_type": "Watercourse",
+      "coordinates": [
+        116.3,
+        39.92
+      ],
+      "description": "公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷"
+    },
+    {
       "id": "feat_gaolianghe",
       "label": "高梁河水系古道",
       "feature_type": "Watercourse",
@@ -209,6 +229,15 @@
       "valid_start_year": -1046,
       "valid_end_year": -700,
       "description": "周武王封召公之子克于燕所建古城，出土克罍、克盉青铜重器"
+    },
+    {
+      "id": "unit_guangyang_commandery",
+      "label": "秦汉广阳郡与西汉广阳国蓟县",
+      "unit_type": "Settlement",
+      "located_at_feature_id": "feat_gaolianghe",
+      "valid_start_year": -221,
+      "valid_end_year": 220,
+      "description": "秦汉幽州刺史部监察与统属之都邑核心，海淀平原全境隶属广阳郡蓟县管辖"
     },
     {
       "id": "unit_jicheng_suburb",
@@ -543,6 +572,24 @@
       "phonetic_pinyin": "yān guó",
       "name_type": "official",
       "associated_unit_id": "unit_yan_fiefdom",
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_chexiangqu",
+      "standard_form": "车箱渠",
+      "script_hanzi": "车箱渠",
+      "phonetic_pinyin": "chē xiāng qú",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_guangyang",
+      "standard_form": "广阳",
+      "script_hanzi": "广阳",
+      "phonetic_pinyin": "guǎng yáng",
+      "name_type": "official",
+      "associated_unit_id": "unit_guangyang_commandery",
       "predecessor_toponym_id": null
     },
     {
@@ -1128,6 +1175,32 @@
       "recorded_year": -100,
       "dynasty": "西汉（记西周初年事）",
       "quote": "武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟",
+      "evidence_level": "Level 2 (一手官刻金石)",
+      "epistemic_status": "VERIFIED",
+      "notes": null
+    },
+    {
+      "id": "attest_qinghe_han_tombs_dig",
+      "toponym_id": "top_qinghezhen",
+      "attested_name": "清河汉墓群发掘简报",
+      "source_title": "北京清河汉代墓葬发掘简报",
+      "source_author": "北京市文物工作队",
+      "recorded_year": 100,
+      "dynasty": "东汉（出土两汉墓葬实物）",
+      "quote": "出土两汉大型砖室墓与土坑墓群，出土泥质灰陶鼎、壶及五铢钱，实证汉代清河沿岸农耕聚落与商旅交通繁盛",
+      "evidence_level": "Level 1 (考古硬证据)",
+      "epistemic_status": "VERIFIED",
+      "notes": null
+    },
+    {
+      "id": "attest_sanguozhi_liujing",
+      "toponym_id": "top_chexiangqu",
+      "attested_name": "魏刘靖筑戾陵堰车箱渠",
+      "source_title": "三国志·魏书·刘靖传",
+      "source_author": "陈寿",
+      "recorded_year": 250,
+      "dynasty": "三国曹魏嘉平二年",
+      "quote": "嘉平二年，刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，灌溉蓟城南北四千余顷",
       "evidence_level": "Level 2 (一手官刻金石)",
       "epistemic_status": "VERIFIED",
       "notes": null
