@@ -584,16 +584,23 @@ FACTS: List[TextualFact] = [
     ),
     TextualFact(
         id="tf_hd_eyou_emsi", division_id="div_hd_ccy",
-        verbatim_quote="雍正元年（1723年），世宗于畅春园清溪书屋旧址建恩佑寺，为圣祖荐福；乾隆四十二年（1777年），高宗于其侧建恩慕寺，为圣母皇太后荐福。",
+        verbatim_quote="雍正三年（1725年），世宗于畅春园东垣内清溪书屋一带建恩佑寺，"
+                       "为圣祖荐福；雍正四年（1726年）三月恭奉圣祖御容；乾隆四十二年"
+                       "（1777年），高宗于恩佑寺之侧建恩慕寺，为圣母皇太后荐福。",
         attested_string="恩佑寺",
-        translator_note="记录式转录——恩佑寺/恩慕寺建者与荐福对象与卷76官书一致；"
-                        "雍正元年(1723)年份为机构/百科通说（官书不载具体年份）",
+        translator_note="官书链：《皇朝通志》「恩佑寺在畅春园，雍正三年建」+《皇朝文献"
+                        "通考》雍正三年四月工竣+《清世宗实录》；御容奉安雍正四年三月"
+                        "（GPT审E14-14/21/23）。v1 采机构通说 1723 已弃用；清溪书屋与"
+                        "恩佑寺为相邻关系，非同址替换（卷76 同时保留两址+导和堂）",
     ),
     TextualFact(
         id="tf_hd_ccy_yizhi", division_id="div_hd_ccy",
         verbatim_quote="咸丰十年（1860年）畅春园罹劫焚废，今仅存恩佑寺、恩慕寺两座山门（北京大学西门南侧），2021年列为第九批北京市文物保护单位。",
         attested_string="恩佑寺",
-        translator_note="记录式转录——现状单独核查：畅春园地上遗存仅两山门",
+        translator_note="记录式转录——现状单独核查：畅春园地上遗存仅两山门。"
+                        "2021第九批市保对象为恩佑寺山门、恩慕寺山门两个独立对象"
+                        "（第九批序号17/18，非畅春园遗址本体——GPT审E14-17）；"
+                        "恩慕寺山门1985年重修换琉璃瓦（海淀博物馆，今见瓦非原物——GPT审E14-11）",
     ),
     TextualFact(
         id="tf_minglu_sswy", division_id="div_minglu_sswy",
@@ -928,7 +935,7 @@ STATES: List[HistoricalFeatureState] = [
     HistoricalFeatureState(
         id="st_ccy_1723", entity_id="ent_changchunyuan_kangxi",
         time_span=_ts(1723, 1859, "ts_ccy1"),
-        geometry="园东垣增恩佑寺（1723）、恩慕寺（1777）；寿萱春永为皇太后寝殿",
+        geometry="园东垣增恩佑寺（1725建成）、恩慕寺（1777）；寿萱春永为皇太后寝殿",
         material="宫苑殿宇、两寺殿宇",
         function="皇太后园与帝问安驻跸之地：乾隆朝太后喜居畅春园，"
                  "帝自木兰回跸辄命驾问安",
@@ -947,13 +954,15 @@ STATES: List[HistoricalFeatureState] = [
     # ---- 恩佑寺 ----
     HistoricalFeatureState(
         id="st_eyou_1723", entity_id="ent_enyousi",
-        time_span=_ts(1723, 1859, "ts_eyou1"),
+        time_span=_ts(1725, 1859, "ts_eyou1"),
         geometry="苑之东垣内：山门东向外临通衢，三殿五楹、南北配殿各三楹，"
-                 "山门额「敬建恩佑寺」",
+                 "山门额「敬建恩佑寺」（世宗雍正御书——GPT审E14-05，勿与"
+                 "恩慕寺乾隆御书混淆）",
         material="殿宇（正殿奉三世佛，左药师右无量寿佛）",
-        function="世宗（雍正）为圣祖（康熙）荐福之寺，奉圣祖御容"
-                 "（乾隆八年癸亥御容奉移安佑宫）；官书不载建年，"
-                 "机构通说作雍正元年(1723)",
+        function="世宗（雍正）为圣祖（康熙）荐福之寺：雍正三年(1725)建成"
+                 "（《皇朝通志》/《皇朝文献通考》），雍正四年(1726)三月恭奉"
+                 "圣祖御容，乾隆八年(1743)御容奉移安佑宫（GPT审E14-14）；"
+                 "与清溪书屋为相邻关系非同址替换",
         evidence_fact_ids=["tf_eyou_yongzheng", "tf_eyou_ce", "tf_eyou_guihong",
                            "tf_hd_eyou_emsi"],
     ),
@@ -969,7 +978,8 @@ STATES: List[HistoricalFeatureState] = [
     HistoricalFeatureState(
         id="st_emsi_1777", entity_id="ent_enmusi",
         time_span=_ts(1777, 1859, "ts_emsi1"),
-        geometry="恩佑寺之右（侧），殿宇规制与恩佑寺同；山门额「敬建恩慕寺」",
+        geometry="恩佑寺之右（侧），殿宇规制与恩佑寺同；山门额「敬建恩慕寺」"
+                 "（高宗乾隆御书——GPT审E14-05；山门1985年重修换琉璃瓦）",
         material="殿宇（正殿奉药师佛一尊、左右药师佛一百八尊）",
         function="乾隆四十二年(1777)高宗为圣母皇太后广资慈福而建（绍承家法："
                  "恩佑寺为皇考为圣祖荐福所建）",
