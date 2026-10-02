@@ -280,10 +280,18 @@ class TestAttribution:
         assert "青龙桥" in why
 
     def test_miss_stopword_suppressed(self):
-        g = gm("s", 3, "万寿山")
-        cls, why = attribute_miss(g, [], "拓建万寿山与昆明湖")
+        # v4 后噪声判定与 _is_noise 同义（整词成员）：旗制复合词仍整词在表
+        g = gm("s", 1, "圆明园八旗")
+        cls, why = attribute_miss(g, [], "驻圆明园八旗")
         assert cls == "stopword-suppressed"
-        assert "万寿山" in why
+        assert "圆明园八旗" in why
+
+    def test_miss_noise_keyword(self):
+        # 内嵌实体：圆明园 被右侧 营-通道拖进 圆明园护军营 复合词，职官关键词拦
+        g = gm("s", 0, "圆明园")
+        cls, why = attribute_miss(g, [], "圆明园护军营驻防")
+        assert cls == "noise-keyword"
+        assert "护军" in why
 
     def test_miss_suffix_and_cue_missing(self):
         g = gm("s", 3, "董四墓")

@@ -109,11 +109,13 @@ class GoldMention:
 class NameRegistry(object):
     """KB 已建实体字形表：归一形 → 实体集合（真值唯一来源）。"""
 
-    def __init__(self, form_map: Dict[str, Set[str]], display: Dict[str, str]):
+    def __init__(self, form_map: Dict[str, Set[str]], display: Dict[str, str],
+                 entity_module: Optional[Dict[str, str]] = None):
         # 长形优先：最长匹配需要
         self._forms = sorted(form_map.keys(), key=len, reverse=True)
         self.form_map = form_map
         self.display = display
+        self.entity_module = entity_module or {}
 
     def entities_of(self, norm_form: str) -> Set[str]:
         return self.form_map.get(norm_form, set())
@@ -135,6 +137,7 @@ def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
     import importlib
     form_map: Dict[str, Set[str]] = {}
     display: Dict[str, str] = {}
+    entity_module: Dict[str, str] = {}
     for name in module_names:
         mod = importlib.import_module("haidian_kg.calibration.%s" % name)
         app_by_id = {a.id: a for a in mod.APPELLATIONS}
@@ -142,6 +145,7 @@ def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
         for ref in mod.REFERENCES:
             ent_apps.setdefault(ref.referent_entity_id, set()).add(ref.appellation_id)
         for ent in mod.ENTITIES:
+            entity_module[ent.id] = name
             labels = [strip_annotation(ent.canonical_label)]
             for aid in ent_apps.get(ent.id, ()):
                 app = app_by_id.get(aid)
@@ -154,7 +158,7 @@ def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
                 nf = norm_eval(label)
                 form_map.setdefault(nf, set()).add(ent.id)
                 display.setdefault(nf, label)
-    return NameRegistry(form_map, display)
+    return NameRegistry(form_map, display, entity_module)
 
 
 def extract_gold_mentions(text: str, segment_id: str,
@@ -225,10 +229,13 @@ def locate_span(text: str, surface: str) -> Optional[Tuple[int, int]]:
 
 
 def run_engine(segments: Sequence[dict]) -> Tuple[Dict[str, List[PredOcc]], object]:
-    """把 33 段喂给 ClosureExpander v3，按段收回 occurrence。
+    """把 33 段喂给 ClosureExpander，按段收回 occurrence。
 
     已知字形过滤刻意不启用（known_forms 空、伪 KB 无 appellations）——
     本闸门测的是 mention 层的 P/R，不是「已收录词条的去重」。
+    v4 起若引擎产出 KnownMention 事件（评估器配置下不会出现，但生产
+    配置会出现），同样计入 mention 口径（confidence="known"，不参与
+    high-conf 置信统计）。
     """
     from haidian_kg.expansion import ClosureExpander  # 引擎入口，非判定函数
 
@@ -238,21 +245,29 @@ def run_engine(segments: Sequence[dict]) -> Tuple[Dict[str, List[PredOcc]], obje
                   for n, seg in enumerate(segments)}
     seg_text = {seg["segment_id"]: seg["text"] for seg in segments}
     out: Dict[str, List[PredOcc]] = {seg["segment_id"]: [] for seg in segments}
+
+    def _absorb(occ) -> None:
+        seg_id = div_to_seg.get(occ.division_id)
+        if seg_id is None:
+            return
+        span = locate_span(seg_text[seg_id], occ.surface_form)
+        if span is None:
+            return
+        out[seg_id].append(PredOcc(
+            segment_id=seg_id, start=span[0], end=span[1],
+            surface=occ.surface_form,
+            normalized_form=norm_eval(occ.surface_form),
+            confidence=occ.confidence, method=occ.extractor_method,
+            occ_id=getattr(occ, "occurrence_id",
+                           "known:%s:%s" % (occ.evidence_fact_id,
+                                            occ.surface_form)),
+        ))
+
     for hyp in report.candidates_found:
         for occ in hyp.occurrences:
-            seg_id = div_to_seg.get(occ.division_id)
-            if seg_id is None:
-                continue
-            span = locate_span(seg_text[seg_id], occ.surface_form)
-            if span is None:
-                continue
-            out[seg_id].append(PredOcc(
-                segment_id=seg_id, start=span[0], end=span[1],
-                surface=occ.surface_form,
-                normalized_form=norm_eval(occ.surface_form),
-                confidence=occ.confidence, method=occ.extractor_method,
-                occ_id=occ.occurrence_id,
-            ))
+            _absorb(occ)
+    for km in getattr(report, "known_mentions", ()):
+        _absorb(km)
     for seg_id in out:
         out[seg_id].sort(key=lambda p: (p.start, p.end))
     return out, report
@@ -383,9 +398,21 @@ def hypothesis_coverage(report, segments: Sequence[dict],
                         hyp_covers.setdefault(hname, set()).add(eid)
     dup_entities = {e for e, hs in ent_covered_by.items() if len(hs) >= 2}
     collision_hyps = {h for h, es in hyp_covers.items() if len(es) >= 2}
+    collision_detail = []
+    for h in sorted(collision_hyps):
+        ents = []
+        for eid in sorted(hyp_covers[h]):
+            ents.append({"entity_id": eid,
+                         "module": registry.entity_module.get(eid, "?")})
+        collision_detail.append({
+            "hypothesis": h, "entities": ents,
+            "note": "同一字形挂多个 KB 实体：若为跨模块同指（无 identity 断言），"
+                    "属 KB 双建模缺陷，非引擎合并错误；若确为异指，属引擎真碰撞",
+        })
     return dup_entities, collision_hyps, {
         "entities_covered": {e: sorted(hs) for e, hs in sorted(ent_covered_by.items())},
         "hypotheses_covering": {h: sorted(es) for h, es in sorted(hyp_covers.items())},
+        "collision_detail": collision_detail,
     }
 
 
@@ -393,10 +420,16 @@ def hypothesis_coverage(report, segments: Sequence[dict],
 # 归因（唯一允许引用 expansion 的地方：rp-v3 冻结规则的描述性镜像）
 # ---------------------------------------------------------------------------
 
+def _short(s: str, n: int = 12) -> str:
+    return s if len(s) <= n else s[:n] + "…"
+
+
 def attribute_miss(g: GoldMention, preds: List[PredOcc], text: str
                    ) -> Tuple[str, str]:
-    """漏检归因（确定性优先级，返回 (类别, 说明)。禁止「噪声」兜底）。"""
-    import re as _re
+    """漏检归因（确定性优先级，返回 (类别, 说明)。禁止「噪声」兜底）。
+
+    镜像对齐 rp-v4：句读表/边界字/噪声表/关键词全部经 expansion 描述性
+    引入；噪声判定语义与 _is_noise 严格一致（整词成员，不做子串）。"""
     from haidian_kg import expansion as X   # 描述性镜像；评分路径不经过此处
 
     # 1) 经验层：引擎到底发了什么
@@ -411,15 +444,11 @@ def attribute_miss(g: GoldMention, preds: List[PredOcc], text: str
         return "erosion", (
             "命中区域但字形不合：引擎发「%s」（%s），金标「%s」"
             % (p.surface, p.method, g.surface))
-    # 2) 规则镜像推演：这条金标在 rp-v3 规则视角下为什么不可达
+    # 2) 规则镜像推演：这条金标在 rp-v4 规则视角下为什么不可达
     norm_form = X.normalize_form(g.surface)
-    for stop in sorted(X._STOPWORDS, key=len, reverse=True):
-        if stop in norm_form or stop in g.surface:
-            return "stopword-suppressed", (
-                "字形（或其归一形）命中挖掘器停用词表「%s」" % stop)
     window = None
     pos = 0
-    for phrase in _re.split(r"[，。、；：！？「」『』（）]", text):
+    for phrase in X._PHRASE_SPLIT_RE.split(text):
         end = pos + len(phrase)
         if pos <= g.start < end or (g.start < pos and g.end > pos):
             window = phrase
@@ -429,32 +458,53 @@ def attribute_miss(g: GoldMention, preds: List[PredOcc], text: str
         return "phrase-unreachable", "短语切分不可达（段内找不到包含该字形的短语）"
     has_cue = any(m in window for m in X._CUE_MARKERS)
     tail_is_suffix = any(norm_form.endswith(s) for s in X.PLACE_SUFFIXES)
-    if not has_cue and not tail_is_suffix:
-        return "suffix-and-cue-missing", (
-            "通名后缀「%s」不在词表且短语无线索词（v3 双通道同时不可达）" % g.normalized_form[-1])
+    # 回溯产物（镜像 _walk_back：从命中尾向左推进到边界字/短语头）
     k = window.find(g.surface)
     if k < 0:
         k = window.find(norm_form)
+    product = None
     if k >= 0:
         end = k + len(g.surface)
-        # 从命中尾往前的最长回溯（镜像 _walk_back）
         j = end - 1
         while j > 0 and window[j - 1] not in X._STOP_CHARS:
             j -= 1
-        walked = window[j:end]
-        if len(walked) < 2:
-            boundary = window[j - 1] if j > 0 else "短语头"
-            return "walkback-too-short", (
-                "回溯在边界字「%s」处截停，只剩「%s」不足 2 字专名下限，命中作废"
-                % (boundary, walked))
-        if len(walked) > 6:
-            return "walkback-overrun", (
-                "回溯跨度 %d 字 > 6 上限（「%s…」），该命中作废"
-                % (len(walked), walked[:4]))
-        for reign in ("康熙", "雍正", "乾隆", "嘉庆", "万历"):
-            if walked.startswith(reign):
+        product = window[j:end]
+    # 镜像 _suffix_hits 判定顺序：长度 → 噪声（整词成员/纪年/关键词）
+    if product is not None and len(product) < 2:
+        boundary = window[j - 1] if j > 0 else "短语头"
+        return "walkback-too-short", (
+            "回溯在边界字「%s」处截停，只剩「%s」不足 2 字专名下限，命中作废"
+            % (boundary, product))
+    if product is not None and len(product) > 6:
+        return "walkback-overrun", (
+            "回溯跨度 %d 字 > 6 上限（「%s…」），该命中作废"
+            % (len(product), product[:4]))
+    if product is not None:
+        prod_norm = X.normalize_form(product)
+        if prod_norm in X._STOPWORDS or product in X._STOPWORDS:
+            return "stopword-suppressed", (
+                "回溯产物「%s」整词命中挖掘器停用词表（v4 已迁出纯地名，"
+                "余为旗制/纪年类）" % product)
+        for reign in X._REIGN_PREFIXES:
+            if prod_norm.startswith(reign) or product.startswith(reign):
                 return "reign-prefix-suppressed", (
                     "回溯头落进纪年「%s」被纪年模式压制" % reign)
+    # 内嵌实体镜像：金标右侧的通名后缀把整段回溯成机构复合词
+    # （「圆明园护军营」：营-通道回溯产物含职官关键词，引擎按纪律拒发）
+    if k >= 0:
+        gold_end = k + len(g.surface)
+        tail = window[gold_end:]
+        if tail and any(t in X._SUFFIX_SET for t in tail):
+            win_norm = X.normalize_form(window)
+            for kw in X._NOISE_KEYWORDS:
+                if kw in win_norm:
+                    return "noise-keyword", (
+                        "金标内嵌于机构复合词语境（短语「%s」含关键词「%s」），"
+                        "%s-通道回溯产物被拦" % (_short(window), kw, tail[-1]))
+    if not has_cue and not tail_is_suffix:
+        return "suffix-and-cue-missing", (
+            "通名后缀「%s」不在词表且短语无线索词（v4 双通道同时不可达）"
+            % g.normalized_form[-1])
     if not tail_is_suffix and has_cue:
         return "cue-window-narrow", (
             "仅 cue 窗通道可达（「%s」非收录后缀），窗内未收拢该字形"
@@ -608,9 +658,11 @@ REMEDY_FN = {
         "rp-v3 句读/回溯边界表缺 Markdown 记号（*、-、空格、书名号《》）；"
         "与 walkback-overrun 同根同修"),
     "walkback-too-short": (
-        "P1·提示词/专名内部字冲突", "「有」既是 cue 又在专名内部（大有庄）：需 known 别名优先召回或词边界判断，属引擎行为变更（v4）"),
+        "P1·提示词/专名内部字冲突", "「有」既是 cue 又在专名内部（大有庄）：需 known 别名优先召回或词边界判断，属引擎行为变更（v5 候选）"),
     "stopword-suppressed": (
-        "P1·已知名设计性压制（需决策）", "圆明园/万寿山/昆明湖等是 KB 已建实体也是挖掘器停用词：身份纪律（不复挖已知名）与 holdout R 口径冲突，见结论决策项"),
+        "P1·旗制词残余压制", "v4 已迁出纯地名；余下为旗名子串（正黄旗营房 类）——需 known 表预匹配或旗营专名通道（v5 候选）"),
+    "noise-keyword": (
+        "P1·机构复合词内嵌实体（需决策）", "圆明园护军营/圆明园副将 语境中的已知实体被职官关键词拦下：引擎按纪律拒发，冻结公式恒计 FN；要么 gold 口径为「复合词内嵌」单列（冻结修正案），要么 v5 做内嵌实体识别"),
     "suffix-and-cue-missing": (
         "P2·通名后缀表扩墓/街/院", "扩表必须先过 spec §5.2 Hard FP/Mutation 独立负控制，不在本闸门内擅动"),
     "erosion": (
@@ -619,8 +671,10 @@ REMEDY_FN = {
         "P2·同 fact 同形只发一次", "多次出现只记首现：跨 fact 互证是设计行为，可按 mention 密度重估"),
     "cue-window-narrow": (
         "P2·cue 窗策略", "生僻通名（院）靠 12 字窗保不住：可在 v4 引入 known 表预匹配"),
-    "reign-prefix-suppressed": ("P2", "回溯头落进纪年模式"),
-    "overlapped-hit-discarded": ("P2", "子词让位策略的已知代价"),
+    "reign-prefix-suppressed": (
+        "P2·纪年模式", "回溯头落进纪年/帝号模式被压"),
+    "overlapped-hit-discarded": (
+        "P2·子词让位", "后缀命中与更右的采纳区间重叠，按子词规则让位（策略已知代价）"),
     "phrase-unreachable": ("P2", "守卫类，本轮未触发"),
 }
 REMEDY_FP = {
@@ -639,6 +693,7 @@ REMEDY_FP = {
 
 def render_conclusion(res: dict) -> List[str]:
     m = res["metrics"]
+    from haidian_kg.expansion import MINER_VERSION
     lines: List[str] = []
     fn_cls = _class_counts(res["false_negatives"])
     fp_cls = _class_counts(res["false_positives"])
@@ -652,7 +707,8 @@ def render_conclusion(res: dict) -> List[str]:
         lines.append("")
         # 敏感度上界（机械可复现，非拍脑袋）
         gap_fp = fp_cls.get("kb-coverage-gap", 0)
-        stop_fn = fn_cls.get("stopword-suppressed", 0)
+        stop_fn = (fn_cls.get("stopword-suppressed", 0)
+                   + fn_cls.get("noise-keyword", 0))
         tp = m["counts"]["tp"]
         fp = m["counts"]["fp"]
         fn = m["counts"]["fn"]
@@ -663,10 +719,10 @@ def render_conclusion(res: dict) -> List[str]:
         lines.append("")
         lines.append("- **precision 严格下界 = 实测值**：KB 覆盖缺口 FP（%d 条，真实地名"
                      "但 8 模块未建词条）按冻结公式计错。若经人工判定为真地名，"
-                     "P 上界 = %.3f——仍远低于 0.90。" % (gap_fp, p_upper))
-        lines.append("- **recall 受已知名设计性压制拖累**：%d 条 FN 是挖掘器按身份纪律"
-                     "（不复挖 KB 已知字形）主动丢弃。若视为命中，R 上界 = %.3f——"
-                     "仍远低于 0.85。" % (stop_fn, r_upper))
+                     "P 上界 = %.3f——仍低于 0.90。" % (gap_fp, p_upper))
+        lines.append("- **recall 受设计性拒发拖累**：%d 条 FN 是引擎按身份/噪声纪律"
+                     "（旗名子串、机构复合词）主动拒发。若视为命中，"
+                     "R 上界 = %.3f——仍低于 0.85。" % (stop_fn, r_upper))
         lines.append("")
         lines.append("两个上界都够不着阈值 ⇒ 缺口是结构性的，调参无解，需按下列路径修复后重跑（holdout 不变）。")
     lines.append("")
@@ -688,23 +744,55 @@ def render_conclusion(res: dict) -> List[str]:
                      fcn, fpcp, remedy[1]))
     for _, pri, cls, fcn, fpcp, how in sorted(
             rows, key=lambda r: (r[0], -(r[3] + r[4]), r[2])):
+        parts = pri.split("·", 1)
+        pri_key = parts[0] if parts else "?"
+        pri_name = parts[1] if len(parts) > 1 else pri
         lines.append("| %s | `%s` | %d / %d | %s | %s |"
-                     % (pri.split("·")[0], cls, fcn, fpcp, pri.split("·")[1], how))
+                     % (pri_key, cls, fcn, fpcp, pri_name, how))
     lines.append("")
     lines.append("### 决策项（超出本评估器权限，需主代理裁定）")
     lines.append("")
-    lines.append("冻结设计存在一处**规格内部张力**：spec §2.5 身份纪律要求已建词条字形"
-                 "「仅计数不重挖」，而 holdout 闸门把 KB 已知字形的重检测计为 recall。"
-                 "本轮数据证明两者不可同时满足（圆明园/万寿山/正黄旗营房 等 6 条 FN "
-                 "全部来自该纪律）。可选：")
-    lines.append("")
-    lines.append("1. **引擎加 known-mention 降级通道**（推荐）：ToponymMiner 对已知字形"
-                 "不再静默丢弃，改为发 `confidence=known` 的 occurrence（不进候选聚类，"
-                 "只进 mention 层）——引擎行为变更即 MINER_VERSION 升 v4，SourceVisitKey "
-                 "自动视为没挖过，纪律自洽；")
-    lines.append("2. 重开闸门改金标口径——违反冻结纪律，不推荐；")
-    lines.append("3. 接受「长编层重检测已知实体」不在引擎职责内，R 闸门只对原文新地名层"
-                 "生效——需在设计文档补一条冻结修正案。")
+    kw_fn = fn_cls.get("noise-keyword", 0)
+    stop_fn = fn_cls.get("stopword-suppressed", 0)
+    if MINER_VERSION != "v3":
+        lines.append("v4 已落地（known-mention 通道 + rp-v4 记号/边界表，%s/%s）"
+                     % (MINER_VERSION, _rule_profile_version()))
+        lines.append("纯地名的已知名压制已消除。余下两类身份层张力：")
+        lines.append("")
+        lines.append("1. **机构复合词内嵌已知实体**（%d 条，noise-keyword）："
+                     "「圆明园护军营」「圆明园副将」语境中的圆明园 mention 被职官"
+                     "关键词拦下——引擎按纪律拒发（这些复合词确实不是地点），"
+                     "冻结公式恒计 FN。出路：(a) gold 口径为「复合词内嵌」单列"
+                     "（冻结修正案，需你批准）；(b) v5 内嵌实体识别。" % kw_fn)
+        lines.append("2. **旗营专名**（%d 条，stopword-suppressed/旗名子串）："
+                     "「正黄旗营房」类不是纯地名、是建置名，营/房后缀通道天然"
+                     "不可达——建议在 KB 建置层补专名通道，或 gold 口径豁免。"
+                     % stop_fn)
+        coll = res["coverage"].get("collision_detail", ())
+        if coll:
+            lines.append("3. **KB 跨模块双建模（collision 硬闸新败因）**："
+                         + "；".join(
+                             "「%s」同时挂 %s" % (
+                                 cd["hypothesis"],
+                                 " 与 ".join(e["entity_id"] for e in cd["entities"]))
+                             for cd in coll)
+                         + "。两词条分属不同校准模块且无 identity 断言：若同指，"
+                           "需 KB 侧补 DiachronicIdentityAssertion 或合并词条"
+                           "（数据修复，不是引擎修复）；若异指，则引擎真碰撞。"
+                           "碰撞=0 硬闸在该数据修复前无法过闸。")
+    else:
+        lines.append("冻结设计存在一处**规格内部张力**：spec §2.5 身份纪律要求已建词条字形"
+                     "「仅计数不重挖」，而 holdout 闸门把 KB 已知字形的重检测计为 recall。"
+                     "本轮数据证明两者不可同时满足（圆明园/万寿山/正黄旗营房 等 %d 条 FN "
+                     "全部来自该纪律）。可选：" % (kw_fn + stop_fn))
+        lines.append("")
+        lines.append("1. **引擎加 known-mention 降级通道**（推荐）：ToponymMiner 对已知字形"
+                     "不再静默丢弃，改为发 `confidence=known` 的 occurrence（不进候选聚类，"
+                     "只进 mention 层）——引擎行为变更即 MINER_VERSION 升 v4，SourceVisitKey "
+                     "自动视为没挖过，纪律自洽；")
+        lines.append("2. 重开闸门改金标口径——违反冻结纪律，不推荐；")
+        lines.append("3. 接受「长编层重检测已知实体」不在引擎职责内，R 闸门只对原文新地名层"
+                     "生效——需在设计文档补一条冻结修正案。")
     lines.append("")
     return lines
 
@@ -801,6 +889,13 @@ def render_markdown(res: dict, holdout_path: str) -> str:
     for h, es in res["coverage"]["hypotheses_covering"].items():
         flag = " ⚠️collision" if len(es) >= 2 else ""
         lines.append("  - 「%s」→ %s%s" % (h, "、".join(es), flag))
+    for cd in res["coverage"].get("collision_detail", ()):
+        ent_desc = " + ".join(
+            "%s（%s 模块）" % (e["entity_id"], e["module"])
+            for e in cd["entities"])
+        lines.append("")
+        lines.append("  **collision 案例归因**：「%s」覆盖 %s —— %s"
+                     % (cd["hypothesis"], ent_desc, cd["note"]))
     lines.append("")
     lines.extend(render_conclusion(res))
     lines.append("## 偏差声明")

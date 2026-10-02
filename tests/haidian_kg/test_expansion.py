@@ -173,13 +173,23 @@ class TestVisitKeySemantics:
 
 class TestMinerDiscipline:
     def test_stopwords_filtered(self):
-        """纪年/官职/皇家园林不得作为候选——繁简双字形（实锤 C1 简体侧）"""
+        """纪年/官职/旗制/机构复合词不得作为候选——繁简双字形（实锤 C1 简体侧）
+
+        v4 迁移：纯地名字形（圆明园/清漪园/万寿山/稻田厂…）移出噪声表
+        （它们是地点，「已知名不冒充新发现」改由 expander known 集合路由）；
+        本用例改钉「迁移后仍是噪声」的旗制/纪年/职官词，并负控制迁移词
+        确实已放行（防单向漂移）。"""
         m = ToponymMiner()
-        for noise in ("雍正二年", "護軍校", "圓明園", "乾隆十六年",
-                      # C1 修复的简体侧七词 + 八处
-                      "护军校", "圆明园", "清漪园", "畅春园",
-                      "静宜园", "静明园", "万寿山", "稻田厂", "八处"):
+        for noise in ("雍正二年", "護軍校", "乾隆十六年",
+                      # C1 修复的简体侧七词 + 八处（地名属性者已迁出）
+                      "护军校", "八处",
+                      # 旗制/机构复合词（非地点，v4 仍拦）
+                      "圆明园八旗", "圆明园副将", "正黄旗"):
             assert m._is_noise(noise), "%s 应被判为噪声" % noise
+        # v4 负控制：迁出的纯地名不再是噪声（通道可达性的前提）
+        for place in ("圆明园", "清漪园", "畅春园", "静宜园",
+                      "静明园", "万寿山", "稻田厂"):
+            assert not m._is_noise(place), "%s 是地点，v4 起不得判为噪声" % place
 
     def test_stopwords_dual_script_symmetry(self):
         """【M6 负控制】_STOPWORDS 每个繁体词的简体对应也必须在表
@@ -233,7 +243,10 @@ class TestMinerDiscipline:
         assert "永定河入西山" not in surfaces, "尾窗污染「永定河入西山」仍在"
 
     def test_no_tail_window_pollution(self):
-        """【M6 负控制·M3】「內務府於青龍橋設稻田廠」绝不产出「龍橋設稻田廠」"""
+        """【M6 负控制·M3】「內務府於青龍橋設稻田廠」绝不产出「龍橋設稻田廠」
+
+        v4 语义迁移：稻田廠 是真实地点（皇家稻田厂），已移出噪声表——
+        本用例改为断言它被**干净取出**（污染名仍绝不出现）。"""
         miner = ToponymMiner()
         f = TextualFact(id="tf_z", division_id="div_z",
                         verbatim_quote="內務府於青龍橋設稻田廠，有倉署、倉廒、碾房，经理官種稻田。",
@@ -243,7 +256,9 @@ class TestMinerDiscipline:
         for polluted in ("龍橋設稻田廠", "橋設稻田廠", "青龍橋設稻田廠"):
             assert polluted not in surfaces, "尾窗污染 %s 仍在" % polluted
         assert "青龍橋" in surfaces, "青龍橋（於 锚点回溯）应被干净取出"
-        assert "稻田廠" not in surfaces, "稻田廠 是停用词，不得作为候选"
+        assert "稻田廠" in surfaces, "稻田廠 是地点，v4 起应被干净召回"
+        assert "倉署" not in surfaces and "倉廒" not in surfaces, \
+            "泛称 倉署/倉廒 不得作为候选"
 
     def test_occurrence_provenance_filled(self):
         """【M1】mine() 收到的 source_id 必须写进每个 occurrence"""
@@ -353,5 +368,93 @@ class TestMinerContract:
         assert len(hyps) == 1 and len(hyps[0].occurrences) == 1
 
     def test_version_constants(self):
-        assert MINER_VERSION == "v3"
-        assert isinstance(RULE_PROFILE_VERSION, str) and RULE_PROFILE_VERSION
+        """v4：known-mention 通道 + rp-v4 记号/边界表（holdout run1 裁决落地）；
+        版本进 SourceVisitKey，bump 即视为全部篇卷没挖过"""
+        assert MINER_VERSION == "v4"
+        assert RULE_PROFILE_VERSION == "rp-v4"
+
+
+class TestV4KnownMentionChannel:
+    """【v4】KnownMention 通道：已知名命中降级记录为 mention 事件，
+    不进 CandidatePlaceHypothesis；纪律（admitted 恒 []、不重复膨胀候选）
+    原样保留，变的是 mention 层可见性（holdout run1 裁决落地）。"""
+
+    def test_known_label_hit_becomes_known_mention(self):
+        """已建词条 label 在引文中命中 → KnownMention 事件 + 不进候选"""
+        from haidian_kg.expansion import KnownMention
+        kb = build(B)   # banners：树村/五圣庵 等是词条 label
+        rep = ClosureExpander(seed_kbs=[kb]).expand()
+        km_surfaces = [k.normalized_form for k in rep.known_mentions]
+        assert km_surfaces, "已知名命中必须产出 KnownMention（v4 前是静默丢弃）"
+        assert rep.known_form_hits == len(rep.known_mentions), \
+            "计数器与事件明细必须同账"
+        cand_forms = {h.normalized_form for h in rep.candidates_found}
+        assert not (set(km_surfaces) & cand_forms), \
+            "KnownMention 不得同时出现在候选聚类（不重复膨胀候选）"
+        assert rep.admitted == [], "引擎只发现不收录（纪律不变）"
+        for k in rep.known_mentions:
+            assert isinstance(k, KnownMention)
+            assert k.confidence == "known"
+            assert k.evidence_fact_id in ALL_FACT_IDS, "KnownMention 必须可溯源"
+            assert k.extractor_version == MINER_VERSION
+
+    def test_unknown_places_still_candidates_same_run(self):
+        """负控制：known 通道不吞新地名——同一次运行里未知地点照常进候选"""
+        kb = build(B)
+        rep = ClosureExpander(seed_kbs=[kb]).expand()
+        cand_forms = {h.normalized_form for h in rep.candidates_found}
+        assert "萧家河" in cand_forms, "未知地点必须仍是候选（known 通道不得过收）"
+        km_forms = {k.normalized_form for k in rep.known_mentions}
+        assert "萧家河" not in km_forms
+
+    def test_place_names_leave_stopword_table_with_dual_script(self):
+        """v4 迁移负控制（对偶 test_stopwords_filtered）：
+        迁出词的繁简双侧都不得残留在 _STOPWORDS（双字形对称铁律）"""
+        from haidian_kg.expansion import normalize_form, _STOPWORDS
+        for place in ("圆明园", "清漪园", "畅春园", "静宜园",
+                      "静明园", "万寿山", "昆明湖", "玉泉山", "稻田厂"):
+            assert place not in _STOPWORDS
+            assert normalize_form(place) not in _STOPWORDS
+        # 但旗制复合词仍必须留表（不是地点）
+        for keep in ("圆明园八旗", "圆明园副将"):
+            assert keep in _STOPWORDS
+
+    def test_markdown_and_boundary_chars_clean_extraction(self):
+        """【rp-v4 P0 负控制】Markdown 记号与 今/名/记 边界字：
+        命中面必须逐字干净，绝不产出带记号/边界字的 surface"""
+        miner = ToponymMiner()
+        f = TextualFact(
+            id="tf_v4_md", division_id="div_v4_md",
+            verbatim_quote="迁驻**蓝靛厂**；《碧云寺》重修；今大觉寺；名娘娘府；"
+                           "卷九十八记外火器营自内城迁来。",
+            attested_string="蓝靛厂")
+        cands = miner.mine("src_v4", "div_v4_md", [f])
+        surfaces = {o.surface_form for o in cands}
+        for expect in ("蓝靛厂", "碧云寺", "大觉寺", "娘娘府", "外火器营"):
+            assert expect in surfaces, "rp-v4 应干净召回 %s，实得 %s" % (
+                expect, sorted(surfaces))
+        junk = [s for s in surfaces
+                if any(ch in s for ch in "*《》-#今名记")
+                or s.startswith(("今", "名", "记"))]
+        assert not junk, "记号/边界字渗入 surface: %s" % junk
+
+    def test_yuanmingyuan_flows_but_compounds_suppressed(self):
+        """圆明园（地点）v4 起可达；圆明园八旗/圆明园护军营（旗制机构）仍拦——
+        防负控制：迁移不得变成泛溢"""
+        miner = ToponymMiner()
+        f = TextualFact(
+            id="tf_v4_ymp", division_id="div_v4_ymp",
+            verbatim_quote="圆明园护军营《圆明园八旗》驻防圈占圆明园周边田地。",
+            attested_string="圆明园")
+        surfaces = {o.surface_form for o in miner.mine("s", "div_v4_ymp", [f])}
+        assert "圆明园" in surfaces, "纯地名 圆明园 必须可达（v4 迁移）"
+        for compound in ("圆明园护军营", "圆明园八旗"):
+            assert compound not in surfaces, "旗制机构 %s 仍须拦" % compound
+
+    def test_source_visit_key_bumped_by_version(self):
+        """MINER_VERSION/RULE_PROFILE 进 VisitKey：v4 升级即视为没挖过，
+        旧版本不会因版本变更被误判重访"""
+        kb = build(S)
+        rep = ClosureExpander(seed_kbs=[kb]).expand()
+        assert rep.revisited_visits == 0
+        assert len(rep.sources_mined) == len(S.DIVISIONS)

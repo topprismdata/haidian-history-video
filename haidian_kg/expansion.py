@@ -36,8 +36,15 @@ from .ontology.epistemic import TextualFact
 
 
 #: 挖掘器版本 / 规则档版本——两者其一升级即视为「篇卷没挖过」（spec §2.5.5）
-MINER_VERSION = "v3"
-RULE_PROFILE_VERSION = "rp-v3"
+#: v4（2026-10-02，holdout run1 闸门裁决）：
+#:   1) KnownMention 通道——已知名命中降级记录为 mention 事件，不再静默丢弃
+#:      （不进 CandidatePlaceHypothesis 的纪律不变，变的是 mention 层可见性）；
+#:   2) rp-v4 句读/回溯边界表扩 Markdown 记号（* - #、书名号《》【】）与
+#:      单字边界（今/名/记）——holdout run1 逐条归因的 P0 修复；
+#:   3) 纯地名条目（圆明园/万寿山/昆明湖等）移出 _STOPWORDS：它们是地点不
+#:      是噪声，「已知名不冒充新发现」改由 expander 的 known 集合路由保证。
+MINER_VERSION = "v4"
+RULE_PROFILE_VERSION = "rp-v4"
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +80,13 @@ def normalize_form(surface: str) -> str:
 
 #: 已知「非地名」的干扰词：出现在引文里但不是我们要的地名
 #: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训，硬性规定）
+#:
+#: v4 迁移：纯地名字形（圆明园/清漪园/畅春园/静宜园/静明园/万寿山/昆明湖/
+#: 玉泉山/稻田厂 及其繁体）不再是「噪声」——它们是真实地点。G6 时代把它们
+#: 停在这里是为了防「已建词条字形冒充新发现」，v4 起该职责由
+#: ClosureExpander 的 known 集合路由（KnownMention 通道）承担，miner 层
+#: 不再吞掉地名。机构/旗制复合词（圆明园八旗、圆明园副将）与旗名、职官、
+#: 纪年仍留本表——它们不是地点。
 _STOPWORDS = {
     # 简体
     "皇帝", "天子", "朝廷", "官书", "内务府", "中科院", "考古所",
@@ -80,14 +94,12 @@ _STOPWORDS = {
     "康熙", "雍正", "乾隆", "嘉庆", "万历", "天启", "嘉靖", "成化",
     "正统", "景泰", "天顺", "弘治", "正德", "隆庆", "泰定", "至元",
     "至大", "太平兴国", "昭文馆", "太史院", "翰林",
-    "圆明园", "清漪园", "畅春园", "静宜园", "静明园", "万寿山", "稻田厂",
     "八处", "仓署",
     "两个小旗驻点", "三个小旗驻点", "圆明园副将", "都督河北诸军事",
     "一万间", "一千二百五十间",
     # 繁体（官书引文用字）
     "護軍", "參領", "護軍校", "副將", "總兵", "守備", "千總", "把總",
-    "內務府", "圓明園", "清漪園", "暢春園", "靜宜園", "靜明園",
-    "昆明湖", "萬壽山", "玉泉山", "稻田廠",
+    "內務府",
     # 泛指词（模式命中但非专名）
     "八處", "八旗", "御道", "倉署", "兩個小旗駐點", "三個小旗駐點",
     "圓明園副將", "都督河北諸軍事", "圓明園八旗", "圆明园八旗",
@@ -127,6 +139,46 @@ class ToponymOccurrence(object):
     confidence: str = "low"        # high: 提示词+通名双证 / mid: 单证 / low: 仅模式
     stripped_suffix: Optional[str] = None  # 被剥离的方位后缀
     note: str = ""
+
+
+@dataclass
+class KnownMention(object):
+    """
+    v4 已知名命中事件（mention 层降级记录，spec §2.5 v4 语义）。
+
+    v3 及以前：已建词条字形（KB label / script_variants / known_forms）
+    在引擎层被**静默丢弃**（known_form_hits 只计数）——「已知名不冒充新
+    发现」的纪律顺带杀死了 mention 层对已知实体的可见性，holdout v1
+    首轮闸门的 recall 因此测不了（6 条 FN 直接来源于此）。
+
+    v4：命中已知名产出 KnownMention——**仍不进 CandidatePlaceHypothesis**
+    （「不重复膨胀候选」的纪律原样保留），但事件本身带完整溯源字段，
+    供 mention 层评估与后续人工挂接复核。
+    """
+    surface_form: str              # 原样字串
+    normalized_form: str           # 归一形
+    source_id: str
+    evidence_fact_id: str
+    division_id: Optional[str] = None
+    edition_id: Optional[str] = None
+    extractor_method: str = ""
+    extractor_version: str = ""
+    text_span: str = ""
+    confidence: str = "known"      # 恒为 known：已知名不参与置信竞争
+
+    @classmethod
+    def from_occurrence(cls, occ: "ToponymOccurrence") -> "KnownMention":
+        return cls(
+            surface_form=occ.surface_form,
+            normalized_form=occ.normalized_form,
+            source_id=occ.source_id,
+            evidence_fact_id=occ.evidence_fact_id,
+            division_id=occ.division_id,
+            edition_id=occ.edition_id,
+            extractor_method=occ.extractor_method,
+            extractor_version=occ.extractor_version,
+            text_span=occ.text_span,
+        )
 
 
 @dataclass
@@ -187,7 +239,12 @@ DIRECTION_SUFFIXES = ("西邊", "東邊", "南邊", "北邊",
 GENERIC_SINGLE = set("村莊庄屯營营府河橋桥泊泉閘闸堰渠湖山園园廠厂場场倉仓窯窑店铺關关嶺岭峪")
 
 #: 句读（切短语/截窗口用）
-_PUNCT_CHARS = "，。、；：！？「」『』（）"
+#: rp-v4：扩 Markdown 记号（* - #）与书名号/方头括号（《》【】）——
+#: holdout run1 逐条归因：**蓝靛厂/《圆明园/- 牛栏庄 类记号渗入与
+#: walkback 越界（「- **外火器营」8 字）同源于此表缺失
+_PUNCT_CHARS = "，。、；：！？「」『』（）《》【】*-#"
+#: 短语切分（单一来源，_phrase_hits 与归因镜像共用同一张表）
+_PHRASE_SPLIT_RE = re.compile("[%s]" % re.escape(_PUNCT_CHARS))
 
 #: 提示词锚点（A 法线索词）
 _CUE_MARKERS = ("為", "曰", "有", "坐落", "跨其上", "即")
@@ -206,6 +263,10 @@ _STOP_CHARS = set(
     # 旗籍通名：旗名内部不可回溯穿越（鑲黄旗營 不许裂成 X旗營/旗營）
     "旗"
 )
+#: rp-v4 单字边界（holdout run1 归因）：今（今大觉寺/今海淀温泉）、
+#: 名（名娘娘府/名健锐营）、记（卷九十八记外火器营）——专名头不可能
+#: 越过它们；不收 北/三/西（lexicalized 方位头：西三旗/北安河 先例）
+_STOP_CHARS |= set("今名记")
 
 
 class SourceMiner(Protocol):
@@ -214,6 +275,14 @@ class SourceMiner(Protocol):
     def mine(self, source_id: str, division_id: str,
              facts: List[TextualFact]) -> List[ToponymOccurrence]:
         ...
+
+
+#: 纪年/帝号模式（繁简）——_is_noise 与评估器归因镜像共用
+_REIGN_PREFIXES = ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
+                   "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国")
+#: 官职/机构模式（繁简）——同上共用
+_NOISE_KEYWORDS = ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
+                   "御道", "倉署", "仓署", "碾房", "都督")
 
 
 class ToponymMiner(object):
@@ -304,7 +373,7 @@ class ToponymMiner(object):
                      source_id: str) -> List[ToponymOccurrence]:
         """B 法：按句读切短语，短语内每个通名后缀命中都回溯取专名头"""
         out: List[ToponymOccurrence] = []
-        for phrase in re.split(r"[，。、；：！？「」『』（）]", text):
+        for phrase in _PHRASE_SPLIT_RE.split(text):
             phrase = phrase.strip()
             if phrase:
                 out.extend(self._suffix_hits(phrase, fact, source_id,
@@ -398,14 +467,10 @@ class ToponymMiner(object):
         if any(ch.isdigit() for ch in name):
             return True
         for form in forms:
-            # 纪年/帝号模式（繁简）
-            for reign in ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
-                          "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国"):
+            for reign in _REIGN_PREFIXES:
                 if form.startswith(reign):
                     return True
-            # 官职/机构模式（繁简）
-            for kw in ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
-                       "御道", "倉署", "仓署", "碾房", "都督"):
+            for kw in _NOISE_KEYWORDS:
                 if kw in form:
                     return True
         return False
@@ -427,6 +492,8 @@ class ExpansionReport(object):
     revisited_visits: int = 0       # SourceVisitKey 已登记 → 跳过
     known_form_hits: int = 0        # 命中已建词条字形 → 仅计数
     duplicate_candidates: int = 0   # 同名同证重复观察 → 并入已有假说
+    #: v4：已知名命中事件（known_form_hits 的明细版），不进 candidates_found
+    known_mentions: List[KnownMention] = field(default_factory=list)
 
     def render(self) -> str:
         lines = ["闭包扩展报告 v3（miner=%s / rule_profile=%s）"
@@ -447,6 +514,7 @@ class ExpansionReport(object):
                                 o.division_id, o.evidence_fact_id, o.note))
         lines.append("  重访篇卷（VisitKey 已登记）: %d" % self.revisited_visits)
         lines.append("  命中已建词条字形（跳过）: %d" % self.known_form_hits)
+        lines.append("  已知实体 mention（v4 降级记录）: %d" % len(self.known_mentions))
         lines.append("  重复候选观察（并入假说）: %d" % self.duplicate_candidates)
         lines.append("  收录: %d / 拒绝: %d"
                      % (len(self.admitted), len(self.rejected)))
@@ -525,7 +593,11 @@ class ClosureExpander(object):
                 if occ.edition_id is None:
                     occ.edition_id = edition_id
                 if occ.normalized_form in known:
+                    # v4：降级记录为 KnownMention（mention 层可见），
+                    # 不再静默丢弃；计数器语义保持不变
                     rep.known_form_hits += 1
+                    rep.known_mentions.append(
+                        KnownMention.from_occurrence(occ))
                     continue
                 hyp = hypo_by_form.get(occ.normalized_form)
                 if hyp is None:
