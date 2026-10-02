@@ -182,6 +182,6 @@ https://zh.wikisource.org/zh-hans/欽定日下舊聞考_(四庫全書本)/卷100
 ## GPT 审核第三轮(2026-10-02)采信与落实
 
 - 1:「坐西朝东」从辽碑证据链拆到现存建筑测绘层
-- 2(模型级,待办):温泉 泉眼/温泉村/温泉镇 三实体不可作别名链——当前 canonical 为合并表述,标注拆分待办;无连续地名档案不 sameAs
+- 2(模型级,✅已拆 2026-10-02):温泉 泉眼(ent_xs_wq_quanyan,NATURAL_SPRING)/村(ent_xs_wenquan)/镇(ent_xs_wenquanzhen,ADMIN_DIVISION)三实体分立,prop_xs_wenquan_split 记空间包含与得名关联,无 sameAs;评测层「温泉镇」形符排除(span 错位传输约束,holdout_eval.EXCLUDED_FORMS);凤凰岭同步二分 ent_xs_fhl_jingqu(SCENIC_AREA),pte 1996 开园只挂景区,prop_xs_fhl_split
 - 3:「妃嫔不入天寿山」降为现代制度史归纳(corpus 同步标注)
 - 4:现状两层改写——金山南麓地下文物埋藏区+周边现代墓园;毁废程度不作比例性判断

@@ -47,6 +47,12 @@ class PhysicalThingKind(str, Enum):
     # 把979高梁河之战战场地望错挂"聚落占地"、把丰益仓错挂"皇家厂坊"都会污染 kind 语义。
     HISTORIC_BATTLEFIELD = "古战场"             # 历史战役战场地望，如979年高梁河之战（与后世桥闸分属不同实体）
     STATE_GRANARY = "官仓"                      # 国家/八旗仓储机构及其占地，如丰益仓
+    # 2026-10-02 GPT审3-2/3-16/3-17 词条拆分新增：泉眼/政区/景区/单体建筑此前无对应类别，
+    # 温泉「泉眼/村/镇」合挂聚落占地、景区挂山阜、演武厅单体挂营垒都会污染 kind 语义。
+    NATURAL_SPRING = "泉眼"                     # 自然泉源地物（E26 Physical Feature），如画眉山北温泉
+    ADMIN_DIVISION = "政区"                     # 现代行政区划实体（镇/区），与聚落占地分立
+    SCENIC_AREA = "风景旅游区"                  # 现代景区经营实体，边界不得倒灌自然山体
+    SINGLE_BUILDING = "单体建筑"                # 建筑群中的殿宇/厅堂单体，如健锐营演武厅
 
 
 class PersistentSpatialEntity(BaseModel):

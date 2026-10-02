@@ -151,6 +151,13 @@ class NameRegistry(object):
         return None
 
 
+# 评测层传输约束（非模型混同）。GPT审3-2 温泉镇实体分立后，「温泉镇」形符
+# 会在金标最长匹配中吃掉「温泉」字面，与挖掘器子串命中产生 span 错位 FP
+# （scoped holdout 实测，见 test_xishan 负钉）。实体与其指称完整保留在 KB，
+# 仅不进字形表——挖掘/金标均不受影响，模型层拆分照常生效。
+EXCLUDED_FORMS = {"温泉镇"}
+
+
 def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
                         ) -> NameRegistry:
     """从校准模块收集实体字形表（canonical_label 剥注 + 别名 + 异体）。
@@ -183,6 +190,8 @@ def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
                 if not label:
                     continue
                 nf = norm_eval(label)
+                if nf in EXCLUDED_FORMS:
+                    continue
                 form_map.setdefault(nf, set()).add(ent.id)
                 display.setdefault(nf, label)
         for dia in getattr(mod, "IDENTITIES", ()):  # 跨模块同指断言

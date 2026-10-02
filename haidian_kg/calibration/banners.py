@@ -681,6 +681,13 @@ _JRY_ENTITIES: List[PersistentSpatialEntity] = [
     # 团城演武厅：器物层（实存建筑群，第六批国保）
     PersistentSpatialEntity(id="ent_jry_tuancheng", kind=PhysicalThingKind.FORTIFIED_CAMP,
                             canonical_label="团城演武厅"),
+    # GPT审3-16 三分：建筑群 / 团城（城池构件，俗称看城）/ 演武厅（殿宇单体）。
+    # 「团城，也称看城」指构件；「演武厅」指单体殿宇；建筑群只承名录名与
+    # 现行通称——见 prop_jry_structure_split
+    PersistentSpatialEntity(id="ent_jry_gucheng", kind=PhysicalThingKind.FORTIFIED_CAMP,
+                            canonical_label="团城（健锐营团城，俗称看城）"),
+    PersistentSpatialEntity(id="ent_jry_ywt_danti", kind=PhysicalThingKind.SINGLE_BUILDING,
+                            canonical_label="演武厅（殿宇单体）"),
     # 香山碉楼（俗称金川碉）：器物层
     PersistentSpatialEntity(id="ent_jry_diaolou", kind=PhysicalThingKind.FORTIFIED_CAMP,
                             canonical_label="香山碉楼（俗称金川碉）"),
@@ -730,8 +737,8 @@ _JRY_STATES: List[HistoricalFeatureState] = [
         id="st_jry_tuancheng_1749", entity_id="ent_jry_tuancheng",
         time_span=_ts(1749, 1978, "ts_jy4"),
         geometry="集城池（团城）、殿宇（演武厅、东西朝房）、西城楼门、碑亭、校场"
-                 "为一体的武备建筑群；团城椭圆城堡南北各有券洞，南匾「威宣壁垒」、"
-                 "北匾「志喻金汤」均为乾隆御书，城上建南北两座城楼",
+                 "为一体的武备建筑群（组成部分分立实体：ent_jry_gucheng/"
+                 "ent_jry_ywt_danti，GPT审3-16）",
         material="青色大城砖砌筑（管理方现行口径，谓砖砌为乾隆原构）",
         function="健锐营合练及皇帝阅兵校阅场所（演武厅为演武场主体建筑；"
                  "「枪炮演武场」系描述性短语不设实体）",
@@ -743,8 +750,8 @@ _JRY_STATES: List[HistoricalFeatureState] = [
         id="st_jry_tuancheng_modern", entity_id="ent_jry_tuancheng",
         time_span=TimeSpan(id="ts_jy5", label="1979年-今",
                            begin=_dt(1979, "ts_jy5b"), end=None, open_end=True),
-        geometry="团城东西直径50.2米、南北直径40米、城高11米、城厚5米（管理方现行"
-                 "公开测绘口径）；北城楼内存《御制实胜寺后记》四体文卧碑，通高3.42米",
+        geometry="核心遗存团城及其城楼、演武厅、西城楼门、碑亭（构件测绘米数挂"
+                 "ent_jry_gucheng 现状态）",
         admin_status="1979年市保；1988年移交市文物局并成立北京市团城演武厅管理处；"
                      "2006年列第六批全国重点文物保护单位（国发〔2006〕19号，2006年"
                      "5月25日公布，序号306编号Ⅲ-9，名录名「健锐营演武厅」，管理处页"
@@ -752,6 +759,35 @@ _JRY_STATES: List[HistoricalFeatureState] = [
         function="以军事武备为主题的博物馆（常设团城演武厅历史沿革展）",
         evidence_fact_ids=["tf_wjbz_tuancheng", "tf_wjbz_wocei",
                            "tf_wjbz_tcywt", "tf_wjbz_guobao6"],
+    ),
+    # 团城（构件）：建成与现状（GPT审3-16 拆出）
+    HistoricalFeatureState(
+        id="st_jry_gucheng_1749", entity_id="ent_jry_gucheng",
+        time_span=_ts(1749, 1978, "ts_jy4a"),
+        geometry="椭圆城堡，南北各有券洞，南匾「威宣壁垒」、北匾「志喻金汤」"
+                 "均为乾隆御书，城上建南北两座城楼",
+        material="青色大城砖砌筑（管理方现行口径，谓砖砌为乾隆原构）",
+        function="建筑群之城池构件（阅兵校场的看城）",
+        evidence_fact_ids=["tf_wjbz_tuancheng", "tf_wjbz_biane",
+                           "tf_wjbz_tcywt_jianzhu"],
+    ),
+    HistoricalFeatureState(
+        id="st_jry_gucheng_now", entity_id="ent_jry_gucheng",
+        time_span=TimeSpan(id="ts_jy4b", label="1979年-今",
+                           begin=_dt(1979, "ts_jy4bb"), end=None, open_end=True),
+        geometry="团城东西直径50.2米、南北直径40米、城高11米、城厚5米（管理方现行"
+                 "公开测绘口径）；北城楼内存《御制实胜寺后记》四体文卧碑，通高3.42米",
+        function="建筑群核心遗存（米数只入现状态，不入乾隆建成态——E8 纪律③）",
+        evidence_fact_ids=["tf_wjbz_tuancheng", "tf_wjbz_wocei"],
+    ),
+    # 演武厅（殿宇单体）：GPT审3-16 拆出
+    HistoricalFeatureState(
+        id="st_jry_ywt_danti_1749", entity_id="ent_jry_ywt_danti",
+        time_span=_ts(1749, 2026, "ts_jy4c"),
+        geometry="演武场西侧主体殿宇（「演武㕔西北為實勝寺」官书明录其方位）",
+        function="演武场主体建筑，皇帝阅兵校阅之所（「枪炮演武场」系描述性"
+                 "短语不设实体）",
+        evidence_fact_ids=["tf_rxjwkc102_ywt", "tf_wjbz_tcywt_jianzhu"],
     ),
     # 香山碉楼：乾隆十四年建（官书口径总数六十七，逐旗相加六十六，两说并存）
     HistoricalFeatureState(
@@ -851,9 +887,17 @@ _JRY_APPELLATIONS: List[Appellation] = [
     Appellation(id="app_jry_tuancheng", label="团城演武厅",
                 kind=AppellationKind.OFFICIAL, valid_time_span=_ts(1749, 2026, "ts_jn6"),
                 attesting_fact_ids=["tf_wjbz_tcywt_jianzhu"]),
-    # app_jry_kancheng「看城」已移除（GPT审3-16）：管理处原文「团城，也称看城」——
-    # 看城指团城这一城池构件，不是健锐营演武厅建筑群的俗名；建筑群/团城/演武厅单体
-    # 待拆为多实体后，看城挂团城实体。参考文献 tf_wjbz_tuancheng 保留。
+    # GPT审3-16：看城/团城挂团城构件实体（ent_jry_gucheng）；建筑群名录名
+    # 「健锐营演武厅」补挂建筑群实体
+    Appellation(id="app_jry_gucheng", label="团城",
+                kind=AppellationKind.OFFICIAL, valid_time_span=_ts(1749, 2026, "ts_jn7a"),
+                attesting_fact_ids=["tf_wjbz_tuancheng"]),
+    Appellation(id="app_jry_kancheng", label="看城",
+                kind=AppellationKind.VULGAR, valid_time_span=_ts(1749, 2026, "ts_jn7"),
+                attesting_fact_ids=["tf_wjbz_tuancheng"]),
+    Appellation(id="app_jry_guobao", label="健锐营演武厅",
+                kind=AppellationKind.OFFICIAL, valid_time_span=_ts(2006, 2026, "ts_jn7b"),
+                attesting_fact_ids=["tf_wjbz_guobao6"]),
     Appellation(id="app_jry_diaolou", label="碉楼",
                 kind=AppellationKind.VULGAR, valid_time_span=_ts(1749, 2026, "ts_jn8"),
                 attesting_fact_ids=["tf_rxjwkc102_diao67"]),
@@ -890,9 +934,29 @@ _JRY_REFERENCES: List[ReferentialAssertion] = [
                    "挂字形表供检索命中，不作为清代官称使用"),
     ReferentialAssertion(
         id="rr_jry_ywt", appellation_id="app_jry_ywt",
-        referent_entity_id="ent_jry_tuancheng",
+        referent_entity_id="ent_jry_ywt_danti",
         time_span=_ts(1749, 2026, "ts_jr5"),
         evidence_fact_ids=["tf_rxjwkc102_ywt", "tf_wjbz_tcywt_jianzhu"]),
+    ReferentialAssertion(
+        id="rr_jry_gucheng", appellation_id="app_jry_gucheng",
+        referent_entity_id="ent_jry_gucheng",
+        time_span=_ts(1749, 2026, "ts_jr7a"),
+        evidence_fact_ids=["tf_wjbz_tuancheng"]),
+    # rr_jry_kancheng 复位（GPT审3-16）：看城指团城构件
+    ReferentialAssertion(
+        id="rr_jry_kancheng", appellation_id="app_jry_kancheng",
+        referent_entity_id="ent_jry_gucheng",
+        time_span=_ts(1749, 2026, "ts_jr7"),
+        evidence_fact_ids=["tf_wjbz_tuancheng"],
+        provenance="管理处原文「团城，也称看城」——看城指团城这一城池构件，"
+                   "不是建筑群俗名（GPT审3-16）"),
+    ReferentialAssertion(
+        id="rr_jry_guobao", appellation_id="app_jry_guobao",
+        referent_entity_id="ent_jry_tuancheng",
+        time_span=_ts(2006, 2026, "ts_jr7b"),
+        evidence_fact_ids=["tf_wjbz_guobao6"],
+        provenance="国保名录名「健锐营演武厅」指建筑群整体（与现行通称"
+                   "「团城演武厅」同指建筑群，GPT审3-16）"),
     ReferentialAssertion(
         id="rr_jry_tuancheng", appellation_id="app_jry_tuancheng",
         referent_entity_id="ent_jry_tuancheng",
@@ -987,6 +1051,24 @@ _JRY_PROPOSITIONS: List[Proposition] = [
                          "「至今仍在服役/开放」类现状表述单独核查",
         alternative_explanations=[
             "「2006年6月」公布说（管理处沿革页口径）",
+        ],
+    ),
+    Proposition(
+        id="prop_jry_structure_split",
+        statement="团城演武厅建筑群/团城（城池构件，俗称看城）/演武厅（殿宇单体）"
+                  "三实体分立：管理处原文「团城，也称看城」中看城指团城构件，"
+                  "不是建筑群俗名；「演武厅」在官书（日下旧闻考考例）中指单体"
+                  "殿宇；国保名录名「健锐营演武厅」与现行通称「团城演武厅」"
+                  "同指建筑群整体（GPT审3-16）",
+        derived_from_fact_ids=["tf_wjbz_tuancheng", "tf_rxjwkc102_ywt",
+                               "tf_wjbz_tcywt_jianzhu", "tf_wjbz_guobao6"],
+        inferred_subject_id="ent_jry_tuancheng",
+        inference_method="实体粒度分立判定：构件/单体/建筑群三层按书证对象"
+                         "与名录对象分立；两名录级名称的同指由国保名单与"
+                         "管理处沿革页并读确证",
+        alternative_explanations=[
+            "「看城/演武厅皆建筑群别名」旧表述（GPT审3-16 判为实体粒度"
+            "污染，已拆）",
         ],
     ),
 ]

@@ -205,14 +205,22 @@ class TestJianruiTroopNumbers:
 
 class TestJianruiTuancheng:
     def test_entity_and_appellations(self, kb):
+        """GPT审3-16 三分钉：建筑群只承名录名+现行通称；看城/团城挂构件
+        实体；演武厅（含异体演武㕔）挂单体实体。"""
         ent = kb.entities["ent_jry_tuancheng"]
         assert ent.canonical_label == "团城演武厅"
         apps = {a.label: a for a in kb.appellations_of("ent_jry_tuancheng")}
-        assert "演武厅" in apps and "团城演武厅" in apps
-        assert "演武㕔" in apps["演武厅"].script_variants
-        # GPT审3-16：看城指团城构件（管理处原文「团城，也称看城」），不是
-        # 建筑群俗名——负向钉：不得挂到建筑群实体；团城/演武厅单体待拆
-        assert "看城" not in apps, "「看城」不得揉合进建筑群实体别名表"
+        assert "团城演武厅" in apps and "健锐营演武厅" in apps
+        assert "演武厅" not in apps, "「演武厅」单体名不得挂在建筑群"
+        assert "看城" not in apps, "「看城」构件俗名不得挂在建筑群"
+        gu = kb.entities["ent_jry_gucheng"]
+        gu_apps = {a.label for a in kb.appellations_of("ent_jry_gucheng")}
+        assert {"团城", "看城"} <= gu_apps
+        dt = kb.entities["ent_jry_ywt_danti"]
+        from haidian_kg.ontology.spatiotemporal import PhysicalThingKind
+        assert dt.kind == PhysicalThingKind.SINGLE_BUILDING
+        dt_apps = {a.label: a for a in kb.appellations_of("ent_jry_ywt_danti")}
+        assert "演武厅" in dt_apps and "演武㕔" in dt_apps["演武厅"].script_variants
 
     def test_gunqiang_yanwuchang_not_an_entity(self, kb):
         """「枪炮演武场」是描述性短语，不设实体"""
@@ -221,10 +229,15 @@ class TestJianruiTuancheng:
         assert "枪炮演武场" in st.function
 
     def test_modern_meters_only_in_modern_state(self, kb):
-        old = kb.state_at("ent_jry_tuancheng", 1749)
-        now = kb.state_at("ent_jry_tuancheng", 2020)
+        """构件测绘米数按 GPT审3-16 挂团城实体：建成态无、现状态有。"""
+        old = kb.state_at("ent_jry_gucheng", 1749)
+        now = kb.state_at("ent_jry_gucheng", 2020)
+        assert old is not None and now is not None
         assert "50.2" not in (old.geometry or "") and "3.42" not in (old.geometry or "")
         assert "50.2" in now.geometry and "3.42" in now.geometry
+        # 建筑群现状态不得再重复米数（part-whole 不双挂数字）
+        cnow = kb.state_at("ent_jry_tuancheng", 2020)
+        assert "50.2" not in (cnow.geometry or "")
 
     def test_heritage_status_single_check(self, kb):
         """现状必须单独核查：市保→国保→现行管理机构"""

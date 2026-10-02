@@ -95,7 +95,10 @@ class TestKeyEntities:
             "ent_xs_dajuesi": "大觉寺",
             "ent_xs_biyunsi": "碧云寺",
             "ent_xs_wenquan": "温泉村",
+            "ent_xs_wq_quanyan": "温泉",
+            "ent_xs_wenquanzhen": "温泉镇",
             "ent_xs_fenghuangling": "凤凰岭",
+            "ent_xs_fhl_jingqu": "凤凰岭自然风景区",
             "ent_xs_beianhe": "北安河村",
             "ent_xs_jinshan": "金山",
             "ent_xs_liaobei": "旸台山清水院创造藏经记碑",
@@ -197,9 +200,13 @@ class TestHoldoutGapFaces:
                      "北安河", "金山", "金山口"]:
             assert norm_eval(form) in reg.forms, "缺口面未入字形表：%s" % form
 
-    def test_wenquanzhen_label_not_in_registry(self):
-        """负向钉：「温泉镇」不得进字形表——金标最长匹配会吃掉「温泉」字面，
-        与挖掘器子串命中产生 span 错位 FP（scoped holdout 对照实测）。"""
+    def test_wenquanzhen_split_with_form_excluded(self):
+        """GPT审3-2 双钉：①模型层「温泉镇」独立政区实体在册；
+        ②评测层其形符仍排除——金标最长匹配会吃掉「温泉」字面，与挖掘器
+        子串命中产生 span 错位 FP（scoped holdout 对照实测）。两层各自成立。"""
+        from haidian_kg.ontology.spatiotemporal import PhysicalThingKind
+        ent = {e.id: e for e in X.ENTITIES}["ent_xs_wenquanzhen"]
+        assert ent.kind == PhysicalThingKind.ADMIN_DIVISION
         from haidian_kg.evaluation.holdout_eval import (
             build_name_registry, norm_eval)
         reg = build_name_registry(["xishan"])
@@ -226,8 +233,11 @@ class TestHoldoutGapFaces:
         assert reg.entities_of(norm_eval("大觉寺")) == {"ent_xs_dajuesi"}
         assert reg.entities_of(norm_eval("清水院")) == {"ent_xs_dajuesi"}
         assert "ent_xs_biyunsi" in reg.entities_of(norm_eval("碧云寺"))
-        assert "ent_xs_wenquan" in reg.entities_of(norm_eval("温泉"))
+        assert "ent_xs_wq_quanyan" in reg.entities_of(norm_eval("温泉"))
+        assert "ent_xs_wenquan" in reg.entities_of(norm_eval("温泉村"))
         assert "ent_xs_fenghuangling" in reg.entities_of(norm_eval("凤凰岭"))
+        assert "ent_xs_fhl_jingqu" in reg.entities_of(
+            norm_eval("凤凰岭自然风景区"))
         assert "ent_xs_beianhe" in reg.entities_of(norm_eval("北安河"))
         assert "ent_xs_jinshan" in reg.entities_of(norm_eval("金山"))
 

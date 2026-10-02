@@ -357,10 +357,22 @@ ENTITIES: List[PersistentSpatialEntity] = [
                             canonical_label="碧云寺金刚宝座塔（清乾隆十三年）"),
     PersistentSpatialEntity(id="ent_xs_wenquan",
                             kind=PhysicalThingKind.SETTLEMENT_AREA,
-                            canonical_label="温泉村（温泉泉眼所在聚落）"),
+                            canonical_label="温泉村"),
+    # GPT审3-2：泉眼/村/镇三实体分立（明清书证对象=泉眼地望；村=聚落；
+    # 镇=现代政区），无连续地名档案不建 sameAs——见 prop_xs_wenquan_split
+    PersistentSpatialEntity(id="ent_xs_wq_quanyan",
+                            kind=PhysicalThingKind.NATURAL_SPRING,
+                            canonical_label="温泉（画眉山北泉眼）"),
+    PersistentSpatialEntity(id="ent_xs_wenquanzhen",
+                            kind=PhysicalThingKind.ADMIN_DIVISION,
+                            canonical_label="温泉镇（海淀区，现代政区）"),
     PersistentSpatialEntity(id="ent_xs_fenghuangling",
                             kind=PhysicalThingKind.MOUNTAIN,
                             canonical_label="凤凰岭（西山山体）"),
+    # GPT审3-17：山体地望与景区经营实体二分，1996 开园只挂景区——见 prop_xs_fhl_split
+    PersistentSpatialEntity(id="ent_xs_fhl_jingqu",
+                            kind=PhysicalThingKind.SCENIC_AREA,
+                            canonical_label="凤凰岭自然风景区"),
     PersistentSpatialEntity(id="ent_xs_longquansi",
                             kind=PhysicalThingKind.RELIGIOUS_PRECINCT,
                             canonical_label="龙泉寺（凤凰岭山麓）"),
@@ -511,25 +523,33 @@ STATES: List[HistoricalFeatureState] = [
         evidence_fact_ids=["tf_xs_bys_jingangta", "tf_xs_bys_sunzhongshan"]),
     # ---- 温泉 ----
     HistoricalFeatureState(
-        id="st_xs_wq_ming", entity_id="ent_xs_wenquan",
+        id="st_xs_wq_ming", entity_id="ent_xs_wq_quanyan",
         time_span=_open(1643, "ts_xs_wq_a"),
-        geometry="画眉山（西堂村之北，产眉石）北十里，温泉泉眼所在；"
-                 "村聚成村年代无考",
-        function="明已有温泉泉眼记载；泉温汤可浴（村名因泉）",
+        geometry="画眉山（西堂村之北，产眉石）北十里泉眼",
+        function="明已有温泉泉眼记载（村名因泉得名）；泉温汤可浴",
         evidence_fact_ids=["tf_xs_wq_quanyan"]),
     HistoricalFeatureState(
-        id="st_xs_wq_qing", entity_id="ent_xs_wenquan",
+        id="st_xs_wq_qing", entity_id="ent_xs_wq_quanyan",
         time_span=_ts(1644, 1911, "ts_xs_wq_b"),
         geometry="同前，泉眼如故",
         function="清代隶昌平州境（乾隆朝按语），非京县宛平辖",
         evidence_fact_ids=["tf_xs_wq_changping"]),
     HistoricalFeatureState(
-        id="st_xs_wq_1949", entity_id="ent_xs_wenquan",
+        id="st_xs_wq_cun_1949", entity_id="ent_xs_wenquan",
         time_span=_ts(1949, 2026, "ts_xs_wq_c"),
-        geometry="今为海淀区山后温泉镇治域内聚落",
-        function="温泉村今属北京市海淀区温泉镇（「香水院在温泉后山」之归附说"
-                 "与卷106法云寺说并存，采文献原文口径——见命题层）",
-        evidence_fact_ids=["tf_xs_wq_guishu", "tf_xs_wq_quanyan"]),
+        geometry="海淀区山后温泉镇治域内聚落（空间包含关系，见命题层）",
+        function="温泉村今属北京市海淀区温泉镇；成村年代无考（村名因泉）",
+        evidence_fact_ids=["tf_xs_wq_guishu"]),
+    HistoricalFeatureState(
+        id="st_xs_wq_zhen_now", entity_id="ent_xs_wenquanzhen",
+        time_span=TimeSpan(id="ts_xs_wq_d", label="现行区划",
+                           open_begin=True, begin=None,
+                           end=_dt(2026, "ts_xs_wq_de")),
+        geometry="北京市海淀区山后（治域边界以现行区划为准）",
+        function="现代乡级行政区划（机构公开资料记录式陈述；置镇沿革年代"
+                 "未核得一手档，不立置镇年代）",
+        evidence_fact_ids=["tf_xs_wq_guishu"]),
+
     # ---- 凤凰岭 ----
     HistoricalFeatureState(
         id="st_xs_fhl_shanti", entity_id="ent_xs_fenghuangling",
@@ -538,7 +558,7 @@ STATES: List[HistoricalFeatureState] = [
         function="自然山体；「凤凰岭」作为山名之明清文献记载未见确证（存疑）",
         evidence_fact_ids=["tf_xs_fhl_jingqu", "tf_xs_fhl_longquansi"]),
     HistoricalFeatureState(
-        id="st_xs_fhl_jingqu", entity_id="ent_xs_fenghuangling",
+        id="st_xs_fhl_jingqu", entity_id="ent_xs_fhl_jingqu",
         time_span=TimeSpan(id="ts_xs_fhl_b", label="1990年代中期-今",
                            begin=_dt(1996, "ts_xs_fhl_bb",
                                      precision="approximate"),
@@ -674,11 +694,23 @@ APPELLATIONS: List[Appellation] = [
                 kind=AppellationKind.OFFICIAL,
                 valid_time_span=_ts(1949, 2026, "ts_xs_n10"),
                 attesting_fact_ids=["tf_xs_wq_guishu"]),
+    Appellation(id="app_xs_wenquanzhen", label="温泉镇",
+                kind=AppellationKind.OFFICIAL,
+                valid_time_span=TimeSpan(id="ts_xs_n10b", label="现行-今",
+                                         open_begin=True, begin=None,
+                                         end=_dt(2026, "ts_xs_n10be")),
+                attesting_fact_ids=["tf_xs_wq_guishu"]),
     Appellation(id="app_xs_fenghuangling", label="凤凰岭",
                 kind=AppellationKind.OFFICIAL,
                 valid_time_span=TimeSpan(id="ts_xs_n12", label="近现代-今",
                                          open_begin=True, begin=None,
                                          end=_dt(2026, "ts_xs_n12e")),
+                attesting_fact_ids=["tf_xs_fhl_jingqu"]),
+    Appellation(id="app_xs_fhl_jingqu", label="凤凰岭自然风景区",
+                kind=AppellationKind.OFFICIAL,
+                valid_time_span=TimeSpan(id="ts_xs_n12b", label="1990年代中期-今",
+                                         open_begin=True, begin=None,
+                                         end=_dt(2026, "ts_xs_n12be")),
                 attesting_fact_ids=["tf_xs_fhl_jingqu"]),
     Appellation(id="app_xs_longquansi", label="龙泉寺",
                 kind=AppellationKind.OFFICIAL,
@@ -743,17 +775,26 @@ REFERENCES: List[ReferentialAssertion] = [
                          time_span=_ts(1748, 2026, "ts_xs_r8"),
                          evidence_fact_ids=["tf_xs_bys_jingangta"]),
     ReferentialAssertion(id="rr_xs_wenquan", appellation_id="app_xs_wenquan",
-                         referent_entity_id="ent_xs_wenquan",
+                         referent_entity_id="ent_xs_wq_quanyan",
                          time_span=TimeSpan(id="ts_xs_r9", label="明代-今",
                                             open_begin=True, begin=None,
                                             end=_dt(2026, "ts_xs_r9e")),
                          evidence_fact_ids=["tf_xs_wq_quanyan",
-                                            "tf_xs_wq_guishu"]),
+                                            "tf_xs_wq_changping"],
+                         provenance="明清书证对象为泉眼/地望（GPT审3-2）："
+                                    "「画眉山北十里有温泉出焉」「隶昌平州境」均指泉"),
     ReferentialAssertion(id="rr_xs_wenquancun",
                          appellation_id="app_xs_wenquancun",
                          referent_entity_id="ent_xs_wenquan",
                          time_span=_ts(1949, 2026, "ts_xs_r10"),
                          evidence_fact_ids=["tf_xs_wq_guishu"]),
+    ReferentialAssertion(id="rr_xs_wenquanzhen",
+                         appellation_id="app_xs_wenquanzhen",
+                         referent_entity_id="ent_xs_wenquanzhen",
+                         time_span=_ts(1949, 2026, "ts_xs_r10b"),
+                         evidence_fact_ids=["tf_xs_wq_guishu"],
+                         provenance="现代政区实体分立（GPT审3-2）；形符不进"
+                                    "评测字形表（span 错位，见 holdout_eval）"),
     ReferentialAssertion(id="rr_xs_fenghuangling",
                          appellation_id="app_xs_fenghuangling",
                          referent_entity_id="ent_xs_fenghuangling",
@@ -763,6 +804,15 @@ REFERENCES: List[ReferentialAssertion] = [
                          evidence_fact_ids=["tf_xs_fhl_jingqu"],
                          provenance="「凤凰岭」作为山体通称主要流行于近现代（景区命名"
                                     "层）；明清文献未见确证，不比定为历史山名"),
+    ReferentialAssertion(id="rr_xs_fhl_jingqu",
+                         appellation_id="app_xs_fhl_jingqu",
+                         referent_entity_id="ent_xs_fhl_jingqu",
+                         time_span=TimeSpan(id="ts_xs_r12b", label="1990年代中期-今",
+                                            open_begin=True, begin=None,
+                                            end=_dt(2026, "ts_xs_r12be")),
+                         evidence_fact_ids=["tf_xs_fhl_jingqu"],
+                         provenance="景区经营实体与山体分立（GPT审3-17）：开放、"
+                                    "游径、门票等只属景区层"),
     ReferentialAssertion(id="rr_xs_longquansi",
                          appellation_id="app_xs_longquansi",
                          referent_entity_id="ent_xs_longquansi",
@@ -864,7 +914,7 @@ PROPOSITIONS: List[Proposition] = [
         statement="「明正德九年（1514）建温泉堂/温泉庙」之说无一手文献确证，"
                   "存疑待考；温泉有明文者为泉眼（画眉山北十里），非庙宇",
         derived_from_fact_ids=["tf_xs_wq_quanyan"],
-        inferred_subject_id="ent_xs_wenquan",
+        inferred_subject_id="ent_xs_wq_quanyan",
         inference_method="仅今人网页转述，未回查到明清原典；按「找不到就不列年代」"
                          "处理，庙宇建置不立状态",
         alternative_explanations=[
@@ -885,6 +935,38 @@ PROPOSITIONS: List[Proposition] = [
             "辽应历初年始建说（通行口径，无早期碑证）",
             "元代舍蓝蓝重修说（记载同指存疑）",
             "始建年代不可考说（无早期纪年实物）",
+        ],
+    ),
+    Proposition(
+        id="prop_xs_wenquan_split",
+        statement="温泉泉眼/温泉村/温泉镇三实体分立：明清书证对象是泉眼与地望"
+                  "（画眉山北十里、隶昌平州境），村是聚落（成村年代无考，村名"
+                  "因泉），镇是现代政区；「温泉村今属温泉镇」是空间包含关系，"
+                  "不是同一实体。无连续地名档案不建 sameAs（GPT审3-2）",
+        derived_from_fact_ids=["tf_xs_wq_quanyan", "tf_xs_wq_changping",
+                               "tf_xs_wq_guishu"],
+        inferred_subject_id="ent_xs_wq_quanyan",
+        inference_method="实体类型分立判定：按书证对象类型（自然泉/聚落/政区）"
+                         "分立实体，引文只证空间包含与得名关联，不证同指",
+        alternative_explanations=[
+            "「温泉村（温泉泉眼所在聚落）」合并表述（旧模型，GPT审3-2 判为"
+            "实体类型污染，已拆）",
+        ],
+    ),
+    Proposition(
+        id="prop_xs_fhl_split",
+        statement="凤凰岭山体地望与凤凰岭自然风景区（现代经营实体）二分："
+                  "「20世纪90年代中期开发开放」只证明现代景区实体，景区边界"
+                  "不得倒灌为历史山体范围；「凤凰岭」作山体通称的明清文献"
+                  "记载未见确证（GPT审3-17）",
+        derived_from_fact_ids=["tf_xs_fhl_jingqu"],
+        inferred_subject_id="ent_xs_fhl_jingqu",
+        inference_method="实体类型分立判定：山体（自然地貌）与景区（经营实体，"
+                         "含游径/门票/管理机构）分立，开放事件只挂景区层，"
+                         "两者以山麓空间关系连接",
+        alternative_explanations=[
+            "「今为凤凰岭自然风景区」单实体表述（旧模型，GPT审3-17 判为"
+            "实体类型污染，已拆）",
         ],
     ),
     Proposition(
@@ -1027,7 +1109,7 @@ TRANSFORMATIONS: List[PlaceTransformation] = [
         resulting_condition="嘉靖十三年金山预造五墓各九数以次葬焉",
         evidence_fact_ids=["tf_xs_js_wubei"]),
     PlaceTransformation(
-        id="pte_xs_fhl_1996_park", entity_id="ent_xs_fenghuangling",
+        id="pte_xs_fhl_1996_park", entity_id="ent_xs_fhl_jingqu",
         transformation=PlaceTransformationEvent.REBUILT,
         time_span=TimeSpan(id="ts_xs_pte8", label="1990年代中期",
                            begin=_dt(1996, "ts_xs_pte8b",
