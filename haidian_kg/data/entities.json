@@ -1837,6 +1837,28 @@
         "attest_gaoliangzha_1292"
       ],
       "confidence_status": "DISPROVEN"
+    },
+    {
+      "id": "hypo_huangzhuang_emperor",
+      "toponym_id": "top_huangzhuang",
+      "hypothesis_title": "黄庄源于明代皇庄讹变说",
+      "claim_summary": "坊间与部分方志推论黄庄为明代皇家庄田‘皇庄’谐音字样演化",
+      "supported_by_attestation_ids": [
+        "attest_huangzhuang_hunt"
+      ],
+      "disproven_by_attestation_ids": [],
+      "confidence_status": "CONTESTED"
+    },
+    {
+      "id": "hypo_zgc_chenyuan_alone",
+      "toponym_id": "top_zhongguancun_modern",
+      "hypothesis_title": "中关村定名陈垣独创提议说",
+      "claim_summary": "相传1930年代辅仁大学校长陈垣首次提议将中官村改写为中关村",
+      "supported_by_attestation_ids": [],
+      "disproven_by_attestation_ids": [
+        "attest_jingxi_map_1913"
+      ],
+      "confidence_status": "CONTESTED"
     }
   ]
 }

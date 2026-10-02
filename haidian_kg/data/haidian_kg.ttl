@@ -139,6 +139,7 @@ hd:top_guangyuanzha a hhto:Toponym ;
 hd:top_huangzhuang a hhto:Toponym ;
     rdfs:label "黄庄"@zh ;
     hhto:attestedIn hd:attest_huangzhuang_hunt ;
+    hhto:hasHypothesis hd:hypo_huangzhuang_emperor ;
     hhto:phoneticPinyin "huáng zhuāng"^^xsd:string ;
     hhto:standardForm "黄庄"^^xsd:string .
 
@@ -572,14 +573,6 @@ hd:attest_hourenzhi_haidian a hhto:PlaceAttestation ;
     hhto:recordedYear 1980 ;
     rdfs:comment "断代: 现代 | 来源: 《北京历史地理与城市水系研究》"@zh .
 
-hd:attest_huangzhuang_hunt a hhto:PlaceAttestation ;
-    rdfs:label "黄庄"@zh ;
-    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "海淀南二里黄庄，明时或为皇庄之讹，或以黄土高阜得名，志家存疑"@zh ;
-    hhto:recordedYear 1774 ;
-    rdfs:comment "断代: 清代 | 来源: 《日下旧闻考卷一百》"@zh .
-
 hd:attest_huoqiying_record a hhto:PlaceAttestation ;
     rdfs:label "外火器营"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -587,15 +580,6 @@ hd:attest_huoqiying_record a hhto:PlaceAttestation ;
     hhto:originalQuote "乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场"@zh ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八》"@zh .
-
-hd:attest_jingxi_map_1913 a hhto:PlaceAttestation ;
-    rdfs:label "中关村"@zh ;
-    hhto:epistemicNotes "推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落"@zh ;
-    hhto:recordedYear 1913 ;
-    rdfs:comment "断代: 民国二年 | 来源: 《实测北京四郊图（京西图）》"@zh .
 
 hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
     rdfs:label "玲珑宝塔"@zh ;
@@ -994,6 +978,12 @@ hd:hypo_gaoliangqiao_979 a hhto:CompetingHypothesis ;
     hhto:supportedBy hd:attest_gaoliangqiao_979_myth ;
     rdfs:comment "民间小说演义赵光义于高梁桥下乘驴车败逃"@zh .
 
+hd:hypo_huangzhuang_emperor a hhto:CompetingHypothesis ;
+    rdfs:label "黄庄源于明代皇庄讹变说"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:supportedBy hd:attest_huangzhuang_hunt ;
+    rdfs:comment "坊间与部分方志推论黄庄为明代皇家庄田‘皇庄’谐音字样演化"@zh .
+
 hd:hypo_taizhouwu_dock a hhto:CompetingHypothesis ;
     rdfs:label "太舟坞源于元代白浮引水河道船坞说"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -1012,6 +1002,12 @@ hd:hypo_xisanqi_manchu a hhto:CompetingHypothesis ;
     hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
     hhto:supportedBy hd:attest_xisanqi_manchu_myth ;
     rdfs:comment "坊间传闻西三旗为满洲上三旗驻军兵营"@zh .
+
+hd:hypo_zgc_chenyuan_alone a hhto:CompetingHypothesis ;
+    rdfs:label "中关村定名陈垣独创提议说"@zh ;
+    hhto:disprovenBy hd:attest_jingxi_map_1913 ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    rdfs:comment "相传1930年代辅仁大学校长陈垣首次提议将中官村改写为中关村"@zh .
 
 hd:top_anheqiao_river a hhto:Toponym ;
     rdfs:label "安河桥"@zh ;
@@ -1184,6 +1180,7 @@ hd:top_zhongguancun_modern a hhto:Toponym ;
         hd:attest_zgc_1988_zone ;
     hhto:evolutionTriggeredBy hd:evt_zhongguan_euphemism ;
     hhto:evolvedFrom hd:top_zhongguancun_eunuch ;
+    hhto:hasHypothesis hd:hypo_zgc_chenyuan_alone ;
     hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
     hhto:standardForm "中关村"^^xsd:string .
 
@@ -1203,6 +1200,23 @@ hd:attest_gaoliangzha_1292 a hhto:PlaceAttestation ;
     hhto:originalQuote "又于高梁河创设水闸，节水利漕，赐名通惠河"@zh ;
     hhto:recordedYear 1292 ;
     rdfs:comment "断代: 元代（至元二十九年） | 来源: 《元史·郭守敬传》"@zh .
+
+hd:attest_huangzhuang_hunt a hhto:PlaceAttestation ;
+    rdfs:label "黄庄"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "海淀南二里黄庄，明时或为皇庄之讹，或以黄土高阜得名，志家存疑"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代 | 来源: 《日下旧闻考卷一百》"@zh .
+
+hd:attest_jingxi_map_1913 a hhto:PlaceAttestation ;
+    rdfs:label "中关村"@zh ;
+    hhto:epistemicNotes "推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落"@zh ;
+    hhto:recordedYear 1913 ;
+    rdfs:comment "断代: 民国二年 | 来源: 《实测北京四郊图（京西图）》"@zh .
 
 hd:attest_shuntian_xisanqi a hhto:PlaceAttestation ;
     rdfs:label "西三旗"@zh ;
@@ -1452,10 +1466,6 @@ hhto:PhoneticShiftEvent a owl:Class ;
     rdfs:label "语音流变与方言通假事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
-hhto:CompetingHypothesis a owl:Class ;
-    rdfs:label "竞争假说"@zh ;
-    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
-
 hhto:MilitaryGarrison a owl:Class ;
     rdfs:label "军事驻防与军屯"@zh ;
     rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
@@ -1464,6 +1474,10 @@ hhto:MilitaryGarrison a owl:Class ;
 hhto:Settlement a owl:Class ;
     rdfs:label "自然聚落与市镇"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
+
+hhto:CompetingHypothesis a owl:Class ;
+    rdfs:label "竞争假说"@zh ;
+    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
 
 hd:feat_wanquanhe a hhto:PhysicalFeature,
         hhto:Wetland ;
