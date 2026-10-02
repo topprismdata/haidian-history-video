@@ -129,15 +129,15 @@ class TestUrbanEntryGate:
 
 class TestTextualCorrections:
     def test_tianzhi_ouwen_is_juan9(self, kb):
-        """万寿街条经维基文库复核在卷九；预置书目表作卷七系误记，
-        本词条按原书纠正并留痕"""
+        """万寿街条经维基文库复核在卷九；预置书目表误记卷七已随集成修正（本词条按原书纠正并留痕）"""
         assert kb.divisions["div_tzow9_jiaodiong"].volume_number == "卷九"
         f = kb.facts["tf_tzow_wanshoujie"]
         assert "今已毀盡" in f.verbatim_quote
         assert "卷九" in f.translator_note and "卷七" in f.translator_note
         from haidian_kg.calibration.bibliography import source_by_title
-        assert "卷七" in (source_by_title("天咫偶闻").edition_note or ""), \
-            "预置书目表的误记原样保留（不修改 bibliography.py），以词条篇卷为准"
+        note = source_by_title("天咫偶闻").edition_note or ""
+        assert "卷九" in note and "卷七" in note, \
+            "书目表已核订为卷九并保留误记历史（v1误记卷七→考订纠正）"
 
     def test_hanshu_is_gaohouji_not_gaodiji(self, kb):
         """「诸中官」条经原书复核出《高后纪第三》高后八年春，非高帝纪"""

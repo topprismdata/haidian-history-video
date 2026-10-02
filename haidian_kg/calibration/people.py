@@ -262,8 +262,9 @@ PEOPLE: List[HistoricalPerson] = [
         dynasty="东汉", primary_role=PersonRole.SCHOLAR_WRITER,
         official_titles=["中郎将", "玄武司马"],
         authored_source_ids=["src_hanshu"],
-        haidian_relevance="《汉书·高帝纪》载「诸中官、宦者令丞」，为「中官」代指宦官的"
-                          "上古正典词源依据；中关村原名中官村即源于明清太监公共义地",
+        haidian_relevance="《汉书》卷三《高后纪第三》高后八年（前180）载「诸中官、宦者令、丞皆赐爵"
+                          "关内侯」，为「中官」代指宦官的上古正典词源依据（卷次据点校本核订）；"
+                          "中关村原名中官村即源于明清太监公共义地",
         birth_year=32, death_year=92,
     ),
     HistoricalPerson(
@@ -279,8 +280,8 @@ PEOPLE: List[HistoricalPerson] = [
         id="person_zhenjun", name="震钧",
         dynasty="清末民初", primary_role=PersonRole.SCHOLAR_WRITER,
         authored_source_ids=["src_tianzhi_ouwen"],
-        haidian_relevance="《天咫偶闻》卷七载万寿寺外买卖街「今已毁尽」，为苏州街咸丰十年后"
-                          "最终荒废状态的一手清末民人观察纪实",
+        haidian_relevance="《天咫偶闻》卷九（郊坰）载万寿寺外买卖街「今已毁尽」，为苏州街咸丰十年后"
+                          "最终荒废状态的一手清末民人观察纪实（卷次据维基文库核订）",
         birth_year=1857, death_year=1920,
     ),
     HistoricalPerson(

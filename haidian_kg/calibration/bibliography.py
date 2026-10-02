@@ -502,14 +502,16 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         category=SourceCategory.LITERARY_COLLECTION,
         author_person_id="person_zhenjun",
         base_edition="光绪三十三年刻本",
-        edition_note="卷七载万寿寺外买卖街「今已毁尽」，为苏州街咸丰朝后毁废现状的一手清末记述",
+        edition_note="卷九（郊坰）载万寿寺外买卖街「今已毁尽」，为苏州街咸丰朝后毁废现状的一手清末记述；"
+                     "卷次据维基文库原文核订（v1 误记卷七，E12 入库考订纠正）",
     ),
     HistoricalSource(
         id="src_hanshu", title="汉书",
         category=SourceCategory.OFFICIAL_HISTORY,
         author_person_id="person_bangu",
         base_edition="百衲本二十四史",
-        edition_note="《高帝纪》载「诸中官、宦者令丞」，为「中官」代指太监的正典溯源；"
+        edition_note="卷三《高后纪第三》高后八年（前180）春载「诸中官、宦者令、丞皆赐爵关内侯」，"
+                     "为「中官」代指太监的正典溯源（卷次据点校本核订，v1 误记高帝纪）；"
                      "中关村明清原名中官村/中官坟/中官屯，为太监公共义地",
     ),
     HistoricalSource(
