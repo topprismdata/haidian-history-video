@@ -279,6 +279,27 @@ class TestLandianchangRedlines:
         assert kb.adoptions["prop_zongji_vs_diming"].status == \
             EpistemicStatus.VERIFIED
 
+    def test_tianzhi_ouwen_juan9_kao_ding(self, kb):
+        """《天咫偶闻》篇卷考订：万寿街/广仁宫/蓝靛厂段在【卷九（郊坰）】，
+        预置书目表 edition_note 作「卷七」系误记——本库篇卷按卷九建并留痕；
+        庚申句单列事实（G1 不拼接），苏州街句属 E12 不得拼入"""
+        div = kb.divisions["div_tz_ju9"]
+        assert div.source_id == "src_tianzhi_ouwen"
+        assert div.volume_number == "卷九"
+        for d in kb.divisions.values():
+            assert d.volume_number != "卷七", d.id
+        f = kb.facts["tf_tz_guangren"]
+        assert "卷九" in f.translator_note and "误记" in f.translator_note
+        assert "今已毁尽" not in f.verbatim_quote
+        assert "tf_tz_guangren" in kb.states["st_ldc_qing"].evidence_fact_ids
+        assert "不下一大縣" in kb.states["st_ldc_qing"].function
+        assert "tf_tz_guangren" in kb.states["st_xd_1712"].evidence_fact_ids
+        g = kb.facts["tf_tz_gengshen"]
+        assert g.division_id == "div_tz_ju9" and g.id != f.id
+        assert "庚申" in g.verbatim_quote and "日就零落" in g.verbatim_quote
+        assert "tf_tz_gengshen" in kb.states["st_yim_1860"].evidence_fact_ids
+        assert "tf_tz_gengshen" in kb.states["st_smh_1860"].evidence_fact_ids
+
     def test_storyboard_waiying_chain(self, kb):
         sb = export_storyboard(kb, "ent_waihuoqiying")
         assert [f.state_id for f in sb.frames] == [
