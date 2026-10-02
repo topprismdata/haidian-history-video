@@ -19,7 +19,7 @@ from qa_v2.data import Episode, Page
 from qa_v2.frames import OcrResult
 from qa_v2.normalize import (
     _REIGN_NAMES, extract_numbers, normalize_punct, normalize_script,
-    number_unknown_rate,
+    number_unknown_rate, to_int,
 )
 from qa_v2.report import Finding
 
@@ -309,4 +309,131 @@ def check_l4c(ep: Episode, ocr_by_page: Dict[int, OcrResult]) -> List[Finding]:
                     "数字 %s 在该页口播稿里找不到" % missing,
                     {"text": item.text[:50]}))
 
+    return out
+
+
+# ── L4-d 引文一致性（2026-10-02，E12/E13 盲区补） ──────────────────────
+# 实证 1（E12 p6）：口播「震钧写下五个字：今已毁尽」——实为四个字，
+# 同页画面就是原文，观者同秒可证伪；QA 七层全放行，靠人工反向走查才抓到。
+# 实证 2（E13 P7）：表头 1980 vs 口播 1984 由 L4-c 抓到，但引文类语义错
+# 无任何判据覆盖。
+#
+# 两级判据：
+#   计数自洽（快档即可，纯口播文本）：口播里「N个字」与其紧邻引文实长矛盾
+#     → fail QUOTE_COUNT_MISMATCH
+#   上屏核验（仅 --ocr）：口播引文（≥3 个实义字）在该页 OCR 文本中找不到
+#     → warn QUOTE_NOT_ON_SCREEN（OCR 漏读无法排除，不阻塞）
+
+_QUOTE_RE = re.compile(r"[「『“]([^「」『』“”]{2,40})[」』”]")
+_COUNT_RE = re.compile(
+    r"([0-9]+|[零〇一二两三四五六七八九十百]+)\s*个?\s*(?:大)?字"
+)
+# E12 p6 实测格式：计数词后跟冒号、裸引文（无引号括号），句号收尾
+# 「震钧写下四个字：今已毁尽。」
+_COLON_QUOTE_RE = re.compile(
+    r"([0-9]+|[零〇一二两三四五六七八九十百]+)\s*个?\s*(?:大)?字\s*[：:]\s*"
+    r"([^。！？；，、\n「」『』“”—]{2,40})"
+)
+_HANZI_ALNUM_RE = re.compile(r"[\u4e00-\u9fffA-Za-z0-9]")
+# 引文与计数词之间允许的最大距离（含引号/冒号/逗号）
+_COUNT_WINDOW = 12
+
+
+def _substantive_len(quote: str) -> int:
+    """引文实义长度：只数汉字/字母/数字，标点空白不算。"""
+    return len(_HANZI_ALNUM_RE.findall(quote))
+
+
+def check_l4d(ep: Episode, ocr_by_page: Optional[Dict[int, OcrResult]] = None
+              ) -> List[Finding]:
+    """引文一致性：口播里的「N个字」计数、引文上屏两层核验。
+
+    计数自洽是纯文本检查，快档即跑（零成本，E12 p6 类错误的直接疫苗）。
+    上屏核验只在 --ocr 下执行，报 warn 不报 fail——OCR 漏读无法排除，
+    诚实降级而不是假装确定（与「skip 不算通过」同一纪律）。
+    """
+    from qa_v2.data import narration_text
+
+    out: List[Finding] = []
+    narration = getattr(ep, "narration", None)
+    if narration is None:
+        narration = narration_text(ep.name)
+    if not narration:
+        out.append(Finding(
+            "L4-d", None, None, "skip", "NO_NARRATION",
+            "找不到 %s_video/narration/all.json，L4-d 未执行（不算通过）"
+            % ep.name))
+        return out
+
+    for page in ep.pages:
+        spoken = narration.get(page.number)
+        if not spoken:
+            continue
+        seen_quotes = set()
+        # 候选 = (quote, stated_or_None)。括号引文计数词在前后窗口找；
+        # 冒号裸引文计数词就是前缀（E12 p6 实测格式）
+        candidates = []
+        for m in _QUOTE_RE.finditer(spoken):
+            before = spoken[max(0, m.start() - _COUNT_WINDOW):m.start()]
+            after = spoken[m.end():m.end() + _COUNT_WINDOW]
+            stated = None
+            token = None
+            for ctx in (before, after):
+                cm = _COUNT_RE.search(ctx)
+                if cm:
+                    token = cm.group(1)
+                    stated = to_int(token)
+                    if stated is not None:
+                        break
+            candidates.append((m.group(1), stated, token))
+        for m in _COLON_QUOTE_RE.finditer(spoken):
+            token, quote = m.group(1), m.group(2)
+            stated = to_int(token)
+            candidates.append((quote, stated if stated is not None else None,
+                               token))
+
+        for quote, stated, token in candidates:
+            actual = _substantive_len(quote)
+            if actual < 2:
+                continue
+            key = (page.number, quote)
+            if key in seen_quotes:
+                continue
+            seen_quotes.add(key)
+
+            if stated is not None and stated != actual:
+                out.append(Finding(
+                    "L4-d", page.number, None, "fail",
+                    "QUOTE_COUNT_MISMATCH",
+                    "口播称「%s个字」但引文「%s」实为 %d 字（画面可同秒证伪）"
+                    % (token, quote, actual),
+                    {"quote": quote, "stated": stated, "actual": actual}))
+
+            # 上屏核验：仅 --ocr；≥3 实义字才查（过短误报高）
+            if ocr_by_page and actual >= 3:
+                # 数字性引文（「一千五百多间」这类量词短语）归 L4-c 数字
+                # 交叉管——shucun P2 实测：画面写 1550，口播念汉字数字，
+                # 字面必然不同，屏检只会重复报警
+                hanzi = [c for c in quote if "\u4e00" <= c <= "\u9fff"]
+                numish = sum(1 for c in hanzi
+                             if c in "零〇一二两三四五六七八九十百千万几多约余")
+                if not hanzi or numish >= 0.8 * len(hanzi):
+                    continue
+                ocr = ocr_by_page.get(page.number)
+                if ocr is None:
+                    continue
+                want = normalize_punct(quote)
+                got = normalize_punct("".join(ocr.texts))
+                # 摘录容忍：画面常节引史料（shucun P7 上谕只摘「移驻树村」），
+                # 任一 ≥4 字连续片段命中即视为上屏；整段缺席才 warn
+                n = min(4, len(want))
+                on_screen = want in got or any(
+                    want[i:i + n] in got for i in range(len(want) - n + 1))
+                if not on_screen:
+                    out.append(Finding(
+                        "L4-d", page.number, None, "warn",
+                        "QUOTE_NOT_ON_SCREEN",
+                        "口播引文「%s」在该页 OCR 文本中未找到（可能漏读，"
+                        "人工复核）" % quote,
+                        {"quote": quote}))
     return out

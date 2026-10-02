@@ -11,7 +11,8 @@ import argparse
 import pathlib
 import sys
 from typing import List, Optional, Tuple
-from qa_v2.checks_content import check_l4a, check_l4b, check_l4c, load_names
+from qa_v2.checks_content import (check_l4a, check_l4b, check_l4c,
+                                  check_l4d, load_names)
 from qa_v2.checks_data import check_l1, check_l2
 from qa_v2.checks_render import (
     check_l3, check_l5, check_l6, assert_negative_control,
@@ -147,6 +148,10 @@ def run_episode(name: str, use_ocr: bool = False, full: bool = False) -> List[Fi
                     % missed.untestable))
     if use_ocr:
         findings += check_l4c(ep, ocr_by_page)
+
+    # L4-d 引文一致性：计数自洽纯文本，快档即跑；ocr_by_page 非空时
+    # （仅 --ocr）自动升级为带上屏核验
+    findings += check_l4d(ep, ocr_by_page or None)
     return findings
 
 
