@@ -300,6 +300,15 @@ hd:unit_jianruiying_garrison a hhto:AdministrativeUnit,
     hhto:validTimeStart 1749 ;
     rdfs:comment "乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼"@zh .
 
+hd:unit_jicheng_capital a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "先秦蓟国故都与战国燕都蓟城"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_jicheng ;
+    hhto:validTimeEnd -221 ;
+    hhto:validTimeStart -1046 ;
+    rdfs:comment "西周初封蓟国、后为战国七雄燕国北都，位于今广安门内外，为北京建城古核"@zh .
+
 hd:unit_jicheng_suburb a hhto:AdministrativeUnit,
         hhto:Settlement ;
     rdfs:label "蓟城西北郊农耕水利鄙野"@zh ;
@@ -425,6 +434,16 @@ hd:unit_xisanqi_garrison a hhto:AdministrativeUnit,
     hhto:validTimeEnd 1644 ;
     hhto:validTimeStart 1368 ;
     rdfs:comment "明代京卫卫所军屯体系中十人编制之‘小旗’编号屯田哨所，绝非满洲八旗"@zh .
+
+hd:unit_yan_fiefdom a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "西周燕国始封都邑（琉璃河城址）"@zh ;
+    hhto:locatedAtFeature hd:feat_liulihe_site ;
+    hhto:namedAs hd:top_liulihe,
+        hd:top_yanguo ;
+    hhto:validTimeEnd -700 ;
+    hhto:validTimeStart -1046 ;
+    rdfs:comment "周武王封召公之子克于燕所建古城，出土克罍、克盉青铜重器"@zh .
 
 hd:unit_yimuyuan_fields a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -643,6 +662,15 @@ hd:attest_huoqiying_record a hhto:PlaceAttestation ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八》"@zh .
 
+hd:attest_ke_lei_bronze a hhto:PlaceAttestation ;
+    rdfs:label "西周琉璃河克罍克盉青铜铭文"@zh ;
+    hhto:epistemicNotes "北京建城史最高规格考古与金文双重互证硬证据"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "盖内铸铭文：周王命太保召公奭长子克‘命克侯于燕’，实证第一代燕侯就封北燕，北京三千年建城信史原点"@zh ;
+    hhto:recordedYear -1046 ;
+    rdfs:comment "断代: 西周初年（约公元前1046年） | 来源: 《房山琉璃河西周燕都遗址M1193发掘报告》"@zh .
+
 hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
     rdfs:label "玲珑宝塔"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -731,6 +759,14 @@ hd:attest_shangzhai_agriculture a hhto:PlaceAttestation ;
     hhto:originalQuote "出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，确立北京地区首支独立新石器定居农耕考古学文化"@zh ;
     hhto:recordedYear -7000 ;
     rdfs:comment "断代: 新石器时代中晚期（距今约7000年） | 来源: 《平谷上宅新石器时代文化遗址发掘简报》"@zh .
+
+hd:attest_shiji_zhou_wuwang a hhto:PlaceAttestation ;
+    rdfs:label "史记武王封燕封蓟记载"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟"@zh ;
+    hhto:recordedYear -100 ;
+    rdfs:comment "断代: 西汉（记西周初年事） | 来源: 《史记·周本纪》"@zh .
 
 hd:attest_shucun_shishi a hhto:PlaceAttestation ;
     rdfs:label "树村"@zh ;
@@ -1062,6 +1098,12 @@ hd:feat_anheqiao_site a hhto:HydraulicFacility,
     hhto:coordinatesWGS84 "116.27,40.01"^^xsd:string ;
     rdfs:comment "2009年出土明代碳十四定年木桩BA10291的水利枢纽节点"@zh .
 
+hd:feat_liulihe_site a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "房山琉璃河西周燕都城址遗迹"@zh ;
+    hhto:coordinatesWGS84 "116.03,39.61"^^xsd:string ;
+    rdfs:comment "西周早期燕国始封之都城遗址，出土克罍、克盉青铜重器，北京三千年建城信史实证地"@zh .
+
 hd:feat_taizhouwu_dock a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "太舟坞古泊船凹岸台地"@zh ;
@@ -1186,6 +1228,12 @@ hd:top_huoqiying a hhto:Toponym ;
     hhto:phoneticPinyin "huǒ qì yíng"^^xsd:string ;
     hhto:standardForm "火器营"^^xsd:string .
 
+hd:top_jicheng a hhto:Toponym ;
+    rdfs:label "蓟城"@zh ;
+    hhto:attestedIn hd:attest_shiji_zhou_wuwang ;
+    hhto:phoneticPinyin "jì chéng"^^xsd:string ;
+    hhto:standardForm "蓟城"^^xsd:string .
+
 hd:top_linglongta a hhto:Toponym ;
     rdfs:label "玲珑塔"@zh ;
     hhto:attestedIn hd:attest_linglongta_yandu ;
@@ -1201,6 +1249,12 @@ hd:top_liulangzhuang_general a hhto:Toponym ;
     hhto:evolvedFrom hd:top_liulangzhuang_willow ;
     hhto:phoneticPinyin "liù láng zhuāng"^^xsd:string ;
     hhto:standardForm "六郎庄"^^xsd:string .
+
+hd:top_liulihe a hhto:Toponym ;
+    rdfs:label "琉璃河"@zh ;
+    hhto:attestedIn hd:attest_ke_lei_bronze ;
+    hhto:phoneticPinyin "liú lí hé"^^xsd:string ;
+    hhto:standardForm "琉璃河"^^xsd:string .
 
 hd:top_niangniangfu a hhto:Toponym ;
     rdfs:label "娘娘府"@zh ;
@@ -1267,6 +1321,11 @@ hd:top_xisanqi a hhto:Toponym ;
     hhto:hasHypothesis hd:hypo_xisanqi_manchu ;
     hhto:phoneticPinyin "xī sān qí"^^xsd:string ;
     hhto:standardForm "西三旗"^^xsd:string .
+
+hd:top_yanguo a hhto:Toponym ;
+    rdfs:label "燕国"@zh ;
+    hhto:phoneticPinyin "yān guó"^^xsd:string ;
+    hhto:standardForm "燕国"^^xsd:string .
 
 hd:top_yimuyuan a hhto:Toponym ;
     rdfs:label "一亩园"@zh ;
@@ -1466,12 +1525,6 @@ hd:feat_changhe a hhto:PhysicalFeature,
     hhto:coordinatesWGS84 "116.32,39.94"^^xsd:string ;
     rdfs:comment "高梁河上游长河段，明清两代通往西山御园的水上御路"@zh .
 
-hd:feat_gaolianghe a hhto:PhysicalFeature,
-        hhto:Watercourse ;
-    rdfs:label "高梁河水系古道"@zh ;
-    hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
-    rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
-
 hd:feat_qinghe a hhto:PhysicalFeature,
         hhto:Watercourse ;
     rdfs:label "清河干流古河道"@zh ;
@@ -1547,6 +1600,12 @@ hhto:Watercourse a owl:Class ;
     rdfs:label "水系河道"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
 
+hd:feat_gaolianghe a hhto:PhysicalFeature,
+        hhto:Watercourse ;
+    rdfs:label "高梁河水系古道"@zh ;
+    hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
+    rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
+
 hd:feat_xiangshan a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "香山与金山翠微山麓"@zh ;
@@ -1589,10 +1648,6 @@ hhto:MilitaryGarrison a owl:Class ;
     rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
 
-hhto:Settlement a owl:Class ;
-    rdfs:label "自然聚落与市镇"@zh ;
-    rdfs:subClassOf hhto:AdministrativeUnit .
-
 hhto:TerrainElevation a owl:Class ;
     rdfs:label "山峦台地"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
@@ -1606,6 +1661,10 @@ hd:feat_wanquanhe a hhto:PhysicalFeature,
 hhto:CompetingHypothesis a owl:Class ;
     rdfs:label "竞争假说"@zh ;
     rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
+
+hhto:Settlement a owl:Class ;
+    rdfs:label "自然聚落与市镇"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
 
 hhto:PhysicalFeature a owl:Class ;
     rdfs:label "物理空间地物"@zh ;

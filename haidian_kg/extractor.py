@@ -74,6 +74,13 @@ class HaidianCorpusExtractor:
                 description="距今约7500至6000年北京最早定居农业陶器与石磨盘聚落",
             ),
             PhysicalFeatureEntity(
+                id="feat_liulihe_site",
+                label="房山琉璃河西周燕都城址遗迹",
+                feature_type="TerrainElevation",
+                coordinates=[116.03, 39.61],
+                description="西周早期燕国始封之都城遗址，出土克罍、克盉青铜重器，北京三千年建城信史实证地",
+            ),
+            PhysicalFeatureEntity(
                 id="feat_gaolianghe",
                 label="高梁河水系古道",
                 feature_type="Watercourse",
@@ -171,6 +178,24 @@ class HaidianCorpusExtractor:
         # =====================================================================
         units = [
             # 先秦与汉唐
+            AdministrativeUnitEntity(
+                id="unit_jicheng_capital",
+                label="先秦蓟国故都与战国燕都蓟城",
+                unit_type="Settlement",
+                located_at_feature_id="feat_gaolianghe",
+                valid_start_year=-1046,
+                valid_end_year=-221,
+                description="西周初封蓟国、后为战国七雄燕国北都，位于今广安门内外，为北京建城古核",
+            ),
+            AdministrativeUnitEntity(
+                id="unit_yan_fiefdom",
+                label="西周燕国始封都邑（琉璃河城址）",
+                unit_type="Settlement",
+                located_at_feature_id="feat_liulihe_site",
+                valid_start_year=-1046,
+                valid_end_year=-700,
+                description="周武王封召公之子克于燕所建古城，出土克罍、克盉青铜重器",
+            ),
             AdministrativeUnitEntity(
                 id="unit_jicheng_suburb",
                 label="蓟城西北郊农耕水利鄙野",
@@ -438,6 +463,10 @@ class HaidianCorpusExtractor:
             ToponymEntity(id="top_yiguangsi", standard_form="遗光寺", script_hanzi="遗光寺", phonetic_pinyin="yí guāng sì", name_type="standard"),
             ToponymEntity(id="top_donghulin", standard_form="东胡林", script_hanzi="东胡林", phonetic_pinyin="dōng hú lín", name_type="standard"),
             ToponymEntity(id="top_banquan", standard_form="阪泉", script_hanzi="阪泉", phonetic_pinyin="bǎn quán", name_type="folk"),
+            # 先秦封国与都邑地名
+            ToponymEntity(id="top_liulihe", standard_form="琉璃河", script_hanzi="琉璃河", phonetic_pinyin="liú lí hé", name_type="standard", associated_unit_id="unit_yan_fiefdom"),
+            ToponymEntity(id="top_jicheng", standard_form="蓟城", script_hanzi="蓟城", phonetic_pinyin="jì chéng", name_type="official", associated_unit_id="unit_jicheng_capital"),
+            ToponymEntity(id="top_yanguo", standard_form="燕国", script_hanzi="燕国", phonetic_pinyin="yān guó", name_type="official", associated_unit_id="unit_yan_fiefdom"),
             # 高梁河与高梁桥
             ToponymEntity(id="top_gaolianghe", standard_form="高梁河", script_hanzi="高梁河", phonetic_pinyin="gāo liáng hé", name_type="standard", associated_unit_id="unit_jicheng_suburb"),
             ToponymEntity(id="top_gaoliangzha", standard_form="高梁闸", script_hanzi="高梁闸", phonetic_pinyin="gāo liáng zhá", name_type="official"),
@@ -601,6 +630,32 @@ class HaidianCorpusExtractor:
                 evidence_level=EvidenceLevel.L5_FOLK_LEGEND,
                 epistemic_status=EpistemicStatus.FOLK_LEGEND,
                 notes="远古部落神话传说，未有出土实物信史印证，严格禁止列为确证信史",
+            ),
+            # Era 1 先秦封国与燕都青铜铭文硬证据
+            PlaceAttestationEntity(
+                id="attest_ke_lei_bronze",
+                toponym_id="top_liulihe",
+                attested_name="西周琉璃河克罍克盉青铜铭文",
+                source_title="房山琉璃河西周燕都遗址M1193发掘报告",
+                source_author="北京市文物研究所、中国社会科学院考古研究所",
+                recorded_year=-1046,
+                dynasty="西周初年（约公元前1046年）",
+                quote="盖内铸铭文：周王命太保召公奭长子克‘命克侯于燕’，实证第一代燕侯就封北燕，北京三千年建城信史原点",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+                notes="北京建城史最高规格考古与金文双重互证硬证据",
+            ),
+            PlaceAttestationEntity(
+                id="attest_shiji_zhou_wuwang",
+                toponym_id="top_jicheng",
+                attested_name="史记武王封燕封蓟记载",
+                source_title="史记·周本纪",
+                source_author="司马迁",
+                recorded_year=-100,
+                dynasty="西汉（记西周初年事）",
+                quote="武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
                 id="attest_anheqiao_wood_c14",
