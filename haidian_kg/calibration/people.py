@@ -256,4 +256,48 @@ PEOPLE: List[HistoricalPerson] = [
                           "书载「歲清明……都人踏青高梁橋」，为高梁桥明清踏青盛况一手明录",
         note="E8复查红线：《帝京景物略》不得说成刘侗一人所撰；生卒不详，故不填",
     ),
+    # ---------- E5一亩园 / E10蓝靛厂 / E12苏州街 / E13中关村 词条入库（2026-10-02） ----------
+    HistoricalPerson(
+        id="person_bangu", name="班固",
+        dynasty="东汉", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["中郎将", "玄武司马"],
+        authored_source_ids=["src_hanshu"],
+        haidian_relevance="《汉书·高帝纪》载「诸中官、宦者令丞」，为「中官」代指宦官的"
+                          "上古正典词源依据；中关村原名中官村即源于明清太监公共义地",
+        birth_year=32, death_year=92,
+    ),
+    HistoricalPerson(
+        id="person_zhaolian", name="昭梿",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["礼亲王"],
+        authored_source_ids=["src_xiaoting_zalu"],
+        haidian_relevance="《啸亭杂录》卷十明确系年乾隆二十六年辛巳（1761）崇庆皇太后七旬圣寿"
+                          "建万寿寺外买卖街（苏州街），为苏州街始建年代最硬清人笔记一手依据",
+        birth_year=1776, death_year=1829,
+    ),
+    HistoricalPerson(
+        id="person_zhenjun", name="震钧",
+        dynasty="清末民初", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_tianzhi_ouwen"],
+        haidian_relevance="《天咫偶闻》卷七载万寿寺外买卖街「今已毁尽」，为苏州街咸丰十年后"
+                          "最终荒废状态的一手清末民人观察纪实",
+        birth_year=1857, death_year=1920,
+    ),
+    HistoricalPerson(
+        id="person_agui", name="阿桂",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["武英殿大学士", "军机大臣"],
+        authored_source_ids=["src_baxun_wanshou"],
+        haidian_relevance="总纂《八旬万寿盛典》（乾隆五十七年，1792），图绘一亩园为"
+                          "圆明园大宫门前附属院落、后勤及临时住舍，反转「皇帝亲耕田」民间传说",
+        birth_year=1717, death_year=1797,
+    ),
+    HistoricalPerson(
+        id="person_hourenzhi", name="侯仁之",
+        dynasty="现代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["中科院院士", "北京大学教授"],
+        haidian_relevance="考证中关村地处永定河故道水湾地势、早期记作「中湾儿」；"
+                          "开创北京历史地理学科，奠定三山五园水系与海淀聚落沿革学术基石",
+        birth_year=1911, death_year=2013,
+    ),
 ]

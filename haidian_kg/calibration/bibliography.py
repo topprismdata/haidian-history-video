@@ -472,6 +472,61 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
                      "木料年代区间之说属项目内部检测资料（L5，原始报告未公开），"
                      "不入库、口播禁用；木桩「桥基」身份存疑，只说「出土的明代木桩」",
     ),
+    # ---------- E5一亩园 / E10蓝靛厂 / E12苏州街 / E13中关村 词条入库（2026-10-02） ----------
+    HistoricalSource(
+        id="src_baxun_wanshou", title="钦定八旬万寿盛典",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        author_person_id="person_agui",
+        base_edition="武英殿刻本",
+        edition_note="乾隆五十七年（1792）成书。图绘一亩园为圆明园大宫门前附属院落、"
+                     "后勤及公务人员临时住舍，反转「皇帝亲耕一亩三分地」民间传说",
+    ),
+    HistoricalSource(
+        id="src_daminghuidian", title="大明会典",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="明礼部官修（徐溥、李东阳等纂修）",
+        base_edition="万历刻本",
+        edition_note="载内官监染坊、蓝靛厂等宫廷专属官营作坊制度，"
+                     "证蓝靛厂初为宫廷官署作坊而非普通村民染坊",
+    ),
+    HistoricalSource(
+        id="src_xiaoting_zalu", title="啸亭杂录",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_zhaolian",
+        base_edition="清道光刻本",
+        edition_note="卷十载乾隆辛巳（1761）崇庆皇太后七旬圣寿建万寿寺外买卖街（万寿街/苏州街），"
+                     "为苏州街作为真正买卖街始建年代的最硬一手笔记依据",
+    ),
+    HistoricalSource(
+        id="src_tianzhi_ouwen", title="天咫偶闻",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_zhenjun",
+        base_edition="光绪三十三年刻本",
+        edition_note="卷七载万寿寺外买卖街「今已毁尽」，为苏州街咸丰朝后毁废现状的一手清末记述",
+    ),
+    HistoricalSource(
+        id="src_hanshu", title="汉书",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        author_person_id="person_bangu",
+        base_edition="百衲本二十四史",
+        edition_note="《高帝纪》载「诸中官、宦者令丞」，为「中官」代指太监的正典溯源；"
+                     "中关村明清原名中官村/中官坟/中官屯，为太监公共义地",
+    ),
+    HistoricalSource(
+        id="src_1913_jingxitu", title="京西图（1913）",
+        category=SourceCategory.MILITARY_SURVEY_MAP,
+        issuing_body="北洋政府内务部测绘局 / 陆军测量局",
+        base_edition="二万五千分之一实测地形图",
+        edition_note="1913年实测地图已零星出现「中关」雅化写法，证「中关」非1953年凭空创造，"
+                     "而是近代测绘谐音雅化的历史沿革产物",
+    ),
+    HistoricalSource(
+        id="src_xiding_miao_bei", title="重修西顶娘娘庙碑记",
+        category=SourceCategory.EPIGRAPHY,
+        issuing_body="清康熙内务府 / 顺天府",
+        edition_note="蓝靛厂西顶广仁宫（碧霞元君庙）重修碑刻；"
+                     "载四月庙会盛况与官帑修葺，为蓝靛厂庙会民俗与皇家香火一手石刻实证",
+    ),
 ]
 
 #: 常见简称 → 规范书名 归一表
@@ -493,6 +548,11 @@ TITLE_ALIASES: Dict[str, str] = {
     "北平工务局桥梁档案": "北平市工务局郊区桥梁档案",
     "第二批名录": "三山五园地区传统地名保护名录（第二批）",
     "三山五园名录（第二批）": "三山五园地区传统地名保护名录（第二批）",
+    # E5/E10/E12/E13 新补
+    "八旬万寿盛典": "钦定八旬万寿盛典",
+    "明会典": "大明会典",
+    "京西图": "京西图（1913）",
+    "西顶庙碑": "重修西顶娘娘庙碑记",
 }
 
 
