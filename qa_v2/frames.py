@@ -62,25 +62,28 @@ class OcrResult(object):
         return cls(d["texts"], d["boxes"], d["scores"])
 
 
+# 全项目 OCR 审计参数基线（T1，2026-10-02）：唯一事实源。任何脚本需要
+# PaddleOCR 都必须 `from qa_v2.frames import OCR_INIT_PARAMS` 或直接用
+# load_ocr()，不得自行另配——E13 反向走查 V3/V4 假警报的精确根因就是
+# 审计脚本自配 use_textline_orientation=True 且未关 doc_orientation。
+OCR_INIT_PARAMS = {
+    "use_doc_orientation_classify": False,
+    "use_doc_unwarping": False,
+    "use_textline_orientation": False,
+    "lang": "ch",
+}
+
+
 def load_ocr() -> Any:
     """构造 PaddleOCR（进程内单例）。首次约 4.7s。
 
-    ⚠️ 此处参数即全项目 OCR 审计基线，外部脚本必须复用（from qa_v2.frames
-    import load_ocr），不得自行另配：
-    - use_doc_orientation_classify=False：doc_ori 分类器会把水彩板面误判倒置
-      后先旋转整图再检测，rec_polys 全落在旋转后坐标系——E13 反向走查
-      V3「P6 旋转 180°」假警报的精确根因（2026-10-02）。
-    - use_textline_orientation=False：同族风险。
+    ⚠️ 参数来自模块常量 OCR_INIT_PARAMS（见其注释），外部审计脚本必须
+    复用该常量或本函数，不得自行另配。
     """
     global _OCR
     if _OCR is None:
         from paddleocr import PaddleOCR
-        _OCR = PaddleOCR(
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-            lang="ch",
-        )
+        _OCR = PaddleOCR(**OCR_INIT_PARAMS)
     return _OCR
 
 
