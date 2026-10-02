@@ -485,11 +485,25 @@ class TestIndependenceDiscipline:
             assert "expansion" not in src, (
                 "%s 的源码引用了挖掘器模块——真值/评分与挖掘器必须隔离" % fn)
 
-    def test_variant_table_not_shared_with_miner(self):
+    def test_variant_table_consistent_with_miner(self):
+        """评估器变体表与挖掘器繁简表：共享键必须同值。
+
+        原钉为「零共享键」。2026-10-02 原文 pilot(四库本繁体域)推翻其前提:
+        原文域要求评估器归一标准繁简映射,而标准映射(園→园)是定义性的,
+        无「独立发明」空间;若两表对同字给出不同归一,金标与预测的 span
+        数学全面破裂。故保护对象改为**一致性**:挖掘器表被改坏时,此钉
+        立即暴露分歧。评估器仍保有挖掘器没有的键(邨/廻/甯——长编域异体),
+        独立维护未废弃。
+        """
         from haidian_kg import expansion
-        assert HE._VARIANT_MAP.keys().isdisjoint(
-            expansion._TRAD_TO_SIMP.keys()), (
-            "评估器变体表与挖掘器繁简表必须零共享键（独立维护）")
+        shared = HE._VARIANT_MAP.keys() & expansion._TRAD_TO_SIMP.keys()
+        conflicts = {k: (HE._VARIANT_MAP[k], expansion._TRAD_TO_SIMP[k])
+                     for k in shared
+                     if HE._VARIANT_MAP[k] != expansion._TRAD_TO_SIMP[k]}
+        assert not conflicts, (
+            "两表对同键归一必须一致,分歧=%r" % conflicts)
+        assert {"邨", "廻", "甯"} <= HE._VARIANT_MAP.keys(), (
+            "评估器自有异体键不得流失(长编域仍需)")
 
     def test_module_top_level_imports_expandable_only_for_adapter(self):
         """模块顶层只许 import 引擎入口相关，不许 import expansion。"""
