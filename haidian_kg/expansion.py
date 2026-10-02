@@ -1,40 +1,78 @@
 """
 haidian_kg/expansion.py
-地名 ⇄ 古书 闭包扩展引擎（复合迭代法）
+地名 ⇄ 古书 闭包扩展引擎 v3（人工门控的增量图扩展）
 
-核心思想（用户提出）：
-  初始地名 → 它们引用古书 → 古书里又出现别的地名 → 那些地名再引书 → …
-  循环直到没有新东西。这就是图遍历的闭包（closure）。
+本系统不是自动跑到 fixpoint 的 closure loop（spec §0）：循环由人工
+admission 事件推进，引擎只做每轮的「发现与登记」。禁止实现
+`while graph_changed: ...` 式自动迭代。
 
-工程意义：
-  1. 词条不靠手工枚举，由数据自然长出来
-  2. 每个新候选必须过同一道 QA 闸门（用户定死的纪律），不得绕过
-  3. 必须有环检测与已见集合——高梁河出现在十几部书里，
-     书又互相引用，没有去重会无限循环
+身份三层（spec §2.1，P0-1）——字符串名不承担实体身份：
+  ToponymOccurrence         文本事实层（机器可自动产生）
+  CandidatePlaceHypothesis  实体假说层（保守聚类：每 normalized_form 一假说）
+  CanonicalPlaceEntity      正式词条（只有人工闸门能产生，本引擎永不写入）
 
-三层工作队列：
-  frontier_entries  待考地名
-  frontier_sources  待挖书（一部书里可能藏着我们还没建的地名）
-  discovered        已发现但未建档的候选地名
+去重单位是 SourceVisitKey（spec §2.2，P0-3），不是裸 (source_id, division_id)；
+遍历严格「先查后加，再挖掘」。
 
-挖书接口（SourceMiner）：
-  mine(source) -> List[CandidateName]
-  目前实现 QuoteCorpusMiner：从已有引文原文里找「候选地名」，
-  这是闭环可跑的最小实现；
-  FullTextMiner 留接口——接入维基文库/ctext 全文后即可升级，
-  无需改动引擎。
+纪律（spec §2.5，不可妥协）：
+  1. 引擎只发现，不入库——admitted 恒 []
+  2. 机器观察记录不是事实
+  3. 每个 occurrence 带 evidence_fact_id / source_id，可溯源
+  4. 词表/规则档繁简双字形（G6/G7/挖掘器三次教训，硬性规定）
+  5. miner_version / rule_profile_version 进 SourceVisitKey
+
+spec 伪代码名 → 本模块实现名对照（m4）：
+  SourceVisitKey       → 同名类型别名（六元组）
+  ToponymOccurrence    → 同名 dataclass
+  candidates.offer()   → CandidatePlaceHypothesis 聚类（expand 内联保守实现）
+  store_observation()  → ExpansionReport.candidates_found 携带 occurrence（落库留给 P1）
 """
 from dataclasses import dataclass, field
 import re
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Protocol, Set, Tuple
 
 from .production_exports import KnowledgeBase
-from .qa_gate import QAGate, QAReport
 from .ontology.epistemic import TextualFact
 
 
+#: 挖掘器版本 / 规则档版本——两者其一升级即视为「篇卷没挖过」（spec §2.5.5）
+MINER_VERSION = "v3"
+RULE_PROFILE_VERSION = "rp-v3"
+
+
+# ---------------------------------------------------------------------------
+# 繁简归一（身份归一的地基：官书引文是繁体，档案是简体）
+# ---------------------------------------------------------------------------
+
+#: opencc 式字符映射子集——只收本项目语料出现过的异体字；
+#: 未收录字符原样保留（生僻字如「礳」繁简同形）
+_TRAD_TO_SIMP = {
+    "樹": "树", "蕭": "萧", "橋": "桥", "龍": "龙", "莊": "庄",
+    "藍": "蓝", "廠": "厂", "場": "场", "聖": "圣", "菴": "庵",
+    "觀": "观", "關": "关", "廟": "庙", "達": "达", "馬": "马",
+    "總": "总", "圓": "圆", "園": "园", "內": "内", "務": "务",
+    "倉": "仓", "鐵": "铁", "爐": "炉", "鐘": "钟", "磚": "砖",
+    "鑲": "镶", "黃": "黄", "紅": "红", "間": "间", "處": "处",
+    "萬": "万", "壽": "寿", "護": "护", "軍": "军", "將": "将",
+    "營": "营", "門": "门", "陽": "阳", "稱": "称", "舊": "旧",
+    "係": "系", "駐": "驻", "鎮": "镇", "廣": "广", "歲": "岁",
+    "頃": "顷", "驢": "驴", "車": "车", "樞": "枢", "開": "开",
+    "壩": "坝", "議": "议", "參": "参", "領": "领", "備": "备",
+    "暢": "畅", "靜": "静", "兩": "两", "個": "个", "點": "点",
+    "綺": "绮", "側": "侧", "圍": "围", "竊": "窃", "罷": "罢",
+    "賜": "赐", "謂": "谓", "從": "从", "與": "与", "並": "并",
+    "則": "则", "數": "数", "築": "筑", "設": "设", "為": "为",
+    "於": "于", "諸": "诸",
+}
+
+
+def normalize_form(surface: str) -> str:
+    """繁体字形 → 简体规范形（逐字映射，未收录字符原样保留）"""
+    return "".join(_TRAD_TO_SIMP.get(ch, ch) for ch in surface)
+
+
 #: 已知「非地名」的干扰词：出现在引文里但不是我们要的地名
-#: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训）
+#: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训，硬性规定）
 _STOPWORDS = {
     # 简体
     "皇帝", "天子", "朝廷", "官书", "内务府", "中科院", "考古所",
@@ -42,29 +80,87 @@ _STOPWORDS = {
     "康熙", "雍正", "乾隆", "嘉庆", "万历", "天启", "嘉靖", "成化",
     "正统", "景泰", "天顺", "弘治", "正德", "隆庆", "泰定", "至元",
     "至大", "太平兴国", "昭文馆", "太史院", "翰林",
+    "圆明园", "清漪园", "畅春园", "静宜园", "静明园", "万寿山", "稻田厂",
+    "八处", "仓署",
+    "两个小旗驻点", "三个小旗驻点", "圆明园副将", "都督河北诸军事",
+    "一万间", "一千二百五十间",
     # 繁体（官书引文用字）
     "護軍", "參領", "護軍校", "副將", "總兵", "守備", "千總", "把總",
     "內務府", "圓明園", "清漪園", "暢春園", "靜宜園", "靜明園",
     "昆明湖", "萬壽山", "玉泉山", "稻田廠",
     # 泛指词（模式命中但非专名）
-    "八處", "御道", "倉署", "兩個小旗駐點", "三個小旗駐點",
-    "圓明園副將", "都督河北諸軍事",
+    "八處", "八旗", "御道", "倉署", "兩個小旗駐點", "三個小旗駐點",
+    "圓明園副將", "都督河北諸軍事", "圓明園八旗", "圆明园八旗",
+    # 八旗满洲旗分（旗名有通名形状但是旗籍不是地点）
+    "正黄旗", "正黃旗", "鑲黄旗", "鑲黃旗", "正白旗", "鑲白旗",
+    "正红旗", "正紅旗", "鑲红旗", "鑲紅旗", "正蓝旗", "正藍旗",
+    "鑲蓝旗", "鑲藍旗",
+    "镶黄旗", "镶白旗", "镶红旗", "镶蓝旗",
+    # 旗制职级/器物/泛称（通名形状但非地点）
+    "總旗", "总旗", "小旗", "鐵爐", "铁炉", "牧馬場", "牧马场",
+    "北牧馬場", "北牧马场",
     # 文言虚词/量词短语（模式误切的典型产物）
     "一萬間", "一千二百五十間", "四丁未", "六年", "十年",
 }
 
 
+# ---------------------------------------------------------------------------
+# 身份三层（spec §2.1，P0-1）
+# ---------------------------------------------------------------------------
+
 @dataclass
-class CandidateName:
-    """从书里挖出的候选地名（尚未建档）"""
-    name: str
-    from_source_id: str
-    from_division_id: Optional[str]
+class ToponymOccurrence(object):
+    """
+    文本事实层：「某文献某位置出现了形状为 X 的字串，上下文像地名」。
+    机器可自动产生，但它不是事实（spec §2.5.2）。
+    """
+    occurrence_id: str
+    surface_form: str              # 原样字串（繁体引文保留繁体）
+    normalized_form: str           # 归一形（繁→简），聚类的唯一键
+    source_id: str                 # 哪部书（M1：mine() 必须写入）
     evidence_fact_id: str          # 哪条引文里出现了它
-    note: str = ""
+    extractor_method: str          # cue:坐落 / cue:為 / suffix_scan
+    extractor_version: str
+    edition_id: Optional[str] = None   # 哪个版本（转录本≠校勘本，由引擎盖章）
+    division_id: Optional[str] = None
+    text_span: str = ""            # 命中所在的上下文片段
     confidence: str = "low"        # high: 提示词+通名双证 / mid: 单证 / low: 仅模式
     stripped_suffix: Optional[str] = None  # 被剥离的方位后缀
+    note: str = ""
 
+
+@dataclass
+class CandidatePlaceHypothesis(object):
+    """
+    实体假说层（spec §2.1）：「这批 occurrence 可能指向同一个历史地点」。
+    保守聚类：每个 normalized_form 一假说，下挂全部 occurrences——
+    一名多书互证保留为 occurrence 列表（修 M2 证据塌缩）。
+    """
+    normalized_form: str
+    occurrences: List[ToponymOccurrence] = field(default_factory=list)
+    confidence: str = "low"        # 取成员 occurrence 的最高置信
+
+    @property
+    def name(self) -> str:
+        return self.normalized_form
+
+    def add_occurrence(self, occ: ToponymOccurrence) -> None:
+        self.occurrences.append(occ)
+        if _CONF_RANK.get(occ.confidence, 0) > _CONF_RANK.get(self.confidence, 0):
+            self.confidence = occ.confidence
+
+
+_CONF_RANK = {"low": 0, "mid": 1, "high": 2}
+
+#: 去重单位（spec §2.2，P0-3）：(书, 版本, 篇卷, 挖掘器版本, 规则档版本, 所属KB)
+#: kb_id 防 M5——每个 KB deep-copy 各自 facts，两词条共引同卷不同切片时
+#: 第二个 KB 的独有引文不是「环」，是必须保留的书证
+SourceVisitKey = Tuple[str, str, str, str, str, str]
+
+
+# ---------------------------------------------------------------------------
+# 挖书器（spec §2.4 SourceMiner；实现 ToponymMiner，FullTextMiner 留接口）
+# ---------------------------------------------------------------------------
 
 #: 中文地名通名后缀表（专名+通名结构：树「村」、安河「桥」、七里「泊」）
 #: 繁简双字形——官书引文是繁体，档案是简体（G6/G7/挖掘器三次教训）
@@ -79,6 +175,7 @@ PLACE_SUFFIXES = (
     "山", "墳", "坟", "園", "园", "廠", "厂", "場", "场", "倉", "仓",
     "窯", "窑", "店", "口", "關", "关", "嶺", "岭", "峪", "澱", "淀",
 )
+_SUFFIX_SET = frozenset(PLACE_SUFFIXES)
 
 #: 方位后缀（「樹村西邊」须剥离为「樹村」）
 DIRECTION_SUFFIXES = ("西邊", "東邊", "南邊", "北邊",
@@ -89,61 +186,176 @@ DIRECTION_SUFFIXES = ("西邊", "東邊", "南邊", "北邊",
 #: 繁简双字形的机构/建筑通名单字（单独成词时不是专名，但作为后缀合法）
 GENERIC_SINGLE = set("村莊庄屯營营府河橋桥泊泉閘闸堰渠湖山園园廠厂場场倉仓窯窑店铺關关嶺岭峪")
 
+#: 句读（切短语/截窗口用）
+_PUNCT_CHARS = "，。、；：！？「」『』（）"
+
+#: 提示词锚点（A 法线索词）
+_CUE_MARKERS = ("為", "曰", "有", "坐落", "跨其上", "即")
+
+#: 回溯边界字（M3）：介词/虚词/连词/限定词/动词——专名头不可能越过它们。
+#: 繁简并收；注意「通」不在表内（通惠河/通稱共用），「三」「北」不在表内
+#: （西三旗/北安河桥是专名头）——lexicalized 方位词误伤面见 spec §四.3
+_STOP_CHARS = set(
+    # 介词/虚词/连词/助词
+    "於于在自從从往到為为之其與与及和並并而則则皆即乃且等者們们因中"
+    # 限定词/量词
+    "每各諸诸數数兩两个個此這这那"
+    # 动词（含提示词锚点本身）
+    "出入至築筑開开引灌設设駐驻紮扎移改奏議议始有曰謂谓幸圍围遁竊窃"
+    "跨存增添罷罢賜赐禁理以著稱称惟落坐葬轄辖"
+    # 旗籍通名：旗名内部不可回溯穿越（鑲黄旗營 不许裂成 X旗營/旗營）
+    "旗"
+)
+
+
+class SourceMiner(Protocol):
+    """挖书器接口（spec §2.4）。实现：ToponymMiner；FullTextMiner 预留。"""
+
+    def mine(self, source_id: str, division_id: str,
+             facts: List[TextualFact]) -> List[ToponymOccurrence]:
+        ...
+
 
 class ToponymMiner(object):
     """
-    混合策略地名挖掘器 v2：
-      A. 提示词模式（為/曰/有/坐落…）——旧行为，召回有线索词的
+    混合策略地名挖掘器 v3：
+      A. 提示词模式（為/曰/有/坐落…）——锚点后开窗
       B. 通名后缀扫描——召回无线索词但符合「专名+通名」结构的
       C. 方位后缀剥离——樹村西邊 → 樹村
-      D. 置信度分级替代二元过滤——high/mid/low，人工审阅从高往低
+      D. 置信度分级 high（双证）/ mid（单证）/ low，人工审阅从高往低
+
+    M3 核心修复：命中通名后缀后，从后缀向前回溯到标点/提示词锚点/
+    虚词边界，取出干净专名头——
+      「水流自永定河入西山」→ 永定河（而非「永定河入西山」）
+      「內務府於青龍橋設稻田廠」→ 青龍橋、稻田廠（绝不产出「龍橋設稻田廠」）
 
     为什么不直接上 jieba/HanLP：
       文言文分词/NER 在现代语料模型上误切率高（实测风险），
       而「专名+通名」是中文地名强结构，后缀词典便宜、可解释、可控。
-      分词框架留给现代文本（方志/档案）的 FullTextMiner 升级路径。
     """
 
     def __init__(self, known_names: Optional[Set[str]] = None):
         self.known_names = set(known_names or [])
         self._stopwords = set(_STOPWORDS)
+        self._seq = 0
 
-    # ---------- 公共 ----------
+    # ---------- 接口 ----------
 
     def mine(self, source_id: str, division_id: str,
-             facts: List[TextualFact]) -> List[CandidateName]:
-        out: List[CandidateName] = []
-        seen_in_call = set()
+             facts: List[TextualFact]) -> List[ToponymOccurrence]:
+        """挖一个篇卷。同一 fact 内同形只发一次；跨 fact/跨卷保留（互证）"""
+        out: List[ToponymOccurrence] = []
+        self._seq = 0
+        emitted: Set[Tuple[str, str]] = set()   # (fact_id, surface_form)
         for f in facts:
             if f.division_id != division_id:
                 continue
             text = f.verbatim_quote
-            # A. 提示词模式
-            for marker in ("為", "曰", "有", "坐落", "跨其上", "即"):
+            # A. 提示词锚点：锚点后开窗，窗内找通名后缀并回溯
+            for marker in _CUE_MARKERS:
                 start = 0
                 while True:
                     i = text.find(marker, start)
                     if i < 0:
                         break
-                    seg = text[i + len(marker): i + len(marker) + 12]
-                    cand = self._make_candidate(seg, f, "提示词「%s」" % marker,
-                                                has_cue=True)
-                    if cand and cand.name not in seen_in_call:
-                        seen_in_call.add(cand.name)
-                        out.append(cand)
                     start = i + len(marker)
+                    for occ in self._cue_hits(text, i, marker, f, source_id):
+                        self._collect(out, emitted, occ)
             # B. 通名后缀扫描（无线索词也能召回）
-            for cand in self._suffix_scan(text, f):
-                if cand.name not in seen_in_call:
-                    seen_in_call.add(cand.name)
-                    out.append(cand)
+            for occ in self._phrase_hits(text, f, source_id):
+                self._collect(out, emitted, occ)
         return out
 
     # ---------- 内部 ----------
 
+    def _collect(self, out: List[ToponymOccurrence], emitted: Set[Tuple[str, str]],
+                 occ: ToponymOccurrence) -> None:
+        key = (occ.evidence_fact_id, occ.surface_form)
+        if key in emitted:
+            return
+        emitted.add(key)
+        out.append(occ)
+
+    def _cue_hits(self, text: str, marker_pos: int, marker: str,
+                  fact: TextualFact, source_id: str) -> List[ToponymOccurrence]:
+        """锚点后开窗（截句读、12 字窗），窗内后缀回溯；无后缀则退回窗口截取"""
+        window = text[marker_pos + len(marker):]
+        cut = len(window)
+        for j, ch in enumerate(window):
+            if ch in _PUNCT_CHARS:
+                cut = j
+                break
+        window = window[:cut][:12].strip()
+        if not window:
+            return []
+        hits = self._suffix_hits(window, fact, source_id,
+                                 method="cue:%s" % marker, cue=True)
+        if hits:
+            return hits
+        # 无通名后缀的线索词命名：生僻通名（水礳）靠这条保住（spec §2.4）
+        name, stripped = self._strip_direction(window)
+        if not (2 <= len(name) <= 6) or self._is_noise(name):
+            return []
+        return [self._emit(name, fact, source_id, method="cue:%s" % marker,
+                           note="提示词「%s」窗口「%s」" % (marker, window),
+                           conf="mid", span=marker + window, stripped=stripped)]
+
+    def _phrase_hits(self, text: str, fact: TextualFact,
+                     source_id: str) -> List[ToponymOccurrence]:
+        """B 法：按句读切短语，短语内每个通名后缀命中都回溯取专名头"""
+        out: List[ToponymOccurrence] = []
+        for phrase in re.split(r"[，。、；：！？「」『』（）]", text):
+            phrase = phrase.strip()
+            if phrase:
+                out.extend(self._suffix_hits(phrase, fact, source_id,
+                                             method="suffix_scan", cue=False))
+        return out
+
+    def _suffix_hits(self, window: str, fact: TextualFact, source_id: str,
+                     method: str, cue: bool) -> List[ToponymOccurrence]:
+        """窗口内每个通名后缀命中 → 回溯专名头 → 干净名（M3 核心路径）。
+        从右往左扫：已采纳的命中区间不再接受重叠命中——
+        「安河橋」不许裂出子词「安河」（子串让位于更长的干净名）"""
+        out: List[ToponymOccurrence] = []
+        taken: List[Tuple[int, int]] = []       # 已采纳 (head, end) 区间
+        for k in range(len(window) - 1, -1, -1):
+            for size in (2, 1):        # 多字后缀（胡同）优先
+                start = k - size + 1
+                if start < 0:
+                    continue
+                suffix = window[start:k + 1]
+                if len(suffix) != size or suffix not in _SUFFIX_SET:
+                    continue
+                head = self._walk_back(window, start)
+                name = window[head:k + 1]   # 专名头 + 通名后缀本身
+                if not (2 <= len(name) <= 6):
+                    break               # 该命中作废，扫下一个后缀字
+                if self._is_noise(name):
+                    break
+                if any(head < e and k + 1 > s for s, e in taken):
+                    break               # 与已采纳命中重叠（子词命中）
+                taken.append((head, k + 1))
+                out.append(self._emit(
+                    name, fact, source_id, method=method,
+                    note="%s「%s」" % ("提示词回溯" if cue else "后缀扫描",
+                                      window[max(0, head - 2):k + 1]),
+                    conf="high" if cue else "mid",
+                    span=window, stripped=None))
+                break
+        out.reverse()   # 恢复从左到右的出现顺序
+        return out
+
+    @staticmethod
+    def _walk_back(window: str, suffix_start: int) -> int:
+        """从后缀起点向左回溯到标点/锚点词/虚词边界，返回专名头下标（M3）"""
+        j = suffix_start
+        while j > 0 and window[j - 1] not in _STOP_CHARS:
+            j -= 1
+        return j
+
     def _clip(self, seg: str) -> Optional[str]:
         for j, ch in enumerate(seg):
-            if ch in "，。、；：！？「」『』（）":
+            if ch in _PUNCT_CHARS:
                 seg = seg[:j]
                 break
         return seg.strip() or None
@@ -157,85 +369,46 @@ class ToponymMiner(object):
     def _has_place_suffix(self, name: str) -> bool:
         return any(name.endswith(s) for s in PLACE_SUFFIXES)
 
-    def _make_candidate(self, seg: str, fact: TextualFact,
-                        note: str, has_cue: bool) -> Optional[CandidateName]:
-        raw = self._clip(seg)
-        if not raw:
-            return None
-        name, stripped = self._strip_direction(raw)
-        if not (2 <= len(name) <= 6):
-            return None
-        if self._is_noise(name):
-            return None
-        suffix_ok = self._has_place_suffix(name) or (
-            stripped and self._has_place_suffix(stripped))
-        # 置信度分级：双证 high，单证 mid
-        if has_cue and suffix_ok:
-            conf = "high"
-        elif has_cue or suffix_ok:
-            conf = "mid"
-        else:
-            conf = "low"
-        return CandidateName(
-            name=name, from_source_id="", from_division_id=fact.division_id,
+    def _emit(self, name: str, fact: TextualFact, source_id: str, method: str,
+              note: str, conf: str, span: str,
+              stripped: Optional[str] = None) -> ToponymOccurrence:
+        self._seq += 1
+        return ToponymOccurrence(
+            occurrence_id="occ:%s:%s:%d" % (fact.id, method, self._seq),
+            surface_form=name,
+            normalized_form=normalize_form(name),
+            source_id=source_id,                     # M1：溯源必填
             evidence_fact_id=fact.id,
-            note=note + ("；剥离方位「%s」" % stripped if stripped else ""),
-            confidence=conf, stripped_suffix=stripped,
+            extractor_method=method,
+            extractor_version=MINER_VERSION,
+            division_id=fact.division_id,
+            text_span=span,
+            confidence=conf,
+            stripped_suffix=stripped,
+            note=note,
         )
 
-    def _suffix_scan(self, text: str, fact: TextualFact) -> List[CandidateName]:
-        """B. 通名后缀扫描：按标点切短语，短语尾部符合专名+通名即候选"""
-        out = []
-        for phrase in re.split(r"[，。、；：！？「」『』（）]", text):
-            phrase = phrase.strip()
-            if not (3 <= len(phrase) <= 12):
-                continue
-            # 取短语尾部 2-6 字窗口，找以通名结尾的子串
-            for size in (2, 3, 4, 5, 6):
-                if len(phrase) < size:
-                    break
-                tail = phrase[-size:]
-                if not self._has_place_suffix(tail):
-                    continue
-                head = phrase[:-size]
-                # 头部若是动词/虚词开头，才可能是「X+地名」结构
-                if head and head[-1] in "於在自從从往到":
-                    name, stripped = self._strip_direction(tail)
-                    if self._is_noise(name):
-                        break
-                    conf = "mid" if len(name) >= 2 else "low"
-                    out.append(CandidateName(
-                        name=name, from_source_id="",
-                        from_division_id=fact.division_id,
-                        evidence_fact_id=fact.id,
-                        note="后缀扫描「…%s%s」" % (head[-1], tail),
-                        confidence=conf, stripped_suffix=stripped))
-                    break
-        return out
-
     def _is_noise(self, name: str) -> bool:
-        if name in self._stopwords or self.known_names:
-            if name in self._stopwords:
-                return True
-        if name in self.known_names:
+        """繁体、简体两个字形都要过一遍（G6/G7 硬性规定）"""
+        forms = (name, normalize_form(name))
+        if any(f in self._stopwords for f in forms):
+            return True
+        if any(f in self.known_names for f in forms):
             return True
         if any(ch.isdigit() for ch in name):
             return True
-        # 纪年/帝号模式（繁简）
-        for reign in ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
-                      "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国"):
-            if name.startswith(reign):
-                return True
-        # 官职/机构模式（繁简）
-        for kw in ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
-                   "御道", "倉署", "仓署", "碾房", "都督"):
-            if kw in name:
-                return True
+        for form in forms:
+            # 纪年/帝号模式（繁简）
+            for reign in ("康熙", "雍正", "乾隆", "嘉庆", "萬曆", "万历", "天啟", "天启",
+                          "嘉靖", "成化", "至元", "至大", "泰定", "太平興國", "太平兴国"):
+                if form.startswith(reign):
+                    return True
+            # 官职/机构模式（繁简）
+            for kw in ("護軍", "护军", "副將", "副将", "總兵", "总兵", "內務府", "内务府",
+                       "御道", "倉署", "仓署", "碾房", "都督"):
+                if kw in form:
+                    return True
         return False
-
-
-# 向后兼容别名
-QuoteCorpusMiner = ToponymMiner
 
 
 # ---------------------------------------------------------------------------
@@ -247,24 +420,36 @@ class ExpansionReport(object):
     seeds: List[str] = field(default_factory=list)
     entries_visited: List[str] = field(default_factory=list)
     sources_mined: List[str] = field(default_factory=list)
-    candidates_found: List[CandidateName] = field(default_factory=list)
+    candidates_found: List[CandidatePlaceHypothesis] = field(default_factory=list)
     admitted: List[str] = field(default_factory=list)
     rejected: List[Tuple[str, str]] = field(default_factory=list)  # (name, reason)
-    cycles_avoided: int = 0
+    #: 「没重复挖」三类事件分账（原 cycles_avoided 混计不可归因，M2/M5）
+    revisited_visits: int = 0       # SourceVisitKey 已登记 → 跳过
+    known_form_hits: int = 0        # 命中已建词条字形 → 仅计数
+    duplicate_candidates: int = 0   # 同名同证重复观察 → 并入已有假说
 
     def render(self) -> str:
-        lines = ["闭包扩展报告"]
+        lines = ["闭包扩展报告 v3（miner=%s / rule_profile=%s）"
+                 % (MINER_VERSION, RULE_PROFILE_VERSION)]
         lines.append("  种子词条: %s" % "、".join(self.seeds))
         lines.append("  遍历词条: %d" % len(self.entries_visited))
-        lines.append("  挖过的书: %d 部（%s）" % (
+        lines.append("  挖过的篇卷: %d 个（%s）" % (
             len(self.sources_mined), "、".join(self.sources_mined)))
-        lines.append("  发现候选地名: %d 个" % len(self.candidates_found))
-        for c in self.candidates_found:
-            lines.append("    - %-8s 来自《%s》篇卷 %s（引文 %s）%s"
-                         % (c.name, c.from_source_id, c.from_division_id,
-                            c.evidence_fact_id, c.note))
-        lines.append("  收录: %d / 拒绝: %d / 环避让: %d 次"
-                     % (len(self.admitted), len(self.rejected), self.cycles_avoided))
+        lines.append("  发现候选假说: %d 个" % len(self.candidates_found))
+        for h in self.candidates_found:
+            srcs = "、".join(sorted({o.source_id for o in h.occurrences}))
+            lines.append("    - %-8s [%s] 书证 %d 处《%s》"
+                         % (h.normalized_form, h.confidence,
+                            len(h.occurrences), srcs))
+            for o in h.occurrences:
+                lines.append("        · 「%s」 %s @%s（引文 %s）%s"
+                             % (o.surface_form, o.extractor_method,
+                                o.division_id, o.evidence_fact_id, o.note))
+        lines.append("  重访篇卷（VisitKey 已登记）: %d" % self.revisited_visits)
+        lines.append("  命中已建词条字形（跳过）: %d" % self.known_form_hits)
+        lines.append("  重复候选观察（并入假说）: %d" % self.duplicate_candidates)
+        lines.append("  收录: %d / 拒绝: %d"
+                     % (len(self.admitted), len(self.rejected)))
         for n, why in self.rejected:
             lines.append("    × %s：%s" % (n, why))
         return "\n".join(lines)
@@ -272,67 +457,90 @@ class ExpansionReport(object):
 
 class ClosureExpander(object):
     """
-    地名 ⇄ 古书 闭包遍历。
+    地名 ⇄ 古书 闭包遍历（人工门控的增量扩展，spec §0/§2.2）。
 
     用法：
-        expander = ClosureExpander(seed_kbs=[kb1, kb2, kb3], qa_gate_args=...)
+        expander = ClosureExpander(seed_kbs=[kb1, kb2, kb3, kb4])
         report = expander.expand()
         print(report.render())
 
     关键纪律：
-    - 新候选只是「候选」，不自动入库
-    - 入库必须过 QAGate（用户定的规矩）
-    - 已见集合防环：同一 (source, division) 不重复挖，
-      同一候选名不重复入队
+    - 新候选只是「假说」，不自动入库；入库必须过人工九维闸门
+    - SourceVisitKey 先查后加，再挖掘（spec §2.2 遍历伪代码）
+    - expand() 无跨调用状态：同一 expander 重复 expand 结果恒等
     """
 
     def __init__(self, seed_kbs: List[KnowledgeBase],
-                 miner: Optional[QuoteCorpusMiner] = None,
-                 known_names: Optional[Set[str]] = None,
+                 miner: Optional[SourceMiner] = None,
+                 known_forms: Optional[Set[str]] = None,
                  adversarial: Optional[Tuple[str, str]] = None):
         self.seeds = list(seed_kbs)
-        self.miner = miner or QuoteCorpusMiner()
-        self.known_names: Set[str] = set(known_names or [])
+        self.miner = miner if miner is not None else ToponymMiner()
+        self.known_forms: Set[str] = set(known_forms or [])
         self.adversarial = adversarial
+        #: kb 身份进 VisitKey（M5）：同一 (书,卷) 在不同 KB 里各挖各的
+        self._kb_ids: Dict[int, str] = {
+            id(kb): "kb%d" % i for i, kb in enumerate(self.seeds)}
 
     def expand(self) -> ExpansionReport:
         rep = ExpansionReport()
 
-        # 1) 收集所有种子词条的名与书
-        all_kbs = list(self.seeds)
-        for kb in all_kbs:
-            rep.seeds.extend(kb.appellations.values() and
-                             [a.label for a in kb.appellations.values()])
-            self.known_names.update(a.label for a in kb.appellations.values())
+        # 1) 已知字形表 = 调用方 known_forms + 全部种子的 label + script_variants
+        #    （C2：Appellation.script_variants 是异体/讹字，必须一并算「已知晓」，
+        #     否则已建词条的繁体字形会以高置信冒充新发现）
+        known: Set[str] = {normalize_form(f) for f in self.known_forms}
+        for kb in self.seeds:
+            for a in kb.appellations.values():
+                rep.seeds.append(a.label)
+                rep.entries_visited.append(a.label)
+                known.add(normalize_form(a.label))
+                for v in a.script_variants:
+                    known.add(normalize_form(v))
 
-        # 2) 遍历种子词条，登记它们引用的书
-        seen_sources: Set[Tuple[str, str]] = set()   # (source_id, division_id)
-        queue: List[Tuple[str, str, KnowledgeBase]] = []
-        for kb in all_kbs:
-            rep.entries_visited.extend(a.label for a in kb.appellations.values())
+        # 2) 登记种子引用的篇卷：先查后加，再挖掘（spec §2.2）
+        seen_visits: Set[SourceVisitKey] = set()
+        queue: List[Tuple[str, str, str, KnowledgeBase]] = []
+        for kb in self.seeds:
+            kb_id = self._kb_ids[id(kb)]
             for d in kb.divisions.values():
-                key = (d.source_id, d.id)
-                if key in seen_sources:
-                    rep.cycles_avoided += 1
+                work_id = d.source_id
+                src = kb.sources.get(work_id)
+                edition_id = getattr(src, "base_edition", None) or "未标注"
+                key: SourceVisitKey = (work_id, edition_id, d.id,
+                                       MINER_VERSION, RULE_PROFILE_VERSION,
+                                       kb_id)
+                if key in seen_visits:
+                    rep.revisited_visits += 1
                     continue
-                seen_sources.add(key)
-                queue.append((d.source_id, d.id, kb))
+                seen_visits.add(key)            # 立即登记，再挖
+                queue.append((work_id, edition_id, d.id, kb))
                 rep.sources_mined.append(d.id)
 
-        # 3) 挖书
-        discovered: Dict[str, CandidateName] = {}
-        for source_id, division_id, kb in queue:
-            for cand in self.miner.mine(source_id, division_id, list(kb.facts.values())):
-                if cand.name in self.known_names:
-                    rep.cycles_avoided += 1
+        # 3) 挖书 → 聚类（保守：每 normalized_form 一假说，全 occurrences 下挂）
+        hypo_by_form: Dict[str, CandidatePlaceHypothesis] = {}
+        seen_sigs: Dict[str, Set[Tuple[str, str]]] = {}
+        for work_id, edition_id, division_id, kb in queue:
+            occs = self.miner.mine(work_id, division_id, list(kb.facts.values()))
+            for occ in occs:
+                if occ.edition_id is None:
+                    occ.edition_id = edition_id
+                if occ.normalized_form in known:
+                    rep.known_form_hits += 1
                     continue
-                if cand.name in discovered:
-                    rep.cycles_avoided += 1
+                hyp = hypo_by_form.get(occ.normalized_form)
+                if hyp is None:
+                    hyp = CandidatePlaceHypothesis(normalized_form=occ.normalized_form)
+                    hypo_by_form[occ.normalized_form] = hyp
+                    rep.candidates_found.append(hyp)
+                    seen_sigs[occ.normalized_form] = set()
+                sig = (occ.evidence_fact_id, occ.surface_form)
+                if sig in seen_sigs[occ.normalized_form]:
+                    rep.duplicate_candidates += 1
                     continue
-                discovered[cand.name] = cand
-                rep.candidates_found.append(cand)
+                seen_sigs[occ.normalized_form].add(sig)
+                hyp.add_occurrence(occ)
 
-        # 4) 候选不自动入库——只登记为 discovered，等人工/闸门裁决
+        # 4) 候选不自动入库——只登记为假说，等人工/闸门裁决
         rep.admitted = []           # 引擎只负责发现；入库由闸门+人工
         rep.rejected = []
         return rep

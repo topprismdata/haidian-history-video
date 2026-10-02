@@ -1,0 +1,71 @@
+================================================================
+闭包引擎 v3 冒烟留档（四模块真实语料 G/Y/B/S）
+================================================================
+置信分布: high=6 mid=12 low=0（合计 18 假说）
+每假说 occurrence 数分布: 1处×15个、2处×3个
+计数器: 重访篇卷=0 已知名命中=14 重复候选=0
+admitted=[]（引擎只发现不入库）
+
+----------------------------------------------------------------
+闭包扩展报告 v3（miner=v3 / rule_profile=rp-v3）
+  种子词条: 高梁水、高粱河、西城闸、高梁闸、长河、高梁河、圆明园、长春园、绮春园、圆明三园、遗址公园、镶黄旗营房、树村西、萧家河北、树村汛、北安河桥、圆明园八旗驻防、树村、大有庄、穷八家、西三旗、青龙桥、七里泊、碾庄、七十二府、东四墓
+  遍历词条: 26
+  挖过的篇卷: 20 个（div_sjz_v13_luoshui、div_sjz_v14_baqiushui、div_yuanshi_hequ_3、div_liaoshi_84、div_songshi_taizong、div_ymy_yuan_yange、div_ymy_yuan_1949、div_ymy_sj、div_bqtz116_yingjian、div_bqtz34_zhuoshu、div_rxjwkc72_baqi、div_rxjwkc99_jiaojiong、div_rizhi46_yu、div_rizhi76_yu、div_zyztj1、div_rxjwkc100_xijiaojing、div_mingshi_bingzhi、div_mingyitongzhi、div_diquminglu_xisanqi、div_2024_minglu_qinglongqiao）
+  发现候选假说: 18 个
+    - 永定河      [mid] 书证 1 处《src_shuijingzhu》
+        · 「永定河」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「水自永定河」
+    - 戾陵堰      [mid] 书证 1 处《src_shuijingzhu》
+        · 「戾陵堰」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「筑戾陵堰」
+    - 车箱渠      [mid] 书证 1 处《src_shuijingzhu》
+        · 「车箱渠」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「开车箱渠」
+    - 通惠河      [mid] 书证 1 处《src_yuanshi》
+        · 「通惠河」 suffix_scan @div_yuanshi_hequ_3（引文 tf_yuanshi_wood）后缀扫描「奏开通惠河」
+    - 绮春三园     [mid] 书证 1 处《src_ymy_yuan》
+        · 「绮春三园」 suffix_scan @div_ymy_yuan_yange（引文 tf_ymy_1770）后缀扫描「绮春三园」
+    - 水礳       [mid] 书证 1 处《src_bqtz》
+        · 「水礳」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词「坐落」窗口「水礳」
+    - 保福寺      [high] 书证 1 处《src_bqtz》
+        · 「保福寺」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「保福寺」
+    - 萧家河      [high] 书证 2 处《src_bqtz、src_rxjwkc》
+        · 「蕭家河」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「蕭家河」
+        · 「蕭家河」 suffix_scan @div_rxjwkc72_baqi（引文 tf_bq72_zhenghuang）后缀扫描「蕭家河」
+    - 安河桥      [high] 书证 1 处《src_bqtz》
+        · 「安河橋」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「安河橋」
+    - 蓝靛厂      [high] 书证 1 处《src_bqtz》
+        · 「藍靛廠」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「藍靛廠」
+    - 五圣庵      [high] 书证 1 处《src_rxjwkc》
+        · 「五聖菴」 cue:有 @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）提示词回溯「五聖菴」
+    - 观音寺      [mid] 书证 1 处《src_rxjwkc》
+        · 「觀音寺」 suffix_scan @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）后缀扫描「觀音寺」
+    - 观音庵      [high] 书证 2 处《src_rxjwkc》
+        · 「觀音菴」 cue:有 @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）提示词回溯「觀音菴」
+        · 「觀音菴」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「村中觀音菴」
+    - 达官村      [mid] 书证 1 处《src_rxjwkc》
+        · 「達官村」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「達官村」
+    - 关帝庙      [mid] 书证 2 处《src_rxjwkc》
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「關帝廟」
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「關帝廟」
+    - 金山       [mid] 书证 1 处《src_rxjwkc》
+        · 「金山」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dsm_jinshan）后缀扫描「金山」
+    - 清河       [mid] 书证 1 处《src_hd_diqumingzhi》
+        · 「清河」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「旗因清河」
+    - 西二旗      [mid] 书证 1 处《src_hd_diqumingzhi》
+        · 「西二旗」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「西二旗」
+  重访篇卷（VisitKey 已登记）: 0
+  命中已建词条字形（跳过）: 14
+  重复候选观察（并入假说）: 0
+  收录: 0 / 拒绝: 0
+----------------------------------------------------------------
+幂等自检:
+  二次 expand 候选集完全一致: True
+  计数器一致: True
+
+C2 自检（已建词条繁体字形不得回归为候选）:
+  树村: 未回归 ✓
+  樹村: 未回归 ✓
+  青龙桥: 未回归 ✓
+  青龍橋: 未回归 ✓
+  大有庄: 未回归 ✓
+  大有莊: 未回归 ✓
+  碾庄: 未回归 ✓
+  碾莊: 未回归 ✓
