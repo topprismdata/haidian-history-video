@@ -28,6 +28,9 @@ from haidian_kg.production_exports import (
 )
 from haidian_kg.qa_gate import QAGate
 from haidian_kg.ontology.video_contracts import AuditVerdict
+from haidian_kg.ontology.spatiotemporal import (
+    IdentityRelation, EpistemicStatus,
+)
 
 
 @pytest.fixture(scope="module")
@@ -248,3 +251,19 @@ class TestVisualConstraints:
         sb = export_storyboard(kb, "ent_camp_xianghuang")
         assert len(sb.frames) == 2
         assert [f.state_id for f in sb.frames] == ["st_camp_1724", "st_camp_1747"]
+
+
+class TestCrossModuleIdentity:
+    def test_yuanmingyuan_parent_same_as_yuanmingyuan(self, kb):
+        """holdout run2 collision 硬闸发现：圆明园在 banners（驻防空间母体）
+        与 yuanmingyuan 模块（园林本体）双建模且无 identity 断言——
+        跨模块同指必须显式断言，否则挖掘假说跨双实体计入 collision。"""
+        ids = [i for i in kb.identities
+               if set(i.subject_entity_ids) == {"ent_yuanmingyuan_parent",
+                                                "ent_yuanmingyuan"}]
+        assert len(ids) == 1, "缺跨模块同指断言 dia_ymy_parent_same"
+        assert ids[0].relation == IdentityRelation.SAME_CONTINUANT
+        assert ids[0].status == EpistemicStatus.VERIFIED
+        # 关系断言不可挪用为同指证据：证据必须是驻防营建/方位事实
+        assert set(ids[0].evidence_fact_ids) == {
+            "tf_bqtz116_yuanzheng", "tf_bqtz116_fangwei"}

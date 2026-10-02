@@ -300,6 +300,20 @@ IDENTITIES: List[DiachronicIdentityAssertion] = [
         status=EpistemicStatus.VERIFIED,
         alternative_relations=[],
     ),
+    # 跨模块同指（holdout run2 collision 硬闸发现的 KB 数据缺陷修复）：
+    # banners 的驻防空间母体与 yuanmingyuan 模块的圆明园本体是同一座园子——
+    # banners 建模时为八旗驻防聚合另立母体实体，未挂身份断言，导致挖掘假说
+    # 「圆明园」跨双实体计入 collision。注意 dia_ymy_ccy_relation 是关系断言，
+    # 不可挪用为同指证据；此处证据取八旗通志营建/方位二事实。
+    DiachronicIdentityAssertion(
+        id="dia_ymy_parent_same",
+        subject_entity_ids=["ent_yuanmingyuan_parent", "ent_yuanmingyuan"],
+        relation=IdentityRelation.SAME_CONTINUANT,
+        time_span=_ts(1724, 1911, "ts_d2"),
+        evidence_fact_ids=["tf_bqtz116_yuanzheng", "tf_bqtz116_fangwei"],
+        status=EpistemicStatus.VERIFIED,
+        alternative_relations=[],
+    ),
 ]
 
 

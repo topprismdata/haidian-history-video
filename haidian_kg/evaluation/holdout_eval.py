@@ -46,6 +46,7 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from haidian_kg.production_exports import KnowledgeBase
 from haidian_kg.ontology.epistemic import SourceDivision, TextualFact
+from haidian_kg.ontology.spatiotemporal import EpistemicStatus  # noqa: F401 (build_name_registry)
 
 #: 冻结阈值（holdout-design.md §7，勿改）
 THRESHOLDS = {
@@ -110,12 +111,16 @@ class NameRegistry(object):
     """KB 已建实体字形表：归一形 → 实体集合（真值唯一来源）。"""
 
     def __init__(self, form_map: Dict[str, Set[str]], display: Dict[str, str],
-                 entity_module: Optional[Dict[str, str]] = None):
+                 entity_module: Optional[Dict[str, str]] = None,
+                 same_as: Optional[Set[frozenset]] = None):
         # 长形优先：最长匹配需要
         self._forms = sorted(form_map.keys(), key=len, reverse=True)
         self.form_map = form_map
         self.display = display
         self.entity_module = entity_module or {}
+        # 已断言同指的实体 ID 对（SAME_CONTINUANT + VERIFIED）——KB 共享数据，
+        # 非挖掘器词表；collision 豁免的合法依据
+        self.same_as: Set[frozenset] = set(same_as or ())
 
     def entities_of(self, norm_form: str) -> Set[str]:
         return self.form_map.get(norm_form, set())
@@ -133,11 +138,18 @@ class NameRegistry(object):
 
 def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
                         ) -> NameRegistry:
-    """从校准模块收集实体字形表（canonical_label 剥注 + 别名 + 异体）。"""
+    """从校准模块收集实体字形表（canonical_label 剥注 + 别名 + 异体）。
+
+    同时收集跨模块同指断言（SAME_CONTINUANT + VERIFIED）——collision
+    豁免依据。身份断言是 KB 共享数据，挖掘器不消费它生成候选，故不构成
+    评估器-挖掘器同源。
+    """
     import importlib
+    from haidian_kg.ontology.spatiotemporal import IdentityRelation
     form_map: Dict[str, Set[str]] = {}
     display: Dict[str, str] = {}
     entity_module: Dict[str, str] = {}
+    same_as: Set[frozenset] = set()
     for name in module_names:
         mod = importlib.import_module("haidian_kg.calibration.%s" % name)
         app_by_id = {a.id: a for a in mod.APPELLATIONS}
@@ -158,7 +170,15 @@ def build_name_registry(module_names: Sequence[str] = DEFAULT_ENTITIES_MODULES
                 nf = norm_eval(label)
                 form_map.setdefault(nf, set()).add(ent.id)
                 display.setdefault(nf, label)
-    return NameRegistry(form_map, display, entity_module)
+        for dia in getattr(mod, "IDENTITIES", ()):  # 跨模块同指断言
+            if (dia.relation == IdentityRelation.SAME_CONTINUANT
+                    and dia.status == EpistemicStatus.VERIFIED
+                    and len(dia.subject_entity_ids) >= 2):
+                ids = list(dia.subject_entity_ids)
+                for i in range(len(ids)):
+                    for j in range(i + 1, len(ids)):
+                        same_as.add(frozenset((ids[i], ids[j])))
+    return NameRegistry(form_map, display, entity_module, same_as)
 
 
 def extract_gold_mentions(text: str, segment_id: str,
@@ -397,7 +417,26 @@ def hypothesis_coverage(report, segments: Sequence[dict],
                         ent_covered_by.setdefault(eid, set()).add(hname)
                         hyp_covers.setdefault(hname, set()).add(eid)
     dup_entities = {e for e, hs in ent_covered_by.items() if len(hs) >= 2}
-    collision_hyps = {h for h, es in hyp_covers.items() if len(es) >= 2}
+
+    def _same_class(eids: Set[str]) -> int:
+        """独立指称计数：covered 实体按 same_as 断言合并等价类后剩余数。"""
+        classes: List[Set[str]] = []
+        for e in eids:
+            hit = [c for c in classes
+                   if e in c
+                   or any(frozenset((e, x)) in registry.same_as for x in c)]
+            if not hit:
+                classes.append({e})
+                continue
+            base = hit[0]
+            for c in hit[1:]:
+                base |= c
+                classes.remove(c)
+            base.add(e)
+        return len(classes)
+
+    collision_hyps = {h for h, es in hyp_covers.items()
+                      if _same_class(es) >= 2}
     collision_detail = []
     for h in sorted(collision_hyps):
         ents = []

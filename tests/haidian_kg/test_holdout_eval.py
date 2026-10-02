@@ -260,6 +260,29 @@ class TestHypothesisCoverage:
         assert coll and len(coll) == 1, "一假说覆盖两个 gold 实体 → collision"
         assert dup == set()
 
+    def test_collision_exempt_when_same_continuant_asserted(self):
+        """跨模块同指对（SAME_CONTINUANT+VERIFIED）合并等价类后不计 collision
+        ——run3 圆明园双建模豁免（dia_ymy_parent_same）的回归钉。"""
+        pair = frozenset(("e_gate_a", "e_gate_b"))
+        reg = NameRegistry({"西城闸": {"e_gate_a", "e_gate_b"}}, {},
+                           same_as={pair})
+        segs = [self.seg("s1", "西城闸旧址犹存")]
+        golds = {"s1": extract_gold_mentions(segs[0]["text"], "s1", reg)}
+        rep = fake_report([fake_hyp("西城闸", [fake_occ("div_holdout_000", "西城闸")])])
+        dup, coll, _ = HE.hypothesis_coverage(rep, segs, golds, reg)
+        assert coll == set(), "已断言同指的双实体假说不得计 collision"
+        assert dup == set()
+
+    def test_collision_persists_for_unrelated_assertion(self):
+        """断言的是别的实体对 → 不得豁免（防豁免条件过松变恒真）。"""
+        reg = NameRegistry({"西城闸": {"e_gate_a", "e_gate_b"}}, {},
+                           same_as={frozenset(("e_x", "e_y"))})
+        segs = [self.seg("s1", "西城闸旧址犹存")]
+        golds = {"s1": extract_gold_mentions(segs[0]["text"], "s1", reg)}
+        rep = fake_report([fake_hyp("西城闸", [fake_occ("div_holdout_000", "西城闸")])])
+        dup, coll, _ = HE.hypothesis_coverage(rep, segs, golds, reg)
+        assert len(coll) == 1, "无关同指对不得豁免"
+
 
 # ---------------------------------------------------------------------------
 # 归因
