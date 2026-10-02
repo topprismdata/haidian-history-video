@@ -422,8 +422,10 @@ def check_l4d(ep: Episode, ocr_by_page: Optional[Dict[int, OcrResult]] = None
                 ocr = ocr_by_page.get(page.number)
                 if ocr is None:
                     continue
-                want = normalize_punct(quote)
-                got = normalize_punct("".join(ocr.texts))
+                # 两侧同口径:繁简归一后比对(E15 实测:屏显繁体「慧日長輝」,
+                # 口播/表内是简体「慧日长辉」,不归一会恒假 warn)
+                want = normalize_script(normalize_punct(quote))
+                got = normalize_script(normalize_punct("".join(ocr.texts)))
                 # 摘录容忍：画面常节引史料（shucun P7 上谕只摘「移驻树村」），
                 # 任一 ≥4 字连续片段命中即视为上屏；整段缺席才 warn
                 n = min(4, len(want))
