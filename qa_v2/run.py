@@ -17,6 +17,7 @@ from qa_v2.checks_render import (
     check_l3, check_l5, check_l6, assert_negative_control,
 )
 from qa_v2.data import Episode, Page, load_episode
+from qa_v2.frames import CACHE as OCR_CACHE_DIR
 from qa_v2.frames import OcrResult, ocr_cached, render_frame
 from qa_v2.report import Finding, render_json, render_text
 
@@ -37,17 +38,54 @@ COMPOSITION_OVERRIDES = {
 }
 
 
+def _source_freshness(ep_name: str) -> float:
+    """该集全部输入的最新 mtime（秒）。
+
+    覆盖：集目录（narration/slots/pages/组件）、公共板图、共享组件与 Root。
+    任一输入比缓存帧新 → 帧过期，必须重渲。
+    """
+    import os
+    roots = [
+        ROOT / "src" / ep_name,
+        ROOT / "public" / ep_name,
+        ROOT / "src" / "components",
+        ROOT / "src" / "Root.tsx",
+        ROOT / "src" / "index.tsx",
+    ]
+    newest = 0.0
+    for r in roots:
+        if r.is_file():
+            newest = max(newest, r.stat().st_mtime)
+        elif r.is_dir():
+            for dirpath, _dirnames, filenames in os.walk(r):
+                for fn in filenames:
+                    p = pathlib.Path(dirpath) / fn
+                    try:
+                        newest = max(newest, p.stat().st_mtime)
+                    except OSError:
+                        pass
+    return newest
+
+
 def _frame_for(
     ep_name: str,
     page: Page,
     use_ocr: bool,
     ep: Optional[Episode] = None,
 ) -> Tuple[pathlib.Path, Optional[OcrResult]]:
-    """抽该页终态帧。--ocr 时顺带跑 OCR 并缓存。"""
+    """抽该页终态帧。--ocr 时顺带跑 OCR 并缓存。
+
+    帧失效纪律（2026-10-02 FullQaRun 实测发现的缺陷修复）：
+    png 存在但早于任一输入文件的 mtime → 视为过期，重渲；
+    重渲后同步删除该页 OCR 缓存（缓存键不含帧内容哈希，旧 OCR 会配错新帧）。
+    """
     out = FRAME_DIR / ep_name
     out.mkdir(parents=True, exist_ok=True)
     png = out / ("p%02d.png" % page.number)
-    if not png.exists():
+    stale = False
+    if png.exists() and png.stat().st_mtime < _source_freshness(ep_name):
+        stale = True
+    if stale or not png.exists():
         if ep is None:
             ep = load_episode(ep_name)
         render_frame(
@@ -55,6 +93,11 @@ def _frame_for(
             ep.final_frame(page.number),
             png,
         )
+        if stale:
+            ocr_cache = OCR_CACHE_DIR / (
+                "%s_p%02d.json" % (ep_name, page.number))
+            if ocr_cache.exists():
+                ocr_cache.unlink()
     if use_ocr:
         return png, ocr_cached(ep_name, page.number, png)
     return png, None
