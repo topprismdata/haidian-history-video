@@ -88,3 +88,47 @@
 口播可用的跨集呼应:中官坟(义地,葬太监)↔ 董四墓(葬妃嫔,守墓人成村);
 汉经厂(太监厂坊)↔ 蓝靛厂(宦官掌控的织染局外署);
 误植说(1953)必须挂「当事人回忆」标签,状态层止于 1952。
+
+---
+
+## 四、run3 缺口批次(2026-10-02,四 agent 并行)
+
+holdout run3 的 48 条 kb-coverage-gap FP 逐面裁决(见 `docs/kg/adjudication-run3.md`):
+16 实体建成入库、3 区外指称 deliberate non-entry、11 引擎垃圾面归 v5 边界处理、其余为复合面待实测。
+
+### 新模块与实体
+
+**xishan.py(西山线,commit 9e84370)**
+| 实体 | 锚点 |
+|---|---|
+| ent_xs_dajuesi 大觉寺(清水院) | 辽咸雍四年(1068)清水院碑[一手实物];八院说标明人追述 |
+| ent_xs_biyunsi 碧云寺 | 元碧云庵(帝京景物略直取)→乾隆十三年金刚宝座塔[塔本体一手/年代现代口径分层] |
+| ent_xs_wenquan 温泉 | 明代泉眼书证;「温泉镇」字形负向钉(防 span 错位 FP) |
+| ent_xs_fenghuangling 凤凰岭 | 山名明清无确证开放起始;龙泉寺年代三说并挂 |
+| ent_xs_beianhe 北安河 | 官书首见 1782;「北安河行宫」证为今人回代命名(辽碑早 700 年) |
+| ent_xs_jinshan 金山(明代妃嫔葬地) | 卷100 转引三证;与 settlements 同指断言 dia_xs_jinshan_same_settlements;「一溜边山七十二府」证伪官书出处 |
+
+**sanshiwuyuan.py(三山五园线,commit b38eea0,12 实体)**
+香山(ent_xiangshan)/静宜园(ent_jingyiyuan,1745-1746 双源)/万寿山(ent_wanshoushan)/清漪园→颐和园(ent_qingyiyuan,SAME_CONTINUANT 改名断言)/昆明湖(ent_kunminghu)/万寿山后溪河(ent_houxihe,「后湖」现代通称 UNSUBSTANTIATED)/玉泉山(ent_yuquanshan,《金史》行宫一手)/静明园(ent_jingmingyuan,澄心园 1680→1692 改名)/畅春园(ent_changchunyuan_kangxi,清华园故址三证;「澄心园改畅春园」判 DISPROVEN)/恩佑寺(ent_enyousi,雍正为康熙荐福——纠正任务书误记,负向钉)/恩慕寺(ent_enmusi,1777)/三山五园概念(ent_sanshiwuyuan,[后世分析];鲍源深 1860「五园三山」最早近形连称;成员关系不挂 identity)
+
+**pingyuan.py(平原水系线,commit b56f527,6 实体)**
+六郎庄(ent_liulangzhuang,牛栏庄→柳浪庄→六郎庄;乾隆改名说 UNSUBSTANTIATED)/万泉庄(ent_wanquanzhuang,1687 御制记首见)/万泉河(ent_wanquanhe,河名无清代官书直书,UNSUBSTANTIATED 挂接)/泉宗庙(ent_quanzongmiao,1766 经始 1767 落成,pilot 卷79+卷99 双证)/海淀(ent_haidian,1260《中堂事记》「憇海店」最早书证)/三里河(ent_sanlihe,1534 钟铭书证;金代开挑 CONTESTED)
+
+**banners.py 追加(commit 7dad920,4 实体)**
+健锐营(ent_jry_ying,1749 碑记+清史稿双源)/云梯兵(ent_jry_yunti,predecessor SUCCESSOR 断言)/团城演武厅(ent_jry_tuancheng,2006 国保)/香山碉楼(ent_jry_diaolou,67/66 两说并存留证)
+
+### 引擎 v5(commit d4c7e2e)
+后缀+墓/街/房/营房(旗名穿越);LEADING_STOP_PREFIXES 17 成员;13 类垃圾面负控制拒绝、9 条 FN 面正控制转 TP;镜像钉同步。
+
+### 评估器配套(commit 本批)
+collision 同指等价类豁免(87dfcc3);duplication 别名感知豁免——覆盖假说全为实体 KB 认可字形→豁免落 dup_exempt,含非认可变体仍计 dup(负向钉保留)。
+
+### 反查战果:两处长编证伪(commit 171e62e)
+1. era6「一溜边山七十二府」非《明史》/卷103 官书引文(四库本全书零命中),改俗谚层
+2. era7 泉宗庙「乾隆四十三年/十三泉」与卷79/卷99 抵牾,改 1766-1767/二十八泉
+
+### 尚未建模(下一批候选)
+- 嵌套地名/子词复审机制(EngineV5 残留:香山董四墓/墓成村/然街,+3 FP 家族)
+- 「京西第一大庙」=蓝靛厂西顶广仁宫考(挂蓝靛厂模块 appellation)
+- 妃嫔园寝单体(娘娘府享堂等)、八旗各旗营房实体(JianRuiying open_questions)
+- 石碉 appellation 变体(run4 剩余 FN)
