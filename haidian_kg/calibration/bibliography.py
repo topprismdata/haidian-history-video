@@ -259,6 +259,106 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         base_edition=SISHU,
         edition_note="《日下旧闻考》卷99引，载树村五圣庵、观音寺",
     ),
+
+    # ---------- 明清北京寺钟文献（E9 大钟寺词条入库，2026-10-02） ----------
+    # 每书作者/机构必填；引文一律按原刻本繁体字形逐字核对，不得以简体转写冒充原文。
+    HistoricalSource(
+        id="src_dijingjingwulue", title="帝京景物略",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_liudong",
+        compiler_person_ids=["person_yuyizheng"],
+        base_edition=SISHU,
+        edition_note="刘侗、于奕正合撰（刘侗属文、于奕正采辑）。记大钟「向藏漢經廠」"
+                     "「日供六僧擊之」，为钟履历链的两处一手明录。"
+                     "引文按原刻繁体字形（漢經廠），卷次待核、不得臆标",
+    ),
+    HistoricalSource(
+        id="src_zuozhongzhi", title="酌中志",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_liuruoyu",
+        edition_note="明末宦官刘若愚忆撰之内府见闻。记「至於三十年後，於西直門外萬壽寺中"
+                     "建大鐘樓，懸大鐘一口」「日夜撞不絕聲，云十萬八千杵」，"
+                     "为万寿寺期一手宦官记述；繁体原字形核对，卷次待核",
+    ),
+    HistoricalSource(
+        id="src_changankehua", title="长安客话",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_jiangyikui",
+        edition_note="万历间蒋一葵撰。记万寿寺「寺有方鐘樓，前臨大道，樓僅容鐘」与大钟"
+                     "「聲聞數十里，其聲宏宏，時遠時近，有異他鐘」；"
+                     "书名繁体作《長安客話》，引文逐字核对，卷次待核",
+    ),
+    HistoricalSource(
+        id="src_chunmengmengyulu", title="春明梦余录",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_sunchengze",
+        total_volumes=70,
+        base_edition=SISHU,
+        edition_note="孙承泽撰。记德胜门东铸钟厂「舊鑄高二丈餘、闊一丈餘者，尚有十數仆地上」，"
+                     "为大钟铸于铸钟厂（现代研究推断）的关键旁证；卷次待核",
+    ),
+    HistoricalSource(
+        id="src_yanjingsuishiji", title="燕京岁时记",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_fuchadunchong",
+        edition_note="清末富察敦崇撰，全一卷。记觉生寺大钟殿「高五丈，下方上圓，四面皆窗，"
+                     "後有旋梯，左升右降」；所记庙会民俗（打金钱眼等）为民俗史料，"
+                     "与佛事功能分属两层，不得混级",
+    ),
+    HistoricalSource(
+        id="src_wanliyehuobian", title="万历野获编",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_shendefu",
+        edition_note="沈德符撰，分类编排、另有补遗。记万寿寺营建「浹歲即成」，"
+                     "证万历五年(1577)开工、六年(1578)竣工跨年完成，堵「同年建成」误说；"
+                     "卷次待核",
+    ),
+    HistoricalSource(
+        id="src_lianggongdingjianji", title="两宫鼎建记",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_hezhongshi",
+        edition_note="贺仲轼记万历年间两宫灾后修建事宜。记搬运巨料「每里掘一井，以澆旱船、"
+                     "資渴飲」「比時天寒地凍，正宜趁時發運」——该方法明代确曾用于运巨石，"
+                     "仅可作「冰道运钟」传说之方法旁证，不得当成本钟史实",
+    ),
+    HistoricalSource(
+        id="src_jueshengsi_beiwen", title="敕建觉生寺碑文",
+        category=SourceCategory.EPIGRAPHY,
+        author_person_id="person_yongzheng",
+        base_edition=SHIBEN,
+        edition_note="雍正御制，寺内原碑（石刻一手）。载选址「高朗乾爽，林木佳茂」"
+                     "「右隔塵市之囂，左繞山川之勝」、取名「以無覺之覺，覺不生之生」、"
+                     "「爰賜名覺生寺」。引文按碑石原字核对；"
+                     "开工(1733)与赐名(1734)分属两年，不得混写同年",
+    ),
+    HistoricalSource(
+        id="src_qianlong_shiwenji", title="清高宗御制诗文集",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_qianlong",
+        base_edition=SISHU,
+        edition_note="乾隆八年(1743)《御制觉生寺大钟诗》仍佛教语汇（「善吼周三界」），"
+                     "乾隆十一年(1746)《觉生寺大钟歌用沈德潜韵》始绑定靖难与忏悔叙事"
+                     "（「晁謀弗善野戰龍」「懺悔詎賴佛氏鐘」）。两诗分属两篇卷，"
+                     "严禁剪接为同年同作",
+    ),
+    HistoricalSource(
+        id="src_yuanzhonglang", title="袁中郎全集",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_yuanhongdao",
+        edition_note="袁宏道撰。《万寿寺观文皇旧钟》诗「道傍觀者肩相摩，車騎數月猶馳逐」"
+                     "记移钟盛况；「外書佛母萬真言，內寫雜花八十軸」与实物铭文不符，"
+                     "证「华严钟」之名与八十一卷华严说至晚明已流传。卷次待核",
+    ),
+    HistoricalSource(
+        id="src_dzs_history", title="大钟寺古钟博物馆馆史资料",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="大钟寺古钟博物馆",
+        version_description="博物馆公开沿革、器物档案与专题课题结项公告",
+        edition_note="1957市保/1980文保所/1985博物馆成立/1996国保(4-166)沿革，"
+                     "钟高6.75米等现行公开口径，1778祈雨设坛记录与2023祈雨专项课题"
+                     "「纠正非祈雨不鸣讹传」结论的公开出处。属机构公开资料(L2/L3)，"
+                     "与古籍逐字引文分挂不同篇卷，不得互冒",
+    ),
 ]
 
 #: 常见简称 → 规范书名 归一表
@@ -269,6 +369,12 @@ TITLE_ALIASES: Dict[str, str] = {
     "皇朝通典": "皇朝通典",
     "仁宗实录": "清仁宗睿皇帝实录",
     "清实录": "清仁宗睿皇帝实录",
+    # E9 大钟寺词条新补
+    "御制觉生寺碑文": "敕建觉生寺碑文",
+    "觉生寺碑": "敕建觉生寺碑文",
+    "高宗御制诗文集": "清高宗御制诗文集",
+    "袁宏道集": "袁中郎全集",
+    "大钟寺博物馆馆史资料": "大钟寺古钟博物馆馆史资料",
 }
 
 

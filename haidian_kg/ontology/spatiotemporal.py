@@ -38,6 +38,11 @@ class PhysicalThingKind(str, Enum):
     RELIGIOUS_PRECINCT = "寺院道场"
     TOMB_CLUSTER = "墓葬群"
     MODERN_INSTITUTION = "近代机构建筑"
+    # E9大钟寺词条入库新增：器物与皇家厂坊此前无对应类别，
+    # 把永乐大钟错挂"寺院道场"、把汉经厂/铸钟厂错挂"近代机构建筑"都会污染 kind 语义。
+    # 依据 CIDOC CRM E18 Physical Thing 下属 E22 Human-Made Object 划出：
+    HUMAN_MADE_ARTIFACT = "人工器物"            # 可移动人工器物（E22），如永乐大钟
+    IMPERIAL_WORKSHOP = "皇家厂坊"              # 御用厂坊机构及其占地，如汉经厂、铸钟厂
 
 
 class PersistentSpatialEntity(BaseModel):

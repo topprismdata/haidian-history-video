@@ -64,9 +64,11 @@ PEOPLE: List[HistoricalPerson] = [
         id="person_qianlong", name="乾隆帝",
         dynasty="清代", primary_role=PersonRole.MONARCH,
         official_titles=["清高宗"],
-        authored_source_ids=["src_ymy_sijifang"],
+        authored_source_ids=["src_ymy_sijifang", "src_qianlong_shiwenji"],
         haidian_relevance="乾隆十二年(1747)御制《圆明园四十景图咏》；"
-                          "乾隆三十五年(1770)前后圆明、长春、绮春三园格局基本形成",
+                          "乾隆三十五年(1770)前后圆明、长春、绮春三园格局基本形成；"
+                          "乾隆八年(1743)御制《觉生寺大钟诗》、十一年(1746)御制"
+                          "《觉生寺大钟歌用沈德潜韵》，两诗分年、不得剪接",
         note="《四十景图咏》为御制，命画院绘图、词臣题咏，"
              "是景观定名的一手依据，具体绘图与题咏者另有其人",
     ),
@@ -147,5 +149,91 @@ PEOPLE: List[HistoricalPerson] = [
                           "若音转成立则树村之名逾千年，「因树得名」不成立",
         note="底层文献（唐墓志？金代碑刻？）未能核到，「蜀村」「蜀社」"
              "在通行古籍库中检索不到 —— 只能作存疑待考，不可作史实",
+    ),
+    # ---------- E9 大钟寺词条（2026-10-02 入库） ----------
+    HistoricalPerson(
+        id="person_liudong", name="刘侗",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_dijingjingwulue"],
+        haidian_relevance="《帝京景物略》记大钟「向藏漢經廠」「日供六僧擊之」，"
+                          "为钟履历链（汉经厂期、万寿寺期）的一手明录",
+        note="与于奕正合撰，刘侗属文、于奕正采辑；生卒年异说，故不填",
+    ),
+    HistoricalPerson(
+        id="person_yuyizheng", name="于奕正",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_dijingjingwulue"],
+        haidian_relevance="《帝京景物略》合撰者，采辑京师景物，万寿寺大钟条出其手",
+        note="合撰分工：刘侗属文、于奕正采辑；生卒年异说，故不填",
+    ),
+    HistoricalPerson(
+        id="person_liuruoyu", name="刘若愚",
+        dynasty="明代", primary_role=PersonRole.IMPERIAL_SERVANT,
+        authored_source_ids=["src_zuozhongzhi"],
+        haidian_relevance="《酌中志》记「至於三十年後，於西直門外萬壽寺中建大鐘樓，"
+                          "懸大鐘一口」「日夜撞不絕聲，云十萬八千杵」，"
+                          "为万寿寺期钟事的一手宦官记述",
+        note="明末内府宦官，自撰生平忆录；生卒不详，故不填",
+    ),
+    HistoricalPerson(
+        id="person_jiangyikui", name="蒋一葵",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_changankehua"],
+        haidian_relevance="《长安客话》记万寿寺「寺有方鐘樓，前臨大道，樓僅容鐘」"
+                          "与大钟「聲聞數十里……有異他鐘」，为万寿寺期形制与声闻一手记载",
+        note="万历间人；具体仕履与生卒不详，故不填",
+    ),
+    HistoricalPerson(
+        id="person_sunchengze", name="孙承泽",
+        dynasty="明末清初", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_chunmengmengyulu"],
+        haidian_relevance="《春明梦余录》记德胜门东铸钟厂「舊鑄高二丈餘、闊一丈餘者，"
+                          "尚有十數仆地上」，为大钟铸于铸钟厂（现代研究推断）的关键旁证",
+        note="明崇祯进士、入清仕至吏部侍郎，顺治间退居；生卒有异说，故不填",
+    ),
+    HistoricalPerson(
+        id="person_fuchadunchong", name="富察敦崇",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_yanjingsuishiji"],
+        haidian_relevance="《燕京岁时记》记觉生寺大钟殿「高五丈，下方上圓，四面皆窗，"
+                          "後有旋梯，左升右降」，为大钟殿形制一手记载；"
+                          "所记庙会民俗属民俗史料层",
+        note="清末满洲人；生卒不详，故不填",
+    ),
+    HistoricalPerson(
+        id="person_shendefu", name="沈德符",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_wanliyehuobian"],
+        haidian_relevance="《万历野获编》记万寿寺营建「浹歲即成」，证万历五年(1577)开工、"
+                          "六年(1578)竣工跨年完成，堵「同年建成」误说",
+        note="万历间人；生卒不详，故不填",
+    ),
+    HistoricalPerson(
+        id="person_hezhongshi", name="贺仲轼",
+        dynasty="明代", primary_role=PersonRole.IMPERIAL_SERVANT,
+        authored_source_ids=["src_lianggongdingjianji"],
+        haidian_relevance="《两宫鼎建记》记明代搬运巨料「每里掘一井，以澆旱船、資渴飲」"
+                          "「比時天寒地凍，正宜趁時發運」，为「冰道运钟」传说之方法旁证"
+                          "（所记为大石料运输，非此钟本身）",
+        note="万历间以荫入仕、预两宫营建事；生卒不详，故不填",
+    ),
+    HistoricalPerson(
+        id="person_yuanhongdao", name="袁宏道",
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        authored_source_ids=["src_yuanzhonglang"],
+        haidian_relevance="《万寿寺观文皇旧钟》诗「道傍觀者肩相摩，車騎數月猶馳逐」记移钟"
+                          "盛况；「外書佛母萬真言，內寫雜花八十軸」与实物铭文不符，"
+                          "为「华严钟」讹名至晚明已流传的一手证据",
+        note="万历间公安派领袖。其描述与实物不符，只能说明名实相左，"
+             "不得替他编造「未入钟内观察」之类过程",
+    ),
+    HistoricalPerson(
+        id="person_yongzheng", name="雍正帝",
+        dynasty="清代", primary_role=PersonRole.MONARCH,
+        official_titles=["清世宗"],
+        authored_source_ids=["src_jueshengsi_beiwen"],
+        haidian_relevance="雍正十一年(1733)正月敕建觉生寺于西直门外曾家庄，十二年(1734)冬"
+                          "告成、御制碑文赐名「觉生寺」；十一年四月已允内务府移钟之奏",
+        note="开工(1733)与赐名(1734)分属两年，碑文载选址与取名依据，不得混写同年",
     ),
 ]
