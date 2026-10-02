@@ -106,6 +106,12 @@ hd:feat_chexiangqu_canal a hhto:PhysicalFeature,
     hhto:coordinatesWGS84 "116.3,39.92"^^xsd:string ;
     rdfs:comment "公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷"@zh .
 
+hd:feat_diaoyutai_lake a hhto:PhysicalFeature,
+        hhto:Wetland ;
+    rdfs:label "金代钓鱼台行宫蓄水湖遗迹"@zh ;
+    hhto:coordinatesWGS84 "116.33,39.91"^^xsd:string ;
+    rdfs:comment "金章宗筑台垂钓积水成池之行宫园林湖泽，引玉泉山水蓄为东湖"@zh .
+
 hd:feat_donghulin_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "门头沟东胡林人永定河阶地遗址"@zh ;
@@ -184,6 +190,12 @@ hd:top_chexiangqu a hhto:Toponym ;
     hhto:attestedIn hd:attest_sanguozhi_liujing ;
     hhto:phoneticPinyin "chē xiāng qú"^^xsd:string ;
     hhto:standardForm "车箱渠"^^xsd:string .
+
+hd:top_diaoyutai a hhto:Toponym ;
+    rdfs:label "钓鱼台"@zh ;
+    hhto:attestedIn hd:attest_diaoyutai_dijing ;
+    hhto:phoneticPinyin "diào yú tái"^^xsd:string ;
+    hhto:standardForm "钓鱼台"^^xsd:string .
 
 hd:top_donghulin a hhto:Toponym ;
     rdfs:label "东胡林"@zh ;
@@ -350,6 +362,15 @@ hd:unit_jicheng_suburb a hhto:AdministrativeUnit,
     hhto:validTimeStart -1046 ;
     rdfs:comment "先秦战国燕国蓟城西北部，沿高梁河水系分布的古农耕原野"@zh .
 
+hd:unit_jin_zhongdu a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "金中都大兴府（北京正式建都之始）"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_zhongdu_daxing ;
+    hhto:validTimeEnd 1215 ;
+    hhto:validTimeStart 1153 ;
+    rdfs:comment "1153年海陵王完颜亮迁都中都，北京首次成为北方封建王朝正式首都，止于1215年蒙古破城更名燕京"@zh .
+
 hd:unit_landianchang_town a hhto:AdministrativeUnit,
         hhto:MilitaryGarrison ;
     rdfs:label "蓝靛厂街市与外火器营"@zh ;
@@ -357,6 +378,15 @@ hd:unit_landianchang_town a hhto:AdministrativeUnit,
     hhto:namedAs hd:top_landianchang_dye ;
     hhto:validTimeStart 1770 ;
     rdfs:comment "明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之四千间兵营市镇"@zh .
+
+hd:unit_liao_nanjing a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "辽代南京析津府宛平县"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_nanjing_xijin ;
+    hhto:validTimeEnd 1125 ;
+    hhto:validTimeStart 938 ;
+    rdfs:comment "公元938年升幽州为南京幽都府后设宛平县，海淀大部行政母体正式归属宛平"@zh .
 
 hd:unit_niangniangfu_tomb a hhto:AdministrativeUnit,
         hhto:BurialGround ;
@@ -395,12 +425,21 @@ hd:unit_qinglongqiao_market a hhto:AdministrativeUnit,
 
 hd:unit_qingshui_court a hhto:AdministrativeUnit,
         hhto:ReligiousSite ;
-    rdfs:label "金代西山八院之清水院"@zh ;
+    rdfs:label "辽代西山清水院（大觉寺前身）"@zh ;
     hhto:locatedAtFeature hd:feat_xiangshan ;
     hhto:namedAs hd:top_dajuesi ;
-    hhto:validTimeEnd 1234 ;
-    hhto:validTimeStart 1190 ;
-    rdfs:comment "金章宗西山八大行宫水院之一，后明代重修为大觉寺"@zh .
+    hhto:validTimeEnd 1215 ;
+    hhto:validTimeStart 1088 ;
+    rdfs:comment "辽大安四年契丹贵族敕建清水院，后金章宗扩为西山八大行宫水院之一"@zh .
+
+hd:unit_shengshui_court a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "金章宗西山八大水院之圣水院（香山寺）"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:namedAs hd:top_shengshuiyuan ;
+    hhto:validTimeEnd 1215 ;
+    hhto:validTimeStart 1186 ;
+    rdfs:comment "金世宗大安寺、章宗圣水院，为香山最早之皇家敕建行宫水院"@zh .
 
 hd:unit_suzhoujie_market a hhto:AdministrativeUnit,
         hhto:ImperialGarden ;
@@ -640,6 +679,14 @@ hd:attest_dazhongsi_bell_stele a hhto:PlaceAttestation ;
     hhto:recordedYear 1733 ;
     rdfs:comment "断代: 清代（雍正十一年） | 来源: 《大清实录·世宗实录》"@zh .
 
+hd:attest_diaoyutai_dijing a hhto:PlaceAttestation ;
+    rdfs:label "帝京景物略金章宗钓鱼台记载"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "钓鱼台在宛平县西十里，章宗钓鱼于此，积水成池，台其后筑也"@zh ;
+    hhto:recordedYear 1190 ;
+    rdfs:comment "断代: 明修记金代事 | 来源: 《帝京景物略卷五》"@zh .
+
 hd:attest_donghulin_pottery a hhto:PlaceAttestation ;
     rdfs:label "东胡林人新石器早期墓葬与陶器"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -713,6 +760,14 @@ hd:attest_ke_lei_bronze a hhto:PlaceAttestation ;
     hhto:originalQuote "盖内铸铭文：周王命太保召公奭长子克‘命克侯于燕’，实证第一代燕侯就封北燕，北京三千年建城信史原点"@zh ;
     hhto:recordedYear -1046 ;
     rdfs:comment "断代: 西周初年（约公元前1046年） | 来源: 《房山琉璃河西周燕都遗址M1193发掘报告》"@zh .
+
+hd:attest_liaoshi_nanjing a hhto:PlaceAttestation ;
+    rdfs:label "辽史会同元年升南京记载"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "会同元年，太宗升幽州为南京，统宛平、析津二县"@zh ;
+    hhto:recordedYear 938 ;
+    rdfs:comment "断代: 元修记辽代事 | 来源: 《辽史·地理志四》"@zh .
 
 hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
     rdfs:label "玲珑宝塔"@zh ;
@@ -1343,6 +1398,12 @@ hd:top_liulihe a hhto:Toponym ;
     hhto:phoneticPinyin "liú lí hé"^^xsd:string ;
     hhto:standardForm "琉璃河"^^xsd:string .
 
+hd:top_nanjing_xijin a hhto:Toponym ;
+    rdfs:label "南京析津府"@zh ;
+    hhto:attestedIn hd:attest_liaoshi_nanjing ;
+    hhto:phoneticPinyin "nán jīng xī jīn fǔ"^^xsd:string ;
+    hhto:standardForm "南京析津府"^^xsd:string .
+
 hd:top_niangniangfu a hhto:Toponym ;
     rdfs:label "娘娘府"@zh ;
     hhto:attestedIn hd:attest_niangniangfu_gazetteer ;
@@ -1361,6 +1422,11 @@ hd:top_qinglongqiao a hhto:Toponym ;
     hhto:attestedIn hd:attest_qinglongqiao_rixia ;
     hhto:phoneticPinyin "qīng lóng qiáo"^^xsd:string ;
     hhto:standardForm "青龙桥"^^xsd:string .
+
+hd:top_shengshuiyuan a hhto:Toponym ;
+    rdfs:label "圣水院"@zh ;
+    hhto:phoneticPinyin "shèng shuǐ yuàn"^^xsd:string ;
+    hhto:standardForm "圣水院"^^xsd:string .
 
 hd:top_wanshousi a hhto:Toponym ;
     rdfs:label "万寿寺"@zh ;
@@ -1433,6 +1499,11 @@ hd:top_zaojunmiao a hhto:Toponym ;
     hhto:phoneticPinyin "zào jūn miào"^^xsd:string ;
     hhto:standardForm "皂君庙"^^xsd:string .
 
+hd:top_zhongdu_daxing a hhto:Toponym ;
+    rdfs:label "中都大兴府"@zh ;
+    hhto:phoneticPinyin "zhōng dū dà xīng fǔ"^^xsd:string ;
+    hhto:standardForm "中都大兴府"^^xsd:string .
+
 hd:top_zhongguancun_modern a hhto:Toponym ;
     rdfs:label "中关村"@zh ;
     hhto:attestedIn hd:attest_jingxi_map_1913,
@@ -1444,10 +1515,6 @@ hd:top_zhongguancun_modern a hhto:Toponym ;
     hhto:hasHypothesis hd:hypo_zgc_chenyuan_alone ;
     hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
     hhto:standardForm "中关村"^^xsd:string .
-
-hhto:Wetland a owl:Class ;
-    rdfs:label "湖泊沼泽水洼"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
 
 hd:attest_banquan_myth a hhto:PlaceAttestation ;
     rdfs:label "黄帝阪泉之战传说"@zh ;
@@ -1605,6 +1672,10 @@ hhto:ModernInstitution a owl:Class ;
     rdfs:label "近现代科研教育机构与高新区"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
 
+hhto:Wetland a owl:Class ;
+    rdfs:label "湖泊沼泽水洼"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
 hd:attest_taizhouwu_dock_study a hhto:PlaceAttestation ;
     rdfs:label "太舟坞地名源流考"@zh ;
     hhto:epistemicStatus "CONTESTED"^^xsd:string ;
@@ -1686,16 +1757,6 @@ hhto:EuphemisticRenamingEvent a owl:Class ;
     rdfs:label "文人雅化避嫌更名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
-hhto:ReligiousSite a owl:Class ;
-    rdfs:label "宗教寺观"@zh ;
-    rdfs:subClassOf hhto:AdministrativeUnit .
-
-hd:feat_xiangshan a hhto:PhysicalFeature,
-        hhto:TerrainElevation ;
-    rdfs:label "香山与金山翠微山麓"@zh ;
-    hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
-    rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
-
 hd:top_haidian_dian1 a hhto:Toponym ;
     rdfs:label "海店"@zh ;
     hhto:attestedIn hd:attest_haidian_1260 ;
@@ -1723,24 +1784,34 @@ hhto:ImperialNamingEvent a owl:Class ;
     rdfs:label "官方赐名改名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
+hhto:ReligiousSite a owl:Class ;
+    rdfs:label "宗教寺观"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
+
 hhto:Watercourse a owl:Class ;
     rdfs:label "水系河道"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
 
+hd:feat_xiangshan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "香山与金山翠微山麓"@zh ;
+    hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
+    rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
+
 hhto:PhoneticShiftEvent a owl:Class ;
     rdfs:label "语音流变与方言通假事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:MilitaryGarrison a owl:Class ;
+    rdfs:label "军事驻防与军屯"@zh ;
+    rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
 
 hd:feat_gaolianghe a hhto:PhysicalFeature,
         hhto:Watercourse ;
     rdfs:label "高梁河水系古道"@zh ;
     hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
     rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
-
-hhto:MilitaryGarrison a owl:Class ;
-    rdfs:label "军事驻防与军屯"@zh ;
-    rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh ;
-    rdfs:subClassOf hhto:AdministrativeUnit .
 
 hd:feat_wanquanhe a hhto:PhysicalFeature,
         hhto:Wetland ;

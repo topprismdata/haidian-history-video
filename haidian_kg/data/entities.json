@@ -91,6 +91,16 @@
       "description": "隋大业七年隋炀帝大举北征高句丽于蓟城北郊所建大本营与储粮军事行宫"
     },
     {
+      "id": "feat_diaoyutai_lake",
+      "label": "金代钓鱼台行宫蓄水湖遗迹",
+      "feature_type": "Wetland",
+      "coordinates": [
+        116.33,
+        39.91
+      ],
+      "description": "金章宗筑台垂钓积水成池之行宫园林湖泽，引玉泉山水蓄为东湖"
+    },
+    {
       "id": "feat_gaolianghe",
       "label": "高梁河水系古道",
       "feature_type": "Watercourse",
@@ -277,13 +287,40 @@
       "description": "唐神龙元年安置东北降户与突厥部众之羁縻州，天宝间寄治昌平县清水店"
     },
     {
+      "id": "unit_liao_nanjing",
+      "label": "辽代南京析津府宛平县",
+      "unit_type": "Settlement",
+      "located_at_feature_id": "feat_gaolianghe",
+      "valid_start_year": 938,
+      "valid_end_year": 1125,
+      "description": "公元938年升幽州为南京幽都府后设宛平县，海淀大部行政母体正式归属宛平"
+    },
+    {
+      "id": "unit_jin_zhongdu",
+      "label": "金中都大兴府（北京正式建都之始）",
+      "unit_type": "Settlement",
+      "located_at_feature_id": "feat_gaolianghe",
+      "valid_start_year": 1153,
+      "valid_end_year": 1215,
+      "description": "1153年海陵王完颜亮迁都中都，北京首次成为北方封建王朝正式首都，止于1215年蒙古破城更名燕京"
+    },
+    {
       "id": "unit_qingshui_court",
-      "label": "金代西山八院之清水院",
+      "label": "辽代西山清水院（大觉寺前身）",
       "unit_type": "ReligiousSite",
       "located_at_feature_id": "feat_xiangshan",
-      "valid_start_year": 1190,
-      "valid_end_year": 1234,
-      "description": "金章宗西山八大行宫水院之一，后明代重修为大觉寺"
+      "valid_start_year": 1088,
+      "valid_end_year": 1215,
+      "description": "辽大安四年契丹贵族敕建清水院，后金章宗扩为西山八大行宫水院之一"
+    },
+    {
+      "id": "unit_shengshui_court",
+      "label": "金章宗西山八大水院之圣水院（香山寺）",
+      "unit_type": "ReligiousSite",
+      "located_at_feature_id": "feat_xiangshan",
+      "valid_start_year": 1186,
+      "valid_end_year": 1215,
+      "description": "金世宗大安寺、章宗圣水院，为香山最早之皇家敕建行宫水院"
     },
     {
       "id": "unit_wenquan_village",
@@ -627,6 +664,42 @@
       "phonetic_pinyin": "yōu zhōu",
       "name_type": "official",
       "associated_unit_id": "unit_youzhou_commandery",
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_diaoyutai",
+      "standard_form": "钓鱼台",
+      "script_hanzi": "钓鱼台",
+      "phonetic_pinyin": "diào yú tái",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_nanjing_xijin",
+      "standard_form": "南京析津府",
+      "script_hanzi": "南京析津府",
+      "phonetic_pinyin": "nán jīng xī jīn fǔ",
+      "name_type": "official",
+      "associated_unit_id": "unit_liao_nanjing",
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_zhongdu_daxing",
+      "standard_form": "中都大兴府",
+      "script_hanzi": "中都大兴府",
+      "phonetic_pinyin": "zhōng dū dà xīng fǔ",
+      "name_type": "official",
+      "associated_unit_id": "unit_jin_zhongdu",
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_shengshuiyuan",
+      "standard_form": "圣水院",
+      "script_hanzi": "圣水院",
+      "phonetic_pinyin": "shèng shuǐ yuàn",
+      "name_type": "official",
+      "associated_unit_id": "unit_shengshui_court",
       "predecessor_toponym_id": null
     },
     {
@@ -1267,6 +1340,32 @@
       "evidence_level": "Level 1 (考古硬证据)",
       "epistemic_status": "VERIFIED",
       "notes": "确证实物：带州寄治昌平清水店而非海淀太舟坞"
+    },
+    {
+      "id": "attest_diaoyutai_dijing",
+      "toponym_id": "top_diaoyutai",
+      "attested_name": "帝京景物略金章宗钓鱼台记载",
+      "source_title": "帝京景物略卷五",
+      "source_author": "刘侗",
+      "recorded_year": 1190,
+      "dynasty": "明修记金代事",
+      "quote": "钓鱼台在宛平县西十里，章宗钓鱼于此，积水成池，台其后筑也",
+      "evidence_level": "Level 3 (正史方志纪实)",
+      "epistemic_status": "VERIFIED",
+      "notes": null
+    },
+    {
+      "id": "attest_liaoshi_nanjing",
+      "toponym_id": "top_nanjing_xijin",
+      "attested_name": "辽史会同元年升南京记载",
+      "source_title": "辽史·地理志四",
+      "source_author": "脱脱等",
+      "recorded_year": 938,
+      "dynasty": "元修记辽代事",
+      "quote": "会同元年，太宗升幽州为南京，统宛平、析津二县",
+      "evidence_level": "Level 3 (正史方志纪实)",
+      "epistemic_status": "VERIFIED",
+      "notes": null
     },
     {
       "id": "attest_anheqiao_wood_c14",
