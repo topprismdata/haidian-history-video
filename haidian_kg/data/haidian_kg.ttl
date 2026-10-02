@@ -100,6 +100,12 @@ hhto:targetToponym a owl:ObjectProperty ;
     rdfs:domain hhto:ToponymEvolutionEvent ;
     rdfs:range hhto:Toponym .
 
+hd:feat_donghulin_site a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "门头沟东胡林人永定河阶地遗址"@zh ;
+    hhto:coordinatesWGS84 "115.71,39.98"^^xsd:string ;
+    rdfs:comment "距今约1万至9000年新石器早期人类过渡期墓葬与最早陶器出土地"@zh .
+
 hd:feat_guangyuanzha_site a hhto:HydraulicFacility,
         hhto:PhysicalFeature ;
     rdfs:label "广源闸水利遗址"@zh ;
@@ -112,17 +118,54 @@ hd:feat_longbeicun_weir a hhto:HydraulicFacility,
     hhto:coordinatesWGS84 "116.27,40.03"^^xsd:string ;
     rdfs:comment "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存"@zh .
 
+hd:feat_shangzhai_site a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "平谷上宅新石器文化遗址"@zh ;
+    hhto:coordinatesWGS84 "117.15,40.17"^^xsd:string ;
+    rdfs:comment "距今约7500至6000年北京最早定居农业陶器与石磨盘聚落"@zh .
+
+hd:feat_wangfujing_paleo a hhto:PhysicalFeature,
+        hhto:Wetland ;
+    rdfs:label "王府井东方广场旧石器晚期古营地"@zh ;
+    hhto:coordinatesWGS84 "116.41,39.91"^^xsd:string ;
+    rdfs:comment "距今约2.5万年北京平原中心古人类季节性狩猎火塘营地"@zh .
+
+hd:feat_yiguangsi_site a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "海淀四季青遗光寺新石器遗址"@zh ;
+    hhto:coordinatesWGS84 "116.26,39.95"^^xsd:string ;
+    rdfs:comment "海淀本土新石器时代晚期磨制石斧出土台地，距今约4000年定居农耕遗存"@zh .
+
 hd:feat_yuquanshan a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "玉泉山山体与泉源"@zh ;
     hhto:coordinatesWGS84 "116.25,39.99"^^xsd:string ;
     rdfs:comment "天下第一泉玉泉水源地，金代芙蓉殿、清代静明园所在地"@zh .
 
+hd:feat_zhoukoudian a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "周口店龙骨山古人类洞穴遗址"@zh ;
+    hhto:coordinatesWGS84 "115.93,39.73"^^xsd:string ;
+    rdfs:comment "距今约77万至20万年北京直立人及3万年山顶洞人栖居地，世界古人类发源圣地"@zh .
+
 hd:top_baijiatuan a hhto:Toponym ;
     rdfs:label "白家疃"@zh ;
     hhto:attestedIn hd:attest_baijiatuan_caoxueqin ;
     hhto:phoneticPinyin "bái jiā tuǎn"^^xsd:string ;
     hhto:standardForm "白家疃"^^xsd:string .
+
+hd:top_banquan a hhto:Toponym ;
+    rdfs:label "阪泉"@zh ;
+    hhto:attestedIn hd:attest_banquan_myth ;
+    hhto:hasHypothesis hd:hypo_banquan_yellow_emperor ;
+    hhto:phoneticPinyin "bǎn quán"^^xsd:string ;
+    hhto:standardForm "阪泉"^^xsd:string .
+
+hd:top_donghulin a hhto:Toponym ;
+    rdfs:label "东胡林"@zh ;
+    hhto:attestedIn hd:attest_donghulin_pottery ;
+    hhto:phoneticPinyin "dōng hú lín"^^xsd:string ;
+    hhto:standardForm "东胡林"^^xsd:string .
 
 hd:top_guajiatun a hhto:Toponym ;
     rdfs:label "挂甲屯"@zh ;
@@ -162,6 +205,12 @@ hd:top_wanshoushan hhto:attestedIn hd:attest_wanshoushan_rixia .
 
 hd:top_xiangshan hhto:attestedIn hd:attest_xiangshan_jinshi .
 
+hd:top_yiguangsi a hhto:Toponym ;
+    rdfs:label "遗光寺"@zh ;
+    hhto:attestedIn hd:attest_yiguangsi_axe ;
+    hhto:phoneticPinyin "yí guāng sì"^^xsd:string ;
+    hhto:standardForm "遗光寺"^^xsd:string .
+
 hd:top_yuquanshan hhto:attestedIn hd:attest_yuquanshan_jinshi .
 
 hd:top_zhongguantun a hhto:Toponym ;
@@ -170,6 +219,15 @@ hd:top_zhongguantun a hhto:Toponym ;
     hhto:evolvedFrom hd:top_zhongguancun_eunuch ;
     hhto:phoneticPinyin "zhōng guān tún"^^xsd:string ;
     hhto:standardForm "中官屯"^^xsd:string .
+
+hd:top_zhoukoudian a hhto:Toponym ;
+    rdfs:label "周口店"@zh ;
+    hhto:attestedIn hd:attest_shandingdong_needle,
+        hd:attest_shangzhai_agriculture,
+        hd:attest_wangfujing_camp,
+        hd:attest_zhoukoudian_peking_man ;
+    hhto:phoneticPinyin "zhōu kǒu diàn"^^xsd:string ;
+    hhto:standardForm "周口店"^^xsd:string .
 
 hd:unit_cas_zhongguancun a hhto:AdministrativeUnit,
         hhto:ModernInstitution ;
@@ -431,10 +489,6 @@ hhto:SpatialExtinctionEvent a owl:Class ;
     rdfs:label "实体消失与地名化石存续事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
-hhto:Wetland a owl:Class ;
-    rdfs:label "湖泊沼泽水洼"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
-
 hd:attest_anhe_republic_record a hhto:PlaceAttestation ;
     rdfs:label "安河桥"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -523,6 +577,14 @@ hd:attest_dazhongsi_bell_stele a hhto:PlaceAttestation ;
     hhto:originalQuote "乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨"@zh ;
     hhto:recordedYear 1733 ;
     rdfs:comment "断代: 清代（雍正十一年） | 来源: 《大清实录·世宗实录》"@zh .
+
+hd:attest_donghulin_pottery a hhto:PlaceAttestation ;
+    rdfs:label "东胡林人新石器早期墓葬与陶器"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "出土完整东胡林少女墓葬骨架及早期素面平底陶器残片，为北京地区新旧石器过渡与农业萌芽之源"@zh ;
+    hhto:recordedYear -10000 ;
+    rdfs:comment "断代: 新石器时代早期（距今约1万至9000年） | 来源: 《门头沟东胡林新石器时代早期遗址发掘报告》"@zh .
 
 hd:attest_dongsimu_record a hhto:PlaceAttestation ;
     rdfs:label "董四墓"@zh ;
@@ -654,6 +716,22 @@ hd:attest_rixia_shucun a hhto:PlaceAttestation ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
 
+hd:attest_shandingdong_needle a hhto:PlaceAttestation ;
+    rdfs:label "山顶洞人人工骨针与穿孔饰物"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "出土长82毫米磨制穿孔骨针与141件穿孔石珠、海蚶壳随葬饰物，实证缝纫技术与原始埋葬礼仪"@zh ;
+    hhto:recordedYear -30000 ;
+    rdfs:comment "断代: 旧石器时代晚期（距今约3万年） | 来源: 《周口店山顶洞人遗址发掘报告》"@zh .
+
+hd:attest_shangzhai_agriculture a hhto:PlaceAttestation ;
+    rdfs:label "上宅文化彩陶与石磨盘"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，确立北京地区首支独立新石器定居农耕考古学文化"@zh ;
+    hhto:recordedYear -7000 ;
+    rdfs:comment "断代: 新石器时代中晚期（距今约7000年） | 来源: 《平谷上宅新石器时代文化遗址发掘简报》"@zh .
+
 hd:attest_shucun_shishi a hhto:PlaceAttestation ;
     rdfs:label "树村"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -669,6 +747,14 @@ hd:attest_suzhoujie_qianlong_poem a hhto:PlaceAttestation ;
     hhto:originalQuote "水木依稀姑苏肆，市廛宛转入楼台"@zh ;
     hhto:recordedYear 1761 ;
     rdfs:comment "断代: 清代（乾隆二十六年） | 来源: 《御制诗三集》"@zh .
+
+hd:attest_wangfujing_camp a hhto:PlaceAttestation ;
+    rdfs:label "王府井东方广场旧石器古营地"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "在北京冲积平原腹地发现古人类火塘遗迹、打制石片与哺乳动物碎骨，实证古人类已走出西山进入平原猎原"@zh ;
+    hhto:recordedYear -25000 ;
+    rdfs:comment "断代: 旧石器时代末期（距今约2.5万年） | 来源: 《北京王府井东方广场旧石器时代晚期遗址发掘简报》"@zh .
 
 hd:attest_wanping_niulanzhuang a hhto:PlaceAttestation ;
     rdfs:label "牛栏庄"@zh ;
@@ -742,6 +828,15 @@ hd:attest_xierqi_shuntian a hhto:PlaceAttestation ;
     hhto:recordedYear 1885 ;
     rdfs:comment "断代: 清光绪十一年 | 来源: 《光绪顺天府志·地理志》"@zh .
 
+hd:attest_yiguangsi_axe a hhto:PlaceAttestation ;
+    rdfs:label "海淀四季青遗光寺新石器磨制石斧"@zh ;
+    hhto:epistemicNotes "海淀本土最早物质文化考古信史物证"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛，证实海淀西山山前阶地四千年前已有人类农耕定居活动"@zh ;
+    hhto:recordedYear -4000 ;
+    rdfs:comment "断代: 新石器时代晚期（距今约4000年） | 来源: 《北京海淀区出土文物志》"@zh .
+
 hd:attest_yimuyuan_qianlong a hhto:PlaceAttestation ;
     rdfs:label "一亩园"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -813,6 +908,14 @@ hd:attest_zhongguantun_map a hhto:PlaceAttestation ;
     hhto:originalQuote "海淀镇东门外二里，标示‘中官屯’，为太监守茔户聚集之聚落"@zh ;
     hhto:recordedYear 1908 ;
     rdfs:comment "断代: 清光绪三十四年 | 来源: 《顺天府宛平县保甲全图》"@zh .
+
+hd:attest_zhoukoudian_peking_man a hhto:PlaceAttestation ;
+    rdfs:label "周口店第一地点北京直立人遗存"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层，确证古人类最早天然用火与石器打制证据"@zh ;
+    hhto:recordedYear -770000 ;
+    rdfs:comment "断代: 旧石器时代初期（距今约77万年） | 来源: 《周口店直立人遗址发掘与定年公报》"@zh .
 
 hd:evt_anhe_imperial a hhto:ImperialNamingEvent,
         hhto:ToponymEvolutionEvent ;
@@ -970,6 +1073,12 @@ hd:feat_wenquan_spring a hhto:PhysicalFeature,
     rdfs:label "温泉地热出露带"@zh ;
     hhto:coordinatesWGS84 "116.17,40.03"^^xsd:string ;
     rdfs:comment "西山断裂带地热水出露点，辽金温泉疗养古地"@zh .
+
+hd:hypo_banquan_yellow_emperor a hhto:CompetingHypothesis ;
+    rdfs:label "黄帝炎帝阪泉之战传说（神话传说）"@zh ;
+    hhto:epistemicStatus "FOLK_LEGEND"^^xsd:string ;
+    hhto:supportedBy hd:attest_banquan_myth ;
+    rdfs:comment "《史记》所载黄帝与炎帝阪泉之战，民间附会于北京延庆或涿鹿，属于部落联盟神话传说而非确证信史"@zh .
 
 hd:hypo_gaoliangqiao_979 a hhto:CompetingHypothesis ;
     rdfs:label "高梁桥宋辽高梁河之战战场桥说（伪说）"@zh ;
@@ -1183,6 +1292,19 @@ hd:top_zhongguancun_modern a hhto:Toponym ;
     hhto:hasHypothesis hd:hypo_zgc_chenyuan_alone ;
     hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
     hhto:standardForm "中关村"^^xsd:string .
+
+hhto:Wetland a owl:Class ;
+    rdfs:label "湖泊沼泽水洼"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
+hd:attest_banquan_myth a hhto:PlaceAttestation ;
+    rdfs:label "黄帝阪泉之战传说"@zh ;
+    hhto:epistemicNotes "远古部落神话传说，未有出土实物信史印证，严格禁止列为确证信史"@zh ;
+    hhto:epistemicStatus "FOLK_LEGEND"^^xsd:string ;
+    hhto:evidenceLevel "Level 5 (民间口碑传说)"^^xsd:string ;
+    hhto:originalQuote "轩辕乃修德振兵……与炎帝战于阪泉之野，三战然后得其志"@zh ;
+    hhto:recordedYear -100 ;
+    rdfs:comment "断代: 西汉（追述远古神话） | 来源: 《史记·五帝本纪》"@zh .
 
 hd:attest_gaoliangqiao_979_myth a hhto:PlaceAttestation ;
     rdfs:label "宋太宗中箭之高梁桥说"@zh ;
@@ -1458,10 +1580,6 @@ hhto:ImperialNamingEvent a owl:Class ;
     rdfs:label "官方赐名改名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
-hhto:TerrainElevation a owl:Class ;
-    rdfs:label "山峦台地"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
-
 hhto:PhoneticShiftEvent a owl:Class ;
     rdfs:label "语音流变与方言通假事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
@@ -1475,15 +1593,19 @@ hhto:Settlement a owl:Class ;
     rdfs:label "自然聚落与市镇"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
 
-hhto:CompetingHypothesis a owl:Class ;
-    rdfs:label "竞争假说"@zh ;
-    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
+hhto:TerrainElevation a owl:Class ;
+    rdfs:label "山峦台地"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
 
 hd:feat_wanquanhe a hhto:PhysicalFeature,
         hhto:Wetland ;
     rdfs:label "万泉河湿地水网"@zh ;
     hhto:coordinatesWGS84 "116.3,39.98"^^xsd:string ;
     rdfs:comment "西山山麓泉群汇聚形成的万泉河浅水洼地与湖泊沼泽区"@zh .
+
+hhto:CompetingHypothesis a owl:Class ;
+    rdfs:label "竞争假说"@zh ;
+    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
 
 hhto:PhysicalFeature a owl:Class ;
     rdfs:label "物理空间地物"@zh ;

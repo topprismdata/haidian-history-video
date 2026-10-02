@@ -39,6 +39,41 @@ class HaidianCorpusExtractor:
         # =====================================================================
         features = [
             PhysicalFeatureEntity(
+                id="feat_zhoukoudian",
+                label="周口店龙骨山古人类洞穴遗址",
+                feature_type="TerrainElevation",
+                coordinates=[115.93, 39.73],
+                description="距今约77万至20万年北京直立人及3万年山顶洞人栖居地，世界古人类发源圣地",
+            ),
+            PhysicalFeatureEntity(
+                id="feat_yiguangsi_site",
+                label="海淀四季青遗光寺新石器遗址",
+                feature_type="TerrainElevation",
+                coordinates=[116.26, 39.95],
+                description="海淀本土新石器时代晚期磨制石斧出土台地，距今约4000年定居农耕遗存",
+            ),
+            PhysicalFeatureEntity(
+                id="feat_donghulin_site",
+                label="门头沟东胡林人永定河阶地遗址",
+                feature_type="TerrainElevation",
+                coordinates=[115.71, 39.98],
+                description="距今约1万至9000年新石器早期人类过渡期墓葬与最早陶器出土地",
+            ),
+            PhysicalFeatureEntity(
+                id="feat_wangfujing_paleo",
+                label="王府井东方广场旧石器晚期古营地",
+                feature_type="Wetland",
+                coordinates=[116.41, 39.91],
+                description="距今约2.5万年北京平原中心古人类季节性狩猎火塘营地",
+            ),
+            PhysicalFeatureEntity(
+                id="feat_shangzhai_site",
+                label="平谷上宅新石器文化遗址",
+                feature_type="TerrainElevation",
+                coordinates=[117.15, 40.17],
+                description="距今约7500至6000年北京最早定居农业陶器与石磨盘聚落",
+            ),
+            PhysicalFeatureEntity(
                 id="feat_gaolianghe",
                 label="高梁河水系古道",
                 feature_type="Watercourse",
@@ -398,6 +433,11 @@ class HaidianCorpusExtractor:
         # 3. 地名称号实体 (Toponyms)
         # =====================================================================
         toponyms = [
+            # 史前古人类与新石器遗址地名
+            ToponymEntity(id="top_zhoukoudian", standard_form="周口店", script_hanzi="周口店", phonetic_pinyin="zhōu kǒu diàn", name_type="standard"),
+            ToponymEntity(id="top_yiguangsi", standard_form="遗光寺", script_hanzi="遗光寺", phonetic_pinyin="yí guāng sì", name_type="standard"),
+            ToponymEntity(id="top_donghulin", standard_form="东胡林", script_hanzi="东胡林", phonetic_pinyin="dōng hú lín", name_type="standard"),
+            ToponymEntity(id="top_banquan", standard_form="阪泉", script_hanzi="阪泉", phonetic_pinyin="bǎn quán", name_type="folk"),
             # 高梁河与高梁桥
             ToponymEntity(id="top_gaolianghe", standard_form="高梁河", script_hanzi="高梁河", phonetic_pinyin="gāo liáng hé", name_type="standard", associated_unit_id="unit_jicheng_suburb"),
             ToponymEntity(id="top_gaoliangzha", standard_form="高梁闸", script_hanzi="高梁闸", phonetic_pinyin="gāo liáng zhá", name_type="official"),
@@ -476,6 +516,92 @@ class HaidianCorpusExtractor:
         # =====================================================================
         attestations = [
             # L1 考古硬证据
+            PlaceAttestationEntity(
+                id="attest_zhoukoudian_peking_man",
+                toponym_id="top_zhoukoudian",
+                attested_name="周口店第一地点北京直立人遗存",
+                source_title="周口店直立人遗址发掘与定年公报",
+                source_author="中国科学院古脊椎动物与古人类研究所",
+                recorded_year=-770000,
+                dynasty="旧石器时代初期（距今约77万年）",
+                quote="出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层，确证古人类最早天然用火与石器打制证据",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_shandingdong_needle",
+                toponym_id="top_zhoukoudian",
+                attested_name="山顶洞人人工骨针与穿孔饰物",
+                source_title="周口店山顶洞人遗址发掘报告",
+                source_author="裴文中",
+                recorded_year=-30000,
+                dynasty="旧石器时代晚期（距今约3万年）",
+                quote="出土长82毫米磨制穿孔骨针与141件穿孔石珠、海蚶壳随葬饰物，实证缝纫技术与原始埋葬礼仪",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_wangfujing_camp",
+                toponym_id="top_zhoukoudian",
+                attested_name="王府井东方广场旧石器古营地",
+                source_title="北京王府井东方广场旧石器时代晚期遗址发掘简报",
+                source_author="北京市文物研究所",
+                recorded_year=-25000,
+                dynasty="旧石器时代末期（距今约2.5万年）",
+                quote="在北京冲积平原腹地发现古人类火塘遗迹、打制石片与哺乳动物碎骨，实证古人类已走出西山进入平原猎原",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_donghulin_pottery",
+                toponym_id="top_donghulin",
+                attested_name="东胡林人新石器早期墓葬与陶器",
+                source_title="门头沟东胡林新石器时代早期遗址发掘报告",
+                source_author="北京大学考古学系、北京市文物研究所",
+                recorded_year=-10000,
+                dynasty="新石器时代早期（距今约1万至9000年）",
+                quote="出土完整东胡林少女墓葬骨架及早期素面平底陶器残片，为北京地区新旧石器过渡与农业萌芽之源",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_shangzhai_agriculture",
+                toponym_id="top_zhoukoudian",
+                attested_name="上宅文化彩陶与石磨盘",
+                source_title="平谷上宅新石器时代文化遗址发掘简报",
+                source_author="北京市文物研究所",
+                recorded_year=-7000,
+                dynasty="新石器时代中晚期（距今约7000年）",
+                quote="出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，确立北京地区首支独立新石器定居农耕考古学文化",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_yiguangsi_axe",
+                toponym_id="top_yiguangsi",
+                attested_name="海淀四季青遗光寺新石器磨制石斧",
+                source_title="北京海淀区出土文物志",
+                source_author="海淀区文物管理所、首都博物馆",
+                recorded_year=-4000,
+                dynasty="新石器时代晚期（距今约4000年）",
+                quote="四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛，证实海淀西山山前阶地四千年前已有人类农耕定居活动",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+                notes="海淀本土最早物质文化考古信史物证",
+            ),
+            PlaceAttestationEntity(
+                id="attest_banquan_myth",
+                toponym_id="top_banquan",
+                attested_name="黄帝阪泉之战传说",
+                source_title="史记·五帝本纪",
+                source_author="司马迁",
+                recorded_year=-100,
+                dynasty="西汉（追述远古神话）",
+                quote="轩辕乃修德振兵……与炎帝战于阪泉之野，三战然后得其志",
+                evidence_level=EvidenceLevel.L5_FOLK_LEGEND,
+                epistemic_status=EpistemicStatus.FOLK_LEGEND,
+                notes="远古部落神话传说，未有出土实物信史印证，严格禁止列为确证信史",
+            ),
             PlaceAttestationEntity(
                 id="attest_anheqiao_wood_c14",
                 toponym_id="top_anheqiao_wood",
@@ -1342,6 +1468,15 @@ class HaidianCorpusExtractor:
         # 6. 竞争与争议假说 (Competing Hypotheses)
         # =====================================================================
         hypotheses = [
+            CompetingHypothesisEntity(
+                id="hypo_banquan_yellow_emperor",
+                toponym_id="top_banquan",
+                hypothesis_title="黄帝炎帝阪泉之战传说（神话传说）",
+                claim_summary="《史记》所载黄帝与炎帝阪泉之战，民间附会于北京延庆或涿鹿，属于部落联盟神话传说而非确证信史",
+                supported_by_attestation_ids=["attest_banquan_myth"],
+                disproven_by_attestation_ids=[],
+                confidence_status=EpistemicStatus.FOLK_LEGEND,
+            ),
             CompetingHypothesisEntity(
                 id="hypo_taizhouwu_tang",
                 toponym_id="top_taizhouwu",
