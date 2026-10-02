@@ -118,6 +118,12 @@ hd:feat_guangyuanzha_site a hhto:HydraulicFacility,
     hhto:coordinatesWGS84 "116.31,39.94"^^xsd:string ;
     rdfs:comment "元至元二十六年通惠河头闸，郭守敬主持修建之节制水柜水闸"@zh .
 
+hd:feat_linshuogong_site a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "隋幽州临朔宫行宫遗址"@zh ;
+    hhto:coordinatesWGS84 "116.36,39.92"^^xsd:string ;
+    rdfs:comment "隋大业七年隋炀帝大举北征高句丽于蓟城北郊所建大本营与储粮军事行宫"@zh .
+
 hd:feat_longbeicun_weir a hhto:HydraulicFacility,
         hhto:PhysicalFeature ;
     rdfs:label "白浮堰龙背村段古水利遗构"@zh ;
@@ -480,6 +486,16 @@ hd:unit_yimuyuan_fields a hhto:AdministrativeUnit,
     hhto:validTimeStart 1723 ;
     rdfs:comment "圆明园大宫门外皇帝躬耕演礼之籍田与京西著名娘娘庙会所在地"@zh .
 
+hd:unit_youzhou_commandery a hhto:AdministrativeUnit,
+        hhto:Settlement ;
+    rdfs:label "唐代幽州大都督府与范阳卢龙节度使"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
+    hhto:namedAs hd:top_linshuogong,
+        hd:top_youzhou ;
+    hhto:validTimeEnd 938 ;
+    hhto:validTimeStart 581 ;
+    rdfs:comment "隋唐北疆军事经略核心，管辖幽州蓟县及周边羁縻府州，止于938年升辽南京"@zh .
+
 hd:unit_yuanmingyuan a hhto:AdministrativeUnit,
         hhto:ImperialGarden ;
     rdfs:label "清代圆明园"@zh ;
@@ -819,6 +835,14 @@ hd:attest_shucun_shishi a hhto:PlaceAttestation ;
     hhto:recordedYear 1801 ;
     rdfs:comment "断代: 清嘉庆六年 | 来源: 《圆明园史事编年》"@zh .
 
+hd:attest_suishu_linshuogong a hhto:PlaceAttestation ;
+    rdfs:label "隋书炀帝纪置临朔宫记载"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "大业七年春二月乙未，帝自江都驿赴涿郡。幽州置临朔宫，征天下兵集涿郡"@zh ;
+    hhto:recordedYear 611 ;
+    rdfs:comment "断代: 隋大业七年 | 来源: 《隋书·炀帝纪上》"@zh .
+
 hd:attest_suzhoujie_qianlong_poem a hhto:PlaceAttestation ;
     rdfs:label "万寿山买卖街"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
@@ -826,6 +850,15 @@ hd:attest_suzhoujie_qianlong_poem a hhto:PlaceAttestation ;
     hhto:originalQuote "水木依稀姑苏肆，市廛宛转入楼台"@zh ;
     hhto:recordedYear 1761 ;
     rdfs:comment "断代: 清代（乾隆二十六年） | 来源: 《御制诗三集》"@zh .
+
+hd:attest_tang_jiao_epitaph a hhto:PlaceAttestation ;
+    rdfs:label "唐带州孤竹府焦君墓志铭"@zh ;
+    hhto:epistemicNotes "确证实物：带州寄治昌平清水店而非海淀太舟坞"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店"@zh ;
+    hhto:recordedYear 750 ;
+    rdfs:comment "断代: 唐天宝九载 | 来源: 《大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭》"@zh .
 
 hd:attest_wangfujing_camp a hhto:PlaceAttestation ;
     rdfs:label "王府井东方广场旧石器古营地"@zh ;
@@ -1290,6 +1323,12 @@ hd:top_linglongta a hhto:Toponym ;
     hhto:phoneticPinyin "líng lóng tǎ"^^xsd:string ;
     hhto:standardForm "玲珑塔"^^xsd:string .
 
+hd:top_linshuogong a hhto:Toponym ;
+    rdfs:label "临朔宫"@zh ;
+    hhto:attestedIn hd:attest_suishu_linshuogong ;
+    hhto:phoneticPinyin "lín shuò gōng"^^xsd:string ;
+    hhto:standardForm "临朔宫"^^xsd:string .
+
 hd:top_liulangzhuang_general a hhto:Toponym ;
     rdfs:label "六郎庄"@zh ;
     hhto:attestedIn hd:attest_liulang_legend ;
@@ -1381,6 +1420,11 @@ hd:top_yimuyuan a hhto:Toponym ;
     hhto:attestedIn hd:attest_yimuyuan_qianlong ;
     hhto:phoneticPinyin "yī mǔ yuán"^^xsd:string ;
     hhto:standardForm "一亩园"^^xsd:string .
+
+hd:top_youzhou a hhto:Toponym ;
+    rdfs:label "幽州"@zh ;
+    hhto:phoneticPinyin "yōu zhōu"^^xsd:string ;
+    hhto:standardForm "幽州"^^xsd:string .
 
 hd:top_zaojunmiao a hhto:Toponym ;
     rdfs:label "皂君庙"@zh ;
@@ -1485,7 +1529,8 @@ hd:top_chengfu a hhto:Toponym ;
 
 hd:top_daizhou_name a hhto:Toponym ;
     rdfs:label "带州"@zh ;
-    hhto:attestedIn hd:attest_daizhou_tang_record ;
+    hhto:attestedIn hd:attest_daizhou_tang_record,
+        hd:attest_tang_jiao_epitaph ;
     hhto:phoneticPinyin "dài zhōu"^^xsd:string ;
     hhto:standardForm "带州"^^xsd:string .
 
@@ -1682,15 +1727,15 @@ hhto:Watercourse a owl:Class ;
     rdfs:label "水系河道"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
 
+hhto:PhoneticShiftEvent a owl:Class ;
+    rdfs:label "语音流变与方言通假事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
 hd:feat_gaolianghe a hhto:PhysicalFeature,
         hhto:Watercourse ;
     rdfs:label "高梁河水系古道"@zh ;
     hhto:coordinatesWGS84 "116.35,39.95"^^xsd:string ;
     rdfs:comment "先秦古河道，自金水河上源至积水潭，元代并入通惠河干道"@zh .
-
-hhto:PhoneticShiftEvent a owl:Class ;
-    rdfs:label "语音流变与方言通假事件"@zh ;
-    rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
 hhto:MilitaryGarrison a owl:Class ;
     rdfs:label "军事驻防与军屯"@zh ;

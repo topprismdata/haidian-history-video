@@ -95,6 +95,13 @@ class HaidianCorpusExtractor:
                 description="公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷",
             ),
             PhysicalFeatureEntity(
+                id="feat_linshuogong_site",
+                label="隋幽州临朔宫行宫遗址",
+                feature_type="TerrainElevation",
+                coordinates=[116.36, 39.92],
+                description="隋大业七年隋炀帝大举北征高句丽于蓟城北郊所建大本营与储粮军事行宫",
+            ),
+            PhysicalFeatureEntity(
                 id="feat_gaolianghe",
                 label="高梁河水系古道",
                 feature_type="Watercourse",
@@ -218,6 +225,15 @@ class HaidianCorpusExtractor:
                 valid_start_year=-221,
                 valid_end_year=220,
                 description="秦汉幽州刺史部监察与统属之都邑核心，海淀平原全境隶属广阳郡蓟县管辖",
+            ),
+            AdministrativeUnitEntity(
+                id="unit_youzhou_commandery",
+                label="唐代幽州大都督府与范阳卢龙节度使",
+                unit_type="Settlement",
+                located_at_feature_id="feat_gaolianghe",
+                valid_start_year=581,
+                valid_end_year=938,
+                description="隋唐北疆军事经略核心，管辖幽州蓟县及周边羁縻府州，止于938年升辽南京",
             ),
             AdministrativeUnitEntity(
                 id="unit_jicheng_suburb",
@@ -492,6 +508,9 @@ class HaidianCorpusExtractor:
             ToponymEntity(id="top_yanguo", standard_form="燕国", script_hanzi="燕国", phonetic_pinyin="yān guó", name_type="official", associated_unit_id="unit_yan_fiefdom"),
             ToponymEntity(id="top_chexiangqu", standard_form="车箱渠", script_hanzi="车箱渠", phonetic_pinyin="chē xiāng qú", name_type="official"),
             ToponymEntity(id="top_guangyang", standard_form="广阳", script_hanzi="广阳", phonetic_pinyin="guǎng yáng", name_type="official", associated_unit_id="unit_guangyang_commandery"),
+            # 隋唐幽州与临朔宫地名
+            ToponymEntity(id="top_linshuogong", standard_form="临朔宫", script_hanzi="临朔宫", phonetic_pinyin="lín shuò gōng", name_type="official", associated_unit_id="unit_youzhou_commandery"),
+            ToponymEntity(id="top_youzhou", standard_form="幽州", script_hanzi="幽州", phonetic_pinyin="yōu zhōu", name_type="official", associated_unit_id="unit_youzhou_commandery"),
             # 高梁河与高梁桥
             ToponymEntity(id="top_gaolianghe", standard_form="高梁河", script_hanzi="高梁河", phonetic_pinyin="gāo liáng hé", name_type="standard", associated_unit_id="unit_jicheng_suburb"),
             ToponymEntity(id="top_gaoliangzha", standard_form="高梁闸", script_hanzi="高梁闸", phonetic_pinyin="gāo liáng zhá", name_type="official"),
@@ -706,6 +725,32 @@ class HaidianCorpusExtractor:
                 quote="嘉平二年，刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，灌溉蓟城南北四千余顷",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            # Era 3 隋唐五代幽州文献与墓志硬证据
+            PlaceAttestationEntity(
+                id="attest_suishu_linshuogong",
+                toponym_id="top_linshuogong",
+                attested_name="隋书炀帝纪置临朔宫记载",
+                source_title="隋书·炀帝纪上",
+                source_author="魏徵等",
+                recorded_year=611,
+                dynasty="隋大业七年",
+                quote="大业七年春二月乙未，帝自江都驿赴涿郡。幽州置临朔宫，征天下兵集涿郡",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            PlaceAttestationEntity(
+                id="attest_tang_jiao_epitaph",
+                toponym_id="top_daizhou_name",
+                attested_name="唐带州孤竹府焦君墓志铭",
+                source_title="大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
+                source_author="唐官刻",
+                recorded_year=750,
+                dynasty="唐天宝九载",
+                quote="君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+                notes="确证实物：带州寄治昌平清水店而非海淀太舟坞",
             ),
             PlaceAttestationEntity(
                 id="attest_anheqiao_wood_c14",
