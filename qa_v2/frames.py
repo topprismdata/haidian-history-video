@@ -63,7 +63,15 @@ class OcrResult(object):
 
 
 def load_ocr() -> Any:
-    """构造 PaddleOCR（进程内单例）。首次约 4.7s。"""
+    """构造 PaddleOCR（进程内单例）。首次约 4.7s。
+
+    ⚠️ 此处参数即全项目 OCR 审计基线，外部脚本必须复用（from qa_v2.frames
+    import load_ocr），不得自行另配：
+    - use_doc_orientation_classify=False：doc_ori 分类器会把水彩板面误判倒置
+      后先旋转整图再检测，rec_polys 全落在旋转后坐标系——E13 反向走查
+      V3「P6 旋转 180°」假警报的精确根因（2026-10-02）。
+    - use_textline_orientation=False：同族风险。
+    """
     global _OCR
     if _OCR is None:
         from paddleocr import PaddleOCR
