@@ -34,6 +34,7 @@ from ..ontology.epistemic import (
     BeliefAdoption, EpistemicStatus, HistoricalSource, Proposition,
     SourceCategory, SourceDivision, TextualFact,
 )
+from .bibliography import source_by_title
 from ..ontology.spatiotemporal import (
     Appellation, AppellationKind, DiachronicIdentityAssertion,
     HistoricalFeatureState, IdentityRelation, PersistentSpatialEntity,
@@ -61,23 +62,18 @@ def _ts(y1, y2, tag):
 # ==================================================================
 
 SOURCES: List[HistoricalSource] = [
-    HistoricalSource(
-        id="src_ymy_yuan", title="圆明园园史资料（管理方公开园史）",
-        category=SourceCategory.ARCHAEOLOGY_REPORT,
-        version_description="圆明园管理处公开园史沿革",
-    ),
-    HistoricalSource(
-        id="src_ymy_gz", title="圆明园四十景图咏（乾隆御制）",
-        category=SourceCategory.LITERARY_COLLECTION,
-    ),
+    # v2.1：一律取自统一书目表，一书一条，禁止在此另建
+    source_by_title("圆明园园史资料"),
+    source_by_title("圆明园四十景图咏"),
 ]
+
 
 DIVISIONS: List[SourceDivision] = [
     SourceDivision(id="div_ymy_yuan_yange", source_id="src_ymy_yuan",
                    volume_number="园史沿革", section_title="建园与焚毁"),
     SourceDivision(id="div_ymy_yuan_1949", source_id="src_ymy_yuan",
                    volume_number="园史沿革", section_title="接管与遗址公园建设"),
-    SourceDivision(id="div_ymy_sj", source_id="src_ymy_gz",
+    SourceDivision(id="div_ymy_sj", source_id="src_ymy_sijifang",
                    volume_number="卷上", section_title="圆明四十景"),
 ]
 

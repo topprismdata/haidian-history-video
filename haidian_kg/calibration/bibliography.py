@@ -100,6 +100,21 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         edition_note="万历年间沈榜任宛平知县所撰，海淀一带明代聚落地名一手账本",
     ),
 
+    HistoricalSource(
+        id="src_ymy_sijifang", title="圆明园四十景图咏",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_qianlong",
+        base_edition=SISHU,
+        edition_note="乾隆十二年(1747)御制并命画院绘图、词臣题咏，"
+                     "是圆明园景观定名与格局的一手文献",
+    ),
+    HistoricalSource(
+        id="src_ymy_yuan", title="圆明园园史资料",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        version_description="圆明园管理处公开园史沿革",
+        edition_note="建园、焚毁、接管与遗址公园建设的公开沿革资料",
+    ),
+
     # ---------- 清代 ----------
     HistoricalSource(
         id="src_bqtz", title="钦定八旗通志",

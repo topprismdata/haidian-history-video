@@ -61,6 +61,16 @@ PEOPLE: List[HistoricalPerson] = [
         note="《水经注》成书年代学界有异说，节点中未臆定",
     ),
     HistoricalPerson(
+        id="person_qianlong", name="乾隆帝",
+        dynasty="清代", primary_role=PersonRole.MONARCH,
+        official_titles=["清高宗"],
+        authored_source_ids=["src_ymy_sijifang"],
+        haidian_relevance="乾隆十二年(1747)御制《圆明园四十景图咏》；"
+                          "乾隆三十五年(1770)前后圆明、长春、绮春三园格局基本形成",
+        note="《四十景图咏》为御制，命画院绘图、词臣题咏，"
+             "是景观定名的一手依据，具体绘图与题咏者另有其人",
+    ),
+    HistoricalPerson(
         id="person_chen_shu", name="陈寿",
         dynasty="西晋", primary_role=PersonRole.SCHOLAR_WRITER,
         authored_source_ids=["src_sanguozhi"],
