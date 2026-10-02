@@ -272,11 +272,22 @@ class QAGate(object):
                 if person_ids and cid not in person_ids:
                     r.add("G9文献完整", "fail",
                           "文献 %s 的编者 %s 不在人物表中" % (sid, cid))
-            # 个人撰述（文集/专著/地方志）必须有作者
-            if s.category.value in ("文集笔记", "历史地理专著", "地方志") \
+            # 个人撰述的书必须有作者；机构编纂（政府名录/地名志/考古报告/实测图）
+            # 无个人作者属正常，但 institution 必须写明责任机构
+            personal = ("文集笔记", "历史地理专著", "地方志")
+            institutional = ("考古发掘报告", "近代实测地图")
+            if s.category.value in personal and not s.author_person_id:
+                if getattr(s, "issuing_body", None):
+                    r.add("G9文献完整", "warn",
+                          "%s（%s）无个人作者，责任机构=%s"
+                          % (sid, s.title, s.issuing_body))
+                else:
+                    r.add("G9文献完整", "fail",
+                          "个人撰述类文献 %s（%s）缺作者" % (sid, s.title))
+            elif s.category.value in institutional and not getattr(s, "issuing_body", None) \
                     and not s.author_person_id:
                 r.add("G9文献完整", "fail",
-                      "个人撰述类文献 %s（%s）缺作者" % (sid, s.title))
+                      "机构编纂文献 %s（%s）须写明责任机构" % (sid, s.title))
 
         res = getattr(self.kb, "resources", None)
         if res is None:

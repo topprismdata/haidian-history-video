@@ -136,6 +136,14 @@ class HistoricalSource(BaseModel):
     edition_note: Optional[str] = Field(
         None, description="校勘依据与异文说明"
     )
+    issuing_body: Optional[str] = Field(
+        None,
+        description=(
+            "责任机构（机构编纂类文献必填，如：北京市规划自然资源委员会 / "
+            "海淀区人民政府 / 中科院考古所）。官修正史无个人作者属正常，"
+            "但机构书必须有责任方，否则无法问责"
+        ),
+    )
     url: Optional[str] = Field(
         None, description="数字资源地址（如维基文库/中国哲学书电子化计划条目）"
     )

@@ -242,6 +242,9 @@ class AppellationKind(str, Enum):
     """
     名称类型（P0-8）。
     字符串"高梁桥"绝不能承担实体消歧——它是名称，所指才是实体。
+
+    v2.1 补齐：交付档案中确有「七十二府」这类民间传说名，
+    原枚举无对应项，会迫使数据方把它错标为 FOLK_LEGEND 之外的类。
     """
     OFFICIAL = "官称"
     VULGAR = "俗名"
@@ -251,6 +254,9 @@ class AppellationKind(str, Enum):
     STREET_NAME = "现代路街名"
     TEXTUAL_CORRUPTION = "文献讹字"       # 如"高粱"讹作"高梁"
     MISPLACED_LEGEND = "讹误载体"       # 如"涿州驴车"误植于桥下
+    FOLK_LEGEND = "民间传说名"          # 如"一溜边山七十二府"，无官方名录
+    OLD_NAME = "旧地名"                 # 如"七里泊""碾庄"，后被通称取代
+    HONORIFIC = "敕名"                  # 如经正式诏敕赐名（须有档案依据）
 
 
 class Appellation(BaseModel):
@@ -273,6 +279,11 @@ class ReferentialAssertion(BaseModel):
 
     "高梁河之战"指向的是水系，不是桥。
     绝不能因为字符串命中"高梁桥"就把战场事件绑到桥实体上。
+
+    【v2.1 补充·传说名】民间传说名（如「穷八家」「七十二府」）确实需要
+    表达"民间认为这个名指这个地方"，但依据是民俗传闻而非档案。
+    此类必须：evidence_fact_ids 可空，但 status 必须为
+    FOLK_LEGEND 或 UNSUBSTANTIATED，且 provenance 必须写明依据性质。
     """
     id: str = Field(..., description="指称断言URI")
     appellation_id: str = Field(..., description="名称ID")
@@ -285,12 +296,27 @@ class ReferentialAssertion(BaseModel):
     status: EpistemicStatus = Field(
         EpistemicStatus.VERIFIED, description="采信状态（战场落点可为CONTESTED）"
     )
+    provenance: Optional[str] = Field(
+        None,
+        description="传说名必填：说明依据性质（如地方文史/民俗传闻），与档案证据区分",
+    )
 
     @model_validator(mode="after")
-    def _need_evidence(self):
-        if not self.evidence_fact_ids:
-            raise ValueError(
-                "【负控制硬阻断】指称断言必须有证据，"
-                "否则会出现'名称字符串命中即自动绑定实体'的假消歧。"
-            )
+    def _need_evidence_or_legend_status(self):
+        has_evidence = bool(self.evidence_fact_ids)
+        legend_status = self.status in (EpistemicStatus.FOLK_LEGEND,
+                                        EpistemicStatus.UNSUBSTANTIATED)
+        if not has_evidence:
+            if not legend_status:
+                raise ValueError(
+                    "【负控制硬阻断】指称断言必须有证据；"
+                    "确无档案证据的传说名必须显式标为"
+                    " FOLK_LEGEND/UNSUBSTANTIATED 并写 provenance，"
+                    "否则会出现'名称字符串命中即自动绑定实体'的假消歧。"
+                )
+            if not self.provenance:
+                raise ValueError(
+                    "【负控制硬阻断】无档案证据的传说指称必须写 provenance，"
+                    "说明依据性质（地方文史/民俗传闻），与档案证据区分。"
+                )
         return self

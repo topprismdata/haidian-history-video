@@ -200,11 +200,21 @@ class TestBibliographyAndPeople:
         assert len(titles) == len(set(titles)), "同一本书被建成多条"
 
     def test_personal_writings_have_authors(self):
+        """个人撰述须有作者；机构编纂须有责任机构（G9 v2.1 新语义）"""
         from haidian_kg.calibration.bibliography import BIBLIOGRAPHY
         personal = ("文集笔记", "历史地理专著", "地方志")
+        institutional = ("考古发掘报告", "近代实测地图")
         for s in BIBLIOGRAPHY:
             if s.category.value in personal:
-                assert s.author_person_id, "%s 缺作者" % s.title
+                assert s.author_person_id or getattr(s, "issuing_body", None), \
+                    "%s 既无作者也无责任机构" % s.title
+                # 地名志类若是机构编纂（编委会），可无个人作者但必须有机构
+                if not s.author_person_id:
+                    assert getattr(s, "issuing_body", None), \
+                        "%s 无个人作者时必须写责任机构" % s.title
+            elif s.category.value in institutional:
+                assert getattr(s, "issuing_body", None) or s.author_person_id, \
+                    "%s 机构编纂文献缺责任机构" % s.title
 
     def test_authors_exist_in_people_table(self):
         from haidian_kg.calibration.bibliography import BIBLIOGRAPHY

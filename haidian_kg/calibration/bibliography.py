@@ -52,6 +52,30 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
                      "严禁拼接为一句原典",
     ),
     HistoricalSource(
+        id="src_mingshi", title="明史",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        total_volumes=332,
+        base_edition=ZHONGHUA,
+        edition_note="《兵志》载卫所编制：卫5600人→千户所1120→百户所112，"
+                     "每百户辖总旗2各50人、小旗10各10人；"
+                     "《地理志》引《明一统志》「青龙桥跨其上」",
+    ),
+    HistoricalSource(
+        id="src_hd_diqumingzhi", title="海淀区地名志",
+        category=SourceCategory.LOCAL_GAZETTEER,
+        issuing_body="北京市海淀区地名志编纂委员会",
+        edition_note="解释西三旗为清河以北牧马场西侧三个小旗驻点，"
+                     "西二旗即两个小旗驻点；同组还有东二旗、东三旗。"
+                     "属地名志解释（L2/L3），非档案直证",
+    ),
+    HistoricalSource(
+        id="src_2024_minglu", title="北京市三山五园传统地名保护名录",
+        category=SourceCategory.LOCAL_GAZETTEER,
+        issuing_body="北京市规划和自然资源委员会",
+        edition_note="2024年第一批421处；「青龙桥」名称出现年代标为明代。"
+                     "属政府正式名录（L2），不能替代文保测绘档案",
+    ),
+    HistoricalSource(
         id="src_sanguozhi", title="三国志",
         category=SourceCategory.OFFICIAL_HISTORY,
         author_person_id="person_chen_shu",
@@ -111,6 +135,7 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
     HistoricalSource(
         id="src_ymy_yuan", title="圆明园园史资料",
         category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="圆明园管理处",
         version_description="圆明园管理处公开园史沿革",
         edition_note="建园、焚毁、接管与遗址公园建设的公开沿革资料",
     ),
