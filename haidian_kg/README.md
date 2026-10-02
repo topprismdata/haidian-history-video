@@ -92,6 +92,16 @@ ToponymOccurrence          文本事实层（机器可自动产生）
 
 外部网络波动不阻塞闭包流水线；所有外部查询在 machine_observation 层带版本缓存。
 
+### 5.1 引文本地化纪律（2026-10-02 用户指令，永续）
+
+**凡引用的古文原文，必须在仓库内保有本地副本；在线源只作检索与裁决，不作运行时依赖。**
+
+1. **书证层**：KB 每条 `verbatim_quote` 本身就在库里（已合规）；凡 research/registry 引用的古文，`research.md` 内必须存原文，不得只留「见某 URL」。
+2. **语料层**：整书/整卷接入（如《日下旧闻考》卷 76-104 原文）必须**先落盘再挖矿**——存 `haidian_kg/corpus/<书名>/`，带 manifest（edition_id/卷次/来源 URL/抓取日期/text_sha1），FullTextMiner **只读本地**，禁止运行时抓维基文库。
+3. **裁决层**：TGAZ/DILA/CCVG/MCGD 查询结果按 machine_observation 版本缓存（已实现）；CCVG 原始 CSV/KMZ 已本地留存（gitignored）。
+4. **已合规项**：holdout_v1.jsonl（text+text_sha1 本地快照）、corpus/era*.md、KB verbatim_quote、CCVG 索引。
+5. **理由**：在线文本可被修订/下线，引文必须可离线回查到与入库时逐字节一致（sha1）；同本古籍的挖掘以本地快照为唯一底本，防止底本漂移导致书证不可复现。
+
 ## 6. 分词/NER 调研决策：不上
 
 结论（2026-10-02，证据链 `.superpowers/sdd/tokenizer-research.md`）：现代分词器
