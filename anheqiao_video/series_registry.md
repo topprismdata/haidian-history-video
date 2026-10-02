@@ -47,6 +47,11 @@ W2/W3 见 `/tmp/history_video/海淀历史地名清单.md`（八旗线/水系线
 
 ## 新支视频 SOP（照抄）
 
+0. **superpowers 全流程纪律（2026-10-02 用户指令，每集独立执行）**：每一集必须独立走
+   brainstorming → spec（用户确认）→ writing-plans → subagent-driven-development 实施
+   → 最终 review → QA v2 验收，**不得**沿用上一集的设计上下文或跳过 spec 确认闸门。
+   每集独立的 spec/plan/ledger 存 `docs/superpowers/{specs,plans}/` 与
+   `.superpowers/sdd/`，命名带集号与日期。
 1. 复制 `/tmp/anheqiao_video/` 结构 → `<新topic>_video/`；`SERIES_STYLE_GUIDE.md` 整段注入 ChatGPT
 2. 研究档案 → **GPT 复查闸门**（确认+挑错，通过才设计）
 3. 设计（8 页建议）→ 人审 → 生图 → ZIP → 浏览器下载（禁 curl estuary）→ 资产体检（尺寸+视觉抽查）
