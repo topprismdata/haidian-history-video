@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- page_03_layout 底板：一名三变时间轴。
+     三段横带 + 箭头，宣纸底纹。零文字：全部由 DOM 按槽位填。
+     槽位随件 layout/slots.json -> p03（板面 1672x941）。
+     纪律（E12 教训 5/6）：装饰线 ≤2px；段头槽用 th_ 前缀触发 L4-c 表格豁免。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+  .frame { position:absolute; inset:26px; border:3px solid #6b5b3e; border-radius:6px; }
+  .frame::before { content:""; position:absolute; inset:9px; border:1px solid #a08a5f; border-radius:3px; }
+
+  /* 标题横带 */
+  .title-band {
+    position:absolute; left:376px; top:110px; width:920px; height:64px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .title-band::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:2px; }
+
+  /* 时间轴主线（横向，2px） */
+  .axis { position:absolute; left:150px; right:150px; top:470px; height:2px; background:#8a7550; }
+  .axis::after { content:""; position:absolute; right:-2px; top:-7px;
+    border-left:18px solid #8a7550; border-top:8px solid transparent; border-bottom:8px solid transparent; }
+
+  /* 三个节点段：段头框(th_ 前缀) + 说明框 */
+  .thead { position:absolute; top:330px; width:380px; height:88px;
+    border:2px solid #6b5b3e; border-radius:5px; background:rgba(246,239,220,.72); }
+  .thead::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:3px; }
+  .th1 { left:150px; }
+  .th2 { left:646px; }
+  .th3 { left:1142px; }
+  .stem { position:absolute; top:418px; width:2px; height:52px; background:#8a7550; }
+  .s1 { left:339px; } .s2 { left:835px; } .s3 { left:1331px; }
+
+  .tdesc { position:absolute; top:560px; width:420px; height:190px;
+    border:2px solid #6b5b3e; border-radius:5px; background:rgba(246,239,220,.55); }
+  .tdesc::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:3px; }
+  .d1 { left:130px; } .d2 { left:626px; } .d3 { left:1122px; }
+
+  /* 页脚据条 */
+  .foot { position:absolute; left:376px; bottom:96px; width:920px; height:52px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.08) 0 9px, transparent 9px 20px);
+    border:1px solid #a08a5f; border-radius:4px; }
+</style>
+</head>
+<body>
+  <div class="corner tl"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner tr"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner bl"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner br"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="frame"></div>
+  <div class="title-band"></div>
+  <div class="axis"></div>
+  <div class="thead th1"></div>
+  <div class="thead th2"></div>
+  <div class="thead th3"></div>
+  <div class="stem s1"></div>
+  <div class="stem s2"></div>
+  <div class="stem s3"></div>
+  <div class="tdesc d1"></div>
+  <div class="tdesc d2"></div>
+  <div class="tdesc d3"></div>
+  <div class="foot"></div>
+</body>
+</html>

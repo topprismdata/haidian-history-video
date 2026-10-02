@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- page_07_layout 底板：硅谷三级跳（三节点横向阶梯）。
+     宣纸底纹 + 阶梯节点框。零文字：全部由 DOM 按槽位填。
+     槽位随件 layout/slots.json -> p07。
+     纪律：装饰线 ≤2px；节点槽用 th_ 前缀触发 L4-c 表格豁免。 -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1672px; height:941px; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, #f6efdc 0%, #efe4c8 60%, #e7d9b8 100%);
+    font-family: "Songti SC", "SimSun", serif;
+    position: relative;
+  }
+  .corner { position:absolute; width:150px; height:150px; opacity:.5; }
+  .corner svg { width:100%; height:100%; }
+  .tl { top:14px; left:14px; }
+  .tr { top:14px; right:14px; transform:scaleX(-1); }
+  .bl { bottom:14px; left:14px; transform:scaleY(-1); }
+  .br { bottom:14px; right:14px; transform:scale(-1,-1); }
+  .frame { position:absolute; inset:26px; border:3px solid #6b5b3e; border-radius:6px; }
+  .frame::before { content:""; position:absolute; inset:9px; border:1px solid #a08a5f; border-radius:3px; }
+
+  .title-band {
+    position:absolute; left:376px; top:110px; width:920px; height:64px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.10) 0 9px, transparent 9px 20px);
+    border:2px solid #6b5b3e; border-radius:4px;
+  }
+  .title-band::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:2px; }
+
+  /* 阶梯连线（自左下向右上，2px 折线模拟） */
+  .step-line { position:absolute; height:2px; background:#8a7550; transform-origin:left center; }
+  .l12 { left:520px;  top:640px; width:260px; transform:rotate(-13deg); }
+  .l23 { left:900px;  top:480px; width:260px; transform:rotate(-13deg); }
+
+  /* 三个节点：头框(th_) + 说明框，逐级抬升 */
+  .thead { position:absolute; width:360px; height:84px;
+    border:2px solid #6b5b3e; border-radius:5px; background:rgba(246,239,220,.75); }
+  .thead::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:3px; }
+  .th1 { left:140px; top:560px; }
+  .th2 { left:660px; top:400px; }
+  .th3 { left:1170px; top:240px; }
+
+  .tdesc { position:absolute; width:400px; height:150px;
+    border:2px solid #6b5b3e; border-radius:5px; background:rgba(246,239,220,.55); }
+  .tdesc::after { content:""; position:absolute; inset:5px; border:1px solid #a08a5f; border-radius:3px; }
+  .d1 { left:120px; top:660px; }
+  .d2 { left:640px; top:500px; }
+  .d3 { left:1150px; top:340px; }
+
+  .foot { position:absolute; left:376px; bottom:96px; width:920px; height:52px;
+    background: repeating-linear-gradient(115deg, rgba(107,91,62,.08) 0 9px, transparent 9px 20px);
+    border:1px solid #a08a5f; border-radius:4px; }
+</style>
+</head>
+<body>
+  <div class="corner tl"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner tr"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner bl"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="corner br"><svg viewBox="0 0 100 100"><path d="M10,90 Q10,30 50,30 Q90,30 90,10" fill="none" stroke="#8a7550" stroke-width="2"/><circle cx="50" cy="52" r="7" fill="none" stroke="#8a7550" stroke-width="2"/></svg></div>
+  <div class="frame"></div>
+  <div class="title-band"></div>
+  <div class="step-line l12"></div>
+  <div class="step-line l23"></div>
+  <div class="thead th1"></div>
+  <div class="thead th2"></div>
+  <div class="thead th3"></div>
+  <div class="tdesc d1"></div>
+  <div class="tdesc d2"></div>
+  <div class="tdesc d3"></div>
+  <div class="foot"></div>
+</body>
+</html>
