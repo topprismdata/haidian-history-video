@@ -461,7 +461,7 @@ FACTS: List[TextualFact] = [
         id="tf_xss_1186", division_id="div_rxjwkc87_jyy2",
         verbatim_quote="大定二十六年三月香山寺成幸其寺賜名大永安寺給田二千畆栗七十株錢二萬貫",
         attested_string="香山寺",
-        translator_note="卷87原引《金史·世宗记》——金大定二十六年(1186)香山寺成"
+        translator_note="卷87原引《金史·世宗纪》（四库转录字形作「记」,规范书目层作「纪」,GPT审2-4）——金大定二十六年(1186)香山寺成"
                         "赐名大永安寺，正史一手",
     ),
     TextualFact(
@@ -489,7 +489,7 @@ FACTS: List[TextualFact] = [
         id="tf_xss_yuan_1312", division_id="div_rxjwkc87_jyy2",
         verbatim_quote="皇慶元年四月給鈔萬錠修香山永安寺",
         attested_string="永安寺",
-        translator_note="卷87原引《元史·仁宗记》——元皇庆元年(1312)官修香山"
+        translator_note="卷87原引《元史·仁宗纪》（四库字形「记」,规范层「纪」）——元皇庆元年(1312)官修香山"
                         "永安寺",
     ),
     TextualFact(
@@ -1389,7 +1389,7 @@ PROPOSITIONS: List[Proposition] = [
     ),
     Proposition(
         id="prop_xss_jin_1186",
-        statement="香山寺金大定二十六年(1186)成、赐名大永安寺（《金史·世宗记》"
+        statement="香山寺金大定二十六年(1186)成、赐名大永安寺（《金史·世宗纪》"
                   "一手），寺之存在更早至天会间；乾隆称旧名永安/甘露属乾隆朝"
                   "对金代寺的解释层",
         derived_from_fact_ids=["tf_xss_1186", "tf_xss_jin_early",

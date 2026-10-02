@@ -151,7 +151,7 @@ FACTS: List[TextualFact] = [
         attested_string="大觉寺",
         source_year=_dt(1428, "dt_xs_xd",
                         _ry(Era.MING, "宣德", 3, "宣德三年")),
-        translator_note="转引《帝京景物略》大觉寺条，转引不另建书目条目"),
+        translator_note="转引《帝京景物略》卷五大觉寺条（原书卷次,GPT审2-2核）；宿主挂日下旧闻考卷106"),
     TextualFact(
         id="tf_xs_jinzhangzong_bayuan", division_id="div_xs_rxjwkc106_dajuesi",
         verbatim_quote="金章宗西山八院寺其清水院也",
@@ -168,7 +168,7 @@ FACTS: List[TextualFact] = [
         attested_string="大觉寺",
         source_year=_dt(1446, "dt_xs_zt",
                         _ry(Era.MING, "正统", 11, "正统十一年三月")),
-        translator_note="转引《明英宗实录》；实录未入统一书目表，挂日下旧闻考篇卷"),
+        translator_note="转引《明英宗实录》卷139·正统十一年三月（原书卷次,GPT审2-1核）；宿主挂日下旧闻考卷106"),
     TextualFact(
         id="tf_xs_kangxi_qianlong_xiu", division_id="div_xs_rxjwkc106_dajuesi",
         verbatim_quote="大觉寺康熙五十九年世宗潜邸时特加修葺乾隆十二年皇上发帑重修",
