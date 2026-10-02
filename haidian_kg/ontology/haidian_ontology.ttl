@@ -1,0 +1,229 @@
+@prefix hhto: <http://history.haidian.gov.cn/ontology/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix crm:  <http://www.cidoc-crm.org/cidoc-crm/> .
+
+<http://history.haidian.gov.cn/ontology/> a owl:Ontology ;
+    rdfs:label "海淀历史地名知识图谱本体 (HHTO)"@zh ;
+    rdfs:comment "面向海淀区全域历史地理、地名演变、史料考订与认识论分层的领域本体模型"@zh ;
+    owl:versionInfo "1.0.0" .
+
+### =========================================================================
+### 核心类层次 (Classes)
+### =========================================================================
+
+hhto:HistoricalEntity a owl:Class ;
+    rdfs:label "历史实体"@zh ;
+    rdfs:comment "所有历史时空要素的顶层抽象基类"@zh .
+
+# --- 核心四分法之一：物理空间地物 ---
+hhto:PhysicalFeature a owl:Class ;
+    rdfs:subClassOf hhto:HistoricalEntity ;
+    rdfs:label "物理空间地物"@zh ;
+    rdfs:comment "具有相对稳定地质、水文特征的客观自然地理底座 (Phenomenal Place)"@zh .
+
+hhto:Watercourse a owl:Class ;
+    rdfs:subClassOf hhto:PhysicalFeature ;
+    rdfs:label "水系河道"@zh .
+
+hhto:HydraulicFacility a owl:Class ;
+    rdfs:subClassOf hhto:PhysicalFeature ;
+    rdfs:label "水利工程设施"@zh ;
+    rdfs:comment "古代蓄水、分水、引水与调节水利工程，如水闸、堰、堤、池"@zh .
+
+hhto:TerrainElevation a owl:Class ;
+    rdfs:subClassOf hhto:PhysicalFeature ;
+    rdfs:label "山峦台地"@zh .
+
+hhto:Wetland a owl:Class ;
+    rdfs:subClassOf hhto:PhysicalFeature ;
+    rdfs:label "湖泊沼泽水洼"@zh .
+
+# --- 核心四分法之二：建置制度实体 ---
+hhto:AdministrativeUnit a owl:Class ;
+    rdfs:subClassOf hhto:HistoricalEntity ;
+    rdfs:label "建置与制度实体"@zh ;
+    rdfs:comment "具有制度身份、赋税职能或社群建制的历史组织单元 (Declarative Place)"@zh .
+
+hhto:Settlement a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "自然聚落与市镇"@zh .
+
+hhto:MilitaryGarrison a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "军事驻防与军屯"@zh ;
+    rdfs:comment "如明代卫所小旗营屯、清代圆明园护军营八旗房、健锐营、外火器营"@zh .
+
+hhto:ImperialGarden a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "皇家园林宫禁"@zh ;
+    rdfs:comment "三山五园及其周边离宫附属建制"@zh .
+
+hhto:ReligiousSite a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "宗教寺观"@zh .
+
+hhto:BurialGround a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "陵寝墓茔与义地"@zh ;
+    rdfs:comment "如金山一溜边山七十二府妃嫔墓、太监义地"@zh .
+
+hhto:ModernInstitution a owl:Class ;
+    rdfs:subClassOf hhto:AdministrativeUnit ;
+    rdfs:label "近现代科研教育机构与高新区"@zh .
+
+# --- 核心四分法之三：地名符号实体 ---
+hhto:Toponym a owl:Class ;
+    rdfs:subClassOf hhto:HistoricalEntity ;
+    rdfs:label "地名称号实体"@zh ;
+    rdfs:comment "作为语言符号、社会称谓而存在的专有地名字符串与名号 (Appellation)"@zh .
+
+# --- 核心四分法之四：史料书证凭证 ---
+hhto:PlaceAttestation a owl:Class ;
+    rdfs:subClassOf hhto:HistoricalEntity ;
+    rdfs:label "史料书证凭证"@zh ;
+    rdfs:comment "具体史料文本在特定断代对该地名的一次实证用例 (Attestation as a First-class Node)"@zh .
+
+# --- 演变事件体系 ---
+hhto:ToponymEvolutionEvent a owl:Class ;
+    rdfs:subClassOf hhto:HistoricalEntity ;
+    rdfs:label "地名演变事件"@zh ;
+    rdfs:comment "触发地名更替、改字、升降或消亡的历史事件"@zh .
+
+hhto:CreationEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "创名立村事件"@zh .
+
+hhto:ImperialNamingEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "官方赐名改名事件"@zh .
+
+hhto:PhoneticShiftEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "语音流变与方言通假事件"@zh .
+
+hhto:EuphemisticRenamingEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "文人雅化避嫌更名事件"@zh .
+
+hhto:FolkAppropriationEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "民间传说附会重塑事件"@zh .
+
+hhto:AdministrativeShiftEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "政区拆分合并与移治事件"@zh .
+
+hhto:SpatialExtinctionEvent a owl:Class ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent ;
+    rdfs:label "实体消失与地名化石存续事件"@zh .
+
+# --- 认识论假说与文献来源 ---
+hhto:SourceDocument a owl:Class ;
+    rdfs:label "史料文献源"@zh ;
+    rdfs:comment "一手碑刻、官修实录、正史地理志、方志地契等文献出处"@zh .
+
+hhto:CompetingHypothesis a owl:Class ;
+    rdfs:label "竞争假说"@zh ;
+    rdfs:comment "关于地名渊源由不同学者或不同史籍提出的互斥考证假说"@zh .
+
+### =========================================================================
+### 对象属性 (Object Properties)
+### =========================================================================
+
+hhto:locatedAtFeature a owl:ObjectProperty ;
+    rdfs:label "物理空间坐落于"@zh ;
+    rdfs:domain hhto:AdministrativeUnit ;
+    rdfs:range hhto:PhysicalFeature .
+
+hhto:namedAs a owl:ObjectProperty ;
+    rdfs:label "定名为"@zh ;
+    rdfs:domain hhto:AdministrativeUnit ;
+    rdfs:range hhto:Toponym .
+
+hhto:attestedIn a owl:ObjectProperty ;
+    rdfs:label "见载书证于"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:PlaceAttestation .
+
+hhto:fromSource a owl:ObjectProperty ;
+    rdfs:label "文献出处为"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range hhto:SourceDocument .
+
+hhto:evolutionTriggeredBy a owl:ObjectProperty ;
+    rdfs:label "由该事件触发"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:ToponymEvolutionEvent .
+
+hhto:sourceToponym a owl:ObjectProperty ;
+    rdfs:label "演变前源地名"@zh ;
+    rdfs:domain hhto:ToponymEvolutionEvent ;
+    rdfs:range hhto:Toponym .
+
+hhto:targetToponym a owl:ObjectProperty ;
+    rdfs:label "演变后目标地名"@zh ;
+    rdfs:domain hhto:ToponymEvolutionEvent ;
+    rdfs:range hhto:Toponym .
+
+hhto:evolvedFrom a owl:ObjectProperty ;
+    rdfs:label "承袭演变自"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range hhto:Toponym .
+
+hhto:competesWith a owl:ObjectProperty ;
+    rdfs:label "竞争互斥假说"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:CompetingHypothesis .
+
+hhto:supportedBy a owl:ObjectProperty ;
+    rdfs:label "由该书证支持"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:PlaceAttestation .
+
+hhto:disprovenBy a owl:ObjectProperty ;
+    rdfs:label "由该史料证据证伪"@zh ;
+    rdfs:domain hhto:CompetingHypothesis ;
+    rdfs:range hhto:PlaceAttestation .
+
+### =========================================================================
+### 数据属性 (Data Properties)
+### =========================================================================
+
+hhto:standardForm a owl:DatatypeProperty ;
+    rdfs:label "标准书写形式"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range xsd:string .
+
+hhto:phoneticPinyin a owl:DatatypeProperty ;
+    rdfs:label "汉语拼音读音"@zh ;
+    rdfs:domain hhto:Toponym ;
+    rdfs:range xsd:string .
+
+hhto:recordedYear a owl:DatatypeProperty ;
+    rdfs:label "书证记录公元年份"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:integer .
+
+hhto:originalQuote a owl:DatatypeProperty ;
+    rdfs:label "史料原始引文"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:evidenceLevel a owl:DatatypeProperty ;
+    rdfs:label "六级证据层级"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:epistemicStatus a owl:DatatypeProperty ;
+    rdfs:label "认识论确证状态"@zh ;
+    rdfs:comment "VERIFIED (确证), CONTESTED (争议), FOLK_LEGEND (传说), DISPROVEN (证伪)"@zh ;
+    rdfs:domain hhto:PlaceAttestation ;
+    rdfs:range xsd:string .
+
+hhto:coordinatesWGS84 a owl:DatatypeProperty ;
+    rdfs:label "WGS84经纬度"@zh ;
+    rdfs:domain hhto:PhysicalFeature ;
+    rdfs:range xsd:string .
