@@ -60,6 +60,8 @@ THRESHOLDS = {
 DEFAULT_ENTITIES_MODULES = (
     "banners", "bridges", "dazhongsi", "gaoliang",
     "settlements", "suburbs", "urban", "yuanmingyuan",
+    # 2026-10-02 词条批次(run3 缺口 FP 反查):西山线/三山五园线/平原水系线
+    "xishan", "sanshiwuyuan", "pingyuan",
 )
 
 
@@ -121,6 +123,11 @@ class NameRegistry(object):
         # 已断言同指的实体 ID 对（SAME_CONTINUANT + VERIFIED）——KB 共享数据，
         # 非挖掘器词表；collision 豁免的合法依据
         self.same_as: Set[frozenset] = set(same_as or ())
+        # 实体 → 其 KB 认可字形（归一形）：duplication 豁免依据
+        self.entity_forms: Dict[str, Set[str]] = {}
+        for f, ents in form_map.items():
+            for e in ents:
+                self.entity_forms.setdefault(e, set()).add(f)
 
     def entities_of(self, norm_form: str) -> Set[str]:
         return self.form_map.get(norm_form, set())
@@ -416,7 +423,13 @@ def hypothesis_coverage(report, segments: Sequence[dict],
                     for eid in set(g.entity_ids) & occ_ents:
                         ent_covered_by.setdefault(eid, set()).add(hname)
                         hyp_covers.setdefault(hname, set()).add(eid)
-    dup_entities = {e for e, hs in ent_covered_by.items() if len(hs) >= 2}
+    dup_entities = {e for e, hs in ent_covered_by.items()
+                    if not hs <= registry.entity_forms.get(e, set())}
+    #: 豁免透明化：覆盖假说全为该实体 KB 认可字形（别名链，如 牛栏庄/柳浪庄/
+    #: 六郎庄 同指一村）——是实体被其自有异名正确提及，非重复建模或噪声变体；
+    #: 含任一非认可变体（如侵蚀面 青龙桥/青龙桥镇）仍计 dup
+    dup_exempt = {e for e, hs in ent_covered_by.items()
+                  if len(hs) >= 2 and hs <= registry.entity_forms.get(e, set())}
 
     def _same_class(eids: Set[str]) -> int:
         """独立指称计数：covered 实体按 same_as 断言合并等价类后剩余数。"""
@@ -452,6 +465,7 @@ def hypothesis_coverage(report, segments: Sequence[dict],
         "entities_covered": {e: sorted(hs) for e, hs in sorted(ent_covered_by.items())},
         "hypotheses_covering": {h: sorted(es) for h, es in sorted(hyp_covers.items())},
         "collision_detail": collision_detail,
+        "dup_exempt": {e: sorted(ent_covered_by[e]) for e in sorted(dup_exempt)},
     }
 
 

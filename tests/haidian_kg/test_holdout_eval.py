@@ -238,18 +238,9 @@ class TestHypothesisCoverage:
     def seg(self, sid, text):
         return {"segment_id": sid, "text": text}
 
-    def test_duplication_two_hypotheses_one_entity(self):
-        segs = [self.seg("s1", "青龙桥镇与青龙桥闸并列")]
-        golds = {("s1"): extract_gold_mentions(
-            segs[0]["text"], "s1",
-            NameRegistry({"青龙桥镇": {"e1"}, "青龙桥": {"e1"},
-                          "青龙桥闸": {"e1"}}, {}))}
-        rep = fake_report([fake_hyp("青龙桥镇", [fake_occ("div_holdout_000", "青龙桥镇")]),
-                           fake_hyp("青龙桥", [fake_occ("div_holdout_000", "青龙桥")])])
-        reg = NameRegistry({"青龙桥镇": {"e1"}, "青龙桥": {"e1"}}, {})
-        dup, coll, _ = HE.hypothesis_coverage(rep, segs, golds, reg)
-        assert dup == {"e1"}, "同实体被 ≥2 假说覆盖 → duplication"
-        assert coll == set()
+    # test_duplication_two_hypotheses_one_entity 已删(2026-10-02):其夹具两面均为
+    # KB 认可字形,按别名感知语义应豁免;「非认可变体仍计 dup」的本意由
+    # test_dup_persists_for_unattested_variant 精确承接。
 
     def test_collision_one_hypothesis_two_entities(self):
         segs = [self.seg("s1", "西城闸旧址犹存")]
@@ -282,6 +273,40 @@ class TestHypothesisCoverage:
         rep = fake_report([fake_hyp("西城闸", [fake_occ("div_holdout_000", "西城闸")])])
         dup, coll, _ = HE.hypothesis_coverage(rep, segs, golds, reg)
         assert len(coll) == 1, "无关同指对不得豁免"
+
+    def test_dup_exempt_for_kb_attested_alias_chain(self):
+        """实体被其 KB 认可的多个异名提及（牛栏庄/柳浪庄/六郎庄型名号链）
+        → 不计 duplication；豁免明细落 dup_exempt。"""
+        reg = NameRegistry({"牛栏庄": {"e_llz"}, "柳浪庄": {"e_llz"},
+                            "六郎庄": {"e_llz"}}, {})
+        segs = [self.seg("s1", "旧名牛栏庄，后雅称柳浪庄"),
+                self.seg("s2", "今统称六郎庄")]
+        golds = {s["segment_id"]: extract_gold_mentions(
+            s["text"], s["segment_id"], reg) for s in segs}
+        rep = fake_report([
+            fake_hyp("牛栏庄", [fake_occ("div_holdout_000", "牛栏庄")]),
+            fake_hyp("柳浪庄", [fake_occ("div_holdout_000", "柳浪庄")]),
+            fake_hyp("六郎庄", [fake_occ("div_holdout_001", "六郎庄")]),
+        ])
+        dup, coll, detail = HE.hypothesis_coverage(rep, segs, golds, reg)
+        assert dup == set(), "全为 KB 认可异名 → 不得计 duplication"
+        assert set(detail["dup_exempt"]) == {"e_llz"}
+
+    def test_dup_persists_for_unattested_variant(self):
+        """覆盖假说含非 KB 字形表变体（侵蚀面 青龙桥/青龙桥镇 型）→ 仍计 dup。"""
+        reg = NameRegistry({"青龙桥镇": {"e_q"}, "六郎庄": {"e_llz"},
+                            "柳浪庄": {"e_llz"}}, {})
+        segs = [self.seg("s1", "青龙桥镇商旅云集，南有柳浪庄")]
+        golds = {"s1": extract_gold_mentions(segs[0]["text"], "s1", reg)}
+        rep = fake_report([
+            fake_hyp("青龙桥镇", [fake_occ("div_holdout_000", "青龙桥镇")]),
+            fake_hyp("青龙桥", [fake_occ("div_holdout_000", "青龙桥镇")]),
+            fake_hyp("柳浪庄", [fake_occ("div_holdout_000", "柳浪庄")]),
+            fake_hyp("六郎庄", [fake_occ("div_holdout_000", "柳浪庄")]),
+        ])
+        dup, _, detail = HE.hypothesis_coverage(rep, segs, golds, reg)
+        assert dup == {"e_q"}, "非认可变体参与 → 实体仍计 duplication"
+        assert "e_llz" not in dup and "e_llz" in detail["dup_exempt"]
 
 
 # ---------------------------------------------------------------------------
