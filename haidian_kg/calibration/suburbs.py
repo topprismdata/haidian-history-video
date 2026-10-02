@@ -97,6 +97,8 @@ SOURCES: List[HistoricalSource] = [
     source_by_title("酌中志"),
     source_by_title("重修西顶娘娘庙碑记"),
     source_by_title("北京市文物局公开文保资料"),
+    # 天咫偶闻卷九（郊坰）：广仁宫/蓝靛厂/火器营一手清末记述（卷次考订见 div_tz_ju9）
+    source_by_title("天咫偶闻"),
 ]
 
 DIVISIONS: List[SourceDivision] = [
@@ -131,6 +133,12 @@ DIVISIONS: List[SourceDivision] = [
                    volume_number="公开沿革", section_title="蓝靛厂条（靛园厂沿革与街市）"),
     SourceDivision(id="div_hd_fusi", source_id="src_hd_gov_open",
                    volume_number="公开沿革", section_title="清真寺与立马关帝庙条"),
+    # 《天咫偶闻》篇卷考订（BuildUrbanEntry 2026-10-02 维基文库原文整段目验）：
+    # 万寿街/广仁宫/蓝靛厂段在【卷九（郊坰）】；预置书目表 edition_note 作「卷七」
+    # 系误记（a95ef48 预置不可改），本库篇卷一律按卷九建，事实层留痕
+    SourceDivision(id="div_tz_ju9", source_id="src_tianzhi_ouwen",
+                   volume_number="卷九",
+                   section_title="郊坰·万寿街广仁宫蓝靛厂条（卷九考订）"),
 ]
 
 
@@ -370,6 +378,32 @@ FACTS: List[TextualFact] = [
                        "一座；2006年10月开工重建，2009年10月21日落成",
         attested_string="清真寺",
     ),
+    # ---- 《天咫偶闻》卷九（郊坰）：一手清末记述（两句分立，不与苏州街句拼接） ----
+    TextualFact(
+        id="tf_tz_guangren", division_id="div_tz_ju9",
+        verbatim_quote="又西為廣仁宮，在南岸，地名藍靛廠。火器營駐此，街衢富庶，"
+                       "不下一大縣",
+        attested_string="藍靛廠",
+        source_year=_dt(1907, "dt_tz",
+                        _ry(Era.QING, "光绪", 33, "光绪三十三年刻本"),
+                        precision="approximate"),
+        translator_note="《天咫偶闻》万寿寺/万寿街/广仁宫整段经维基文库原文复核在"
+                        "【卷九（郊坰）】，预置书目表 edition_note 作「卷七」系误记"
+                        "（a95ef48 预置不可改，篇卷按卷九建，BuildUrbanEntry 考订留痕）；"
+                        "「寺西城关为万寿街，俗称苏州街……今已毁尽」句属万寿街苏州街"
+                        "（E12 词条范围），不入本词条",
+    ),
+    TextualFact(
+        id="tf_tz_gengshen", division_id="div_tz_ju9",
+        verbatim_quote="自庚申秋御園被毀，翠輦不來。湖上諸園及甸鎮長街，日就零落",
+        attested_string="御園被毀",
+        source_year=_dt(1907, "dt_tz2",
+                        _ry(Era.QING, "光绪", 33, "光绪三十三年刻本"),
+                        precision="approximate"),
+        translator_note="庚申＝咸丰十年（1860）；「日就零落」为园毁后湖上诸园与"
+                        "长街凋敝的一手清末旁证（支撑扇面湖/一亩园 1860 后状态），"
+                        "与广仁宫句分立为两条事实，避免跨句拼接",
+    ),
 ]
 
 
@@ -419,8 +453,9 @@ STATES: List[HistoricalFeatureState] = [
         id="st_yim_1860", entity_id="ent_yimuyuan",
         time_span=_ts(1860, 1911, "ts_yim_b"),
         geometry="圆明园及其附属园囿遭焚毁，一亩园区域院落俱损",
-        function="毁损后荒废（毁损≠消亡；地点持续体见身份断言）",
-        evidence_fact_ids=["tf_smh_1860"],
+        function="毁损后荒废，「湖上诸园及甸镇长街，日就零落」（庚申＝1860，"
+                 "《天咫偶闻》卷九一手旁证；毁损不是终点，地点持续体见身份断言）",
+        evidence_fact_ids=["tf_smh_1860", "tf_tz_gengshen"],
     ),
     HistoricalFeatureState(
         id="st_yim_minguo", entity_id="ent_yimuyuan",
@@ -449,8 +484,9 @@ STATES: List[HistoricalFeatureState] = [
         id="st_smh_1860", entity_id="ent_shanmianhu",
         time_span=_ts(1860, 1999, "ts_smh_b"),
         geometry="园毁后淤废，渐辟为稻田",
-        function="农田水面（毁损后转型，非消亡）",
-        evidence_fact_ids=["tf_smh_1860"],
+        function="农田水面（「自庚申秋御园被毁，翠辇不来」一手旁证；"
+                 "毁损后转型，非终点）",
+        evidence_fact_ids=["tf_smh_1860", "tf_tz_gengshen"],
     ),
     HistoricalFeatureState(
         id="st_smh_2000", entity_id="ent_shanmianhu",
@@ -528,8 +564,10 @@ STATES: List[HistoricalFeatureState] = [
         geometry="京西驻防重地与庙市街：外火器营驻此，西顶庙会（火器营南门外街道"
                  "形成市集），另有立马关帝庙、清真寺",
         function="外火器营驻地与庙市街（京旗外三营互为犄角，蓝靛厂东临昆玉河、"
-                 "北接颐和园，自是要冲）",
-        evidence_fact_ids=["tf_wjbz_qianjian", "tf_hd_miaohui", "tf_hd_jingqi"],
+                 "北接颐和园，自是要冲）；清末一手：「火器營駐此，街衢富庶，"
+                 "不下一大縣」（《天咫偶闻》卷九）",
+        evidence_fact_ids=["tf_wjbz_qianjian", "tf_hd_miaohui", "tf_hd_jingqi",
+                           "tf_tz_guangren"],
     ),
     HistoricalFeatureState(
         id="st_ldc_modern", entity_id="ent_landianchang",
@@ -583,8 +621,10 @@ STATES: List[HistoricalFeatureState] = [
         geometry="清康熙五十一年（1712）改称广仁宫碧霞元君庙",
         material="庙宇砖木，碑记载官帑修葺",
         function="京西香火最盛的碧霞元君古刹：庙会正月初一至十五、四月初一至十五，"
-                 "庙外有戏楼，火器营南门外街道形成市集——庙反而是庙会的配角",
-        evidence_fact_ids=["tf_hd_xiding_yange", "tf_xdb_hui", "tf_hd_miaohui"],
+                 "庙外有戏楼，火器营南门外街道形成市集——庙反而是庙会的配角；"
+                 "「又西為廣仁宮，在南岸，地名藍靛廠」（卷九一手地望）",
+        evidence_fact_ids=["tf_hd_xiding_yange", "tf_xdb_hui", "tf_hd_miaohui",
+                           "tf_tz_guangren"],
     ),
     HistoricalFeatureState(
         id="st_xd_modern", entity_id="ent_xiding",
@@ -715,7 +755,7 @@ APPELLATIONS: List[Appellation] = [
     # ---- E10 ----
     Appellation(id="app_landianchang", label="蓝靛厂", kind=AppellationKind.OFFICIAL,
                 valid_time_span=_ts(1522, 2026, "ts_n6"),
-                attesting_fact_ids=["tf_hd_dingyuanchang"]),
+                attesting_fact_ids=["tf_hd_dingyuanchang", "tf_tz_guangren"]),
     Appellation(id="app_dingyuanchang", label="靛园厂", kind=AppellationKind.OLD_NAME,
                 valid_time_span=_ts(1522, 1644, "ts_n7"),
                 attesting_fact_ids=["tf_hd_dingyuanchang"]),
@@ -738,7 +778,7 @@ APPELLATIONS: List[Appellation] = [
                 attesting_fact_ids=["tf_hd_xiding_yange"]),
     Appellation(id="app_guangren", label="广仁宫", kind=AppellationKind.OFFICIAL,
                 valid_time_span=_ts(1712, 2026, "ts_n13"),
-                attesting_fact_ids=["tf_hd_xiding_yange"]),
+                attesting_fact_ids=["tf_hd_xiding_yange", "tf_tz_guangren"]),
     Appellation(id="app_limaguandi", label="立马关帝庙", kind=AppellationKind.OFFICIAL,
                 valid_time_span=TimeSpan(id="ts_n14", label="清光绪年间以来",
                                          begin=_dt(1875, "ts_n14b",
@@ -791,7 +831,8 @@ REFERENCES: List[ReferentialAssertion] = [
     ReferentialAssertion(id="rr_landianchang", appellation_id="app_landianchang",
                          referent_entity_id="ent_landianchang",
                          time_span=_ts(1522, 2026, "ts_r6"),
-                         evidence_fact_ids=["tf_hd_dingyuanchang"]),
+                         evidence_fact_ids=["tf_hd_dingyuanchang",
+                                            "tf_tz_guangren"]),
     ReferentialAssertion(id="rr_dingyuanchang", appellation_id="app_dingyuanchang",
                          referent_entity_id="ent_landianchang",
                          time_span=_ts(1522, 1644, "ts_r7"),
