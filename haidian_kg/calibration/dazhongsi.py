@@ -102,10 +102,11 @@ DIVISIONS: List[SourceDivision] = [
                    volume_number="卷次待核", section_title="搬运巨料凿井浇水条"),
     SourceDivision(id="div_yhd_wanshousi", source_id="src_yuanzhonglang",
                    volume_number="卷次待核", section_title="万寿寺观文皇旧钟"),
-    # 官书：日下旧闻考卷100 西郊景物（万寿寺条引《燕邸纪闻》——转引，不独立建目）
-    SourceDivision(id="div_rxjwkc100_wanshousi", source_id="src_rxjwkc",
-                   volume_number="卷100",
-                   section_title="西郊景物·万寿寺条（引《燕邸纪闻》）"),
+    # 官书：日下旧闻考卷77 国朝苑囿·乐善园后（万寿寺条引《燕邸纪闻》——转引，不独立建目）
+    # E15 闸门裁定（2026-10-02）：旧记「卷100 西郊景物」系旧分类定位（郊坰门）致误；canonical=卷77
+    SourceDivision(id="div_rxjwkc77_wanshousi", source_id="src_rxjwkc",
+                   volume_number="卷77",
+                   section_title="国朝苑囿·乐善园后·万寿寺条（引《燕邸纪闻》；旧记卷100系旧定位致误）"),
     # 御制诗：1743 短诗与 1746 大钟歌分挂两个篇卷，物理阻断同年剪接
     SourceDivision(id="div_qgz_1743_shi", source_id="src_qianlong_shiwenji",
                    volume_number="卷次待核", section_title="御制觉生寺大钟诗（乾隆八年）"),
@@ -195,10 +196,10 @@ FACTS: List[TextualFact] = [
     ),
     # ---- 日下旧闻考卷100 转《燕邸纪闻》：1607 徙置万寿寺（转引，不建独立书目） ----
     TextualFact(
-        id="tf_yandijian_1607", division_id="div_rxjwkc100_wanshousi",
+        id="tf_yandijian_1607", division_id="div_rxjwkc77_wanshousi",
         verbatim_quote="今徙置之日為六月十六日，亦四丁未相符",
         attested_string="徙置",
-        translator_note="《燕邸纪闻》原书不独立建目：此为《日下旧闻考》卷100万寿寺条转引，"
+        translator_note="《燕邸纪闻》原书不独立建目：此为《日下旧闻考》卷77万寿寺条转引（E15 闸门裁定：旧记卷100系致误）"
                         "丁未即万历三十五年(1607)；provenance 挂 src_rxjwkc",
     ),
     # ---- 春明梦余录：铸钟厂仆地巨钟（铸地推断旁证） ----
