@@ -36,9 +36,9 @@ export const Page03: React.FC = () => {
            下部渐隐入卡纸色，引文横幅与考据卡落座其上。 */
         <div
           style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, height: 560,
+            position: "absolute", left: 0, right: 0, bottom: 0, height: 720,
             background:
-              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.90) 22%, rgba(247,240,223,0.97) 100%)",
+              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.95) 12%, rgba(247,240,223,0.98) 100%)",
           }}
         />
       }
