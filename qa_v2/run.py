@@ -40,6 +40,7 @@ COMPOSITION_OVERRIDES = {
     "wanshou": "WanshouCourse",
     "changhe": "ChangheCourse",
     "fenshi": "FenshiCourse",
+    "liulangzhuang": "LiulangzhuangCourse",
 }
 
 

@@ -69,8 +69,11 @@ class TestDazhongsiEntryGate:
 
     def test_yandijian_marked_as_transit_quote(self, kb):
         f = kb.facts["tf_yandijian_1607"]
-        assert f.division_id == "div_rxjwkc100_wanshousi"
+        # E15 闸门裁定（2026-10-02）：万寿寺条 canonical=卷77（国朝苑囿·乐善园后），
+        # 旧记「卷100 西郊景物」系旧分类定位（郊坰门）致误。KB 已纠错，见 dazhongsi.py。
+        assert f.division_id == "div_rxjwkc77_wanshousi"
         assert "转引" in f.translator_note, "转引必须在 note 标明"
+        assert "77" in f.translator_note
 
 
 # ==================================================================
