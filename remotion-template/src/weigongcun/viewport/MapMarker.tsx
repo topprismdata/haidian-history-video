@@ -46,23 +46,19 @@ export const MapMarker: React.FC<{
   const h = 160;
 
   return (
-    <div
+    <svg
+      width={w}
+      height={h}
+      viewBox={`${-w / 2} ${-h / 2} ${w} ${h}`}
       style={{
         position: "absolute",
-        left: x,
-        top: y,
-        width: 0,
-        height: 0,
+        left: x - w / 2,
+        top: y - h / 2,
+        overflow: "visible",
         transform: `scale(${pop})`,
         transformOrigin: "center",
       }}
     >
-      <svg
-        width={w}
-        height={h}
-        viewBox={`${-w / 2} ${-h / 2} ${w} ${h}`}
-        style={{ position: "absolute", left: -w / 2, top: -h / 2, overflow: "visible" }}
-      >
         {/* 呼吸光圈 */}
         <circle
           cx={0}
@@ -91,7 +87,6 @@ export const MapMarker: React.FC<{
         >
           {label}
         </text>
-      </svg>
-    </div>
+    </svg>
   );
 };

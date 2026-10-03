@@ -382,27 +382,43 @@ def test_crossfadeviewport_contract():
     assert "smooth" in src, "必须支持 smooth 平滑过渡开关"
 
 
+SVG_TAG_WHITELIST = {
+    "svg", "circle", "text", "style", "defs", "g", "animate", "path", "rect",
+    "line", "polyline", "polygon", "tspan"
+}
+
+def scan_mapmarker_jsx_for_dom_leak(source_code: str) -> None:
+    """严格扫描 MapMarker 组件源码，阻断任何非 SVG 标签与 DOM 文本泄露。"""
+    # 截取 JSX return 块
+    m = re.search(r"return\s*\(\s*(<.*?>)\s*\);", source_code, re.S)
+    jsx_block = source_code[source_code.find("return"):source_code.rfind(";")] if "return" in source_code else source_code
+    
+    # 1. 拦截所有 HTML 常见标签
+    forbidden_html = re.findall(r"<(div|span|p|label|h[1-6]|small|b|strong|article|section)\b", jsx_block, re.I)
+    if forbidden_html:
+        raise AssertionError("MapMarker 泄露 HTML DOM 标签: %s" % forbidden_html)
+    
+    # 2. 检查所有出现的标签是否全部在 SVG 白名单内
+    all_tags = re.findall(r"<([a-zA-Z0-9]+)\b", jsx_block)
+    for tag in all_tags:
+        if tag.lower() not in SVG_TAG_WHITELIST:
+            raise AssertionError("MapMarker 包含非 SVG 白名单标签 <%s>" % tag)
+
+    # 3. 必须包含 <svg> 与 <text>
+    if "<svg" not in jsx_block or "<text" not in jsx_block:
+        raise AssertionError("MapMarker 必须包含 <svg> 根容器与 <text> 矢量文本")
+
+    # 4. 严禁与 slots.json 耦合
+    code_no_comments = re.sub(r"/\*.*?\*/|//.*?$", "", source_code, flags=re.M | re.S)
+    if "slots.json" in code_no_comments.lower():
+        raise AssertionError("MapMarker 严禁在代码中引用 slots.json")
+
 def test_mapmarker_is_deterministic_svg_overlay():
-    """MapMarker 红线：SVG 矢量叠加层 + <text> 矢量标签 + 正弦呼吸确定性，
-    严禁输出为 QA 可见的 DOM 文字槽。"""
     src = _read_component("MapMarker.tsx")
-    assert "<svg" in src, "MapMarker 必须以 SVG 叠加层渲染"
-    assert "<text" in src, "标签必须为 SVG 矢量文本 (<text>)，不得使用 DOM 文本节点"
     assert "Math.sin" in src, "呼吸光圈必须由正弦函数驱动（逐帧确定性）"
     assert "useCurrentFrame" in src, "呼吸必须由 useCurrentFrame 驱动"
     assert "spring" in src, "入场弹性必须用 Remotion spring，而非 CSS 时间基动画"
-    # 红线按代码口径检验：剥离注释后不得出现 slots.json 引用
-    # （文档注释书写「严禁写入 slots.json」属红线声明，不算违规）
-    assert "slots.json" not in _strip_tsx_strings_and_comments(src, keep_strings=True), \
-        "MapMarker 代码严禁引用 slots.json"
-    # 标签只允许落在 SVG 内部：组件不得渲染任何 DOM 文本节点
-    # （先折叠 JSX 注释与标签间空白，再查找 >非空白非表达式< 形态的裸文本）
-    tail = re.sub(r"\{/\*.*?\*/", "{}", src[src.index("<svg"):], flags=re.S)
-    tail = re.sub(r">\s+", ">", tail)
-    dom_text = re.search(r">[^<>{\s][^<>]*<", tail)
-    assert dom_text is None, "SVG 内发现裸 DOM 文本节点: %r" % dom_text.group(0)[:40]
-
-
+    scan_mapmarker_jsx_for_dom_leak(src)
 def test_scrollpanview_contract():
     src = _read_component("ScrollPanView.tsx")
     assert "scrollWidth" in src and "viewportWidth" in src, "长卷契约缺失 scrollWidth/viewportWidth"
@@ -443,3 +459,61 @@ def test_working_copy_synced_with_template():
         sp = SYNC_DIR / name
         assert sp.is_file(), "工程副本缺失: %s" % sp
         assert sp.read_bytes() == tp.read_bytes(), "工程副本与模板正本内容漂移: %s" % name
+
+class TestNegativeControls:
+    """变异负控制测试套件：根据 detector-needs-negative-control 规范，
+    必须注入主动变异样本，证明检测判据非恒真（能在反例上明确抛出 AssertionError）。"""
+
+    def test_negative_control_catches_injected_html_span(self):
+        """变异测试：注入 <span>{label}</span> 必须被守卫有效抛错拦截。"""
+        bad_src = """
+        export const BadMarker = () => {
+            return (
+                <div>
+                    <svg><circle r={10} /></svg>
+                    <span>{label}</span>
+                </div>
+            );
+        };
+        """
+        import pytest
+        with pytest.raises(AssertionError, match="MapMarker 泄露 HTML DOM 标签"):
+            scan_mapmarker_jsx_for_dom_leak(bad_src)
+
+    def test_negative_control_catches_non_svg_custom_tag(self):
+        """变异测试：注入未知非 SVG 标签必须被白名单拦截。"""
+        bad_src = """
+        export const BadMarker = () => {
+            return (
+                <svg>
+                    <custombox><text>{label}</text></custombox>
+                </svg>
+            );
+        };
+        """
+        import pytest
+        with pytest.raises(AssertionError, match="非 SVG 白名单标签 <custombox>"):
+            scan_mapmarker_jsx_for_dom_leak(bad_src)
+
+    def test_negative_control_catches_missing_svg_text(self):
+        """变异测试：如果 MapMarker 遗漏 <text>，必须被拦截。"""
+        bad_src = """
+        export const BadMarker = () => {
+            return (<svg><circle r={10} /></svg>);
+        };
+        """
+        import pytest
+        with pytest.raises(AssertionError, match="必须包含 <svg> 根容器与 <text>"):
+            scan_mapmarker_jsx_for_dom_leak(bad_src)
+
+    def test_negative_control_catches_slots_json_coupling(self):
+        """变异测试：如果在代码逻辑中耦合 slots.json，必须被拦截。"""
+        bad_src = """
+        export const BadMarker = () => {
+            const slot = require("./slots.json");
+            return (<svg><circle r={10} /><text>tag</text></svg>);
+        };
+        """
+        import pytest
+        with pytest.raises(AssertionError, match="严禁在代码中引用 slots.json"):
+            scan_mapmarker_jsx_for_dom_leak(bad_src)
