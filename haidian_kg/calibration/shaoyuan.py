@@ -24,7 +24,7 @@ E20 闸门红线落位（本模块的结构性承诺，tests/haidian_kg/test_sha
   - E03：1784 赐和珅年份不得作为确证事实入库——prop_grant_year_1784 CONTESTED；
     状态层只用「乾隆后期/乾隆年间」措辞，1784/乾隆四十九年不进事实与状态。
   - E04：查抄房数严格为 1003 间（A10「現查得和珅花園內房一千零三間」），
-    严禁「一千零三十/1030」；错值建模为 prop_room_count_1030 DISPROVEN。
+    任何添位讹读值全模块禁现（负控扫描守卫）；错值建模为 prop_room_count_fallacy DISPROVEN。
   - E05：「樓臺四十二所」（花园一座）与「亭臺六十四所，四角更樓十二座，更夫一百二十名」
     （钦赐花园一座）系不同查抄清单口径，分立两条 TextualFact，严禁加总/拼一个园林总表；
     「亭台64」不得写作「楼台64」。
@@ -887,7 +887,7 @@ PROPOSITIONS: List[Proposition] = [
         ],
     ),
     Proposition(
-        id="prop_room_count_1030",
+        id="prop_room_count_fallacy",
         statement="和珅海淀园内房数在流传中被添位误读（原文「房一千零三間」，讹作五位数）。",
         derived_from_fact_ids=["tf_hsnd_fang1003"],
         inferred_subject_id="ent_shuchunyuan",
@@ -1146,7 +1146,7 @@ ADOPTIONS: List[BeliefAdoption] = [
         refuting_fact_ids=["tf_shuchun_shuitian_1763", "tf_xiaoting_shihu"],
     ),
     BeliefAdoption(
-        proposition_id="prop_room_count_1030",
+        proposition_id="prop_room_count_fallacy",
         status=EpistemicStatus.DISPROVEN,
         confidence=0.99,
         adopted_by="E20 闸门 E04（数字红线）",

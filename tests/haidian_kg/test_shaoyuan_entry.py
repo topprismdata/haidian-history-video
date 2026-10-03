@@ -292,7 +292,7 @@ class TestE04RoomCount1003:
         assert "一千零三十" not in dump
 
     def test_fallacy_modeled_as_disproven(self):
-        adopt = _adopt("prop_room_count_1030")
+        adopt = _adopt("prop_room_count_fallacy")
         assert adopt.status == EpistemicStatus.DISPROVEN
         assert "tf_hsnd_fang1003" in adopt.refuting_fact_ids
 
