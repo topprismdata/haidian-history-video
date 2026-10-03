@@ -226,6 +226,17 @@ class TestPixelLevelTranscription:
         assert "因得速就如此" in f.verbatim_quote
         assert "速竣" not in f.verbatim_quote
 
+    def test_no_inference_leaked_into_verbatim_quote(self):
+        """释义不得写成原文——「跨鳳九首」倒推成「九蓮像」进 verbatim_quote
+        等于伪造一手书证，这是本集根除的病。"""
+        f = _fact("tf_cs97_1783")
+        assert "九蓮" not in f.verbatim_quote, (
+            "卷97 该栏原书无「九蓮」二字，只有「供像一尊高尺餘有跨鳳九首之形」；"
+            "「此像即九莲」是考订释读，不属原书字面")
+        assert "跨鳳九首" in f.verbatim_quote
+        assert "跨鳳九首" in f.attested_string
+        assert "九莲" in f.translator_note, "释读必须放 translator_note 而不是引文里"
+
     def test_stele_sides_not_swapped(self):
         """左碑紫竹、右碑鱼篮——曾被记反。"""
         assert "左碑前刻紫竹觀音像" in _fact("tf_cs97_tableleft").verbatim_quote
