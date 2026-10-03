@@ -4,7 +4,7 @@
 
 export const VIDEO = { width: 1920, height: 1080, fps: 30 } as const;
 
-export const PAGE_DURATIONS_SEC = [26.72, 36.48, 44.32, 37.36, 35.52, 38.8, 36.72, 40.16];
+export const PAGE_DURATIONS_SEC = [27.12, 39.2, 43.44, 35.12, 36.16, 42.32, 39.76, 40.96];
 
 export const TOTAL_FRAMES = PAGE_DURATIONS_SEC.reduce(
   (sum, s) => sum + Math.round(s * VIDEO.fps), 0,

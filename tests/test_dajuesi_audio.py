@@ -77,7 +77,8 @@ def test_key_screen_numbers_spoken_l4c():
     data = _narration()
     combined = "".join(data.values())
     spoken_nums = set(extract_numbers(combined))
-    required = {1068, 1189, 1208, 121, 1428, 1720, 1747, 579, 2006}
+    required = {1068, 1189, 1208, 121, 1428, 1446, 1720, 1747, 579, 2006,
+                300000, 500000}
     missing = required - spoken_nums
     assert not missing, f"口播缺少关键数字: {missing}"
 

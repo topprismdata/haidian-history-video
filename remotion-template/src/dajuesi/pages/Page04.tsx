@@ -25,10 +25,11 @@ export const Page04: React.FC = () => {
       overlay={
         <div
           style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, height: 430,
-            // 12% 处即达 0.99 不透明：负控制平移候选（y=740~980）须落在纯净纸雾区
+            position: "absolute", left: 0, right: 0, bottom: 0, height: 700,
+            // 3% 处即达 0.99 不透明：负控制平移候选（y=440~486）须落在纯净纸雾区
+            // （12% 收敛点太晚，y=440 的地图字「巴清村」仍半透明可见）
             background:
-              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.99) 12%, rgba(247,240,223,1) 100%)",
+              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.99) 3%, rgba(247,240,223,1) 100%)",
           }}
         />
       }
