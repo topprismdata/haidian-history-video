@@ -56,6 +56,14 @@ class TextItem(object):
     def is_tag(self) -> bool:
         return self.kind == "tag"
 
+    def is_photo(self) -> bool:
+        """历史影像槽(PhotoFrame 装裱框)——非文字槽。
+
+        2026-10-03：E18 首次使用真图页，photo/caption 两槽记录装裱框几何，
+        不是文字框。L1 越界/空洞检查与 L5 文字检测都必须排除它们。
+        """
+        return self.kind in ("photo", "photo_caption")
+
     def __repr__(self) -> str:
         return "TextItem(%r, %r)" % (self.slot_id, self.text)
 
@@ -143,7 +151,7 @@ def parse_pages_config(text: str) -> Dict[int, List[TextItem]]:
                 continue
             txt = json.loads(tm.group(1))
             sm = _SIZE_RE.search(rest)
-            km = re.search(r"kind:\s*\"tag\"", rest)
+            km = re.search(r"kind:\s*\"(tag|photo|photo_caption)\"", rest)
             bm2 = _BACKING_RE.search(rest)
             if bm2:
                 backing = (True if bm2.group(1) == "true"
@@ -152,7 +160,9 @@ def parse_pages_config(text: str) -> Dict[int, List[TextItem]]:
                 backing = True
             items.append(TextItem(
                 sid, txt, int(sm.group(1)) if sm else 20, backing,
-                "tag" if km else None))
+                # 2026-10-03：取 kind 的实际值（tag/photo/photo_caption），
+                # 原式写死 "tag" if km 会把任何 kind 都判成 tag。
+                km.group(1) if km else None))
         out[page_no] = items
     return out
 

@@ -81,7 +81,16 @@ def check_l1(ep: Episode) -> List[Finding]:
                     "文案引用了不存在的槽位（渲染时会静默走兜底框）",
                     {"text": i.text[:40]}))
 
+        photo_ids = {i.slot_id for i in page.items if i.is_photo()}
+        # 2026-10-03：真图槽(PhotoFrame)由 PageNN.tsx 渲染，不经 pages.config 文案，
+        # 几何是画布坐标而非板面像素——L1 的空洞/越界检查对它们不适用。
+        for i in page.items:
+            if i.is_photo() and i.slot_id and i.slot_id not in {s.id for s in page.slots}:
+                used.add(i.slot_id)
+
         for s in page.slots:
+            if s.id in photo_ids:
+                continue
             if s.id not in used:
                 out.append(Finding(
                     "L1", page.number, s.id, "fail", "SLOT_WITHOUT_TEXT",

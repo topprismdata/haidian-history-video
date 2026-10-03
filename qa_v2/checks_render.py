@@ -225,8 +225,11 @@ def check_l5(page: Page, png: Path) -> List[Finding]:
             continue
         rect = plate_to_canvas(page.plate, s.x, s.y, s.w, s.h)
         r = text_bbox_in_slot(a, rect)
+        photo_ids = {i.slot_id for i in page.items if i.is_photo()}
         if r is None:
             continue  # 空槽由 L3 报，这里不重复
+        if s.id in photo_ids:
+            continue  # 2026-10-03：真图装裱框内是图像像素，不是文字框
         tx, ty, tw, th = r
         rx, ry, rw, rh = rect
         hits = []

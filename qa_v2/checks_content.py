@@ -128,7 +128,9 @@ def check_l4a(page: Page, ocr: OcrResult) -> List[Finding]:
                               key=lambda s: len(s), reverse=True)
 
     for item in page.items:
-        if item.is_tag:
+        if item.is_tag or item.is_photo():
+            # 2026-10-03：真图槽的文字由 PhotoFrame 组件在画布别处渲染，
+            # 槽内只有图像像素——L4 逐字/数字比对对它不成立。
             continue
         want = set(extract_numbers(item.text))
         if not want:
@@ -176,7 +178,9 @@ def check_l4b(page: Page, ocr: OcrResult, names: Set[str]) -> List[Finding]:
             "专名表为空，L4-b 未执行（不算通过）。新集需维护 qa_v2/names.txt"))
         return out
     for item in page.items:
-        if item.is_tag:
+        if item.is_tag or item.is_photo():
+            # 2026-10-03：真图槽的文字由 PhotoFrame 组件在画布别处渲染，
+            # 槽内只有图像像素——L4 逐字/数字比对对它不成立。
             continue
         norm_item_text = normalize_punct(item.text)
         want = [normalize_punct(n) for n in names if normalize_punct(n) in norm_item_text]
