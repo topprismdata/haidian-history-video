@@ -195,6 +195,7 @@ class TestE01TwoSystemsDistinct:
 
     def test_two_chains_not_one_line_disproven(self):
         prop = _prop("prop_two_chains_one_line")
+        assert "同一条" in prop.statement
         adopt = _adopt("prop_two_chains_one_line")
         assert adopt.status == EpistemicStatus.DISPROVEN
         assert "tf_xiaoting_shihu" in adopt.refuting_fact_ids
