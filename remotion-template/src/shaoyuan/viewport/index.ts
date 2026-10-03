@@ -6,4 +6,5 @@ export { PanZoomView } from "./PanZoomView";
 export type { ViewSpec } from "./PanZoomView";
 export { CrossFadeViewport } from "./CrossFadeViewport";
 export type { CrossFadeLayer } from "./CrossFadeViewport";
+export { ScrollPanView } from "./ScrollPanView";
 export { MapMarker } from "./MapMarker";
