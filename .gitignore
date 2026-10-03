@@ -83,3 +83,9 @@
 # node_modules/       npm 依赖
 # *-venv/             Python 虚拟环境
 # chemistry-video/    本机工程副本（Remotion 模板见 remotion-template/）
+
+
+# ── 放行：历史影像证据本体（2026-10-03，原始像素+来源表入库）──────────────
+!/assets/
+!/assets/hist_*/
+!/assets/hist_*/**

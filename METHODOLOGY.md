@@ -541,5 +541,19 @@ mkdir -p <集名>_video/{boards,prompts,narration} && cd <集名>_video
 ### 代码落点
 - 组件:`ui.tsx` 的 `PhotoFrame`(props: src/alt/caption/width/height/mount),全片唯一实现;
 - 槽位:`pages.config.ts` 项加 `kind:"photo"` + `src:"hist/<topic>/<file>"`(放 `public/hist/<topic>/`),caption 走 `sub` 或 `caption` 字段;
-- 底图真身:下载件放仓库外 `assets/hist_<topic>/`(不入库,同板图/音频),`public/hist/` 为渲染落位;
+- 底图真身:**入库** `assets/hist_<topic>/`(原始像素+来源表,见下节「原始影像入库规约」);`public/hist/<topic>/` 仅为渲染落位(软链或副本,同板图/音频);
 - QA:快档 L1 检查 photo 项 src 存在、L6 不误判;反向走查新增「凡真图页,来源条须含藏家或刊名+期号/年代」。
+
+
+## 原始影像入库规约(2026-10-03 用户定,证据本体)
+
+**原则:原始影像属于证据本体,必须进仓库;渲染副本可重建。**
+
+- **入库**:`assets/hist_<topic>/`
+  - 影像像素:归档原文件(优先 tiff/png;超大 jpeg 存 ≤2000px 长边的展示版 + 标原尺寸);
+  - `sources.csv`:**一图一行**,字段 `file / title / period / archive(藏家或刊名) / shelfmark(藏品号或期号) / url(来源页) / access_date / rights(权利状态) / sha256(像素级指纹)`;
+  - 权利:公共领域或研究性引用照用;权利存疑的条目在 csv 标 `rights=待核`,仅内部留存,上屏前再核;
+- **不入库**:`public/hist/<topic>/`(渲染落位,可由 assets 复制重建)、OCR 缓存、放大裁切中间件;
+- **为什么要像素入库**(2026-10-03 决定):①来源 URL 会失效/改版,链接不等于证据;②像素可复现、可核对、可重渲;③每集的史实裁定(哪张图代表哪个年代)必须可回溯到具体像素,否则后人无法复核;
+- **校验**:`sha256` 落 csv,入库前跑一次(防止同图不同源混淆);同名不同图的条目必须用不同文件名;发现历史上配错的图,直接在 csv 记 `assignment_revised` 行说明改配依据;
+- **派生规则**:上屏版本只做**色彩归一 + 尺寸适配**,不改内容(不裁主体、不加重滤镜);任何裁切版都另存 `*_crop.<ext>` 并在 csv 注明裁切区域用途(如「来源条区域已裁」)。
