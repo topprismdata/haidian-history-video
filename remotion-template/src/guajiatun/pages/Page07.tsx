@@ -14,19 +14,21 @@ export const Page07: React.FC = () => {
         <PanZoomView
           src="guajiatun/beijing_1915_guajiatun_roi.png"
           startView={{ x: 0, y: 0, scale: 1 }}
-          endView={{ x: -70, y: -50, scale: 1.35 }}
+          endView={{ x: -140, y: -70, scale: 1.22 }}
           durationInFrames={frames}
         >
-          <MapMarker x={955} y={390} label="" color={PALETTE.ochre} radius={24} delay={90} />
-          <MapMarker x={340} y={400} label="" color={PALETTE.indigo} radius={18} delay={170} />
+          <MapMarker x={1560} y={500} label="" color={PALETTE.ochre} radius={24} delay={90} />
+          <MapMarker x={1200} y={280} label="" color={PALETTE.indigo} radius={18} delay={170} />
         </PanZoomView>
       }
       overlay={
         <div
           style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, height: 420,
+            position: "absolute", left: 0, right: 0, bottom: 0, height: 700,
+            // 12% 处即达 0.99 不透明：覆盖 p7_summary 平移候选 (y=400..630) 内的图内汉字
+            // 「頤和園」的「頤」，避免负控制把底图字迹误判为槽位文字（E23 事故）
             background:
-              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.90) 28%, rgba(247,240,223,0.97) 100%)",
+              "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.99) 12%, rgba(247,240,223,1) 100%)",
           }}
         />
       }

@@ -27,7 +27,7 @@ export const Page06: React.FC = () => {
       overlay={
         <div
           style={{
-            position: "absolute", left: 0, right: 0, bottom: 0, height: 620,
+            position: "absolute", left: 0, right: 0, bottom: 0, height: 420,
             background:
               "linear-gradient(to bottom, rgba(247,240,223,0) 0%, rgba(247,240,223,0.92) 26%, rgba(247,240,223,0.97) 100%)",
           }}

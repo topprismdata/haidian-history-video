@@ -81,8 +81,10 @@ def build_sanshanyuan_roi(out_path):
 def build_1915_roi(out_path):
     z = 16
     cx, cy = 53938, 24811
-    x0, x1 = cx - 7, cx - 1
-    y0, y1 = cy - 2, cy + 3
+    # 拼接窗口必须 >= 裁切窗口 + ox（本集裁切 1920x1080，ox=300）
+    # 旧参数 7 瓦片 = 1792px < ox+1920，PIL 以黑色补齐 → 成片右侧 1/3 黑边（E23 事故）
+    x0, x1 = cx - 9, cx - 1
+    y0, y1 = cy - 3, cy + 3
     w_tiles = x1 - x0 + 1
     h_tiles = y1 - y0 + 1
     big_map = Image.new("RGB", (w_tiles * 256, h_tiles * 256), (255, 255, 255))
@@ -117,9 +119,9 @@ def build_1915_roi(out_path):
             gy = (ty - y0) * 256
             big_map.paste(img, (gx, gy))
 
-    # 挂甲屯标签位于 x≈1445, y≈380
-    # 取 ox = 490, oy = 50 -> 截取 1920x1080
-    ox, oy = 490, 50
+    # 挂甲屯标签在 11 瓦片窗口内位于 x≈?（原 7 瓦片窗口 x≈1445，+2 瓦片偏移 = 1957）, y≈380+256
+    # 取 ox = 300, oy = 40 -> 截取 1920x1080（ox+1920 <= 10*256=2560 边界内）
+    ox, oy = 300, 40
     crop = big_map.crop((ox, oy, ox + 1920, oy + 1080))
     crop.save(out_path, optimize=True)
     return out_path.stat().st_size

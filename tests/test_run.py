@@ -54,7 +54,7 @@ def test_composition_overrides_covers_all_registered_episodes():
             "shucun", "dazhongsi", "xisanqi", "yimuyuan", "niangniangfu",
             "landianchang", "suzhoujie", "zhongguancun",
             "changchunyuan", "wanshou", "changhe", "fenshi", "liulangzhuang",
-            "cishousi", "shaoyuan", "weigongcun",
+            "cishousi", "shaoyuan", "weigongcun", "taizhouwu", "guajiatun",
         ), "%s 的映射是 capitalize() 拼的，需人工确认" % ep
 
 
