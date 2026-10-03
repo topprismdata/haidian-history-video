@@ -23,7 +23,7 @@ AUDIO_DIR = pathlib.Path("/tmp/chemistry-video/public/audio/shaoyuan")
 REMOTION_DATA = pathlib.Path("/tmp/chemistry-video/src/shaoyuan/data")
 TEMPLATE_DATA = ROOT / "remotion-template" / "src" / "shaoyuan" / "data"
 FPS = 30
-SPLIT_RE = re.compile(r"(?<=[。！？；：，、—,;:])")
+SPLIT_RE = re.compile(r"(?<=[,。?!;:、——?])")
 
 # E20 旁白句读自检:切断点之后不允许出现成对书名号残留等异常由 pytest 兜底。
 

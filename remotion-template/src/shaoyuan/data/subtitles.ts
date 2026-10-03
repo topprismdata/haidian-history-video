@@ -60,9 +60,14 @@ export const SUBTITLES: Record<string, CaptionLine[]> = {
       "dur": 1.91
     },
     {
-      "text": "它到底是不是明代米万钟勺园的湖?先记住这条石船,",
+      "text": "它到底是不是明代米万钟勺园的湖?",
       "from": 15.5,
-      "dur": 5.09
+      "dur": 3.39
+    },
+    {
+      "text": "先记住这条石船,",
+      "from": 18.89,
+      "dur": 1.7
     },
     {
       "text": "故事要从四百多年前说起。",

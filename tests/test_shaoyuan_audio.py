@@ -55,7 +55,7 @@ def test_narration_json_has_8_nonempty_pages():
 def test_redline_forbidden_phrases_absent():
     """GPT 闸门红线:己卯(1615=乙卯)/1030/1784/独资/钱穆命名独断。"""
     text = (NARR_DIR / "all.json").read_text(encoding="utf-8")
-    for bad in ["己卯", "一千零三十", "一七八四", "1784", "独资",
+    for bad in ["己卯", "一千零三十", "1030", "一七八四", "1784", "独资",
                 "钱穆命名", "钱穆首创"]:
         assert bad not in text, f"红线禁词「{bad}」不得出现"
 
@@ -91,7 +91,7 @@ def test_all_16_audio_files_present():
 def test_alias_bytes_identical_to_canonical():
     for k in PAGES:
         a = (AUDIO_DIR / f"{k}.wav").read_bytes()
-        b = (AUDIO_DIR / f"{k[1:]}.wav").read_bytes()
+        b = (AUDIO_DIR / f"p{int(k[1:])}.wav").read_bytes()
         assert hashlib.md5(a).hexdigest() == hashlib.md5(b).hexdigest(), \
             f"别名 {k[1:]}.wav 与 {k}.wav 内容不一致"
 
