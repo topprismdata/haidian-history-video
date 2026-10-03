@@ -655,6 +655,32 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
                      "李东阳《怀麓堂集》卷75诸引文之转录出处；其 footnote 39 另引元明善《廉希宪神道碑》"
                      "「春秋五十……葬于宛平之西原」。现代研究结论与古籍引文严禁混级",
     ),
+    # ---- E22 太舟坞·带州 新增一手文献（一书一条） ----
+    HistoricalSource(
+        id="src_jiutangshu", title="旧唐书",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        total_volumes=200,
+        base_edition=ZHONGHUA,
+        edition_note="后晋刘昫等撰。卷三十九《地理志二·河北道》载「帶州，神龍元年置，"
+                     "寄治昌平縣清水店，領孤竹一縣」，为唐代羁縻带州建制之一手正史锚（L2）",
+    ),
+    HistoricalSource(
+        id="src_xintangshu", title="新唐书",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        total_volumes=225,
+        base_edition=ZHONGHUA,
+        edition_note="宋欧阳修、宋祁等撰。卷四十三下《地理志七下·河北道》载「帶州，"
+                     "神龍元年析營州置，以契丹降戶置，寄治良鄉，後徙昌平之清水店。縣一：孤竹」，"
+                     "确证带州为安置内附契丹部族降户之羁縻州（L2）",
+    ),
+    HistoricalSource(
+        id="src_jiaojinfu_epitaph", title="大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
+        category=SourceCategory.EPIGRAPHY,
+        base_edition="石刻拓本",
+        edition_note="唐天宝九载（750）出土金石实物（L1）。志文确载志主焦金府任"
+                     "「孤竹府带州折冲」，卒葬「幽州昌平县清水店之原」，"
+                     "确证唐代带州治所寄治昌平清水店（阳坊一带），为地望隔离之硬实物",
+    ),
 ]
 
 #: 常见简称 → 规范书名 归一表
@@ -692,6 +718,10 @@ TITLE_ALIASES: Dict[str, str] = {
     "1915京西图": "实测京师四郊图（1915）",
     "魏公村考（党宝海）": "魏公村考——元大都一个畏兀儿聚落的历程",
     "民大校史资料": "中央民族大学公开校史资料",
+    # E22 太舟坞·带州 新补
+    "焦金府墓志铭": "大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
+    "焦府君墓志": "大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
+    "焦金府墓志": "大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
 }
 
 
