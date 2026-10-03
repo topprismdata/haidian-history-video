@@ -642,8 +642,8 @@ hd:attest_chengfulu_gazetteer a hhto:PlaceAttestation ;
 hd:attest_cishousi_dijing a hhto:PlaceAttestation ;
     rdfs:label "慈寿寺"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "慈寿寺在阜成门外八里庄，神宗生母李太后建，浮屠十三级，巍峨插天，京师地标也"@zh ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "宗祈胤嗣卜地阜成门外八里建寺，有永安寿塔，塔十三级"@zh ;
     hhto:recordedYear 1635 ;
     rdfs:comment "断代: 明崇祯八年 | 来源: 《帝京景物略卷五》"@zh .
 
@@ -771,9 +771,9 @@ hd:attest_liaoshi_nanjing a hhto:PlaceAttestation ;
 
 hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
     rdfs:label "玲珑宝塔"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
     hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "八里庄有慈寿寺舍利宝塔，雕饰玲珑秀出，京师游人呼为玲珑宝塔"@zh ;
+    hhto:originalQuote "宝藏阁系圣母御笔题…今頺楹殘礎"@zh ;
     hhto:recordedYear 1623 ;
     rdfs:comment "断代: 明天启三年 | 来源: 《燕都游览志卷三》"@zh .
 
@@ -1107,7 +1107,7 @@ hd:evt_chengfu_extinction a hhto:SpatialExtinctionEvent,
 
 hd:evt_cishou_linglong_drift a hhto:PhoneticShiftEvent,
         hhto:ToponymEvolutionEvent ;
-    rdfs:label "慈寿寺建筑毁于清末大火仅存舍利塔，民间因塔身玲珑秀丽俗称玲珑塔，演化为区域地标"@zh ;
+    rdfs:label "光绪间寺毁，惟浮图及碑存（《光绪顺天府志》）；民间称玲珑宝塔，但明代即有此称尚缺一手佐证"@zh ;
     hhto:sourceToponym hd:top_cishousi ;
     hhto:targetToponym hd:top_linglongta .
 

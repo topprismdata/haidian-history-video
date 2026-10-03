@@ -1661,8 +1661,8 @@
       "source_author": "刘侗、于奕正",
       "recorded_year": 1635,
       "dynasty": "明崇祯八年",
-      "quote": "慈寿寺在阜成门外八里庄，神宗生母李太后建，浮屠十三级，巍峨插天，京师地标也",
-      "evidence_level": "Level 3 (正史方志纪实)",
+      "quote": "宗祈胤嗣卜地阜成门外八里建寺，有永安寿塔，塔十三级",
+      "evidence_level": "Level 2 (一手官刻金石)",
       "epistemic_status": "VERIFIED",
       "notes": null
     },
@@ -1960,9 +1960,9 @@
       "source_author": "孙国敉",
       "recorded_year": 1623,
       "dynasty": "明天启三年",
-      "quote": "八里庄有慈寿寺舍利宝塔，雕饰玲珑秀出，京师游人呼为玲珑宝塔",
+      "quote": "宝藏阁系圣母御笔题…今頺楹殘礎",
       "evidence_level": "Level 3 (正史方志纪实)",
-      "epistemic_status": "VERIFIED",
+      "epistemic_status": "CONTESTED",
       "notes": null
     },
     {
@@ -2218,7 +2218,7 @@
       "target_toponym_id": "top_linglongta",
       "dynasty": "清代中后期",
       "occurred_year": null,
-      "description": "慈寿寺建筑毁于清末大火仅存舍利塔，民间因塔身玲珑秀丽俗称玲珑塔，演化为区域地标",
+      "description": "光绪间寺毁，惟浮图及碑存（《光绪顺天府志》）；民间称玲珑宝塔，但明代即有此称尚缺一手佐证",
       "triggering_person": null
     },
     {

@@ -505,6 +505,15 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         edition_note="卷九（郊坰）载万寿寺外买卖街「今已毁尽」，为苏州街咸丰朝后毁废现状的一手清末记述；"
                      "卷次据维基文库原文核订（v1 误记卷七，E12 入库考订纠正）",
     ),
+    # E19 新增：张居正文集——慈寿寺建寺碑文（为穆考荐福今上祈储、万历四年二月始事、集资非独资）
+    HistoricalSource(
+        id="src_zhangjuzheng_jiwen", title="明张文忠公全集",
+        category=SourceCategory.EPIGRAPHY,
+        base_edition="四库全书本",
+        edition_note="文集卷四《敕建大慈寿寺碑记》为本集建寺缘起、始事年与集资结构的一手碑文层书证；"
+                     "**原碑 1783 年已无存（卷97按语「今已無存」），此处所据为传世文本**，"
+                     "禁写「碑现存/现存拓片」；四库本用字须以「慈夀」「永安夀」检索",
+    ),
     HistoricalSource(
         id="src_hanshu", title="汉书",
         category=SourceCategory.OFFICIAL_HISTORY,

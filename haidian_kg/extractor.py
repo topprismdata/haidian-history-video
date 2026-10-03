@@ -1097,8 +1097,12 @@ class HaidianCorpusExtractor:
                 source_author="刘侗、于奕正",
                 recorded_year=1635,
                 dynasty="明崇祯八年",
-                quote="慈寿寺在阜成门外八里庄，神宗生母李太后建，浮屠十三级，巍峨插天，京师地标也",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                # E19 像素级复核(2026-10-03)：本条引文在卷五 p92/p93 影印中**不存在**。
+                # 卷五实读为「慈聖皇太后為禱子…宗祈胤嗣卜地阜成門外八里建寺…
+                # 有永安壽塔塔十三級」。原引文疑为后人概括回填的伪引文。
+                # 塔十三级已由卷五直证，存续到 quote 里；「京师地标」是现代观感不入引文。
+                quote="宗祈胤嗣卜地阜成门外八里建寺，有永安寿塔，塔十三级",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
@@ -1373,9 +1377,12 @@ class HaidianCorpusExtractor:
                 source_author="孙国敉",
                 recorded_year=1623,
                 dynasty="明天启三年",
-                quote="八里庄有慈寿寺舍利宝塔，雕饰玲珑秀出，京师游人呼为玲珑宝塔",
+                # E19 复核(2026-10-03)：卷97 按语引《燕都游览志》只记「宝藏阁系圣母
+                # 御笔题…今頺楹殘礎」，未记「雕饰玲珑秀出」。「玲珑宝塔」作为
+                # 明代称呼缺乏一手支撑，VERIFIED 降为 CONTESTED。
+                quote="宝藏阁系圣母御笔题…今頺楹殘礎",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                epistemic_status=EpistemicStatus.CONTESTED,
             ),
             PlaceAttestationEntity(
                 id="attest_wutasi_beiping",
@@ -1620,7 +1627,10 @@ class HaidianCorpusExtractor:
                 source_toponym_id="top_cishousi",
                 target_toponym_id="top_linglongta",
                 dynasty="清代中后期",
-                description="慈寿寺建筑毁于清末大火仅存舍利塔，民间因塔身玲珑秀丽俗称玲珑塔，演化为区域地标",
+                # E19 复核(2026-10-03)：「毁于清末大火」无任何一手记载——《宸垣识略》
+                # 与《光绪顺天府志》只记寺毁而未记火；火灾细节本集负控制明禁。
+                # 「惟浮图及碑存」是《光绪顺天府志》原话，据此改写。
+                description="光绪间寺毁，惟浮图及碑存（《光绪顺天府志》）；民间称玲珑宝塔，但明代即有此称尚缺一手佐证",
             ),
             ToponymEventEntity(
                 id="evt_zhenjue_wuta_drift",
