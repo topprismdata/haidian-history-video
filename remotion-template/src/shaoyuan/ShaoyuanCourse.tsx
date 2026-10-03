@@ -33,7 +33,7 @@ export const ShaoyuanCourse: React.FC = () => (
       audioBeats(i + 1).map((b) => (
         // ⚠ b.from 已是**帧**（见 data/narration.ts 的单位约定），不要再乘 fps
         <Sequence key={`a-${b.name}`} from={pageOffsetFrames(i) + b.from} name={b.name}>
-          <Audio src={staticFile(`audio/shaoyuan/${b.name.padStart(2, "0")}.wav`)} />
+          <Audio src={staticFile(`audio/shaoyuan/${b.name.replace(/^p(\d)$/, "p0$1")}.wav`)} />
         </Sequence>
       )),
     )}
