@@ -1,7 +1,9 @@
-file,title,period,archive,shelfmark,url,access_date,rights,sha256
-commons_1860_tongzhou_pagoda.jpg,通州塔(1860 摄影),1860s,公共领域,—,Wikimedia Commons,2026-10-03,公共领域,0d040f56ea2f1638
-commons_1926_yenching_campus.jpg,燕京大学校园(1926),1926,公共领域/待核,—,Wikimedia Commons,2026-10-03,待核,53a435da23c1b37e
-commons_1930s_yenching_campus1.jpg,燕京大学校园(1930s),1930s,公共领域/待核,—,Wikimedia Commons,2026-10-03,待核,af5708ba87c5bfb2
-commons_2008_weiming_lake.jpg,未名湖(2008),2008,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,de9068acdbc90454
-commons_2016_shibao_stele.jpg,石舫基座石碑(2016),2016,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,6c40ff9d10a77304
-commons_2017_boya_lake.jpg,博雅塔湖(2017),2017,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,baf9a45d82004d2e
+file,title,period,archive,shelfmark,url,access_date,rights,sha256,mec,vec
+sanshanyuan_haidian_roi_4000.png,三山五园图海淀核心区切片(巴沟水系-畅春园-海淀镇-圆明园南-勺园淑春园带),清晚期(绘有颐和园名/不早于1888),清·佚名《三山五园图》51x88cm 绘本扫描母版(10468x6072) ROI(2880/2486/8670/5960) Lanczos重采样4000x2400/切片脚本 scripts/extract_shaoyuan_map_roi.py,—,file:///Users/mac/Downloads/清 佚名 三山五园图51x88.tif,2026-10-03,母版来源待核/制作研究用,fa13fd93c6d4e27ab9da66c5d0c412f806f25d2e4a13f0f621f3b239670c6374,MEC-1,VEC-1
+wubin_shaoyuan_fuxi_scroll.jpg,吴彬《勺园祓禊图》卷,1615(明万历乙卯),北京大学图书馆藏(明·吴彬 纸本设色),北大图书馆藏,—,2026-10-03,馆藏影像/引用需授权/尚未获取影像,—,—,VEC-1
+commons_1860_tongzhou_pagoda.jpg,通州塔(1860 摄影),1860s,公共领域,—,Wikimedia Commons,2026-10-03,公共领域,0d040f56ea2f163820159b5bae052727dc1c23a8c86e3bc0b8d1b25efc92cbd6,—,VEC-3
+commons_1926_yenching_campus.jpg,燕京大学校园(1926),1926,公共领域/待核,—,Wikimedia Commons,2026-10-03,待核,53a435da23c1b37e9f47b86dbed8eea3daf15fab159615904f071c3699e0de85,—,VEC-2
+commons_1930s_yenching_campus1.jpg,燕京大学校园(1930s),1930s,公共领域/待核,—,Wikimedia Commons,2026-10-03,待核,af5708ba87c5bfb24c388464594212286fee0d47107103e19695972b5686a22d,—,VEC-2
+commons_2008_weiming_lake.jpg,未名湖(2008),2008,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,de9068acdbc904546c919de1f59f83eaf4d5bc4356f68e5ca847391d13ba28df,—,VEC-2
+commons_2016_shibao_stele.jpg,石舫基座石碑(2016),2016,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,6c40ff9d10a77304a9dfcdb895b0729fe214c24cb015fe98c245c68e693cc807,—,VEC-4
+commons_2017_boya_lake.jpg,博雅塔湖(2017),2017,Wikimedia Commons,—,Wikimedia Commons,2026-10-03,公共领域,baf9a45d82004d2e847fb3821174e563a7729fe270db145914756e2b13abace2,—,VEC-2
