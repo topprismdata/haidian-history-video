@@ -194,7 +194,7 @@ FACTS: List[TextualFact] = [
         verbatim_quote="此鐘日夜撞不絕聲，云十萬八千杵",
         attested_string="十萬八千杵",
     ),
-    # ---- 日下旧闻考卷100 转《燕邸纪闻》：1607 徙置万寿寺（转引，不建独立书目） ----
+    # ---- 日下旧闻考卷77 转《燕邸纪闻》：1607 徙置万寿寺（转引，不建独立书目） ----
     TextualFact(
         id="tf_yandijian_1607", division_id="div_rxjwkc77_wanshousi",
         verbatim_quote="今徙置之日為六月十六日，亦四丁未相符",
