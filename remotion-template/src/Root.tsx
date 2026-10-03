@@ -1,3 +1,4 @@
+import { WeigongcunCourse } from "./weigongcun/WeigongcunCourse";
 import React from "react";
 import { Composition } from "remotion";
 import { EpisodeCourse, DURATION_IN_FRAMES } from "./EpisodeCourse";
