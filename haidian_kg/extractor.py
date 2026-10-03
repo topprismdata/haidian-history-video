@@ -1102,7 +1102,10 @@ class HaidianCorpusExtractor:
                 # 有永安壽塔塔十三級」。原引文疑为后人概括回填的伪引文。
                 # 塔十三级已由卷五直证，存续到 quote 里；「京师地标」是现代观感不入引文。
                 quote="宗祈胤嗣卜地阜成门外八里建寺，有永安寿塔，塔十三级",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                # E19 复核(2026-10-03)：等级保持 L3，不升 L2。
+                # L2 定义域是「一手官刻金石」，《帝京景物略》��明崇祯刻本诗文集，
+                # 不属此域。升 L2 会让 evidence_level 语义失真且不可逆地放宽定义。
+                evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(

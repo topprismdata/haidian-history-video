@@ -229,7 +229,7 @@ class TestPixelLevelTranscription:
     def test_stele_sides_not_swapped(self):
         """左碑紫竹、右碑鱼篮——曾被记反。"""
         assert "左碑前刻紫竹觀音像" in _fact("tf_cs97_tableleft").verbatim_quote
-        assert "右碑前刻魚籧觀音像" in _fact("tf_cs97_tableright").verbatim_quote
+        assert "右碑前刻魚籃觀音像" in _fact("tf_cs97_tableright").verbatim_quote
 
     def test_zan_tongzuo_is_formula_not_author(self):
         f = _fact("tf_cs97_tableright")

@@ -180,8 +180,8 @@ FACTS: List[TextualFact] = [
     TextualFact(
         id="tf_cs97_tableright",
         division_id="div_rxjwkc97_cishousi",
-        verbatim_quote="右碑前刻魚籧觀音像贊同左",
-        attested_string="右碑……魚籧觀音像",
+        verbatim_quote="右碑前刻魚籃觀音像贊同左",
+        attested_string="右碑……魚籃觀音像",
         source_year=_dt(1783, "dt_rxjwkc97_comp", precision="decade"),
         translator_note=(
             "**右碑像主＝鱼篮观音**。「贊同左」是「其赞体例与左碑相同」，"
