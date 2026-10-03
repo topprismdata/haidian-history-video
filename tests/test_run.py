@@ -46,7 +46,7 @@ def test_composition_overrides_covers_all_registered_episodes():
     assert set(COMPOSITION_OVERRIDES) >= {
         "yimuyuan", "niangniangfu", "xisanqi", "gaoliangqiao",
         "dazhongsi", "landianchang", "shucun", "suzhoujie", "zhongguancun",
-        "cishousi",
+        "cishousi", "shaoyuan",
     }
     for ep, comp in COMPOSITION_OVERRIDES.items():
         assert comp.endswith("Course")
@@ -54,7 +54,7 @@ def test_composition_overrides_covers_all_registered_episodes():
             "shucun", "dazhongsi", "xisanqi", "yimuyuan", "niangniangfu",
             "landianchang", "suzhoujie", "zhongguancun",
             "changchunyuan", "wanshou", "changhe", "fenshi", "liulangzhuang",
-            "cishousi",
+            "cishousi", "shaoyuan",
         ), "%s 的映射是 capitalize() 拼的，需人工确认" % ep
 
 

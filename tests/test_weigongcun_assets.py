@@ -14,7 +14,8 @@ import pathlib
 
 from PIL import Image
 
-ASSET_DIR = pathlib.Path("assets/hist_weigongcun")
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+ASSET_DIR = REPO_ROOT / "assets" / "hist_weigongcun"
 PUBLIC_DIR = pathlib.Path("/tmp/chemistry-video/public/weigongcun")
 
 # file -> (约束描述, 最小宽, 最小高, 精确宽高或 None, 允许模式)
@@ -94,3 +95,26 @@ def test_public_weigongcun_synced():
         assert p.exists(), "资产未同步到 public/weigongcun: %s" % name
         if name != "sources.csv":
             assert _sha256_of(p) == _sha256_of(ASSET_DIR / name), "%s 同步副本 sha256 不一致" % name
+
+
+def test_mec4_composite_spatial_topology():
+    """断言四时代叠合图(mec4_composite_eras.png)空间几何符合真实地理:
+    河流在南(高梁河/南长河 y > 600), 畏吾村与高校园区在北(北岸台地 y < 600),
+    严守 V-NC08 及 V-NC05 负控制红线(地望严格界定在高梁河北岸台地, 严禁南北颠倒)."""
+    p = ASSET_DIR / "mec4_composite_eras.png"
+    assert p.exists()
+    im = Image.open(p).convert("RGB")
+    w, h = im.size
+    assert (w, h) == (1920, 1080)
+
+    # 采样南部高梁河水系特征点 (x=880, y=760 为河流中心线)
+    # 河流颜色为 RIVER=(154, 176, 190) 或 RIVER_LINE=(47, 93, 124)
+    r_south, g_south, b_south = im.getpixel((880, 760))
+    # 验证南部该点具备明显蓝灰色水体特征 (b > r)
+    assert b_south > r_south, "南部 (y=760) 必须为高梁河水系 (实际 R=%d, B=%d)" % (r_south, b_south)
+
+    # 采样北部畏吾村聚落中心特征点 (x=820, y=380)
+    # 畏吾村为赭黄色 OCHRE_YUAN=(180, 80, 50), r > b
+    r_north, g_north, b_north = im.getpixel((820, 380))
+    # 验证北部该点具备畏吾村地坪/聚落特征 (r > b)
+    assert r_north > b_north, "北部 (y=380) 必须为畏吾村聚落台地 (实际 R=%d, B=%d)" % (r_north, b_north)

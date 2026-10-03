@@ -43,11 +43,14 @@ Python 3.9.6 兼容: 无 X | None, 无 match。
 import csv
 import hashlib
 import io
+import json
 import math
 import pathlib
 import shutil
 import time
+import urllib.parse
 import urllib.request
+import fitz
 
 from PIL import Image, ImageDraw
 
@@ -144,19 +147,27 @@ MERC_CENTER = (116.3105, 39.9555)  # 魏公村/万寿寺带中心
 BBOX_1915 = (116.288, 39.9660, 116.333, 39.9450)  # lon0 lat0 lon1 lat1
 
 
+WMTS_CACHE = pathlib.Path("/tmp/cache_wmts_1915")
+
 def build_1915_roi(out_path):
     lon0, lat0, lon1, lat1 = BBOX_1915
     x0, y0 = lonlat_to_mercator_px(lon0, lat0, Z1915)
     x1, y1 = lonlat_to_mercator_px(lon1, lat1, Z1915)
     c0, r0 = int(x0 // 256), int(y0 // 256)
     c1, r1 = int(x1 // 256), int(y1 // 256)
+    WMTS_CACHE.mkdir(parents=True, exist_ok=True)
     mosaic = Image.new("RGB", ((c1 - c0 + 1) * 256, (r1 - r0 + 1) * 256), (255, 0, 255))
     for col in range(c0, c1 + 1):
         for row in range(r0, r1 + 1):
-            blob = http_get(WMTS_TEMPLATE % (Z1915, col, row))
+            tile_cache_path = WMTS_CACHE / f"tile_{Z1915}_{col}_{row}.png"
+            if tile_cache_path.exists():
+                blob = tile_cache_path.read_bytes()
+            else:
+                blob = http_get(WMTS_TEMPLATE % (Z1915, col, row))
+                tile_cache_path.write_bytes(blob)
+                time.sleep(0.05)
             tile = Image.open(io.BytesIO(blob)).convert("RGB")
             mosaic.paste(tile, ((col - c0) * 256, (row - r0) * 256))
-            time.sleep(0.1)
     cx, cy = lonlat_to_mercator_px(MERC_CENTER[0], MERC_CENTER[1], Z1915)
     ox, oy = int(cx - x0 - 960), int(cy - y0 - 540)
     if ox < 0 or oy < 0 or ox + 1920 > mosaic.width or oy + 1080 > mosaic.height:
@@ -173,8 +184,6 @@ def build_1915_roi(out_path):
 
 # ---------------------------------------------------- 3. 元史廉希宪传书影
 def build_yuanshi_folio(out_path):
-    import fitz
-
     fetch_cached(IA_PDF_URL, IA_PDF_LOCAL.name)
     doc = fitz.open(str(IA_PDF_LOCAL))
     page = doc[IA_FOLIO_PAGE - 1]
@@ -205,9 +214,7 @@ def build_commons_assets():
 def _commons_imageinfo(title):
     q = ("https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo"
          "&iiprop=url|size|extmetadata&format=json&titles=")
-    import urllib.parse
     data = http_get(q + urllib.parse.quote(title))
-    import json
     pages = json.loads(data)["query"]["pages"]
     for _, page in pages.items():
         ii = page["imageinfo"][0]
@@ -244,13 +251,18 @@ def _blob(cx, cy, rx, ry, n=48, seed=7, wobble=0.16):
     return [(round(x), round(y)) for x, y in pts]
 
 
-VILLAGE_HUTS = [(620, 640), (700, 610), (760, 660), (660, 700), (740, 720),
-                (820, 640), (590, 690), (810, 700)]
-MING_TEMPLES = [(430, 330), (980, 300), (1420, 360), (760, 470)]
-QING_DOCKS = [(500, 300), (900, 265), (1300, 310), (1650, 350)]
-TODAY_BLOCKS = [(980, 700, 220, 150), (1240, 660, 260, 130), (1540, 700, 220, 160),
-                (700, 800, 200, 120), (1000, 860, 240, 110), (1320, 860, 220, 120)]
-TODAY_ROADS = [(0, 620), (1920, 620)]
+# 地理空间基线: 上北(y小)下南(y大), 左西(x小)右东(x大)
+# 高梁河/南长河位于画面南部(y≈740..850), 畏吾村位于高梁河北岸台地(y≈320..440)
+VILLAGE_HUTS = [(740, 360), (820, 330), (880, 370), (780, 420), (860, 430),
+                (920, 360), (710, 400), (910, 420)]
+# 明代佛刹: 大慧寺位于畏吾村北侧(820, 250), 万寿寺/延庆寺等位于长河北岸水际(420, 680)
+MING_TEMPLES = [(820, 250), (420, 680), (1350, 720), (1600, 740)]
+# 清代长河码头与沿河御道(位于南部水系旁)
+QING_DOCKS = [(400, 715), (800, 740), (1250, 775), (1650, 815)]
+# 当代高校园区与街区(位于北部高地)
+TODAY_BLOCKS = [(680, 180, 240, 150), (1020, 180, 260, 140), (1340, 220, 220, 160),
+                (700, 350, 220, 130), (1020, 340, 250, 140), (1320, 400, 220, 100)]
+TODAY_ROADS = [(0, 520), (1920, 520)]
 
 
 def _draw_layer(spec):
@@ -262,17 +274,17 @@ def _draw_layer(spec):
 
 
 def draw_river_base(dr):
-    """长河/高梁河水系骨架 (上层带状双线, 左西右东)."""
-    pts = [(0, 340), (260, 320), (520, 300), (820, 280), (1120, 300),
-           (1420, 340), (1700, 380), (1920, 400)]
+    """长河/高梁河水系骨架 (南部带状双线, 左西右东, 自西北流向东南)."""
+    pts = [(0, 750), (280, 740), (580, 730), (880, 760), (1200, 790),
+           (1550, 830), (1920, 860)]
     dr.line(pts, fill=RIVER, width=46)
     dr.line([(x, y - 20) for x, y in pts], fill=RIVER_LINE, width=3)
     dr.line([(x, y + 20) for x, y in pts], fill=RIVER_LINE, width=3)
 
 
 def era_yuan(dr):
-    """元代: 畏吾村聚落 (中部南岸台地, 虚线村域圈)."""
-    dr.polygon(_blob(710, 665, 190, 110, seed=21), outline=OCHRE_YUAN + (170,), width=4)
+    """元代: 畏吾村聚落 (北部高梁河北岸台地, 虚线村域圈)."""
+    dr.polygon(_blob(820, 380, 200, 120, seed=21), outline=OCHRE_YUAN + (170,), width=4)
     for i, (hx, hy) in enumerate(VILLAGE_HUTS):
         dr.polygon([(hx, hy - 16), (hx + 20, hy), (hx, hy + 14), (hx - 20, hy)],
                    fill=OCHRE_YUAN + (110,), outline=OCHRE_YUAN + (200,))
@@ -281,7 +293,7 @@ def era_yuan(dr):
 
 
 def era_ming(dr):
-    """明代: 佛刹带 (河岸四大刹, 殿+塔几何形)."""
+    """明代: 佛刹带 (大慧寺在北, 万寿寺在水际)."""
     for tx, ty in MING_TEMPLES:
         dr.rectangle([tx - 34, ty - 14, tx + 34, ty + 22], fill=INDIGO_MING + (95,),
                      outline=INDIGO_MING + (190,))
@@ -291,21 +303,21 @@ def era_ming(dr):
 
 
 def era_qing(dr):
-    """清代: 皇家水道 (御道/码头/稻田)."""
-    dr.line([(60, 470), (520, 440), (1000, 450), (1500, 480), (1880, 500)],
+    """清代: 皇家水道 (南部水系御道/码头/南岸稻田)."""
+    dr.line([(60, 810), (520, 800), (1000, 830), (1500, 870), (1880, 900)],
             fill=DEEPGREEN_QING + (150,), width=8)
     for dx, dy in QING_DOCKS:
         dr.rectangle([dx - 14, dy - 8, dx + 14, dy + 8], fill=DEEPGREEN_QING + (140,),
                      outline=DEEPGREEN_QING + (200,))
-    for (fx, fy, fw, fh) in [(220, 540, 150, 90), (1180, 520, 170, 80), (1580, 560, 150, 90)]:
+    for (fx, fy, fw, fh) in [(200, 880, 160, 90), (700, 890, 180, 80), (1200, 920, 160, 80)]:
         for yy in range(fy, fy + fh, 12):
             dr.line([(fx, yy), (fx + fw - 6, yy)], fill=DEEPGREEN_QING + (70,), width=2)
 
 
 def era_today(dr):
-    """当代: 高校街区 (正交路网+院系楼块)."""
+    """当代: 高校街区 (北部正交路网+院系楼块)."""
     dr.line(TODAY_ROADS, fill=SLATE_TODAY + (160,), width=14)
-    dr.line([(1120, 560), (1120, 1080)], fill=SLATE_TODAY + (160,), width=10)
+    dr.line([(960, 0), (960, 720)], fill=SLATE_TODAY + (160,), width=10)
     for (bx, by, bw, bh) in TODAY_BLOCKS:
         dr.rectangle([bx, by, bx + bw, by + bh], fill=SLATE_TODAY + (80,),
                      outline=SLATE_TODAY + (180,))
@@ -346,24 +358,29 @@ def main():
 
     # 1. 三山五园图高梁河带切片
     p1 = OUT_DIR / "sanshanyuan_gaoliang_roi_4000.png"
-    size1, mode1 = build_sanshanyuan_roi(p1)
-    print("1. %s %dx%d %s %d bytes" % (p1.name, TARGET_SIZE[0], TARGET_SIZE[1], mode1, size1))
+    if not p1.exists():
+        size1, mode1 = build_sanshanyuan_roi(p1)
+    print("1. %s ready (%d bytes)" % (p1.name, p1.stat().st_size))
 
     # 2. 1915 实测京师四郊图切片
     p2 = OUT_DIR / "beijing_1915_weigongcun_roi.png"
-    size2 = build_1915_roi(p2)
-    print("2. %s 1920x1080 %d bytes" % (p2.name, size2))
+    if not p2.exists():
+        size2 = build_1915_roi(p2)
+    print("2. %s ready (%d bytes)" % (p2.name, p2.stat().st_size))
 
     # 3. 元史卷126 廉希宪传卒谥叶书影
     p3 = OUT_DIR / "yuanshi_lianxixian_folio.png"
-    size3, dims3 = build_yuanshi_folio(p3)
-    print("3. %s %dx%d %d bytes" % (p3.name, dims3[0], dims3[1], size3))
+    if not p3.exists():
+        size3, dims3 = build_yuanshi_folio(p3)
+    print("3. %s ready (%d bytes)" % (p3.name, p3.stat().st_size))
 
     # 4-6. Commons 实拍照三件
-    commons_sizes = build_commons_assets()
-    for name, (info, dims, nbytes) in commons_sizes.items():
-        print("4-6. %s %dx%d %d bytes (src %dx%d %s)"
-              % (name, dims[0], dims[1], nbytes, info["w"], info["h"], info["license"]))
+    for name, _, _ in COMMONS_ASSETS:
+        if not (OUT_DIR / name).exists():
+            build_commons_assets()
+            break
+    print("4-6. Commons assets ready")
+
 
     # 7. MEC-4 四时代叠合图
     p7 = OUT_DIR / "mec4_composite_eras.png"
