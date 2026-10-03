@@ -301,4 +301,22 @@ PEOPLE: List[HistoricalPerson] = [
                           "开创北京历史地理学科，奠定三山五园水系与海淀聚落沿革学术基石",
         birth_year=1911, death_year=2013,
     ),
+    # ---- E20 勺园·淑春园 词条新增（新增一手文献的作者，G9 一书一条配套） ----
+    HistoricalPerson(
+        id="person_xuefucheng", name="薛福成",
+        dynasty="清末", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["都察院左副都御史", "驻英法意比四国公使"],
+        authored_source_ids=["src_yongan_biji"],
+        haidian_relevance="《庸庵笔记》卷三录《查抄和珅住宅花园清单》：花园一座楼台四十二所、"
+                          "钦赐花园一座亭台六十四所——两条查抄口径的传世转录层，严禁与他档房数加总",
+    ),
+    HistoricalPerson(
+        id="person_yixuan", name="奕譞",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["醇亲王"],
+        authored_source_ids=["src_jiusitang_shigao"],
+        haidian_relevance="《九思堂诗稿》卷七《中秋后二日游舒春園四律》序「是園乾隆年間屬和相珅，"
+                          "籍沒後入官……後輾轉為睿邸園寓」，为和珅园→睿王园流转的时人追述；"
+                          "蔚秀园主人游邻园咏《石舫》《孤屿》，为石舫清中后期尚存的咏物证据",
+    ),
 ]

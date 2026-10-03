@@ -538,6 +538,65 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         edition_note="蓝靛厂西顶广仁宫（碧霞元君庙）重修碑刻；"
                      "载四月庙会盛况与官帑修葺，为蓝靛厂庙会民俗与皇家香火一手石刻实证",
     ),
+    # ---- E20 勺园·淑春园·未名湖 新增一手文献（一书一条，篇卷挂 SourceDivision） ----
+    HistoricalSource(
+        id="src_qingdai_heshen_dangshi", title="清代和珅档案史料",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="中国第一历史档案馆",
+        edition_note="一史馆藏和珅案档案汇编（含《和珅犯罪全案档》）；影印见中国第一历史档案馆、"
+                     "文化部恭王府管理中心编《和珅秘档》（国家图书馆出版社2009）第九册第36/110/127页。"
+                     "查抄清单「現查得和珅花園內房一千零三間」即出此系统（E04 红线：1003，严禁 1030）；"
+                     "本档引文经恭王府博物馆官网学术文（郝黎，2026-03-24）转引，原件未直核",
+    ),
+    HistoricalSource(
+        id="src_yongan_biji", title="庸庵笔记",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_xuefucheng",
+        edition_note="薛福成撰。卷三录《查抄和珅住宅花园清单》：「花園一座，樓臺四十二所；欽賜花園一座，"
+                     "亭臺六十四所，四角更樓十二座，更夫一百二十名」——两个花园两条口径，"
+                     "严禁与他档房数拼作一个园林总表（E05）。本档引文经恭王府博物馆学术文转引，原书未直核",
+    ),
+    HistoricalSource(
+        id="src_jiusitang_shigao", title="九思堂诗稿",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_yixuan",
+        edition_note="醇亲王奕譞撰。卷七《中秋后二日游舒春園四律》序「是園乾隆年間屬和相珅，籍沒後入官……"
+                     "後輾轉為睿邸園寓」与《孤屿》注为和珅园→睿王园流转、石舫清中后期尚存的清人咏证；"
+                     "转录据《故宫珍本丛刊》584册p145（恭博转引），原书未直核",
+    ),
+    HistoricalSource(
+        id="src_huidian_shili", title="钦定大清会典事例",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="清会典馆",
+        edition_note="内务府园囿类：乾隆二十八年淑春园水田租银档、嘉庆六年「賞滿漢文職堂官弘雅園一區，"
+                     "為圓明園值日公所」。⚠️与《钦定大清会典》为两部书，严禁并档（一书一条）。"
+                     "本档引文经恭王府博物馆学术文转引（卷次待核），原件未直核",
+    ),
+    HistoricalSource(
+        id="src_gongbo_research", title="探秘和珅时期的花园",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="文化和旅游部恭王府博物馆",
+        edition_note="官网学术文（郝黎，2026-03-24页面生成）。淑春园归属争议一方（主张和珅园很可能即名"
+                     "淑春园，据奕譞/丰绅殷德材料），与何瑜（故宫博物院院刊2021，主张淑春园在长春园北、"
+                     "和珅园为其东邻十笏园）对峙——E20 闸门裁定争议建模不判死（E01）。"
+                     "本档 A9—A14 清档/清人诗文集引文的转引层（同机构同口径不计独立多源）",
+    ),
+    HistoricalSource(
+        id="src_pku_open", title="北京大学公开校史与校园文物资料",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="北京大学",
+        edition_note="含校史馆《未名湖名字的由来》（新京报2026-01-09转载，目验）、校园文物档案石舫/石屏页"
+                     "（fdcb.pku.edu.cn，目验）、图书馆勺园两卷捐赠页。勺园两卷题跋转录经《中华读书报》"
+                     "2010-10-22张红扬文目验（A17），画卷本体未目验",
+    ),
+    HistoricalSource(
+        id="src_guobao_5th", title="国务院公布全国重点文物保护单位名单",
+        category=SourceCategory.OFFICIAL_HISTORY,
+        issuing_body="国务院",
+        edition_note="第五批（国发〔2001〕25号，2001-06-25公布）：「未名湖燕园建筑」编号5-475，"
+                     "近现代重要史迹及代表性建筑。名录原文页逐字待核（E20待核6）；"
+                     "名称与编号经北京市文物局公开页确认（E20闸门P8）",
+    ),
 ]
 
 #: 常见简称 → 规范书名 归一表
@@ -564,6 +623,12 @@ TITLE_ALIASES: Dict[str, str] = {
     "明会典": "大明会典",
     "京西图": "京西图（1913）",
     "西顶庙碑": "重修西顶娘娘庙碑记",
+    # E20 勺园·淑春园 新补
+    "会典事例": "钦定大清会典事例",
+    "大清会典事例": "钦定大清会典事例",
+    "和珅犯罪全案档": "清代和珅档案史料",
+    "国务院第五批国保名单": "国务院公布全国重点文物保护单位名单",
+    "北大校史文物资料": "北京大学公开校史与校园文物资料",
 }
 
 
