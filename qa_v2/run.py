@@ -44,6 +44,7 @@ COMPOSITION_OVERRIDES = {
     "cishousi": "CishousiCourse",
     "shaoyuan": "ShaoyuanCourse",
     "weigongcun": "WeigongcunCourse",
+    "taizhouwu": "TaizhouwuCourse",
 }
 
 
