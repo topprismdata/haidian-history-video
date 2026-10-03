@@ -226,6 +226,17 @@ class TestPixelLevelTranscription:
         assert "因得速就如此" in f.verbatim_quote
         assert "速竣" not in f.verbatim_quote
 
+    def test_quote_sentence_structure_not_rewritten(self):
+        """引文不得顺读改写句法——「碑亭二」被读成「二座碑亭」是加字。
+
+        与 test_no_inference_leaked_into_verbatim_quote 同源：
+        往 verbatim_quote 里塞原书没有的字，无论是倒推的释义还是补的量词，
+        都是伪造一手书证。
+        """
+        f = _fact("tf_cs97_beipai")
+        assert "塔下碑亭二左碑前刻" in f.verbatim_quote, "「二」后直接接「左碑」"
+        assert "二座" not in f.verbatim_quote, "原书无量词「座」，加字即改写"
+
     def test_no_inference_leaked_into_verbatim_quote(self):
         """释义不得写成原文——「跨鳳九首」倒推成「九蓮像」进 verbatim_quote
         等于伪造一手书证，这是本集根除的病。"""

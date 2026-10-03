@@ -161,10 +161,16 @@ FACTS: List[TextualFact] = [
     TextualFact(
         id="tf_cs97_beipai",
         division_id="div_rxjwkc97_cishousi",
-        verbatim_quote="本朝乾隆二十二年奉敕修葺塔下碑亭二座碑前刻紫竹觀音像",
-        attested_string="奉敕修葺塔下碑亭二座",
+        # 🔴 2026-10-03 三次修正：原书作「塔下碑亭二左碑前刻紫竹觀音像」——
+        # 「二」后直接接「左碑」，**无「座」字**。此前把「碑亭二」顺读成
+        # 「二座碑亭」是倒装改写原书句法，与本集根除的「释义写成原文」同类。
+        verbatim_quote="本朝乾隆二十二年奉勅修葺塔下碑亭二左碑前刻紫竹觀音像",
+        attested_string="奉勅修葺塔下碑亭二",
         source_year=_dt(1783, "dt_rxjwkc97_comp", precision="decade"),
-        translator_note="1757 修葺是官书明载的唯一清代整修节点，**规模无载，禁写「大修/重建」**。",
+        translator_note=(
+            "1757 修葺是官书明载的唯一清代整修节点，**规模无载，禁写「大修/重建」**。"
+            "「碑亭二」是原文省略量词的写法，现代汉语顺读为「两座碑亭」但引文不得改写句法。"
+        ),
     ),
     TextualFact(
         id="tf_cs97_tableleft",
@@ -361,7 +367,7 @@ STATES: List[HistoricalFeatureState] = [
     HistoricalFeatureState(
         id="st_cs_1757", entity_id="ent_cishousi", label="乾隆二十二年奉敕修葺",
         time_span=_ts(1757, 1783, "ts_cs_1757"),
-        geometry="塔下碑亭二座；御书额「栴檀寳地」「香云」，阁联「智珠朗暎光明藏，意蘂常舒歡喜園」",
+        geometry="塔下碑亭二；御书额「栴檀寳地」「香云」，阁联「智珠朗暎光明藏，意蘂常舒歡喜園」",
         function="乾隆二十二年奉敕修葺（**规模无载，禁写「大修/重建」**）",
         evidence_fact_ids=["tf_cs97_beipai"],
     ),
