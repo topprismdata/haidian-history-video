@@ -1,0 +1,1091 @@
+"""
+haidian_kg/calibration/weigongcun.py
+魏公村／畏吾村词条 —— 海淀历史地名知识库 E21 入库模块
+
+数据唯一来源：《魏公村·高梁河畔的畏吾村》研究档案 v1.0（weigongcun_video/research.md）
+＋ Task1/Task3 直核勘误（2026-10-03，见下）。引文一律照录原文字形。
+
+证据分级映射（research.md 四级 → 本体表达，绝不混级）：
+  [一手史料文献] 《元史》卷125/126 → TextualFact + VERIFIED（L2 正史列传）
+      —— 但仅限：族属（卷125「布魯海牙畏吾人也」）、廉姓由来（卷125「子孫皆姓廉氏」）、
+         廉孟子（卷126「世祖嘉之目曰廉孟子」）、卒年五十（卷126「是夕希憲卒年五十」）、
+         追封魏国公谥文正加赠恒阳王（卷126 大德八年条）。
+  [一手史料文献] 《怀麓堂集》卷75 → TextualFact + VERIFIED（L2 文集层，经党宝海文转引）
+  [方志碑刻考订] 查礼《畏吾村考》 → TextualFact（L3 金石考据笔记，经党宝海文转引，原刻未直核）
+  [方志碑刻考订] 乔松年《萝藦亭札记》 → TextualFact（L3 笔记，经人民网2012/党宝海文转录）
+  [官书] 《日下旧闻考》卷九十八郊坰西八 → TextualFact + VERIFIED（L2 官书，四库本直核）
+  [民国实测地图] 1915《实测京师四郊图》 → 记录式转录 Fact（L2 档案地图，标签目视核验留痕）
+
+Task1/Task3 直核勘误（research.md v1.0 的三处偏差，入库即冻结，不得回退）：
+  1. 【最重要】《元史·卷126·廉希宪传》全篇**无「畏吾」字样**——原设计「元史含畏吾村
+     葬地记载（葬大都宛平之西高梁河畔，子孙家焉，号畏吾村）」不成立（Task1 经维基文库
+     卷125/126/127 全文核验＋四库本第86叶书影目验）。葬地书证移挂：元明善《廉希宪神道碑》
+     「春秋五十……葬于宛平之西原」（党宝海文转引，L3）＋查礼《畏吾村考》守冢廉姓（L3）。
+     该伪引文本身建为 DISPROVEN 假说节点（prop_yuanshi_burial_quote）。
+  2. 「帝尝以廉孟子称之」非卷126原文；原文作「世祖嘉之，目曰廉孟子」。
+  3. 卷98为「郊坰西八」（非 research.md 所记「郊垧西四」）；且卷98明载：
+     大慧寺「明正德癸酉」张雄建（癸酉即正德八年1513）；嘉靖中太监「麥某」提督东厂
+     于其左增盖佑圣观；万历壬辰（二十年）重修时撰记者是**王锡爵**——
+     research.md「万历二十年麦福重修、有申时行碑」系两事混淆，勘误入库。
+  4. 「魏家村」写法：研究档案音转链作「魏家村」，但本库直核来源作「魏吴村」（崇祯墓志，
+     党宝海转引）、「畏兀村」（乔松年）；「魏家村」书证待核，不入指称层（E21待核3）。
+
+伪说负控制（V-NC01/02）：
+  - 汉族魏姓（太监/地主）初建说 → DISPROVEN（refuting: 元史族属/廉姓由来 + 明代畏吾村书证）
+  - 魏忠贤庄田说 → DISPROVEN（refuting: 1513大慧寺已建于畏吾村、李东阳祖茔——均早于魏忠贤）
+  - 「魏国公爵位是唯一定名诱因」→ DISPROVEN（V-NC02：族名音转是基底层，爵位记忆只是
+    雅化选字的参与项——后者另立 CONTESTED 假说，两说皆不抹杀）
+口播转录纪律：1915 地图标签为记录式转录（无逐字文本可引），与古籍引文分层，不得互冒。
+口播红线（V-NC05）：聚落位于高梁河北岸台地（Task2 MEC-4 冻结拓扑：水系居南、村居北岸）。
+"""
+from typing import List
+
+from .bibliography import source_by_title
+from ..ontology.temporal import (
+    CalibrationTable, DatePoint, GregorianDate, TimeSpan,
+)
+from ..ontology.epistemic import (
+    BeliefAdoption, EpistemicStatus, HistoricalSource, Proposition,
+    SourceCategory, SourceDivision, TextualFact,
+)
+from ..ontology.spatiotemporal import (
+    Appellation, AppellationKind, DiachronicIdentityAssertion,
+    HistoricalFeatureState, IdentityRelation, PersistentSpatialEntity,
+    PhysicalThingKind, PlaceAggregate, PlaceTransformation,
+    PlaceTransformationEvent, ReferentialAssertion,
+)
+
+
+# ==================================================================
+# 工具
+# ==================================================================
+
+# 换算基准：与 cishousi.py / dazhongsi.py 同款
+CAL = CalibrationTable.CN_ASTRONOMICAL_ALMANAC
+
+
+def _dt(y, tag, precision="year"):
+    return DatePoint(id=tag, label=str(y), precision=precision,
+                     gregorian=GregorianDate(year=y, calibration=CAL))
+
+
+def _ts(y1, y2, tag):
+    # 注意：必须用 begin=，不能用 start=——TimeSpan 无 start 字段，
+    # pydantic 会静默丢弃 start=（E21 教训，begin 缺失会让 state_at 失真）
+    return TimeSpan(id=tag, label="%d-%d" % (y1, y2),
+                    begin=_dt(y1, tag + "_b"), end=_dt(y2, tag + "_e"))
+
+
+# ==================================================================
+# 书源与篇卷
+# ==================================================================
+
+SOURCES: List[HistoricalSource] = [
+    # v2.1：一律取自统一书目表，一书一条，禁止在此另建
+    source_by_title("元史"),
+    source_by_title("畏吾村考"),
+    source_by_title("萝藦亭札记"),
+    source_by_title("怀麓堂集"),
+    source_by_title("钦定日下旧闻考"),
+    source_by_title("宛署杂记"),
+    source_by_title("实测京师四郊图（1915）"),
+    source_by_title("中央民族大学公开校史资料"),
+    source_by_title("魏公村考（党宝海）"),
+    source_by_title("国务院公布全国重点文物保护单位名单"),
+]
+
+DIVISIONS: List[SourceDivision] = [
+    SourceDivision(id="div_ys125_buluhaiya", source_id="src_yuanshi",
+                   volume_number="卷一百二十五", section_title="布鲁海牙传"),
+    SourceDivision(id="div_ys126_lianxixian", source_id="src_yuanshi",
+                   volume_number="卷一百二十六", section_title="廉希宪传"),
+    # 四库本卷98原文直核（维基文库四库全书本 raw，2026-10-03；标题「郊坰西八」）
+    SourceDivision(id="div_rxjwkc98_weiwu", source_id="src_rxjwkc",
+                   volume_number="卷九十八", section_title="郊坰西八"),
+    SourceDivision(id="div_hltj75_zumu", source_id="src_huailutangji",
+                   volume_number="卷七十五", section_title="合葬告考妣文"),
+    SourceDivision(id="div_wwck_main", source_id="src_weiwucunkao",
+                   volume_number="篇", section_title="畏吾村考"),
+    SourceDivision(id="div_lmtzj_weiwu", source_id="src_luomoting_zhaji",
+                   volume_number="卷次待核", section_title="畏兀村条"),
+    SourceDivision(id="div_wanshu_xiangcun", source_id="src_wanshu",
+                   volume_number="卷次待核", section_title="宛平县乡村"),
+    SourceDivision(id="div_sjst1915_jingxi", source_id="src_jingshi_sijiaotu_1915",
+                   volume_number="京西幅", section_title="魏公村—万寿寺—大慧寺一带"),
+    SourceDivision(id="div_muc_1951", source_id="src_muc_open",
+                   volume_number="校史沿革", section_title="1951年建校"),
+    SourceDivision(id="div_dangbaohai_2000", source_id="src_dangbaohai_2000",
+                   volume_number="2000年第4期", section_title="聚落的形成"),
+    SourceDivision(id="div_guobao5_dahuisi", source_id="src_guobao_5th",
+                   volume_number="第五批", section_title="北京市·大慧寺"),
+]
+
+
+# ==================================================================
+# 文本事实层（L2 直核逐字引文；L3 转录注明转引链）
+# ==================================================================
+
+FACTS: List[TextualFact] = [
+    # —— 《元史》卷125：族属与廉姓由来（L2，直核维基文库点校本） ——
+    TextualFact(
+        id="tf_ys125_weiwu_ren",
+        division_id="div_ys125_buluhaiya",
+        verbatim_quote="布魯海牙畏吾人也",
+        attested_string="布魯海牙……畏吾人也",
+        source_year=_dt(1370, "dt_ys_comp"),
+        translator_note=(
+            "廉氏族属的一手正史锚（L2）。注意卷125用字作「畏吾」，卷126廉希宪传开篇"
+            "「廉希憲字善甫，布魯海牙子也」并不重复族属——族属只在乃父传中。"
+        ),
+    ),
+    TextualFact(
+        id="tf_ys125_lian_surname",
+        division_id="div_ys125_buluhaiya",
+        verbatim_quote="初布魯海牙拜廉使命下之日子希憲適生喜曰吾聞古以官為姓天其以廉為吾宗之姓乎故子孫皆姓廉氏",
+        attested_string="故子孫皆姓廉氏",
+        source_year=_dt(1370, "dt_ys_comp"),
+        translator_note=(
+            "「廉」姓由来的一手正史锚（L2）：拜廉访使而得姓。与查礼《畏吾村考》"
+            "「守冢者亦廉姓」构成「守冢廉姓＝廉氏后人」推断的文献底座（推断本身"
+            "是查礼自标「疑即」，采信层 CONTESTED，不得升格）。"
+        ),
+    ),
+    # —— 《元史》卷126：廉希宪本传（L2，直核维基文库点校本＋四库本第86叶书影目验） ——
+    TextualFact(
+        id="tf_ys126_identity",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="廉希憲字善甫布魯海牙子也",
+        attested_string="廉希憲字善甫",
+        source_year=_dt(1370, "dt_ys_comp"),
+    ),
+    TextualFact(
+        id="tf_ys126_duhao_jingshi",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="希憲篤好經史手不釋卷",
+        attested_string="篤好經史手不釋卷",
+        source_year=_dt(1370, "dt_ys_comp"),
+    ),
+    TextualFact(
+        id="tf_ys126_lianmengzi",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="世祖嘉之目曰廉孟子由是知名",
+        attested_string="目曰廉孟子",
+        source_year=_dt(1370, "dt_ys_comp"),
+        translator_note=(
+            "🔴 勘误（Task3 直核）：research.md v1.0 引作「帝尝以'廉孟子'称之」，"
+            "卷126原文实作「世祖嘉之，目曰廉孟子」。引文以原文为准，不得回退。"
+            "四库本卷126书影（assets/hist_weigongcun/yuanshi_lianxixian_folio.png）"
+            "目验一致。"
+        ),
+    ),
+    TextualFact(
+        id="tf_ys126_death",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="十七年十一月十九夜有大星隕于正寢之旁流光照地久之方滅是夕希憲卒年五十",
+        attested_string="是夕希憲卒年五十",
+        source_year=_dt(1370, "dt_ys_comp"),
+        translator_note=(
+            "至元十七年（1280）卒、年五十。「卒于上都」为通行转述，原文只记"
+            "「有大星隕于正寢之旁」。🔴 全传至此**无一句葬地文**——"
+            "「畏吾」葬地书证不在《元史》，见 prop_yuanshi_burial_quote。"
+        ),
+    ),
+    TextualFact(
+        id="tf_ys126_fengwei_guogong",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="大德八年贈忠清粹德功臣太傅開府儀同三司追封魏國公諡文正",
+        attested_string="追封魏國公諡文正",
+        source_year=_dt(1370, "dt_ys_comp"),
+        translator_note=(
+            "「魏国公」追封在大德八年（1304），是卒后二十四年的加恩，**不是卒时之封**。"
+            "research.md 原引「赠推忠佐命同德翊运功臣、太师……」与原文"
+            "「贈忠清粹德功臣、太傅……加贈推忠佐理翊運功臣、太師」不符，已按原文校正。"
+        ),
+    ),
+    TextualFact(
+        id="tf_ys126_hengyang_wang",
+        division_id="div_ys126_lianxixian",
+        verbatim_quote="加贈推忠佐理翊運功臣太師開府儀同三司上柱國恒陽王諡如故",
+        attested_string="恒陽王",
+        source_year=_dt(1370, "dt_ys_comp"),
+    ),
+    # —— 《日下旧闻考》卷98 郊坰西八：大慧寺建置（L2 官书，四库本直核） ——
+    TextualFact(
+        id="tf_rxjwkc98_dhs_build",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="明正徳癸酉司禮監太監張雄建寺于宛平縣香山鄉畏吾村賜額曰大慧并護勅勒于碑",
+        attested_string="張雄建寺于宛平縣香山鄉畏吾村",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "大慧寺建置的最硬一手（L2 官书直核，2026-10-03 逐字核维基文库四库本卷98）。"
+            "原文纪年作「正德癸酉」＝正德八年（1513）；口播换算须以「正德八年（1513）」"
+            "一次说清，不得把干支与公元年并列上屏（E16 纪律）。"
+            "research.md「郊垧西四」勘误：卷98门类为郊坰西八。"
+        ),
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_beiluo",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="寺之始建大學士茶陵李東陽為碑工部尚書湯隂李鐩書之新寧伯譚祐篆額",
+        attested_string="大學士茶陵李東陽為碑",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "李东阳与大慧寺的直接一手关联：寺始建时**为碑**（撰碑）。与祖茔在畏吾村"
+            "互证「李东阳—畏吾村」地望。三碑（李东阳/李本/王锡爵）乾隆按语已注「並無存者」。"
+        ),
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_dabeidian",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="寺有大悲殿重簷架之中笵銅為佛像髙五丈土人遂呼為大佛寺",
+        attested_string="土人遂呼為大佛寺",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note="「大佛寺」俗名的一手出处；查礼《畏吾村考》「村前有大佛寺」互证。",
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_guan",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="嘉靖中太監麥某提督東厰于其左増盖佑聖觀",
+        attested_string="嘉靖中太監麥某",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "🔴 勘误（Task3 直核）：嘉靖中增盖佑圣观的是「太監**麥某**」（姓麦、名不详），"
+            "职能是提督东厂——research.md「万历二十年司礼监太监麦福重修」系把此人"
+            "与万历重修混为一事。麦福（嘉靖间司礼监）与大慧寺的万历重修无卷98书证。"
+        ),
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_183ying",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="于是合寺觀計之殿宇凡一百八十三楹拓地田百二十一畆",
+        attested_string="殿宇凡一百八十三楹",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "注意口径：183 楼楹是**合寺与佑圣观**计（嘉靖增观后），不得单记大慧寺。"
+            "「畆」为原书字形，照录。"
+        ),
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_wanli",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="其後萬厯壬辰重修則太子太保禮部尚書太倉王鍚爵撰記",
+        attested_string="萬厯壬辰重修……王鍚爵撰記",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "🔴 勘误（Task3 直核）：万历壬辰（二十年，1592）重修的撰记者是**王锡爵**，"
+            "不是申时行——research.md「有大学士申时行碑」无卷98书证。重修年份壬辰"
+            "换算二十年无误。"
+        ),
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_dhs_qianlong_status",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="大佛寺即大慧寺今存殿兩重本朝重修",
+        attested_string="今存殿兩重本朝重修",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note="「臣等謹按」官书按语层（1783 纂竣时点）：存殿两重、本朝重修。",
+    ),
+    TextualFact(
+        id="tf_rxjwkc98_lidongyang_tomb_lost",
+        division_id="div_rxjwkc98_weiwu",
+        verbatim_quote="李東陽墓今無考",
+        attested_string="李東陽墓今無考",
+        source_year=_dt(1783, "dt_rxjwkc98_comp", precision="decade"),
+        translator_note=(
+            "官书按语层（1783）：李东阳墓湮灭无考。这是「墓葬地面遗存不可复原」红线的"
+            "一手依据（V-NC03）：祖茔在畏吾村有文集书证，墓址本身1783年已无考——"
+            "严禁AI生成「李东阳墓/廉希宪墓神道碑」类图像充当证据。"
+        ),
+    ),
+    # —— 《怀麓堂集》卷75：李东阳祖茔（L2 文集层，经党宝海文转引，四库本原页未直核） ——
+    TextualFact(
+        id="tf_hlt_zumu_weiwu",
+        division_id="div_hltj75_zumu",
+        verbatim_quote="自我先祖葬曾祖考妣于畏吾村吾母之墓實在右穆墓地狹隘不過二畝",
+        attested_string="葬曾祖考妣于畏吾村",
+        source_year=None,
+        translator_note=(
+            "李东阳祖茔在畏吾村的文集层书证（L2；转引自党宝海《魏公村考》footnote 3，"
+            "简体转录径改繁体、四库本原页未直核——引文定位卷75《合葬告考妣文》明确）。"
+            "research.md 通行句「宛平县香山乡畏吾村，吾祖茔也」篇名卷次待核（E21待核2），"
+            "直核前不得作逐字引文。"
+        ),
+    ),
+    # —— 《宛署杂记》：万历间异写「苇孤村」（L2 地方志，经党宝海文转引） ——
+    TextualFact(
+        id="tf_wanshu_beigu",
+        division_id="div_wanshu_xiangcun",
+        verbatim_quote="出西直門一里曰高良橋又五里曰籬笆房曰葦孤村又二十里曰韃子營",
+        attested_string="葦孤村",
+        source_year=_dt(1593, "dt_wanshu_comp"),
+        translator_note=(
+            "万历二十一年（1593）《宛署杂记》所记西直门外西北乡村道路序列，"
+            "「苇孤村」为畏吾村万历异写（党宝海文转引；简体转录径改繁体）。"
+            "同时证明畏吾村位置与今魏公村相当。转引层不得冒充直核。"
+        ),
+    ),
+    # —— 查礼《畏吾村考》：葬地与守冢廉姓（L3 金石考据笔记，经党宝海文转引） ——
+    TextualFact(
+        id="tf_wwck_village",
+        division_id="div_wwck_main",
+        verbatim_quote="京師西直門外八里有村名畏吾明大學士李東陽墓在焉村前有大佛寺予家祖壠未遷榆垡時俱葬此村",
+        attested_string="有村名畏吾",
+        source_year=None,
+        translator_note=(
+            "查礼（乾隆间）《畏吾村考》开篇（L3；经党宝海《魏公村考》footnote 19 转引，"
+            "简体转录径改繁体、原刻未直核）。「予家祖壠……俱葬此村」说明查氏亦与"
+            "畏吾村有葬地关联。"
+        ),
+    ),
+    TextualFact(
+        id="tf_wwck_guohao",
+        division_id="div_wwck_main",
+        verbatim_quote="案畏吾元時西域國號也太祖四年歸於元或稱畏吾或稱畏吾兒或稱畏兀或稱畏兀兒",
+        attested_string="畏吾元時西域國號也",
+        source_year=None,
+        translator_note="「畏吾」词源：元时西域国号（回鹘/畏兀儿），诸形并存（L3 转引）。",
+    ),
+    TextualFact(
+        id="tf_wwck_juzudi",
+        division_id="div_wwck_main",
+        verbatim_quote="此村密邇郊甸意即其聚族地乎",
+        attested_string="聚族地",
+        source_year=None,
+        translator_note=(
+            "「意即……乎」是查礼的**推测句式**——村为畏吾族聚族之地的判断在查礼笔下"
+            "就是拟测语气。本库采信（与乔松年互证），但推理层级是 L3 考据推断，"
+            "不是正史直证。"
+        ),
+    ),
+    TextualFact(
+        id="tf_wwck_start_yuan",
+        division_id="div_wwck_main",
+        verbatim_quote="畏吾之名當始於元",
+        attested_string="畏吾之名當始於元",
+        source_year=None,
+        translator_note="村名始年判断（L3 考据推断）：始于元代——与蒙速思（1267）、廉希宪（1280）葬地链相容。",
+    ),
+    TextualFact(
+        id="tf_wwck_weiwu_rejected",
+        division_id="div_wwck_main",
+        verbatim_quote="今之人或以其地近郊甸兵衛所居遂稱之曰衛伍殊失其義",
+        attested_string="遂稱之曰衛伍殊失其義",
+        source_year=None,
+        translator_note=(
+            "「卫伍」是时人望文生训的异写，查礼已驳「殊失其义」。本库存档该名"
+            "（民间异写映射档）但**不采信为得名之义理**——防止口播把「卫伍」当词源。"
+        ),
+    ),
+    TextualFact(
+        id="tf_wwck_juju",
+        division_id="div_wwck_main",
+        verbatim_quote="當時畏吾之人聚族而居者正自不少",
+        attested_string="聚族而居",
+        source_year=None,
+        translator_note="清初畏吾村仍有畏吾人聚族而居的查礼记（L3 转引）。",
+    ),
+    TextualFact(
+        id="tf_wwck_shouzhong_lian",
+        division_id="div_wwck_main",
+        verbatim_quote="守冢者亦廉姓疑即右丞後人",
+        attested_string="守冢者亦廉姓",
+        source_year=None,
+        translator_note=(
+            "🔴 守冢廉姓书证（L3 转引）。**「疑即右丞后人」五字前缀是查礼自标的推测语气**"
+            "（右丞＝右丞廉希宪），完整照录、不得删「疑」字升格为实指——"
+            "升格路径与「寺有僧自言」同型（E19 纪律）。"
+        ),
+    ),
+    # —— 乔松年《萝藦亭札记》：畏吾部落聚居（L3 笔记，人民网2012/党宝海文转录） ——
+    TextualFact(
+        id="tf_lmt_weiwucun",
+        division_id="div_lmtzj_weiwu",
+        verbatim_quote="畏兀村蓋京西直門外村名本西域畏吾部落元太祖時歸來聚於此地以稱村焉",
+        attested_string="本西域畏吾部落",
+        source_year=None,
+        translator_note=(
+            "乔松年（同治间）《萝藦亭札记》（L3）：「畏兀村……本西域畏吾部落……聚于此地"
+            "以称村焉」——族名得名说的清代笔记层书证。转录经人民网2012"
+            "《魏公村与维吾尔族的不解之缘》与维基百科转引、党宝海文另引"
+            "「李西涯或自署畏吾」条，原刻未直核。党宝海按语指出乔氏文字「稍有错误」"
+            "（把李东阳自号与村名相混），故此条只作族源旁证、不作李东阳号「畏吾」之证。"
+        ),
+    ),
+    # —— 党宝海《魏公村考》转引的元明善《廉希宪神道碑》（L3 转引层） ——
+    TextualFact(
+        id="tf_dbh_shendaobei",
+        division_id="div_dangbaohai_2000",
+        verbatim_quote="春秋五十越某日葬于宛平之西原",
+        attested_string="葬于宛平之西原",
+        source_year=_dt(2000, "dt_dangbaohai"),
+        translator_note=(
+            "廉希宪葬地最直接的墓碑级文字，但本库所据为党宝海《魏公村考》（《北京文博》"
+            "2000年第4期）footnote 39 的转引——碑文原拓未直核，按 L3 转引层处理，"
+            "不得冒充 L1 直核。与查礼「守冢廉姓」构成葬地—守冢—聚落证据链。"
+        ),
+    ),
+    TextualFact(
+        id="tf_dbh_weiwu_cun",
+        division_id="div_dangbaohai_2000",
+        verbatim_quote="葬于西直門外魏吳村",
+        attested_string="魏吳村",
+        source_year=_dt(2000, "dt_dangbaohai"),
+        translator_note=(
+            "崇祯十六年（1643）刘继祖及妻李氏合葬墓志「葬于西直门外魏吴村」"
+            "（魏公村出土，党宝海文转引）——「魏吴村」写法在明末已行的实物书证（L3 转引）。"
+            "research.md 音转链作「魏家村」，书证待核（E21待核3），本库不采。"
+        ),
+    ),
+    # —— 1915《实测京师四郊图》：记录式转录（L2 档案地图） ——
+    TextualFact(
+        id="tf_1915_weigongcun",
+        division_id="div_sjst1915_jingxi",
+        verbatim_quote="民国四年（1915）北洋陆军测地局实测五万分之一《实测京师四郊图》京西幅，"
+                       "魏公村一带聚落图注标绘「魏公村」，与万寿寺、大慧寺等标注并列。",
+        attested_string="魏公村",
+        source_year=_dt(1915, "dt_sjst1915"),
+        translator_note=(
+            "记录式转录：实测地图标注无逐字文本可引，此为档案内容的转写；与古籍引文分层，"
+            "不得互冒。「魏公村」标签经中研院 Beijing_1915 WMTS 图层切片目视核验，"
+            "留痕见 assets/hist_weigongcun/sources.csv（sha256 e54b590c…）。"
+            "此为「魏公村」三字的官方测绘源头（现行官方地名之法学与测绘起点）。"
+        ),
+    ),
+    # —— 中央民族学院 1951（记录式转录，机构公开沿革） ——
+    TextualFact(
+        id="tf_muc_1951",
+        division_id="div_muc_1951",
+        verbatim_quote="1951年中央民族学院成立，校址位于北京西郊白石桥以北魏公村一带；"
+                       "1993年更名为中央民族大学。",
+        attested_string="中央民族学院",
+        source_year=None,
+        translator_note=(
+            "记录式转录（校方公开沿革口径），与古籍引文分层。1951 校址在畏吾村故地——"
+            "「七百年民族交融空间」的当代节点（research.md P7）。"
+        ),
+    ),
+    # —— 国保名单（记录式转录） ——
+    TextualFact(
+        id="tf_guobao5_dahuisi",
+        division_id="div_guobao5_dahuisi",
+        verbatim_quote="国务院2001年6月25日公布第五批全国重点文物保护单位名单，"
+                       "北京市大慧寺（明）列名，编号5-199，类别古建筑。",
+        attested_string="大慧寺",
+        source_year=_dt(2001, "dt_guobao5"),
+        translator_note=(
+            "记录式转录：名单行无逐字排版可引。编号5-199经新京报/新华网/维基多源确认；"
+            "名单原文页逐字待核（E21待核1）。与E20「未名湖燕园建筑」5-475同一部名单"
+            "（src_guobao_5th），一书一条不另建源。"
+        ),
+    ),
+]
+
+
+# ==================================================================
+# 空间实体（村、墓、寺、校分立——「寺院亡/墓湮灭」与「村存续」是两件事）
+# ==================================================================
+
+ENTITIES: List[PersistentSpatialEntity] = [
+    PersistentSpatialEntity(id="ent_weigongcun", kind=PhysicalThingKind.SETTLEMENT_AREA,
+                            canonical_label="魏公村（元畏吾村—明香山乡畏吾村—清异写并存—1915实测定名魏公村；高梁河北岸台地）"),
+    PersistentSpatialEntity(id="ent_lian_jiazu_mu", kind=PhysicalThingKind.TOMB_CLUSTER,
+                            canonical_label="廉希宪家族墓茔（宛平之西原，守冢聚落核心；地面遗存无考）"),
+    PersistentSpatialEntity(id="ent_dahuisi", kind=PhysicalThingKind.RELIGIOUS_PRECINCT,
+                            canonical_label="大慧寺（正德八年张雄建于畏吾村，国保5-199，俗称大佛寺）"),
+    PersistentSpatialEntity(id="ent_minzu_univ", kind=PhysicalThingKind.MODERN_INSTITUTION,
+                            canonical_label="中央民族学院→中央民族大学（1951选址畏吾村故地）"),
+]
+
+
+# ==================================================================
+# 历史状态链
+# ==================================================================
+
+STATES: List[HistoricalFeatureState] = [
+    HistoricalFeatureState(
+        id="st_wgc_yuan", entity_id="ent_weigongcun", label="元代：畏吾村始立（守冢聚落）",
+        time_span=_ts(1280, 1368, "ts_wgc_yuan"),
+        geometry="大都宛平之西、高梁河北岸台地；廉希宪葬于宛平之西原，族人与守冢者聚居成村",
+        function="畏兀儿显贵墓茔守冢聚落——蒙速思葬于前、廉希宪葬于后，聚落跨元一代持续成形",
+        admin_status="元大都路宛平县郊",
+        evidence_fact_ids=["tf_ys125_weiwu_ren", "tf_dbh_shendaobei",
+                           "tf_wwck_start_yuan", "tf_wwck_juzudi"],
+    ),
+    HistoricalFeatureState(
+        id="st_wgc_ming", entity_id="ent_weigongcun", label="明代：宛平县香山乡畏吾村",
+        time_span=_ts(1368, 1644, "ts_wgc_ming"),
+        geometry="顺天府宛平县香山乡畏吾村；大慧寺（正德八年/1513）建村中，李东阳祖茔在村；"
+                 "万历间异写「苇孤村」见于《宛署杂记》道路序列",
+        function="宛平西郊名村——佛刹与士族祖茔所在",
+        admin_status="顺天府宛平县香山乡",
+        evidence_fact_ids=["tf_hlt_zumu_weiwu", "tf_rxjwkc98_dhs_build", "tf_wanshu_beigu"],
+    ),
+    HistoricalFeatureState(
+        id="st_wgc_qing", entity_id="ent_weigongcun", label="清代：畏吾村沿用，异写并存",
+        time_span=_ts(1644, 1915, "ts_wgc_qing"),
+        geometry="西直门外高梁河北岸；写法并存：畏吾村（正写）、畏兀村（乔松年）、"
+                 "魏吴村（明末墓志已见）、卫伍（时人望文生训，查礼驳「殊失其義」）；"
+                 "清初守冢廉姓仍存",
+        function="村名沿用畏吾村，俗写异体并存——音转链的活证据",
+        admin_status="顺天府宛平县",
+        evidence_fact_ids=["tf_wwck_village", "tf_wwck_juju", "tf_wwck_shouzhong_lian",
+                           "tf_lmt_weiwucun", "tf_wwck_weiwu_rejected"],
+    ),
+    HistoricalFeatureState(
+        id="st_wgc_1915", entity_id="ent_weigongcun", label="1915：实测图定名「魏公村」",
+        time_span=_ts(1915, 2026, "ts_wgc_1915"),
+        geometry="《实测京师四郊图》京西幅标绘「魏公村」；今在中关村南大街与西三环之间",
+        function="官方测绘定名——「畏吾」数百年音转的雅化定格（雅化选字与魏国公爵位记忆的"
+                 "合流为 CONTESTED 推断，族名音转为已确证基底层）",
+        admin_status="京兆地方→北平市→北京市海淀区",
+        evidence_fact_ids=["tf_1915_weigongcun"],
+    ),
+    HistoricalFeatureState(
+        id="st_wgc_1951", entity_id="ent_weigongcun", label="1951：中央民族学院选址，村落融入街区",
+        time_span=_ts(1951, 2026, "ts_wgc_1951"),
+        geometry="中央民族学院建于白石桥以北旧村域，校园与街区逐步覆盖村落",
+        function="七百年民族交融空间——畏兀儿聚落故地迎来全国各族师生（P7 叙事节点）",
+        evidence_fact_ids=["tf_muc_1951"],
+    ),
+    HistoricalFeatureState(
+        id="st_tomb_yuan", entity_id="ent_lian_jiazu_mu", label="元代：廉氏家族墓茔聚葬",
+        time_span=_ts(1280, 1736, "ts_tomb_yuan"),
+        geometry="宛平之西原（高梁河畔畏吾村一带）：廉希宪（1280，年五十）归葬，"
+                 "布鲁海牙—廉氏家族聚葬，守冢者近茔而居",
+        function="畏兀儿显贵家族墓地——畏吾村聚落形成的核心引力（党宝海《魏公村考》结论）",
+        evidence_fact_ids=["tf_dbh_shendaobei", "tf_ys125_lian_surname", "tf_wwck_shouzhong_lian"],
+    ),
+    HistoricalFeatureState(
+        id="st_tomb_qing", entity_id="ent_lian_jiazu_mu", label="清：守冢廉姓仍存，地面遗存渐湮",
+        time_span=_ts(1736, 1911, "ts_tomb_qing"),
+        geometry="查礼时「守冢者亦廉姓，疑即右丞后人」（查礼自标推测）；墓区地面建筑无著录；"
+                 "乾隆官书按语已注李东阳墓「今無考」",
+        function="守冢聚落存而墓园地面遗存无考——**严禁AI复原神道碑亭/墓园**（V-NC03）",
+        evidence_fact_ids=["tf_wwck_shouzhong_lian", "tf_rxjwkc98_lidongyang_tomb_lost"],
+    ),
+    HistoricalFeatureState(
+        id="st_dhs_1513", entity_id="ent_dahuisi", label="正德八年（1513）：张雄建寺赐额",
+        time_span=_ts(1513, 1592, "ts_dhs_1513"),
+        geometry="宛平县香山乡畏吾村；司礼监太监张雄建，赐额曰大慧并护敕勒于碑；"
+                 "大悲殿重簷架之中笵铜为佛像高五丈，土人遂呼大佛寺；"
+                 "嘉靖中太监麦某提督东厂于其左增盖佑圣观，合寺观计殿宇凡一百八十三楹",
+        function="明代名刹；李东阳为碑（始建撰碑）、李鐩书、谭祐篆额",
+        evidence_fact_ids=["tf_rxjwkc98_dhs_build", "tf_rxjwkc98_dhs_beiluo",
+                           "tf_rxjwkc98_dhs_dabeidian", "tf_rxjwkc98_dhs_guan",
+                           "tf_rxjwkc98_dhs_183ying"],
+    ),
+    HistoricalFeatureState(
+        id="st_dhs_1592", entity_id="ent_dahuisi", label="万历壬辰（二十年，1592）：重修",
+        time_span=_ts(1592, 2001, "ts_dhs_1592"),
+        geometry="万历壬辰重修，太子太保礼部尚书太仓王锡爵撰记；三碑（李东阳/李本/王锡爵）"
+                 "至乾隆间按语已注「並無存者」",
+        function="万历重修（撰记者王锡爵——research.md「申时行碑」无书证，已勘误）",
+        evidence_fact_ids=["tf_rxjwkc98_dhs_wanli", "tf_rxjwkc98_dhs_qianlong_status"],
+    ),
+    HistoricalFeatureState(
+        id="st_dhs_2001", entity_id="ent_dahuisi", label="2001：第五批全国重点文物保护单位（5-199）",
+        time_span=_ts(2001, 2026, "ts_dhs_2001"),
+        geometry="北京市海淀区大慧寺路；2001年国务院公布第五批国保，编号5-199，类别古建筑；"
+                 "今存大悲宝殿等（明代殿宇、二十八部众彩塑、壁画）",
+        function="全国重点文物保护单位「大慧寺」",
+        evidence_fact_ids=["tf_guobao5_dahuisi"],
+    ),
+    HistoricalFeatureState(
+        id="st_mu_1951", entity_id="ent_minzu_univ", label="1951：中央民族学院建校",
+        time_span=_ts(1951, 2026, "ts_mu_1951"),
+        geometry="北京西郊白石桥以北（魏公村一带）；1993年更名中央民族大学",
+        function="民族高等教育重镇——与畏吾村故地的七百年对话",
+        evidence_fact_ids=["tf_muc_1951"],
+    ),
+]
+
+
+# ==================================================================
+# 地名指称
+# ==================================================================
+
+APPELLATIONS: List[Appellation] = [
+    Appellation(id="app_weiwucun", label="畏吾村", kind=AppellationKind.OFFICIAL,
+                valid_time_span=_ts(1280, 1915, "ts_ap_wwc"),
+                attesting_fact_ids=["tf_wwck_village", "tf_hlt_zumu_weiwu",
+                                    "tf_rxjwkc98_dhs_build"]),
+    Appellation(id="app_weiwucun_er", label="畏兀村", kind=AppellationKind.VULGAR,
+                valid_time_span=_ts(1644, 1915, "ts_ap_wwe"),
+                attesting_fact_ids=["tf_lmt_weiwucun"]),
+    Appellation(id="app_beigucun", label="苇孤村", kind=AppellationKind.VULGAR,
+                valid_time_span=_ts(1593, 1593, "ts_ap_bgc"),
+                attesting_fact_ids=["tf_wanshu_beigu"]),
+    Appellation(id="app_weiwucun_wu", label="魏吴村", kind=AppellationKind.OLD_NAME,
+                valid_time_span=_ts(1643, 1643, "ts_ap_www"),
+                attesting_fact_ids=["tf_dbh_weiwu_cun"]),
+    # 「卫伍」：查礼明驳「殊失其義」的望文生训异写——存档不采信，指称断言挂单点书证
+    Appellation(id="app_weiwu5", label="卫伍", kind=AppellationKind.TEXTUAL_CORRUPTION,
+                valid_time_span=_ts(1736, 1736, "ts_ap_w5"),
+                attesting_fact_ids=["tf_wwck_weiwu_rejected"]),
+    Appellation(id="app_weigongcun", label="魏公村", kind=AppellationKind.EUPHEMISTIC,
+                valid_time_span=_ts(1915, 2026, "ts_ap_wgc"),
+                attesting_fact_ids=["tf_1915_weigongcun"]),
+    Appellation(id="app_dahuisi", label="大慧寺", kind=AppellationKind.OFFICIAL,
+                valid_time_span=_ts(1513, 2026, "ts_ap_dhs"),
+                attesting_fact_ids=["tf_rxjwkc98_dhs_build"]),
+    Appellation(id="app_dafoosi", label="大佛寺", kind=AppellationKind.VULGAR,
+                valid_time_span=_ts(1513, 1783, "ts_ap_dfs"),
+                attesting_fact_ids=["tf_rxjwkc98_dhs_dabeidian", "tf_wwck_village"]),
+    Appellation(id="app_minzu_univ", label="中央民族学院", kind=AppellationKind.OFFICIAL,
+                valid_time_span=_ts(1951, 2026, "ts_ap_muc"),
+                attesting_fact_ids=["tf_muc_1951"]),
+]
+
+
+# ==================================================================
+# 命题层（假说节点：含两条 DISPROVEN 民间伪说与一条 meta 伪引文）
+# ==================================================================
+
+PROPOSITIONS: List[Proposition] = [
+    # —— V-NC01：汉族魏姓初建说（民间通行误解）——
+    Proposition(
+        id="prop_han_wei_founder",
+        statement="魏公村由汉族魏姓太监或魏姓地主初建，村名源于魏姓。",
+        derived_from_fact_ids=["tf_ys125_weiwu_ren", "tf_ys125_lian_surname",
+                               "tf_rxjwkc98_dhs_build", "tf_hlt_zumu_weiwu",
+                               "tf_wwck_start_yuan"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "两源同向否证：(1)《元史》明载廉氏族属「畏吾人」、以官得姓「子孫皆姓廉氏」——"
+            "村名族属谱系里没有魏姓；(2)「畏吾村」之名至迟正德八年（1513）已见于官书"
+            "（大慧寺建址）、更可上溯元代（查礼「畏吾之名當始於元」），「魏公村」字样"
+            "1915年才见于官方测绘——得名时序与魏姓无涉。"
+        ),
+        alternative_explanations=[
+            "村名是「畏吾」音转的雅化（1915实测定格；本库采信）",
+            "雅化选字兼受「魏国公」爵位记忆影响（合流说，另立 prop_weiguo_title_sole_cause）",
+            "（无任何支持魏姓初建的一手或二手书证）",
+        ],
+    ),
+    Proposition(
+        id="prop_weizhongxian_estate",
+        statement="魏公村是明末魏忠贤的庄田，村名源于魏忠贤。",
+        derived_from_fact_ids=["tf_rxjwkc98_dhs_build", "tf_hlt_zumu_weiwu",
+                               "tf_1915_weigongcun"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "时序否证：大慧寺正德八年（1513）建于畏吾村、李东阳祖茔在畏吾村"
+            "（李东阳1447-1516），均早于魏忠贤生年（1568）一百多年；「畏吾村」"
+            "名称早已存在，与魏忠贤庄田无涉；「魏公村」定名在1915年实测图。"
+        ),
+        alternative_explanations=[
+            "（无任何支持魏忠贤庄田说的书证）",
+            "魏忠贤庄田在京畿他处存在，但与本村得名无关",
+        ],
+    ),
+    # —— V-NC02：爵位唯一定名诱因说 ——
+    Proposition(
+        id="prop_weiguo_title_sole_cause",
+        statement="「魏公村」定名唯一诱因是廉希宪追封「魏国公」的爵位（族名音转可忽略）。",
+        derived_from_fact_ids=["tf_wwck_guohao", "tf_lmt_weiwucun", "tf_dbh_weiwu_cun"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "基底层否证：「畏吾」音转链有独立书证——畏兀村（乔松年）、魏吴村（崇祯墓志）、"
+            "卫伍（查礼所记并驳）诸写法均先于1915年官方定名而存在，且查礼明考"
+            "「畏吾，元時西域國號也」。爵位记忆不是唯一定名诱因；其是否参与雅化选字"
+            "另立 prop_weiguo_title_convergence（CONTESTED），两不抹杀。"
+        ),
+        alternative_explanations=[
+            "纯音转雅化，爵位无关（可能性存在，但无法排除合流）",
+            "音转为基底、爵位记忆参与选字（双重合流，本库作 CONTESTED 假说并存）",
+        ],
+    ),
+    Proposition(
+        id="prop_weiguo_title_convergence",
+        statement="1915年雅化定名选「魏公」二字时，兼受廉希宪追封「魏国公」爵位记忆的影响（双重合流说）。",
+        derived_from_fact_ids=["tf_ys126_fengwei_guogong", "tf_1915_weigongcun",
+                               "tf_wwck_guohao"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "合理推断但无明文：测绘档案只记「魏公村」标签，未记选字理由；"
+            "「音转基底层」（VERIFIED）与「爵位记忆参与」（本条）必须分层——"
+            "本条不是已确证事实，正片表述须用「既合音转、又暗合魏国公爵号」的并存句式，"
+            "禁说「因魏国公而改名」或「与魏国公无关」。"
+        ),
+        alternative_explanations=[
+            "纯音转定名，爵位记忆未参与（无法证伪，与合流说并存）",
+            "民间口传先有「魏公」之称，测绘只作记录（无书证）",
+        ],
+    ),
+    # —— meta 负控制：research.md v1.0 的《元史》葬地伪引文（Task1 直核证伪） ——
+    Proposition(
+        id="prop_yuanshi_burial_quote",
+        statement="《元史·廉希宪传》直接记载廉希宪「葬大都宛平之西高梁河畔，子孙家焉，号畏吾村」。",
+        derived_from_fact_ids=["tf_ys126_death", "tf_ys126_identity",
+                               "tf_ys126_fengwei_guogong"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "🔴 meta 伪引文（Task1 直核证伪，入库冻结）：经维基文库《元史》卷125/126/127"
+            "全文核验＋四库本第86叶书影目验，卷126廉希宪传**全篇无「畏吾」字样**，"
+            "亦无葬地一句；传末只记「是夕希憲卒年五十」与追封赠谥。该句系现代著述"
+            "（含 research.md v1.0）对廉希宪葬地链的概括回填。葬地书证正位："
+            "元明善《廉希宪神道碑》「葬于宛平之西原」（党宝海文转引，L3）＋"
+            "查礼《畏吾村考》守冢廉姓（L3）——L3 考据层，不是正史直证。"
+        ),
+        alternative_explanations=[
+            "「元史」云云为他书（如《元朝名臣事略》/神道碑系统）之文被误冠元史之名",
+            "《元史》他卷（如礼志/祭祀志）或有相关记载（未检得，存疑）",
+        ],
+    ),
+    # —— V-NC03：墓园复原 ——
+    Proposition(
+        id="prop_tomb_restoration",
+        statement="廉希宪墓园的元代地面建制（神道碑、翁仲、享殿）今天可以按原貌复原呈现。",
+        derived_from_fact_ids=[],
+        inferred_subject_id="ent_lian_jiazu_mu",
+        inference_method=(
+            "无据推论：墓区地面建筑清中期已无著录（查礼只记守冢廉姓），"
+            "乾隆官书按语注李东阳墓「今無考」——同区明墓尚且无考，元代墓园建制"
+            "更无任何实测/拓片依据。正片严禁AI生成墓园复原图充当证据。"
+        ),
+        alternative_explanations=[
+            "按元代品官坟制（一品四面各三百步）作规模推想——仅为制度推断，非实测",
+            "墓葬本体可能仍埋存于地下——无勘探数据，不得作为呈现依据",
+        ],
+    ),
+    # —— 正命题：族属得名（采信）与音转链（采信） ——
+    Proposition(
+        id="prop_weiwu_tribe_origin",
+        statement="畏吾村得名于畏兀儿（畏吾）族属：廉希宪家族等畏兀儿显贵葬地与守冢族人在高梁河畔聚族而居。",
+        derived_from_fact_ids=["tf_ys125_weiwu_ren", "tf_ys125_lian_surname",
+                               "tf_wwck_guohao", "tf_wwck_juzudi", "tf_wwck_start_yuan",
+                               "tf_lmt_weiwucun", "tf_dbh_shendaobei"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "分层采信：族属与廉姓为正史直证（L2 卷125）；葬地为神道碑转引（L3）；"
+            "「聚族地/始于元」为查礼考据推断（L3，自带「意即……乎」拟测语气），"
+            "乔松年「本西域畏吾部落……以称村焉」独立互证。L2＋L3 不混级、"
+            "合并支持的结论按 VERIFIED 采信，但逐条证据的层级标注保持原级。"
+        ),
+        alternative_explanations=[
+            "兵卫所居说（「卫伍」）——查礼已驳「殊失其义」",
+            "金代回鹘聚落遗存说——党宝海已辨：金中都北郊人烟稀少，金代无书证",
+        ],
+    ),
+    Proposition(
+        id="prop_phonetic_chain",
+        statement="「魏公村」是「畏吾村」数百年口语音转（畏兀村/苇孤村/魏吴村/卫伍诸写法）在1915年官方实测中的雅化定格。",
+        derived_from_fact_ids=["tf_lmt_weiwucun", "tf_wanshu_beigu",
+                               "tf_dbh_weiwu_cun", "tf_wwck_weiwu_rejected",
+                               "tf_1915_weigongcun"],
+        inferred_subject_id="ent_weigongcun",
+        inference_method=(
+            "四段异写皆有独立书证且均先于1915年；1915实测图标签为官方定名起点。"
+            "注意：research.md 音转链作「魏家村」，本库直核书证作「魏吴村」——"
+            "「魏家村」书证待核（E21待核3），不得入指称层。"
+        ),
+        alternative_explanations=[
+            "「魏公」为民间口传在先、测绘追认（无书证）",
+            "1915年测绘人员据「魏国公」典故改字（无档案明文，归 CONTESTED 假说）",
+        ],
+    ),
+    # —— 守冢廉姓＝廉希宪后人（查礼自标「疑即」，CONTESTED） ——
+    Proposition(
+        id="prop_shouzhong_lian_descendant",
+        statement="清初畏吾村守冢廉姓即廉希宪（右丞）后人。",
+        derived_from_fact_ids=["tf_wwck_shouzhong_lian", "tf_ys125_lian_surname",
+                               "tf_ys126_death"],
+        inferred_subject_id="ent_lian_jiazu_mu",
+        inference_method=(
+            "查礼原文明标「疑即」——推测语气必须保留（「寺有僧自言」同型纪律）。"
+            "旁证：廉姓确由布鲁海牙拜廉访使而来（L2 卷125「子孫皆姓廉氏」），"
+            "守冢廉姓与廉氏后人相容；但查礼未给出世系，不得升 VERIFIED。"
+        ),
+        alternative_explanations=[
+            "守冢廉姓为廉氏疏族/部曲后裔而非直系（无世系书证）",
+            "守冢廉姓与廉希宪家族无关、同姓偶合（无法排除）",
+        ],
+    ),
+]
+
+ADOPTIONS: List[BeliefAdoption] = [
+    BeliefAdoption(
+        proposition_id="prop_han_wei_founder",
+        status=EpistemicStatus.DISPROVEN,
+        confidence=0.95,
+        adopted_by="E21 闸门 V-NC01（research.md §5 负控制红线）",
+        adopted_at=_dt(2026, "dt_e21_nc01"),
+        rationale=(
+            "族属（畏吾人）与得姓（廉氏）有正史直证，村名「畏吾村」早于任何魏姓叙事"
+            "六百余年，得名时序与魏姓无涉。口播必须先立《元史》廉孟子—魏国公—畏吾村"
+            "正源，魏姓说只可作「民间误解」引入并当场破除。"
+        ),
+        refuting_fact_ids=["tf_ys125_weiwu_ren", "tf_ys125_lian_surname",
+                           "tf_rxjwkc98_dhs_build", "tf_hlt_zumu_weiwu"],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_weizhongxian_estate",
+        status=EpistemicStatus.DISPROVEN,
+        confidence=0.95,
+        adopted_by="E21 负控制（research.md §1 通行误解条）",
+        adopted_at=_dt(2026, "dt_e21_nc02"),
+        rationale=(
+            "大慧寺1513年已建于畏吾村、李东阳祖茔在村，均早于魏忠贤生年（1568）；"
+            "「魏公村」定名迟至1915年实测。时序三重不合。"
+        ),
+        refuting_fact_ids=["tf_rxjwkc98_dhs_build", "tf_hlt_zumu_weiwu",
+                           "tf_1915_weigongcun"],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_weiguo_title_sole_cause",
+        status=EpistemicStatus.DISPROVEN,
+        confidence=0.85,
+        adopted_by="E21 闸门 V-NC02（严禁抹杀畏兀儿族源首要性）",
+        adopted_at=_dt(2026, "dt_e21_nc03"),
+        rationale=(
+            "音转链（畏兀村/苇孤村/魏吴村/卫伍）四段异写皆有独立书证且先于1915年，"
+            "查礼明考「畏吾，元時西域國號也」——族名音转是基底层；"
+            "把爵位抬为唯一诱因既违背书证、也抹杀族源。"
+        ),
+        refuting_fact_ids=["tf_wwck_guohao", "tf_lmt_weiwucun", "tf_dbh_weiwu_cun"],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_weiguo_title_convergence",
+        status=EpistemicStatus.CONTESTED,
+        confidence=0.5,
+        adopted_by="E21 闸门 V-NC02 伴生假说（双重合流，不判死）",
+        adopted_at=_dt(2026, "dt_e21_hyp1"),
+        rationale=(
+            "「既合音转、又暗合魏国公爵号」的并存句式是本集叙事亮点，但选字动机"
+            "无档案明文——CONTESTED 0.5，正片禁单边化（禁「因魏国公而改名」/"
+            "「与魏国公无关」两种表述）。"
+        ),
+        refuting_fact_ids=[],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_yuanshi_burial_quote",
+        status=EpistemicStatus.DISPROVEN,
+        confidence=0.9,
+        adopted_by="E21 Task1/Task3 直核（维基文库卷125/126/127＋四库本第86叶书影）",
+        adopted_at=_dt(2026, "dt_e21_meta"),
+        rationale=(
+            "卷126廉希宪传全篇无「畏吾」字样、无葬地文；伪引文系概括回填。"
+            "葬地书证正位到神道碑转引（L3）与查礼守冢廉姓（L3）。"
+            "本条同时约束下游：任何「《元史》云葬畏吾村」的表述一律打回。"
+        ),
+        refuting_fact_ids=["tf_ys126_death", "tf_ys126_identity",
+                           "tf_ys126_fengwei_guogong"],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_tomb_restoration",
+        status=EpistemicStatus.UNSUBSTANTIATED,
+        confidence=0.05,
+        adopted_by="E21 闸门 V-NC03（严禁AI编造墓葬复原图）",
+        adopted_at=_dt(2026, "dt_e21_nc04"),
+        rationale=(
+            "墓区地面建制无任何实测/拓片/影像依据；同区李东阳墓乾隆间已「今無考」。"
+            "正片证据视觉只用文献影印与地图（Task1 资产纪律同款）。"
+        ),
+        refuting_fact_ids=["tf_rxjwkc98_lidongyang_tomb_lost"],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_weiwu_tribe_origin",
+        status=EpistemicStatus.VERIFIED,
+        confidence=0.9,
+        adopted_by="E21 主命题（L2 正史＋L3 考据互证，分级合并）",
+        adopted_at=_dt(2026, "dt_e21_main"),
+        rationale=(
+            "族属（L2 卷125）＋葬地（L3 神道碑转引）＋聚族地考据（L3 查礼/乔松年互证）"
+            "三层同向；逐条证据层级保持原级，合并结论 VERIFIED 0.9。"
+        ),
+        refuting_fact_ids=[],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_phonetic_chain",
+        status=EpistemicStatus.VERIFIED,
+        confidence=0.9,
+        adopted_by="E21 主命题（音转链四段书证＋1915 实测定名）",
+        adopted_at=_dt(2026, "dt_e21_main2"),
+        rationale=(
+            "「魏公村」1915年官方定格前，异写四段各有独立书证；地图标签目视核验留痕。"
+            "「魏家村」写法未入链（书证待核）。"
+        ),
+        refuting_fact_ids=[],
+    ),
+    BeliefAdoption(
+        proposition_id="prop_shouzhong_lian_descendant",
+        status=EpistemicStatus.CONTESTED,
+        confidence=0.5,
+        adopted_by="E21 闸门（查礼「疑即」语气纪律）",
+        adopted_at=_dt(2026, "dt_e21_hyp2"),
+        rationale=(
+            "查礼自标推测；与 L2 廉姓由来相容但不构成世系证明。口播须带"
+            "「守冢者亦廉姓，（查礼）疑即（右丞廉希宪）后人」的转述层级，禁升实指。"
+        ),
+        refuting_fact_ids=[],
+    ),
+]
+
+
+# ==================================================================
+# 空间变换
+# ==================================================================
+
+TRANSFORMATIONS: List[PlaceTransformation] = [
+    PlaceTransformation(
+        id="pte_wgc_1280_form", entity_id="ent_weigongcun",
+        transformation=PlaceTransformationEvent.CONSTRUCTED,
+        time_span=_ts(1280, 1280, "ts_pte_wgc1"),
+        resulting_state_id="st_wgc_yuan",
+        resulting_condition="廉希宪归葬宛平之西原，守冢族人聚居，畏吾村始立"
+                            "（党宝海《魏公村考》：聚落成形跨至元四年蒙速思葬至元末）",
+        evidence_fact_ids=["tf_dbh_shendaobei", "tf_wwck_start_yuan"],
+    ),
+    PlaceTransformation(
+        id="pte_wgc_1951_absorb", entity_id="ent_weigongcun",
+        transformation=PlaceTransformationEvent.EXPANDED,
+        time_span=_ts(1951, 1951, "ts_pte_wgc2"),
+        resulting_state_id="st_wgc_1951",
+        resulting_condition="中央民族学院选址建校，旧村域融入校园与街区",
+        evidence_fact_ids=["tf_muc_1951"],
+    ),
+    PlaceTransformation(
+        id="pte_dhs_1513_build", entity_id="ent_dahuisi",
+        transformation=PlaceTransformationEvent.CONSTRUCTED,
+        time_span=_ts(1513, 1513, "ts_pte_dhs1"),
+        resulting_state_id="st_dhs_1513",
+        resulting_condition="正德八年（癸酉）张雄建寺赐额「大慧」，李东阳为碑",
+        evidence_fact_ids=["tf_rxjwkc98_dhs_build", "tf_rxjwkc98_dhs_beiluo"],
+    ),
+    PlaceTransformation(
+        id="pte_dhs_1592_repair", entity_id="ent_dahuisi",
+        transformation=PlaceTransformationEvent.REBUILT,
+        time_span=_ts(1592, 1592, "ts_pte_dhs2"),
+        resulting_state_id="st_dhs_1592",
+        resulting_condition="万历壬辰（二十年）重修，王锡爵撰记",
+        evidence_fact_ids=["tf_rxjwkc98_dhs_wanli"],
+    ),
+    PlaceTransformation(
+        id="pte_tomb_1280_burial", entity_id="ent_lian_jiazu_mu",
+        transformation=PlaceTransformationEvent.CONSTRUCTED,
+        time_span=_ts(1280, 1280, "ts_pte_tomb1"),
+        resulting_state_id="st_tomb_yuan",
+        resulting_condition="廉希宪葬于宛平之西原，廉氏家族墓茔始聚葬",
+        evidence_fact_ids=["tf_dbh_shendaobei"],
+    ),
+    PlaceTransformation(
+        id="pte_mu_1951_build", entity_id="ent_minzu_univ",
+        transformation=PlaceTransformationEvent.CONSTRUCTED,
+        time_span=_ts(1951, 1951, "ts_pte_mu1"),
+        resulting_state_id="st_mu_1951",
+        resulting_condition="中央民族学院成立于魏公村一带",
+        evidence_fact_ids=["tf_muc_1951"],
+    ),
+]
+
+AGGREGATES: List[PlaceAggregate] = []
+
+
+# ==================================================================
+# 跨时同一性：村是同一持续体——改名是称谓层事件，不产生新聚落实体
+# ==================================================================
+
+IDENTITIES: List[DiachronicIdentityAssertion] = [
+    DiachronicIdentityAssertion(
+        id="dia_wgc_same_cont",
+        subject_entity_ids=["ent_weigongcun"],
+        relation=IdentityRelation.SAME_CONTINUANT,
+        time_span=_ts(1280, 2026, "ts_dia_wgc"),
+        evidence_fact_ids=["tf_wwck_start_yuan", "tf_hlt_zumu_weiwu",
+                           "tf_wwck_village", "tf_1915_weigongcun"],
+        status=EpistemicStatus.VERIFIED,
+        alternative_relations=[
+            IdentityRelation.SUCCESSOR,
+        ],
+        is_orthogonal_to_state_change=True,
+    ),
+]
+
+
+# ==================================================================
+# 指称断言：古称、俗写、雅化名分挂同体，绝不混级
+# ==================================================================
+
+REFERENCES: List[ReferentialAssertion] = [
+    ReferentialAssertion(
+        id="ref_weiwu_village",
+        appellation_id="app_weiwucun",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1280, 1915, "ts_r_wwc"),
+        evidence_fact_ids=["tf_wwck_village", "tf_hlt_zumu_weiwu",
+                           "tf_rxjwkc98_dhs_build"],
+        status=EpistemicStatus.VERIFIED,
+    ),
+    ReferentialAssertion(
+        id="ref_weiwu_er",
+        appellation_id="app_weiwucun_er",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1644, 1915, "ts_r_wwe"),
+        evidence_fact_ids=["tf_lmt_weiwucun"],
+        status=EpistemicStatus.VERIFIED,
+    ),
+    ReferentialAssertion(
+        id="ref_beigu",
+        appellation_id="app_beigucun",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1593, 1593, "ts_r_bgc"),
+        evidence_fact_ids=["tf_wanshu_beigu"],
+        status=EpistemicStatus.VERIFIED,
+        provenance="单点书证（万历二十一年《宛署杂记》道路序列）；异写对应关系依党宝海考订",
+    ),
+    ReferentialAssertion(
+        id="ref_weiwu_wu",
+        appellation_id="app_weiwucun_wu",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1643, 1643, "ts_r_www"),
+        evidence_fact_ids=["tf_dbh_weiwu_cun"],
+        status=EpistemicStatus.VERIFIED,
+        provenance="单点书证（崇祯十六年墓志，魏公村出土，党宝海文转引）",
+    ),
+    ReferentialAssertion(
+        id="ref_weiwu5",
+        appellation_id="app_weiwu5",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1736, 1736, "ts_r_w5"),
+        evidence_fact_ids=["tf_wwck_weiwu_rejected"],
+        status=EpistemicStatus.FOLK_LEGEND,
+        provenance="时人望文生训异写，查礼已驳「殊失其義」；存档不采信其得名义理",
+    ),
+    ReferentialAssertion(
+        id="ref_weigongcun_village",
+        appellation_id="app_weigongcun",
+        referent_entity_id="ent_weigongcun",
+        time_span=_ts(1915, 2026, "ts_r_wgc"),
+        evidence_fact_ids=["tf_1915_weigongcun"],
+        status=EpistemicStatus.VERIFIED,
+        provenance=(
+            "1915 实测图标签目视核验（assets/hist_weigongcun/sources.csv 留痕）。"
+            "定名机理：族名音转为 VERIFIED 基底层；「魏国公」爵位记忆参与选字为"
+            " CONTESTED 假说（prop_weiguo_title_convergence），两不抹杀（V-NC02）。"
+        ),
+    ),
+    ReferentialAssertion(
+        id="ref_dahuisi",
+        appellation_id="app_dahuisi",
+        referent_entity_id="ent_dahuisi",
+        time_span=_ts(1513, 2026, "ts_r_dhs"),
+        evidence_fact_ids=["tf_rxjwkc98_dhs_build"],
+        status=EpistemicStatus.VERIFIED,
+    ),
+    ReferentialAssertion(
+        id="ref_dafoosi",
+        appellation_id="app_dafoosi",
+        referent_entity_id="ent_dahuisi",
+        time_span=_ts(1513, 1783, "ts_r_dfs"),
+        evidence_fact_ids=["tf_rxjwkc98_dhs_dabeidian", "tf_wwck_village"],
+        status=EpistemicStatus.VERIFIED,
+    ),
+    ReferentialAssertion(
+        id="ref_minzu_univ",
+        appellation_id="app_minzu_univ",
+        referent_entity_id="ent_minzu_univ",
+        time_span=_ts(1951, 2026, "ts_r_muc"),
+        evidence_fact_ids=["tf_muc_1951"],
+        status=EpistemicStatus.VERIFIED,
+    ),
+]

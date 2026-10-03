@@ -29,8 +29,8 @@
 
 | 状态 | 数量 | 词条（calibration 模块） |
 |---|---|---|
-| 已入库 | 9/13 | gaoliang（高梁河）、yuanmingyuan（圆明三园）、banners（八旗营房）、settlements（聚落）、dazhongsi（大钟寺）、bridges（E8 高梁桥 + E2 安河桥，双系统与时空冲突判据） |
-| 并发入库中 | 2 | suburbs（近郊聚落）、urban（城区地名） |
+| 已入库 | 14/14 | gaoliang（高梁河）、yuanmingyuan（圆明三园）、banners（八旗营房）、settlements（聚落）、dazhongsi（大钟寺）、bridges（E8 高梁桥 + E2 安河桥，双系统与时空冲突判据）、xishan、sanshiwuyuan、pingyuan、shaoyuan（E20 勺园·淑春园）、cishousi（E19 慈寿寺）、suburbs（近郊聚落）、urban（城区地名）、weigongcun（E21 魏公村·畏吾村：《元史》L2 与查礼/乔松年 L3 严密分层，魏姓/魏忠贤伪说 DISPROVEN，大慧寺国保 5-199，1915 实测定名） |
+| 并发入库中 | 0 | — |
 | 待启动 | 0 | — |
 
 配套三层登记已就绪：人物（people）、书目（bibliography，一书一条 + 作者 + 卷次）、
@@ -129,7 +129,9 @@ haidian_kg/
 ├── authority_resolver.py      # 多源外部权威裁决（TGAZ+DILA+CCTS_MHPNAME+MCGD）
 ├── qa_gate.py                 # 九维词条入库闸门（fail 阻塞 / 负控制防恒真）
 ├── calibration/               # 已入库词条（gaoliang/yuanmingyuan/banners/settlements/
-│                              #   dazhongsi/bridges + people/bibliography/digital_resources）
+│                              #   dazhongsi/bridges/xishan/sanshiwuyuan/pingyuan/
+│                              #   shaoyuan/cishousi/suburbs/urban/weigongcun
+│                              #   + people/bibliography/digital_resources）
 ├── production_exports.py      # export_storyboard / export_visual_constraints → 视频管线
 ├── builder.py / query.py      # RDF 构建序列化；SPARQL + NetworkX 演变推理
 ├── corpus/era*.md             # Era 0–9 逐断代考据档案
@@ -138,7 +140,7 @@ haidian_kg/
 └── visualizer/                # 离线 D3 力导向图 + Era 时间轴游标看板
 ```
 
-测试：`tests/haidian_kg/` 24 个文件（闸门/词条/闭包/本体/负控制/断代审计）。
+测试：`tests/haidian_kg/` 38 个文件（闸门/词条/闭包/本体/负控制/断代审计）。
 
 ## 8. Python 使用范例
 

@@ -15,7 +15,11 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from ..ontology.temporal import TimeSpan
+from ..ontology.temporal import (
+    CalibrationTable, DatePoint, GregorianDate, TimeSpan,
+)
+
+CAL = CalibrationTable.CN_ASTRONOMICAL_ALMANAC
 
 
 class PersonRole(str):
@@ -318,5 +322,68 @@ PEOPLE: List[HistoricalPerson] = [
         haidian_relevance="《九思堂诗稿》卷七《中秋后二日游舒春園四律》序「是園乾隆年間屬和相珅，"
                           "籍沒後入官……後輾轉為睿邸園寓」，为和珅园→睿王园流转的时人追述；"
                           "蔚秀园主人游邻园咏《石舫》《孤屿》，为石舫清中后期尚存的咏物证据",
+    ),
+    # ---- E21 魏公村·畏吾村 词条新增（E19 纪律：生卒年无直核者留空，严禁臆造） ----
+    HistoricalPerson(
+        id="person_lianxixian", name="廉希宪",
+        courtesy_name="善甫",
+        aliases=["廉孟子"],
+        dynasty="元代", primary_role=PersonRole.LOCAL_MAGISTRATE,
+        official_titles=["中书平章政事", "中书右丞", "行省荆南"],
+        haidian_relevance="《元史》卷125载其父布鲁海牙「畏吾人也」、拜廉访使而「子孫皆姓廉氏」；"
+                          "卷126载「世祖嘉之目曰廉孟子」「是夕希憲卒年五十」（至元十七年，1280）、"
+                          "大德八年「追封魏國公諡文正」加赠恒阳王。归葬大都宛平之西高梁河畔"
+                          "（今魏公村一带），守冢族人聚居成畏吾村——本集地名源头人物",
+        life_span=TimeSpan(
+            id="ts_person_lianxixian", label="1231-1280",
+            begin=DatePoint(id="dt_lianxixian_b", label="1231",
+                            gregorian=GregorianDate(year=1231, calibration=CAL)),
+            end=DatePoint(id="dt_lianxixian_d", label="1280",
+                          gregorian=GregorianDate(year=1280, calibration=CAL))),
+        note="生年1231系据《元史》卷126「至元十七年（1280）……希憲卒，年五十」虚岁倒推；"
+             "「卒于上都」为通行转述，卷126原文只记「有大星隕于正寢之旁……是夕希憲卒」。",
+    ),
+    HistoricalPerson(
+        id="person_lidongyang", name="李东阳",
+        courtesy_name="宾之",
+        aliases=["西涯", "茶陵李东阳"],
+        dynasty="明代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["内阁首辅", "谨身殿大学士", "少师兼太子太师"],
+        authored_source_ids=["src_huailutangji"],
+        haidian_relevance="祖茔在宛平县香山乡畏吾村（《怀麓堂集》卷75《合葬告考妣文》"
+                          "「自我先祖葬曾祖考妣于畏吾村」，经党宝海《魏公村考》转引）；"
+                          "《日下旧闻考》卷98郊坰西八载大慧寺始建「大學士茶陵李東陽為碑」；"
+                          "乾隆官书按语已注「李東陽墓今無考」——墓址湮灭，严禁AI复原",
+        life_span=TimeSpan(
+            id="ts_person_lidongyang", label="1447-1516",
+            begin=DatePoint(id="dt_lidongyang_b", label="1447",
+                            gregorian=GregorianDate(year=1447, calibration=CAL)),
+            end=DatePoint(id="dt_lidongyang_d", label="1516",
+                          gregorian=GregorianDate(year=1516, calibration=CAL))),
+    ),
+    HistoricalPerson(
+        id="person_zhali", name="查礼",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["陕西布政使", "湖南巡抚"],
+        authored_source_ids=["src_weiwucunkao"],
+        haidian_relevance="撰《畏吾村考》考定「畏吾，元時西域國號也」「畏吾之名當始於元」，"
+                          "并记「守冢者亦廉姓，疑即右丞后人」——畏吾村葬地与守冢廉姓的"
+                          "清代金石考据笔记层书证（L3，经党宝海文转引，原刻未直核）",
+        note="生年诸记载作1715或1716，未直核，生卒年留空不臆造。",
+    ),
+    HistoricalPerson(
+        id="person_qiaosongnian", name="乔松年",
+        dynasty="清代", primary_role=PersonRole.SCHOLAR_WRITER,
+        official_titles=["河东河道总督", "陕西巡抚"],
+        authored_source_ids=["src_luomoting_zhaji"],
+        haidian_relevance="《萝藦亭札记》载「畏兀村，盖京西直门外村名，本西域畏吾部落，"
+                          "元太祖时归来，聚于此地，以称村焉」——畏吾部落聚居说的清代笔记层"
+                          "书证（L3，转录经人民网2012与党宝海文转引，原刻未直核）",
+        life_span=TimeSpan(
+            id="ts_person_qiaosongnian", label="1815-1875",
+            begin=DatePoint(id="dt_qiaosongnian_b", label="1815",
+                            gregorian=GregorianDate(year=1815, calibration=CAL)),
+            end=DatePoint(id="dt_qiaosongnian_d", label="1875",
+                          gregorian=GregorianDate(year=1875, calibration=CAL))),
     ),
 ]

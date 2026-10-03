@@ -595,7 +595,65 @@ BIBLIOGRAPHY: List[HistoricalSource] = [
         issuing_body="国务院",
         edition_note="第五批（国发〔2001〕25号，2001-06-25公布）：「未名湖燕园建筑」编号5-475，"
                      "近现代重要史迹及代表性建筑。名录原文页逐字待核（E20待核6）；"
-                     "名称与编号经北京市文物局公开页确认（E20闸门P8）",
+                     "名称与编号经北京市文物局公开页确认（E20闸门P8）。"
+                     "E21补记：「大慧寺」（明，古建筑）编号5-199，经新京报/新华网/维基多源确认，"
+                     "名单原文页逐字待核（E21待核1）",
+    ),
+    # ---- E21 魏公村·畏吾村 新增一手文献（一书一条，篇卷挂 SourceDivision） ----
+    # 证据分级纪律：查礼/乔松年引文均经党宝海《魏公村考》（《北京文博》2000年第4期）
+    # 转引或人民网2012转录，原刻本未直核——按 E20 转引层先例记 L3，不得冒充直核 L1。
+    HistoricalSource(
+        id="src_weiwucunkao", title="畏吾村考",
+        category=SourceCategory.EPIGRAPHY,
+        author_person_id="person_zhali",
+        base_edition="原本/石刻",
+        edition_note="清乾隆间查礼金石考据笔记（L3）。考定「畏吾，元時西域國號也，太祖四年歸於元」"
+                     "「畏吾之名當始於元」、驳「衛伍」望文生训，并记「守冢者亦廉姓，疑即右丞后人」"
+                     "（「疑即」为查礼自标推测语气，不得升格为实指）。"
+                     "引文经党宝海《魏公村考》（《北京文博》2000年第4期）转引，原刻本未直核",
+    ),
+    HistoricalSource(
+        id="src_luomoting_zhaji", title="萝藦亭札记",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_qiaosongnian",
+        edition_note="清同治间乔松年笔记（L3）。载「畏兀村，盖京西直门外村名，本西域畏吾部落，"
+                     "元太祖时归来，聚于此地，以称村焉」——畏吾部落聚居说笔记层书证。"
+                     "转录经人民网2012《魏公村与维吾尔族的不解之缘》与党宝海文转引，原刻本未直核",
+    ),
+    HistoricalSource(
+        id="src_huailutangji", title="怀麓堂集",
+        category=SourceCategory.LITERARY_COLLECTION,
+        author_person_id="person_lidongyang",
+        base_edition=SISHU,
+        edition_note="明李东阳文集（L2文集层）。卷75《合葬告考妣文》「自我先祖葬曾祖考妣于畏吾村」"
+                     "证李氏祖茔在畏吾村（经党宝海文转引，四库本原页未直核）；"
+                     "研究档案通行句「宛平县香山乡畏吾村，吾祖茔也」卷次篇名待核，"
+                     "未直核前不得作逐字引文使用（E21待核2）",
+    ),
+    HistoricalSource(
+        id="src_jingshi_sijiaotu_1915", title="实测京师四郊图（1915）",
+        category=SourceCategory.MILITARY_SURVEY_MAP,
+        issuing_body="北洋政府陆军测地局（民国四年）",
+        base_edition="五万分之一实测地形图",
+        edition_note="1915年实测：图上正式标绘「魏公村」，为现行官方地名之测绘源头（E21 L2档案地图）。"
+                     "「魏公村」标签经中研院「北京百年历史地图」Beijing_1915 WMTS 图层切片目视核验，"
+                     "留痕见 assets/hist_weigongcun/sources.csv（sha256 e54b590c…）。"
+                     "与1913《京西图》为两部图籍，严禁并档（一书一条）",
+    ),
+    HistoricalSource(
+        id="src_muc_open", title="中央民族大学公开校史资料",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="中央民族大学",
+        edition_note="校方公开沿革（记录式陈述）：1951年中央民族学院成立，校址北京西郊白石桥以北"
+                     "魏公村一带；1993年更名为中央民族大学。与古籍逐字引文分挂不同篇卷，不得互冒",
+    ),
+    HistoricalSource(
+        id="src_dangbaohai_2000", title="魏公村考——元大都一个畏兀儿聚落的历程",
+        category=SourceCategory.ARCHAEOLOGY_REPORT,
+        issuing_body="《北京文博》2000年第4期（作者党宝海）",
+        edition_note="现代研究文（转引枢纽层）：本词条查礼《畏吾村考》、乔松年《萝藦亭札记》、"
+                     "李东阳《怀麓堂集》卷75诸引文之转录出处；其 footnote 39 另引元明善《廉希宪神道碑》"
+                     "「春秋五十……葬于宛平之西原」。现代研究结论与古籍引文严禁混级",
     ),
 ]
 
@@ -629,6 +687,11 @@ TITLE_ALIASES: Dict[str, str] = {
     "和珅犯罪全案档": "清代和珅档案史料",
     "国务院第五批国保名单": "国务院公布全国重点文物保护单位名单",
     "北大校史文物资料": "北京大学公开校史与校园文物资料",
+    # E21 魏公村·畏吾村 新补
+    "实测京师四郊图": "实测京师四郊图（1915）",
+    "1915京西图": "实测京师四郊图（1915）",
+    "魏公村考（党宝海）": "魏公村考——元大都一个畏兀儿聚落的历程",
+    "民大校史资料": "中央民族大学公开校史资料",
 }
 
 
