@@ -254,6 +254,13 @@ def _is_volume_ref(n: int) -> bool:
     return 1 <= n <= 200
 
 
+#: L4-c 口播豁免槽（冻结裁决落地，非判据松动）。
+#: C09（E19 闸门，2026-10-03）：P7 机车年款 1937/1956 定为「仅卡片小字、
+#: 不进口播、不进 L4-c」——机车是彩蛋不是主线，为它开白名单会挤占叙事预算。
+#: 登记在此的槽：数字不要求口播覆盖，但仍受 L4-a（OCR 可读性）约束。
+L4C_NONSPOKEN_SLOT_IDS = {"p7_loco"}
+
+
 def check_l4c(ep: Episode, ocr_by_page: Dict[int, OcrResult]) -> List[Finding]:
     """字幕交叉：槽里的数字，必须与当页口播稿保持事实一致。
 
@@ -301,6 +308,10 @@ def check_l4c(ep: Episode, ocr_by_page: Dict[int, OcrResult]) -> List[Finding]:
                 needs_check = any(_has_competing_number(w, spoken_nums) for w in want)
                 if not needs_check:
                     continue
+
+            # C09 冻结豁免槽（如 E19 p7_loco 机车年款）：数字不要求口播覆盖
+            if item.slot_id in L4C_NONSPOKEN_SLOT_IDS:
+                continue
 
             missing = sorted(
                 n for n in want

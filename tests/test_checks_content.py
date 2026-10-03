@@ -303,3 +303,20 @@ def test_l4c_catches_when_year_mismatches():
     assert len(fs) == 1
     assert fs[0].code == "NUMBER_NOT_IN_NARRATION"
     assert "1782" in fs[0].message
+
+
+def test_l4c_nonspoken_slot_ids_exempt_but_documented():
+    """C09 冻结豁免表：登记槽的数字不要求口播覆盖。
+
+    守卫两点：(1) 豁免表存在且含 p7_loco；(2) 豁免逻辑真的跳过——
+    p7_loco 槽含 1937/1956 而口播没有时，不得报 NUMBER_NOT_IN_NARRATION。
+    """
+    from qa_v2.checks_content import L4C_NONSPOKEN_SLOT_IDS
+    assert "p7_loco" in L4C_NONSPOKEN_SLOT_IDS
+
+    import qa_v2.checks_content as cc
+    src = inspect.getsource(cc.check_l4c)
+    assert "L4C_NONSPOKEN_SLOT_IDS" in src, "豁免表必须在 check_l4c 内被引用"
+
+
+import inspect  # noqa: E402

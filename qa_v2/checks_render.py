@@ -29,9 +29,14 @@ LOW_CONFIDENCE: float = 0.80
 def check_l3(page: Page, ocr: OcrResult) -> List[Finding]:
     """槽内必须有 OCR 文本。"""
     out: List[Finding] = []
+    # 2026-10-03：真图槽（PhotoFrame 装裱框/AI 复原条）内是图像像素，
+    # 「槽内必须有字」对它们不成立——与 L1/L5 的 photo 排除同口径。
+    photo_ids = {i.slot_id for i in page.items if i.is_photo()}
     for s in page.slots:
         if s.id in TAG_IDS:
             continue  # 深底白字，交给 L6
+        if s.id in photo_ids:
+            continue
         rect = plate_to_canvas(page.plate, s.x, s.y, s.w, s.h)
         found = text_at(ocr, rect)
         if not found:
