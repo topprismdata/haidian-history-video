@@ -379,7 +379,12 @@ def build():
             except ValueError: pass
     bmesh.ops.recalc_face_normals(ab, faces=ab.faces[:]); ab.normal_update()
     bm_to_obj(ab, "abutment_ground", m_body)
-    for n in ("bridge_body","impost","voussoir","deck_rail","lions","beasts","pier_plinth","deck_cornice"):
+    # 全部桥体与引道构件统一绕 Z 转桥轴方位。
+    # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
+    # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
+    # 根因在此——它与本体同父级 m_body, 本就该一起转。
+    for n in ("bridge_body","impost","voussoir","deck_rail","lions","beasts",
+              "pier_plinth","deck_cornice","abutment_ground"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     # 照明
     w = bpy.data.worlds.new("World"); bpy.context.scene.world = w; w.use_nodes=True

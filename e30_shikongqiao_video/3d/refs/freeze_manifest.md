@@ -24,15 +24,16 @@
 | 文件 | SHA256 | 角色 |
 |---|---|---|
 | `3d/bridge_geom2.py` | `8990d5e80d856c5788365e136a4820a125b1b6574ee2f2d55d179820dc727296` | 纯几何（消费 facts，零字面尺寸） |
-| `3d/build_scene2.py` | `ffb53006bd860149b34d9332fc471c6f13ff8d0d24911fa10199c46220e1edad` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35） |
+| `3d/build_scene2.py` | `b93c93f063b0357ebabf24a0d5cb75b623dfd75fe472c65188641a0fba015068` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变，见 body_changelog.md） |
 | `3d/qa_bridge.py` | `e8e6684bb5a7016e700bb8485a78959aa0f95e3224ddc0df4967311bacb4f64e` | L1 判据（纯数据） |
 | `3d/qa_l2.py` | `315898346b895a07bb887a3c036fe90edac4d43c6c4d61e0cccc66228aebd34e` | L2 判据（开 blend 查 evaluated mesh） |
 | `3d/materials.py` | `590c528508637a25e330d9fb67c1bb0bf2cc3554f1383cf28589f2357b99b35b` | 程序化材质（无 random，节点内置噪声同版本确定） |
 | `3d/lions.py` | `aa4c3b3e3f0314da3594a4c070aee4722660ee581a88b5122f5db5406610d627` | 狮母题（自带 LCG，seed 显式入参，确定） |
-| `3d/ortho.py` | `2fe76ce0baedd79773e4aef43ae9321cf4fac9f1c325352a05bde841b4ee4879` | 正交出图（seed 显式） |
+| `3d/ortho.py` | `cddb37980ee4ef3e3bf0cdcc636b9513b2942d2bc6fba533a20ebe1aa074905e` | 正交出图（T6 当日演进：新增 top/arch 机位；首采哈希 2fe76ce0… 已被取代） |
 | `3d/render_shot.py` | `957322629203d449aebe660e7912c0c113f3206bb55f120abf2f75b0d9e5a247` | 机位渲染（seed 显式） |
-| `3d/shot_auto2.py` | `1a46bcec6997df0f6e45c3a7e623051cf1b900c1ff826a58b094e2e0f59c63e2` | 自动取景渲染（**seed 未显式**，见 §6 偏差 7） |
-| `3d/freeze_hash.py` | （随冻结包提交，以提交版为准） | 核心几何哈希工具 |
+| `3d/shot_auto2.py` | `1b74f5bafeaf95f9710daf62b0c1a66729db7e4e90a1ba89bc926e3ff7845a8a` | 自动取景渲染（主控 2026-10-04 补 seed 显式化，已提交） |
+| `3d/freeze_hash.py` | `120e8e40be6d0992410809dbf5cd8b8347176f8308a61716884d45e154c4f370` | 核心几何哈希唯一定义点（随冻结包 commit `6d8a838`） |
+| `3d/register_overlay.py` | `ffa10d609d64d9171d74d4d87593c64d7727d9b850f8e46889559b929d2b461e`（T7 在途，标定回填后定版） | T7 L3 配准工具（T8 只引用不运行） |
 
 ## 3. Blender 版本
 
@@ -73,48 +74,58 @@ build platform: Darwin (arm64)  build type: Release
 
 ## 6. 渲染图哈希 + seed
 
-seed 政策: `ortho.py` / `render_shot.py` 显式 `cycles.seed=20261004`、`use_animated_seed=False`；Cycles 自适应采样 + OpenImageDenoise 同机同版本确定。**同机同 build 承诺可逐字节复现；跨机/跨 GPU 不承诺。**
+seed 政策: `ortho.py` / `render_shot.py` / `shot_auto2.py`（主控 2026-10-04 修正显式化）均 `cycles.seed=20261004`、`use_animated_seed=False`。⚠ seed 只固定采样序列；自适应采样调度仍非确定（见下），"同机同版本确定"仅对**采样序列**成立。
 
-冻结候选（2026-10-04 采集，T6 出图期间快照；冷重建后以重建值为准）:
+**对照口径（主控 2026-10-04 提出，T8 复测后修订）**: 渲染对照**禁用 PNG 文件哈希**（文件差异含 `tEXt` 元数据 `Date`/`RenderTime`）。像素级（IDAT 拼流 SHA256）对照经 T8 冷重建复测**被证伪为不可用判据**：
+- 主控独占条件实验（旧 blend、arch 视图）：seed 固定后两渲像素逐位相同、IDAT 一致——当时据此采纳 IDAT 口径；
+- **T8 复测（重建 blend、arch 视图）：5 渲 5 异**（IDAT 全不同，含 GPU 空闲条件下背靠背两渲仍异）；hero 视图 2 渲一致（单视图偶证）。
+- **归因**: `use_adaptive_sampling=True` + Metal 后端下，自适应采样调度存在运行间非确定（seed 只固定采样序列，不固定逐步收敛判定）；与 GPU 并发无关（空闲条件复现）。
+- **结论**: 渲染层可复现性当前只能声明到**配置锁定**（seed/samples/分辨率/脚本哈希），**逐位像素复现不成立**；IDAT/文件哈希均不构成冻结判据。逐位复现需 M4 关闭自适应采样（`use_adaptive_sampling=False`）后独占 GPU 另测（§8-11）。
 
-| 文件 | SHA256 | seed |
+冻结候选（2026-10-04 冷重建删除前重采，**仅作存档快照，非对照判据**）:
+
+| 文件 | IDAT 像素 SHA256 | seed |
 |---|---|---|
-| `ortho_side.png` | `0c29503b5afc1669173daffbf262382cb1b941fd8f0c731e0e054e9500af36fc` | 20261004 |
-| `ortho_front.png` | `41a1525825e65467cebf18a1d702aa278e43b7dbbe6c5469a3e6b643731d3a9c` | 20261004 |
-| `ortho_top.png` | `38d483a5b461f2d0128a5ac6aa76c5224974b12e840633d35d832e49caac27fc` | 20261004 |
-| `ortho_arch.png` | `20f24fde030298e4124a9f9b9de5fceb76a53ebcc304ae6023f92223445da84f` | 20261004 |
-| `shot_hero.png` | `e037dcfd23d664a7db1d3d047ee2279cb921a4bccd9ac32883c6df0b10eb0061` | 未显式（§8-7） |
-| `shot_arch.png` | `54649219c37eeeef89ce0e127d6d2dd4f6295089fac726c59d61d885a588c1b4` | 未显式（§8-7） |
-| `shot_side.png` | `cbb4bfc1d21db6f67422bf6d7ed93e88d6c0ceaa90d4d6a0877a75adc126cd12` | 未显式（§8-7） |
+| `ortho_side.png` | `143cc9d590f1370f611884d2a26ae9bfa8e5090eea0f34e03913b8d13d3afbf5` | 20261004 |
+| `ortho_front.png` | `85ec08dbf8cc8a62523f9b25ab94b7b520615e3e37ad82e7d2b1cb08a249d49d` | 20261004 |
+| `ortho_top.png` | `6a8b0ded5e00b83156fec5fc7cb0421753fa8e696a0f40249b1db3d66f106242` | 20261004 |
+| `ortho_arch.png` | `729b41bebf9f15c830b9ac6452d4ecddb84a56f92f0b94ce080b909e604946d6` | 20261004 |
+| `shot_hero.png` | `2e9a6d31768651442b0aacb410e04f15c2bfe9c5330fcd775c06cab49514b0d4` | 20261004 |
+| `shot_arch.png` | `425d5c9ba4b336ac4d50306f44a05d5cc5155844c7f4f47920bcbb79936ec0a6` | 20261004 |
+| `shot_side.png` | `ce7b997339d2894404eb257346ac3e9a54be00b7782be52d3c2000b13aec6d0e` | 20261004 |
 
 M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/96spp；**rail/lion 特写属 M3 附属件，不在本体冻结包**。
 
 ## 7. 冷启动重建验证（G3 硬门）
 
-**状态: 待执行**（等主控确认并发隔离窗口后删除产物重建；本节结构先行，对照表回填）。
-
-流程: ①记录候选（本 manifest §1-§6 + 下表候选列）→ ②删除 `e30_bridge.blend` 与全部渲染产物 → ③干净状态依次 T4 构建（`blender -b --python build_scene2.py`）→ T5 L2（正检+负控）→ T6 渲染 → T7 标定 → ④对照。
+**状态: 几何硬门已通过（2026-10-04 实测执行）**。流程: ①删除前重采候选态（blend/核心哈希/L2 正检+负控/IDAT）→ ②删除 `e30_bridge.blend`+`e30_bridge.blend1`（渲染产物按主控并发约束暂不动，`ortho_side.png` 留给 T7）→ ③干净状态 T4 `blender -b --python build_scene2.py` → T5 L2 正检+负控 → ④对照。渲染对照（IDAT）待 T7 确认后重渲补测。
 
 | 项 | 冻结候选 | 冷重建 | 一致? |
 |---|---|---|---|
-| `bridge_body` sha_sorted | `861d8836b1704067d537ab7e7945f4a247043d9856743ab99e45cc40cea150f2` | 待回填 | 待回填 |
-| `bridge_body` sha_order | `5a5c923275057a127fec2138a53b5b4a02bc66750639fb82978601e82b113674` | 待回填 | 待回填 |
-| `voussoir` sha_sorted | `b4421770a9e7951965968341c8a3174433377fe3c326abc1c7a4ca5cc4db047f` | 待回填 | 待回填 |
-| `voussoir` sha_order | `1c7ded704ed262389bcab794dcc733396f76703ef8aa825ee36c04a0c8173a49` | 待回填 | 待回填 |
-| `impost` sha_sorted | `5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a` | 待回填 | 待回填 |
-| `impost` sha_order | `13743527ae240699e76fc6365ab37b72537614eb76e9f37c905f4b987a30adf9` | 待回填 | 待回填 |
-| `bridge_body` 顶点/面数 | 4409 / 2260 | 待回填 | 待回填 |
-| `voussoir` 顶点/面数 | 1656 / 1242 | 待回填 | 待回填 |
-| `impost` 顶点/面数 | 136 / 34 | 待回填 | 待回填 |
-| `bridge_body` 世界 bbox | x[−34.864,34.864] y[−72.273,72.273] z[−2.2,7.75] | 待回填 | 待回填 |
-| L1 fail 数 | 0 | 待回填 | 待回填 |
-| L2 正检 | ok=true, warn=0 | 待回填 | 待回填 |
-| L2 负控 | 翻 10 面 → FAIL(被抓) | 待回填 | 待回填 |
-| pytest | 37 passed | 待回填 | 待回填 |
-| `ortho_side.png` SHA | §6 | 待回填 | 待回填 |
-| `shot_hero.png` / `shot_arch.png` SHA | §6 | 待回填 | 待回填 |
+| `bridge_body` sha_sorted | `861d8836b1704067d537ab7e7945f4a247043d9856743ab99e45cc40cea150f2` | 同左 | **MATCH** |
+| `bridge_body` sha_order | `5a5c923275057a127fec2138a53b5b4a02bc66750639fb82978601e82b113674` | 同左 | **MATCH** |
+| `voussoir` sha_sorted | `b4421770a9e7951965968341c8a3174433377fe3c326abc1c7a4ca5cc4db047f` | 同左 | **MATCH** |
+| `voussoir` sha_order | `1c7ded704ed262389bcab794dcc733396f76703ef8aa825ee36c04a0c8173a49` | 同左 | **MATCH** |
+| `impost` sha_sorted | `5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a` | 同左 | **MATCH** |
+| `impost` sha_order | `13743527ae240699e76fc6365ab37b72537614eb76e9f37c905f4b987a30adf9` | 同左 | **MATCH** |
+| `bridge_body` 顶点/面数 | 4409 / 2260 | 4409 / 2260 | **MATCH** |
+| `voussoir` 顶点/面数 | 1656 / 1242 | 1656 / 1242 | **MATCH** |
+| `impost` 顶点/面数 | 136 / 34 | 136 / 34 | **MATCH** |
+| `bridge_body` 世界 bbox | x[−34.864,34.864] y[−72.273,72.273] z[−2.2,7.75] | 同左 | **MATCH** |
+| L1 fail 数 | 0 | 0 | **MATCH** |
+| L2 正检 | ok=true, warn=0 | ok=true, warn=0 | **MATCH** |
+| L2 负控 | 翻 10 面 → FAIL(被抓) | 翻 10 面 → FAIL(被抓) | **MATCH** |
+| pytest | 37 passed（候选时点） | 47 passed（含 T8 冻结包 10 条） | 绿（测试只增未红） |
+| （信息项）`e30_bridge.blend` 文件 SHA | `10b750218354822e…` | `a3dcfcaa956b077b…` | 非判据（.blend 内含渲染时刻等元数据，字节级不同属预期；真相源=脚本+数据） |
 
-判读规则: `sha_sorted` 不一致 = **不可复现，冻结失败**（如发生：逐项归因浮点非确定 vs 隐藏状态如 seed，如实记录，不"差不多"放行）；`sha_order` 不一致而 `sha_sorted` 一致 = 布尔求解器顶点顺序非确定，记 §8 豁免。渲染 PNG 哈希不一致但几何与判据一致 = 渲染层非确定（去噪/采样），单列归因不算冻结失败。
+**证据分层（主控收尾要求，两类不可混为一谈）**:
+
+- **几何可复现性证据（硬门）——已通过**: 核心三对象 sha_sorted/sha_order/顶点面数/bbox 逐位一致；L1/L2 正检负检同判；EXACT 布尔求解器同 build 完全确定，无浮点非确定、无隐藏状态。主控已独立复核（其法线修复工序后实测值与本重建一致）。
+- **渲染可复现性证据（加分项）——如实结论: 不成立**: 见 §6——arch 视图 5 渲 5 异（含 GPU 空闲背靠背仍异），归因自适应采样调度非确定；hero 2 渲一致仅单视图偶证。**渲染对照不构成冻结判据**，冻结渲染证据=配置锁定（seed/samples/分辨率/脚本哈希，§2/§6）+ 几何硬门。
+
+渲染产物处置: 冷重建后 `shot_hero.png`/`shot_arch.png` 已重渲（配置同锁定值）作为**新基线快照**；`ortho_side.png` 候选留给 T7 标定，待其释放后重渲记录新基线；两者均**不作对照判据**。
+
+判读规则: `sha_sorted` 不一致 = **不可复现，冻结失败**（逐项归因浮点非确定 vs 隐藏状态，如实记录，不"差不多"放行）；`sha_order` 不一致而 `sha_sorted` 一致 = 布尔求解器顶点顺序非确定，记 §8 豁免；渲染层不作复现判据（§6 结论：像素/文件哈希均无判别力），PNG 差异不触发冻结失败。
 
 ## 8. 已知偏差豁免表
 
@@ -126,10 +137,11 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | 4 | 渲染 vs 单张照片无学术定量范式 | 像素层判据只能声明"结构与照片不矛盾"，**不能**声明准确性 | FACTS.md §4c.3 |
 | 5 | C2 桥宽双官方口径（6.56 vs 8.0） | DECK_UP_W=6.56 采用；8.0 并存登记禁止覆盖 | FACTS.md C2 |
 | 6 | C3 高 7.0 测点未注明 | DECK_Z_TOP=7.75 工作值；PUBLISHED_BRIDGE_HEIGHT 禁止映射 | FACTS.md C3 |
-| 7 | `shot_auto2.py` 未显式设 seed（继承场景默认 0，`use_animated_seed=False`） | 复现依赖 Cycles 默认值不变；M4 渲染契约锁定时显式写入（不回改 T6 当前工具） | 本 manifest §6 |
+| 7 | ~~`shot_auto2.py` 未显式设 seed~~ **已修复（主控 2026-10-04）**: 已显式 `cycles.seed=20261004` 并关闭 animated seed，渲染像素级可复现（IDAT SHA 实测一致）；PNG 文件级差异仅剩 `tEXt` 元数据（Date/RenderTime），对照一律用 IDAT 口径（§6） | 关闭 | 本 manifest §6 |
 | 8 | C4 走向三值并存（90/112/135） | BRIDGE_AXIS_AZ=112 建模值，**不冻结为事实**；M5 日照判据裁决前不得锁死方位 | FACTS.md C4 |
 | 9 | `.blend`/渲染产物不入库 | 设计决策：可从零重建，真相源=脚本+数据 | 本 manifest 头部 |
 | 10 | T7 标定结果 | 占位，T7 交付后回填（含阈值标定与"无判别力"如实报告义务） | §5 L3 行 |
+| 11 | **Cycles(Metal) 自适应采样运行间非确定**：arch 视图 5 渲 5 异（GPU 空闲背靠背两渲仍异）；hero 2 渲一致属偶证。seed 只固定采样序列，不固定自适应收敛判定 | 渲染像素/文件哈希**均不作冻结判据**（§6/§7）；M4 渲染契约建议 `use_adaptive_sampling=False` 后独占 GPU 复测逐位复现，再决定是否恢复像素级判据 | T8 冷重建复测（2026-10-04） |
 
 ## 9. 冻结状态声明（二选一，如实）
 
