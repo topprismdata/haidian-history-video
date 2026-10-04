@@ -48,6 +48,7 @@ COMPOSITION_OVERRIDES = {
     "guajiatun": "GuajiatunCourse",
     "dajuesi": "DajuesiCourse",
     "wutasi": "WutasiCourse",
+    "shifangpujue": "ShifangpujueCourse",
 }
 
 

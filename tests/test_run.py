@@ -56,6 +56,7 @@ def test_composition_overrides_covers_all_registered_episodes():
             "changchunyuan", "wanshou", "changhe", "fenshi", "liulangzhuang",
             "cishousi", "shaoyuan", "weigongcun", "taizhouwu", "guajiatun",
             "dajuesi", "wutasi",
+            "shifangpujue",
         ), "%s 的映射是 capitalize() 拼的，需人工确认" % ep
 
 

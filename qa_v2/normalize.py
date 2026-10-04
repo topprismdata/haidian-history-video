@@ -29,18 +29,62 @@ _REIGN_NAMES = (
     "大定|承安|泰和|贞祐|至元|乾亨|太平兴国"
 )
 _REIGN_YEAR_RE = re.compile(rf"(?:{_REIGN_NAMES})[零〇一二两三四五六七八九十]+年")
-_PARALLEL_REIGN_YEAR = re.compile(r"(?<=[·、，,和与至到\s])([零〇一二两三四五六七八九十]{1,2}年)")
+# 🔴 E26 修复：简写年号（如「· 成化九年」）不得吞掉**时长**表述。
+# 「不到四十年」「近三十年」「四十余年」里的「四十年」是时长不是年号，
+# 旧正则会把「四十年」整段删掉，导致屏显侧的 40 在口播侧查无此数 ——
+# 症状是 L4-c 报「屏显纪年 [40] 未在当页口播念出」，而口播明明念了「不到四十年」。
+# 判据：年号数字后若紧跟时长量词（余/多/几/上下/整），或数字出现在
+# 「不到/近/约/逾/超过/不足」等时长语境，则**不是**年号。
+_DURATION_CTX_BEFORE = re.compile(
+    r"(?:不到|不足|近|约|逾|超过|将近|不足|接连|前后|前后约|长达|绵延|前后达|累计|共|计|约莫|)"
+    r"[零〇一二两三四五六七八九十百千万两]{0,3}$"
+)
+_DURATION_TAIL = re.compile(r"^[零〇一二两三四五六七八九十]{0,3}(?:余|多|几|上下|整|来|许|余|左右)")
+
+
+def _is_reign_year_not_duration(s: str, start: int, num_end: int) -> bool:
+    """判断 s[start:num_end] 的数字是年号还是时长量。返回 True = 是年号（应剥离）。"""
+    # 「· 五年」「、六年」：中间点/顿号是**并列省略年号**的强信号（E21 起历年的标准写法），
+    # 此时数字必是年号，不受时长语境影响。E26 修复时曾把这两例误判为时长量。
+    # 注意前缀可能含空格（「· 五年」），须取末位**非空白**字符。
+    prefix = s[max(0, start - 3):start].rstrip()
+    # 🔴 逗号不进强信号表：「，不到四十年」里逗号后接的是时长量。
+    if prefix[-1:] in ("·", "・", "、"):
+        return True
+    before = s[max(0, start - 12):start]
+    if _DURATION_CTX_BEFORE.search(before):
+        return False
+    after = s[num_end:num_end + 2]
+    if _DURATION_TAIL.match(after):
+        return False
+    return True
+
+
+_PARALLEL_REIGN_YEAR = re.compile(r"(?<=[·、，,和与至到\s])([零〇一二两三四五六七八九十]{1,2})年")
 
 
 def clean_reign_years(s: str) -> str:
     """剥离帝号年号（如「乾隆四十六年」「嘉庆四年」）及紧随其后的简写年号（如「· 五年」）。
 
     注意：4 位数字的公历年份（如「一七八一年」）绝不是年号，必须保留。
+
+    🔴 E26 修复：简写年号不得吞掉时长量。「不到四十年」「四十余年」里的
+    「四十年」是时长；旧实现整段删除，导致 L4-c 报「屏显 [40] 未在当页口播念出」，
+    而口播确实念了「不到四十年」——这是两侧口径不对称造成的**必假 fail**。
     """
     has_reign = bool(_REIGN_YEAR_RE.search(s))
     s = _REIGN_YEAR_RE.sub("", s)
     if has_reign:
-        s = _PARALLEL_REIGN_YEAR.sub("", s)
+        out = []
+        last = 0
+        for m in _PARALLEL_REIGN_YEAR.finditer(s):
+            # 函数名 _is_reign_year_not_duration：True = 是年号（应剥离）
+            if not _is_reign_year_not_duration(s, m.start(1), m.end(1)):
+                continue  # 判定为时长量（如「不到四十年」），原样保留
+            out.append(s[last:m.start()])
+            last = m.end()
+        out.append(s[last:])
+        s = "".join(out)
     return s
 
 # 通用繁简字对照表：
