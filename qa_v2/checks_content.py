@@ -312,6 +312,9 @@ def check_l4c(ep: Episode, ocr_by_page: Dict[int, OcrResult]) -> List[Finding]:
                 continue
 
             cleaned_text = _clean_slot_text_for_l4c(item.text, spoken)
+            # 🔴 E28：与 L4-a 同口径——国保编号（6-886 等）是标识符不是数量，
+            #    口播不逐位念编号，剥离后再抽（否则逼实现者删编号卡过验收）。
+            cleaned_text = _IDENTIFIER_RE.sub(" ", cleaned_text)
             want = set(extract_numbers(cleaned_text))
             if not want:
                 continue
