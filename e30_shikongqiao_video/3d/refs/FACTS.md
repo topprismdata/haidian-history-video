@@ -119,7 +119,7 @@
 | 文献 | 出处 | 等级 | 对 E30 的价值 |
 |---|---|---|---|
 | **DB11/T 1796-2020《文物建筑三维信息采集技术规程》** | 北京市地方标准，2021-04-01 实施，北京市文物局公告 | ✅ | **北京本地文保强制规程**。阶段划分：技术准备→控制测量→数据采集→数据处理→成果制作→**质量检验**→成果归档。E30 的 M0 研究对应"技术准备+控制测量"，七层判据对应"质量检验" |
-| **The London Charter**（ICOMOS+CIPA，约2008） | london-charter.org，Principle 4 含 **paradata** | ✅ | 六原则：Implementation/Aims and Methods/Research Sources/Documentation/Access/Sustainability。Principle 4 要求记录"评估、分析、推断、解释、创造性决策"即 paradata。**本项目 FACTS.md 的等级标注 + 冲突登记 + 冻结 manifest 即其 paradata 对应物** |
+| **The London Charter** v2.1（2009-02-07，编者 Hugh Denard, King's College London） | `london-charter.org/media/files/london_charter_2_1_en.pdf`（13页全文）；**CIPA（ICOMOS/ISPRS 委员会）框架下起草的非约束性行业宪章**——⚠️**不在 ICOMOS 大会教义文本目录内**（已逐项核对 icomos.org/charters-and-doctrinal-texts/），**切勿写成「ICOMOS 大会通过」**；至今未被 UNESCO/ISO 采纳 | ✅ 已读全文 | **Principle 2.2（逐字）**："A systematic, documented evaluation of the suitability of each method to each aim should be carried out" → **「摄影测量 vs 参数化」必须写成书面评估，这是宪章义务不是可选项**；Denard 导言明言宪章"throws the ball back"不规定谁用什么方法。**Principle 4.4（逐字）**：须向使用者说明"what a computer-based visualisation seeks to represent, for example … an hypothetical reconstruction … and the extent and nature of any factual uncertainty" → **模型必须自标假说身份，是宪章硬要求**。**Principle 4.10 + 术语表 Dependency relationship**：参数化依赖关系（改门高则门框高必改）——**参数化方法论的合法性来源**。**本项目 FACTS.md 的等级标注 + 冲突登记 + 冻结 manifest 即 paradata 对应物**（Principle 4.6） |
 | **Demetrescu & Ferdani 2021**, Appl. Sci. 11:5206 | DOI 10.3390/app11115206 | ✅ 已读全文 | Extended Matrix 五步法：数据采集→管理分析→解释与虚拟重建→表达模型→发布。**核心命题："每个 3D 资产都链接到支撑它的证据，记录可靠性等级与解释缺口"** → 比我们的"来源五级"更进一步，建议升级为 `paradata.py` |
 | **Sommer, Koehl & Grussenmeyer 2024**, ISPRS Archives XLVIII-2/W4-2024:405 | DOI 10.5194/isprs-archives-XLVIII-2-W4-2024-405-2024（CC BY 全文） | ✅ | **与 E30 同构度最高**：Geometry Nodes + Modifiers + Python 做参数化遗产建模。HBIM 缺历史构件库正是 Blender 的机会窗口 |
 | **Sommer, Koehl & Grussenmeyer 2025**, ISPRS Archives XLVIII-M-9-2025:1387（CIPA Symposium 30th） | 同上系列 | ✅ | **MSSIM > 0.95 判据体系**，阈值源自独立观察者实验；真值图用 10k vs 100k spp 的 MSSIM>0.99 自证 |
@@ -137,6 +137,28 @@
 - **Blender 不是本领域的学术主流**（主流是 Rhino+Grasshopper / Revit+Dynamo / FreeCAD）。本项目用 Blender 接近无先例——但 Rhine 城堡系列证明这条路可行。
 - 逐孔净跨等测绘值仍无公开来源（梁雪《颐和园测绘笔记》/孔庆普《中国古桥结构考察》需线下借阅；严雨 2022 论文全文不可得）。**升级路径仅剩线下。**
 
+### 4c.3b Blender 官方技术依据（角度 D，一手原文，2026-10-04 核验；版本 5.2 LTS 与本项目一致）
+
+| 结论 | 官方出处 | 对 E30 的落成纪律 |
+|---|---|---|
+| **float32 不是限制** | `docs.blender.org/manual/en/latest/advanced/limits.html`：±5000 内可靠，"Internally single precision" | 桥长 150m、坐标 ±100 → 单位内精度 ±0.06mm，比照片判据（cm 级）**富余三个数量级**。**唯一真陷阱是直接套用 GIS/UTM 或经纬度绝对坐标**（北京 1e2~1e6 量级会掉到米级）→ 须「导入前减锚点偏移、偏移量存元数据」 |
+| **evaluated vs base mesh** | Python API Depsgraph 页逐字："Its data does not have any modifiers applied… access to vertices or faces after modifier stack happens via fields of object_eval" | **T5 已据此修复**：`obj.data` 永远不含修改器，任何量取/导出/比对必须先 `evaluated_get(depsgraph)`。属性页同源警告：Attribute Conversion 只作用于 original，**参数化生成的属性在 Apply 前不等于最终属性** |
+| **属性与可复现** | Cycles Sampling 页 Sample Subset + Offset/Length + `merge_images()` 跨机分片 | 冻结交付「同一命令可复现同一张图」有官方路径（须关去噪、Max Samples 设为分片之和） |
+| **`.blend` 无法分支合并** | **Blender Studio 官方博客**（Parborg 2024-10-01）："we only expect linear workflows to work well… **branching and merging branches is not a workflow we are looking for**"；"only feasible to have one person working on a .blend file at a time" | **本项目以 Python/JSON 为真相源、`.blend` 为可从零重建的产物——恰好绕开该边界，应作为方法论正当性论据** |
+| **无 BIM 语义** | 官方 mesh structure 页只有 vert/edge/face，无 solid/B-rep 特征树 | 不能产出合规测绘成果。定位为**复原与传播工具**，与测量成果分离 |
+
+**Blender 的四条硬边界（可写进方法论的不适用清单）**：①无 BIM/构件语义 ②`.blend` 无法分支合并协作 ③无原生几何约束求解器（改尺寸常需逐点手改，CAD Sketcher 类插件只是覆盖层）④不产生测量合同效力成果。**凡"要施工图/要制造/要法律效力测量"一律不用 Blender。**
+
+### 4c.3c 选型论证（伦敦宪章 2.2 框架下，本项目的书面评估）
+
+**为什么选「参数化+正交出图比对」而非「实拍扫描比对」**——这不是"国外指南说该怎么做"，而是按宪章 2.2 义务做出的书面评估：
+
+摄影测量对以下五类场景**结构性失效**：①无纹理规则平面（SfM 找不到特征点）②强镜面/透明材质（鬼影几何）③深凹遮挡区（券洞、栏杆之间→蛛网化）④**需要"理想化"而非"实测"的表达** ⑤动态环境（水面/植被/游客）。
+
+> **第 ④ 条对本项目最致命也最重要**：我们判据要比对的恰恰是**对称性、模数性、拱券圆弧规则度**——这些正是摄影测量**最不可靠**（平面微起伏）、而参数化重建**最可控**的量。
+
+**可抄的定量比对协议**（Paul Bourke, CloudCompare 工作流, 2015-01，已读全文）：采样 100–200 万点 → 把纹理颜色传给点 → **人工对应点对齐（≥4 点且三轴都要有深度分布，顺序须一致）** → C2M 距离 → **用已知距离标定到真实单位**。原文强调若对应点近共线或共面*"relatively poor alignment can result"*。**这是论文之外的成熟实践范式，恰好补上「照片比对无学术范式」的空白。**
+
 ### 4c.4 ❌ 存疑不得引用（主控 2026-10-04 独立核验）
 
 用户提供的材料中，下述条目**核验发现与原始文献不符，已判定为不可采信**：
@@ -144,6 +166,12 @@
 | 材料主张 | 核验结果 |
 |---|---|
 | "Oostwegel et al. 2022 = 斯洛文尼亚 Mrak 农舍 + Blender + 摄影测量/大地测量点云 + 故意向 IFC 放 9 个错误再测检查器，9 个全被发现" | **该 DOI 论文（Heritage Science 10:10, 10.1186/s40494-021-00640-y）只讨论 OpenBIM 数据交换与专门的 IDM（information delivery model），不涉及 Mrak 建筑、不涉及 Blender、不涉及上述实验。** 标题/作者/DOI 真实，但**案例内容系伪造**。材料把"9 个错误全被发现"当作负控制实践的先例引用——该实验不存在。**不得引用。** |
+
+**搜索引擎 AI 摘要本轮新产出两处不可信内容（角度 D 实测后剔除）**：
+- 称 Open Heritage 3D 的常见处理工具"包括 Agisoft、RealityCapture、**Blender**"——读其 FAQ 全文，**通篇未提 Blender**（该站只列 5 类数据采集类型）
+- 称 "Meshroom 是 Meshroom CGI 建筑事务所"——完全无关的同名噪音
+
+另：**「Blender 支持 20 亿面」未经当前官方文档证实**，仅见 2008 年社区帖转述 2.32 release notes；官方 Working Limits 页只列空间/时间/字符串三类限制。**本项目量级不依赖此数字，但不得当官方上限引用。**
 
 **该材料中经核验成立的部分**已分别收入 4c.1/4c.2（DB11/T 1796-2020、London Charter、Demetrescu 五步法、Sommer 2024、León-Robles 2019）。**教训**：所有外部材料必须逐条回原文核验——"标题作者 DOI 全对 + 案例细节虚构"是本项目遇到的第一次，成本低（4 次检索）但若未核验即入库，会把虚构证据写进 paradata。
 
