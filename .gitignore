@@ -70,6 +70,9 @@
 # SEND_LOG.md / DELIVERY.md
 !*_video/
 !*/research.md
+!yihheyuan_video/
+!yihheyuan_video/research/
+!yihheyuan_video/research/*.md
 !*/design.md
 !*/slotcheck.py
 !*/make_prompts.js
