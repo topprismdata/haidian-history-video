@@ -60,7 +60,9 @@ def check_body(f):
     # 口径注意: 本判据按 15 内墩计数(派发口径, -2.50m 即按此计);
     # derive 的 PIER_X 布局为 16 内墩(2 台+16 墩=18 支承)。两种口径的取舍归 T2b,
     # 本层禁止改计数或调阈值让 fail 变绿。
-    total = sum(d.SPANS) + 15 * f.PIER_W + 2 * f.BRIDGE_ABUT
+    # 2026-10-04 修正: 17 孔之间是 16 个墩, 原式误按 15 墩导致 -2.50m 假闭合差。
+    # 改用 (N_SPAN-1), 使判据随 facts 变化而非硬编码墩数。
+    total = sum(d.SPANS) + (f.N_SPAN - 1) * f.PIER_W + 2 * f.BRIDGE_ABUT
     if abs(total - f.BRIDGE_LEN) > 0.5:
         add("fail", "MET_CLOSURE", "几何闭合差 %.2fm: 跨和+墩+台=%.1f != 桥长%.1f (2026-10-04 实测 -2.50m: 桥台1.35偏小, 闭合推导应为2.60m, M0须归因)" % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
     # ── MET 券族: 圆拟合残差(G2: f/l 只是必要条件) ──

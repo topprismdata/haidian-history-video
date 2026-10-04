@@ -39,8 +39,9 @@ def test_baseline_green():
     assert not fails, "基线不应 fail: %s" % fails
 
 
-test_baseline_green = pytest.mark.xfail(
-    strict=True, reason="MET_CLOSURE 暴露 -2.50m 闭合差, T2b 待归因")(test_baseline_green)
+# 2026-10-04: 原先的 strict xfail 已摘除。T3 复核发现 -2.50m 闭合差是计划稿的
+# 算术错误(误按 15 墩); 17 孔之间是 16 墩, 107.3+16×2.5+2×1.35=150.0 精确闭合。
+# xfail 的存在本身就是危险信号: 它让"基线红"变成可接受状态。基线必须真绿。
 
 
 def test_circle_fit_synthetic():
@@ -104,10 +105,9 @@ def test_global_z_shift_within_tolerance_passes():
 
 # ── 特异性(G2 J类: 无关破坏不应触发无关判据) ──
 def test_specificity():
-    # MET_CLOSURE 为已知基线矛盾(T2b 归因中, 见 test_baseline_green 的 xfail),
-    # 此处显式排除它; 其余本体判据对无关字段改动必须全静默。
+    # 闭合差已闭环(16 墩口径), 无需再排除任何判据: 改非本体字段必须全静默。
     r = qa_bridge.check_body(_mutate(PIER_MAIN_W=3.3))   # 改非本体字段
-    fails = {x[1] for x in r if x[0] == "fail"} - {"MET_CLOSURE"}
+    fails = {x[1] for x in r if x[0] == "fail"}
     assert not fails, "无关字段改动不应触发本体判据: %s" % fails
 
 
@@ -185,10 +185,15 @@ def test_imp_dim_break():
 
 
 # ── MET_CLOSURE 真负控: 闭合推导值必须让它变绿(证明不是恒真判据) ──
-def test_met_closure_true_negative():
-    # BRIDGE_ABUT=2.60 = (150−107.3−15×2.5)/2, 即 MET_CLOSURE 文案中的闭合推导值。
-    # 实测: 此时 check_body 零 fail —— 同时预告 T2b 采用该值后基线转绿、
-    # test_baseline_green 的 strict xfail 将 XPASS 报错, 提示摘标记。
-    codes = _fail_codes(BRIDGE_ABUT=2.60)
-    assert not codes, "闭合推导值下应全绿, 实测: %s" % codes
-    assert "MET_CLOSURE" not in _fail_codes(BRIDGE_ABUT=2.60)
+def test_met_closure_baseline_is_exactly_closed():
+    """基线在 16 墩口径下精确闭合到 0.0000m —— MET_CLOSURE 必须恒静默。
+    这条锁住"基线绿"这个事实本身: 若将来有人改 facts 使基线红, 这里立刻报。"""
+    assert not _fail_codes(), "基线应零 fail, 实测: %s" % _fail_codes()
+
+
+def test_met_closure_catches_real_gap():
+    """真负控: 打破闭合必须被抓。基线 150.0 精确闭合, 桥台改 1.35->2.60 会多出 2.5m。"""
+    assert "MET_CLOSURE" in _fail_codes(BRIDGE_ABUT=2.60), \
+        "桥台改 2.60 会造成 +2.5m 闭合差, 判据必须抓到"
+    assert "MET_CLOSURE" in _fail_codes(PIER_W=2.40), \
+        "墩宽改 2.40 会造成 -2.4m 闭合差, 判据必须抓到"
