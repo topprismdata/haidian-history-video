@@ -4,7 +4,7 @@ export interface Beat { name: string; from: number; dur: number }
 
 const FPS = 30;
 
-const PAGE_AUDIO_SEC = [30.24, 39.84, 40.48, 40.65, 35.17, 56.33, 49.28, 37.04];
+const PAGE_AUDIO_SEC = [30.24, 39.84, 37.20, 38.64, 16.96, 35.36, 49.28, 37.04];
 
 export const audioBeats = (pageNo: number): Beat[] =>
   PAGE_AUDIO_SEC[pageNo - 1] === undefined

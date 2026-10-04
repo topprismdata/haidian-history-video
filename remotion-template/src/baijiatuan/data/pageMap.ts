@@ -6,7 +6,7 @@
 
 export const VIDEO = { width: 1920, height: 1080, fps: 30 } as const;
 
-export const PAGE_DURATIONS_SEC = [31.84, 41.44, 42.08, 42.25, 36.77, 57.93, 50.88, 38.64];
+export const PAGE_DURATIONS_SEC = [31.84, 41.44, 38.8, 40.24, 18.56, 36.96, 50.88, 38.64];
 
 export const PAGES: Record<number, { title: string; startSec: number; durationSec: number }> = (() => {
   const pages: Record<number, { title: string; startSec: number; durationSec: number }> = {};

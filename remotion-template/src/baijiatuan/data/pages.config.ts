@@ -14,6 +14,8 @@
 // V-NC09 示意图 caption 限定语逐字（非原刊扫描／非原石拓片／非测绘拓扑…）；
 // V-NC10 存疑清单逐条落位（每条带「存疑」前缀），禁写清单零命中。
 const INK = "#3a3226";
+// 浅红底：亮度高于墨迹阈值，L5 检测器只见深红文字（见 172 行注释）
+const RED_BANNER_TINT = "rgba(168, 69, 44, 0.14)";
 
 export interface TextItem {
   slotId?: string;
@@ -34,7 +36,9 @@ export interface TextItem {
 const GRAY_BACKING = "rgba(107,90,68,0.16)";
 const GRAY_INK = "#5a5044";
 // P5 证据状态横幅：全片唯一红底警示条（规格 §二 Page05）。
-const RED_BANNER = "#8c2f24";
+// 🔴 E27 实测：深红底(#8c2f24)+浅字会让 L5 溢出检测器把整块垫板判成墨迹
+//    （检测器以亮度<130 为墨），四面贴边误报。改为浅红底＋深红字：
+//    警示语义不变，检测器假设（浅底深字）不破。
 
 export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; items: TextItem[] }> = {
   // ── p01 连红学家都要查字典的村名 ──────────────────────────────
@@ -52,7 +56,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       },
       {
         slotId: "p1_note",
-        text: "［据吴恩裕晚年回忆，转引自樊志斌《曹雪芹京西居所、行迹研究及相关问题考辨》，《曹雪芹研究》二零一五年第一期］",
+        text: "［据吴恩裕晚年回忆，转引自樊志斌考证文章］",
         size: 16, color: GRAY_INK, weight: 500, lh: 1.5, backing: GRAY_BACKING, delay: 460,
       },
       { slotId: "p1_tag_foot", kind: "tag", text: "纸上一个音 · 嘴里一个音 · 从名字开始就不简单", backing: true, delay: 560 },
@@ -111,7 +115,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       },
       {
         slotId: "p3_verdict",
-        text: "两个读音并存已逾二百六十年。\n是「滩」雅化成了「疃」，还是「疃」的白读本就是「滩」？\n——未考得，本片不定案。\n存疑：「白」之所指两说（白姓聚居／滩地地形）皆无早期书证。",
+        text: "两个读音长期并存。\n是「滩」雅化成了「疃」，还是「疃」的白读本就是「滩」？\n——未考得，本片不定案。\n存疑：「白」之所指两说（白姓聚居／滩地地形）皆无早期书证。",
         size: 22, color: INK, weight: 800, lh: 1.45, backing: true, delay: 500,
       },
       { slotId: "p3_tag_verdict", kind: "tag", text: "三副面孔 · 并存不定案", backing: true, delay: 620 },
@@ -126,7 +130,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       { slotId: "p4_title", text: "敕建白家疃和硕怡贤亲王祠", size: 38, color: INK, weight: 800, lh: 1.3, backing: true },
       {
         slotId: "p4_names",
-        text: "怡亲王允祥——生前避雍正帝讳称「允祥」；\n雍正八年（一七三零）卒，谥「贤」，配享太庙，\n特旨复名「胤祥」。",
+        text: "怡亲王允祥——生前避雍正帝讳称「允祥」；\n雍正八年卒，谥「贤」，配享太庙，\n特旨复名「胤祥」。",
         size: 24, color: INK, weight: 800, lh: 1.5, backing: true, delay: 120,
       },
       {
@@ -149,6 +153,8 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
     ],
   },
   // ── p05 一桩书证，写着一个村名 ───────────────────────────────
+  // 🔴 delay 单位是帧（SlotPage: at = 8 + min(idx,30)*14 + delay）。p05 旁白重录后
+  // 仅 16.96s，QA 抽帧在音频结束−0.2s ≈ 帧 502——delay 压到 ≤200 帧，最晚入场 ≈ 帧 278。
   5: {
     design: 5,
     bounds: [0, 0, 9999, 9999],
@@ -157,23 +163,23 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       {
         slotId: "p5_quote1",
         text: "敦敏《瓶湖懋斋记盛》：\n「（乾隆二十三年）春間，芹圃曾過舍以告，\n將徙居白家疃，值余赴通州迓過公，未能相遇。」",
-        size: 24, color: INK, weight: 800, lh: 1.45, backing: true, delay: 120,
+        size: 24, color: INK, weight: 800, lh: 1.45, backing: true, delay: 40,
       },
       {
         slotId: "p5_quote2",
         text: "「乃訪其居……其地有小溪阻路，\n隔岸望之，土屋四間……」",
-        size: 24, color: INK, weight: 800, lh: 1.45, backing: true, delay: 260,
+        size: 24, color: INK, weight: 800, lh: 1.45, backing: true, delay: 80,
       },
       {
         slotId: "p5_banner",
-        text: "原件不存 · 今存一九四三年过录本 · 真伪存争",
-        size: 24, color: "#f7efe0", weight: 800, lh: 1.4, backing: RED_BANNER, delay: 380,
+        text: "原件不存 · 今存过录本 · 真伪存争",
+        size: 26, color: "#8c2f24", weight: 800, lh: 1.4, backing: RED_BANNER_TINT, delay: 120,
       },
-      { slotId: "p5_tag", kind: "tag", text: "过录本 · 真伪存争", backing: true, delay: 480 },
+      { slotId: "p5_tag", kind: "tag", text: "过录本 · 真伪存争", backing: true, delay: 160 },
       {
         slotId: "p5_caveat",
-        text: "存疑：据传缘起——乾隆二十二年冬其姨母目盲，雪芹为之医治至春方愈，白氏请以祖茔土地树木筑室。\n存疑：「曹雪芹小道」为二零一三年报道口径的旅游叙事，步道与红枫林现状未核——本片不写「至今开放」。",
-        size: 21, color: GRAY_INK, weight: 600, lh: 1.45, backing: GRAY_BACKING, delay: 580,
+        text: "存疑：据传缘起——乾隆二十二年冬其姨母目盲，雪芹为之医治至春方愈，白氏请以祖茔土地树木筑室。\n存疑：「曹雪芹小道」为媒体报道口径的旅游叙事，步道与红枫林现状未核——本片不写「至今开放」。",
+        size: 21, color: GRAY_INK, weight: 600, lh: 1.45, backing: GRAY_BACKING, delay: 200,
       },
       { slotId: "p5_photo_trail", kind: "photo", text: "小道拓扑（Page05 提供 PhotoSpec）" },
     ],
@@ -186,7 +192,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       { slotId: "p6_title", text: "没有原件的公案", size: 42, color: INK, weight: 800, lh: 1.3, backing: true },
       {
         slotId: "p6_chain",
-        text: "《废艺斋集稿》八卷（署「芹圃曹霑」）→ 一九四三年孔祥泽经日本教员短暂过手抄录 → 原件旋佚，从未公开 → 一九七三年吴恩裕于《文物》撰文公布残文 → 学界两派至今未决",
+        text: "《废艺斋集稿》八卷（署「芹圃曹霑」）→ 一九四三年孔祥泽经日本教员短暂过手抄录 → 原件旋佚，从未公开 → 上世纪七十年代吴恩裕于《文物》撰文公布残文 → 学界两派至今未决",
         size: 24, color: INK, weight: 700, lh: 1.4, backing: true, delay: 120,
       },
       {
@@ -225,12 +231,12 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       },
       {
         slotId: "p7_baijiatuan",
-        text: "一九五五年决定易地重建于白家疃；\n一九五七年正式恢复观测（适逢国际地球物理年），\n台站名「北京地震基准台、地磁台」；\n二零零零年后称北京国家地球观象台。",
+        text: "一九五五年决定易地重建于白家疃；\n一九五七年正式恢复观测（适逢国际地球物理年），\n台站名「北京地震基准台、地磁台」；\n后来更名北京国家地球观象台。",
         size: 23, color: INK, weight: 800, lh: 1.5, backing: true, delay: 260,
       },
       {
         slotId: "p7_miles",
-        text: "我国第一台自主研制的地震仪（一九四三）\n我国第一个地震遥测台网（一九六六）\n我国第一个数字化地震台（一九八六）",
+        text: "我国第一台自主研制的地震仪\n我国第一个地震遥测台网\n我国第一个数字化地震台",
         size: 22, color: INK, weight: 700, lh: 1.5, backing: true, delay: 400,
       },
       {

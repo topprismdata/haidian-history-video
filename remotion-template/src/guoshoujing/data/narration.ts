@@ -1,10 +1,10 @@
-// narration.ts — E28《温泉·「温泉」之前叫「石窝」》配音节拍。实测 2026-10-04。
+// narration.ts — E29《郭守敬·一泉入都》配音节拍。实测 2026-10-04。
 
 export interface Beat { name: string; from: number; dur: number }
 
 const FPS = 30;
 
-const PAGE_AUDIO_SEC = [37.04, 39.68, 38.96, 41.68, 35.14, 36.32, 36.40, 39.84];
+const PAGE_AUDIO_SEC = [33.28, 37.76, 35.12, 36.00, 29.44, 36.96, 37.52, 37.84];
 
 export const audioBeats = (pageNo: number): Beat[] =>
   PAGE_AUDIO_SEC[pageNo - 1] === undefined
