@@ -47,6 +47,11 @@ Nv = Vector((-Bv.y, Bv.x, 0.0))
 print("bbox 尺寸 %.1f x %.1f x %.1f  桥轴向 %.1f 度" % (size.x,size.y,size.z, math.degrees(AX)))
 
 cd = bpy.data.cameras.new("C"); cd.lens = 50
+# 2026-10-05 修天空硬边(主控量化: 逐行亮度 y=173 跳变 7.68): 默认 clip_end=1000m
+# 会把雾盒(z 上限 123, 侧壁 2600m)的出射面截断 —— 出射距离 >1000m 的天空射线
+# 没有体积边界穿越, Cycles 体积栈为空 => 雾效为零, 在仰角 atan(121/1000)≈6.9°
+# 处形成"有雾/无雾"硬边。clip_end 拉到雾盒对角之外, 所有射线完整穿出体积。
+cd.clip_end = 20000.0
 cam = bpy.data.objects.new("C", cd); bpy.context.collection.objects.link(cam)
 sc.camera = cam
 # 先全部选中再 auto frame

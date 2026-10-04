@@ -23,6 +23,7 @@ AXIS = math.radians(112.0)   # 桥轴方位: build_scene2.BRIDGE_AXIS_AZ=112.0(�
 B = Vector((math.cos(-AXIS), math.sin(-AXIS), 0))
 N = Vector((-B.y, B.x, 0))
 cd = bpy.data.cameras.new("Ortho")
+cd.clip_end = 20000.0   # 默认 1000m 会截断雾盒出射面 -> 天空硬边(见 shot_auto2.py 注)
 cd.type = 'ORTHO'
 # 视域宽度按需: 桥 150m + 余量
 cd.ortho_scale = {"side": 165.0, "front": 90.0, "top": 165.0, "arch": 24.0}[which]
