@@ -1136,6 +1136,39 @@ class HaidianCorpusExtractor:
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
+            # 🔴 E27 考订降级（2026-10-04）：本条把三段强度悬殊的断言捆在一条
+            # 里标 VERIFIED，实为过度断言。逐段处置见下三条。
+            # ① 成村叙事：辽金说 / 明洪武屯田说 / 无定向书证 —— 三说并存，无一定案
+            PlaceAttestationEntity(
+                id="attest_baijiatuan_founding",
+                toponym_id="top_baijiatuan",
+                attested_name="白家疃",
+                source_title="海淀区地名志（1992）与现代通行说法",
+                source_author="（转述，非一手）",
+                recorded_year=1992,
+                dynasty="现代",
+                quote="白家疃成村于辽金或更早；一说为明洪武屯田移民聚落（两说并存，无定向书证）",
+                evidence_level=EvidenceLevel.L5_FOLK_LEGEND,
+                # schema 侧 EpistemicStatus 无 UNSUBSTANTIATED；attest 层的等价值是
+                # CONTESTED（诸说并存、无定案）。「无据」在 calibration 层才有
+                # UNSUBSTANTIATED 专档（见 calibration/wutasi.py 的用法）。
+                epistemic_status=EpistemicStatus.CONTESTED,
+            ),
+            # ② 怡亲王祠：残碑碑额为 L1 实证，祠名与所在可证
+            PlaceAttestationEntity(
+                id="attest_baijiatuan_yixianqin",
+                toponym_id="top_baijiatuan",
+                attested_name="白家疃",
+                source_title="怡贤亲王祠残碑碑额（实物）",
+                source_author="（一手金石）",
+                recorded_year=1732,
+                dynasty="清雍正十年",
+                quote="怡贤亲王祠残碑（碑额存「怡贤亲王祠」五字，白家疃境内，海淀区文物保护单位）",
+                # L1 金石实物：怡贤亲王祠残碑碑额
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
+                epistemic_status=EpistemicStatus.VERIFIED,
+            ),
+            # ③ 曹雪芹居留：唯一书证为无原件过录本，属学术假说，禁写「定居/终老」
             PlaceAttestationEntity(
                 id="attest_baijiatuan_caoxueqin",
                 toponym_id="top_baijiatuan",
@@ -1144,10 +1177,17 @@ class HaidianCorpusExtractor:
                 source_author="红楼梦研究所",
                 recorded_year=1978,
                 dynasty="现代学术专著",
-                quote="白家疃为明洪武屯田移民聚落，清代怡亲王胤祥有祠邸于此，曹雪芹晚年曾徙居西山白家疃著书行医",
+                quote="曹雪芹乾隆二十三年至二十四年初曾徙居西山白家疃著书行医（居留约一年，非定居）",
                 evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                # 唯一书证为无原件过录本，属学术假说：有文献引述、无第一手档案支持
+                epistemic_status=EpistemicStatus.CONTESTED,
             ),
+            # 🔴 E28 证伪（2026-10-04）：本条为**伪引文**。
+            # 《帝京景物略》**无**「平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所」一语；
+            # 「辽金帝王驻跸沐浴」之说亦无任何一手书证。
+            # 温泉村可证文字史的一手起点是明初显龙山采石题记（洪武二十七年 1394 /
+            # 正统十年 1445）与万历《宛署杂记》（1593，官书正名为「石窝村」）。
+            # 旧实现把伪引文标为 VERIFIED，等于让伪造证据升格为一手著录。
             PlaceAttestationEntity(
                 id="attest_wenquan_dijing",
                 toponym_id="top_wenquan",
@@ -1158,7 +1198,7 @@ class HaidianCorpusExtractor:
                 dynasty="明代",
                 quote="平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                epistemic_status=EpistemicStatus.DISPROVEN,
             ),
             PlaceAttestationEntity(
                 id="attest_qinghe_tianfu",
