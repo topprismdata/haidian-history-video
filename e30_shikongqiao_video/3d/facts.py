@@ -18,16 +18,16 @@ M0(2026-10-04, Task 2): 完成 web 检索回填, RESEARCH_DONE=True。
 RESEARCH_DONE = True
 
 # --- 全局 ---
-BRIDGE_LEN = 150.0        # [官方] 北京青年报(中新网转载2025-12-09): "长150米"; visitbeijing 同值; URL 见 FACTS.md
-N_SPAN = 17               # [官方] 同篇: "17个拱形桥洞"; visitbeijing: "桥由17个桥洞组成"
+BRIDGE_LEN = 150.0        # [官方散文] 北京青年报(中新网转载2025-12-09): "长150米"; visitbeijing 同值; URL 见 FACTS.md
+N_SPAN = 17               # [官方实测] 同篇: "17个拱形桥洞"; visitbeijing: "桥由17个桥洞组成"
 
 # --- 桥面 ---
 DECK_Z_TOP = 7.75         # [工作值] 现脚本值(GPT建议); 官方"高7米"测点/基准面未注明(C3), 禁止映射 PUBLISHED_BRIDGE_HEIGHT
 DECK_Z_END = 5.05         # [工作值] 现脚本值
-DECK_UP_W = 6.56          # [官方] 北京青年报2025-12-09: "桥面上宽6.56米"(公园管理中心口径; 2019原始专题页未检回, 见FACTS.md)
-DECK_DOWN_W = 14.6        # [官方] 北京青年报2025-12-09: "桥面下宽14.6米"
-PUBLISHED_GENERAL_WIDTH = 8.0   # [官方] 公园管理中心2023-12-01: "桥身宽8米"; 与 DECK_UP_W 口径冲突(C2)
-PUBLISHED_BRIDGE_HEIGHT = 7.0   # [官方] 中新网2025-12-09: "高7米"; 官方侧对7米测点表述互异(桥高 vs 桥洞最高点, C3), 禁止映射 DECK_Z_TOP
+DECK_UP_W = 6.56          # [官方散文] 北京青年报2025-12-09: "桥面上宽6.56米"(公园管理中心口径; 2019原始专题页未检回, 见FACTS.md)
+DECK_DOWN_W = 14.6        # [官方散文] 北京青年报2025-12-09: "桥面下宽14.6米"
+PUBLISHED_GENERAL_WIDTH = 8.0   # [官方散文] 公园管理中心2023-12-01: "桥身宽8米"; 与 DECK_UP_W 口径冲突(C2)
+PUBLISHED_BRIDGE_HEIGHT = 7.0   # [官方散文] 中新网2025-12-09: "高7米"; 官方侧对7米测点表述互异(桥高 vs 桥洞最高点, C3), 禁止映射 DECK_Z_TOP
 
 # --- 券洞 ---
 ARCH_RATIO = 0.50         # [图像推导] 近正面原始照目视近正对孔宽高比≈1.00; ESRGAN 版测量已退出计量链, 待测绘升级

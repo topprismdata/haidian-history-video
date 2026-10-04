@@ -14,12 +14,16 @@ from pathlib import Path
 import pytest
 
 _3D_DIR = Path(__file__).resolve().parents[1] / "3d"
+_ROOT = Path(__file__).resolve().parents[2]      # 仓库根(bridge3d 所在)
 sys.path.insert(0, str(_3D_DIR))
+sys.path.insert(0, str(_ROOT))
+
+from bridge3d.schema import ALL_GRADES   # noqa: E402  等级集单一来源, 避免硬编码漂移
 
 facts = importlib.import_module("facts")
 assumptions = importlib.import_module("assumptions")
 
-ALLOWED_LEVELS = {"测绘", "档案", "官方", "图像推导", "工作值", "待核"}
+ALLOWED_LEVELS = set(ALL_GRADES) | {"待核"}   # 2026-10-05: 改为引用 bridge3d 单一来源, 不再硬编码(硬编码会随框架拆级漂移)
 
 
 def _public_constants():
