@@ -33,7 +33,7 @@
 | `3d/render_shot.py` | `957322629203d449aebe660e7912c0c113f3206bb55f120abf2f75b0d9e5a247` | 机位渲染（seed 显式） |
 | `3d/shot_auto2.py` | `1b74f5bafeaf95f9710daf62b0c1a66729db7e4e90a1ba89bc926e3ff7845a8a` | 自动取景渲染（主控 2026-10-04 补 seed 显式化，已提交） |
 | `3d/freeze_hash.py` | `120e8e40be6d0992410809dbf5cd8b8347176f8308a61716884d45e154c4f370` | 核心几何哈希唯一定义点（随冻结包 commit `6d8a838`） |
-| `3d/register_overlay.py` | `ffa10d609d64d9171d74d4d87593c64d7727d9b850f8e46889559b929d2b461e`（T7 在途，标定回填后定版） | T7 L3 配准工具（T8 只引用不运行） |
+| `3d/register_overlay.py` | `2532aaa974057d2ffd0d9fafa6e22ff36697bfa7f03f556906aaab6604694eb4`（T7 `d30502f` 定版） | T7 L3 配准判据（OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02；T8 只引用不运行） |
 
 ## 3. Blender 版本
 
@@ -68,7 +68,7 @@ build platform: Darwin (arm64)  build type: Release
 | WALL_NORMAL 采样带 | \|y\|<7.0；z>SPRINGER+0.02；\|n_y\|<0.5；\|r−a\|≤0.15 | qa_l2.py | T5 实测修订：剔除 26 个洞缘倾斜 n-gon（§8-1）；负控翻"采样带内前 10 面"（R3） |
 | IMPOST_ANCHOR | 0.5 m（xz 平面距离） | qa_l2.py | T5 修订：起拱线石是 x×z 纵剖面陈述，3D 距离版假红 34/34 |
 | VOUSSOIR_IN_VOID | r < a − MESH_TOL | qa_l2.py | 2026-10-04 修订：券石内缘=拱腹，须加径向条件否则全孔误杀 |
-| L3/T7 阈值 | **待回填** | register_overlay.py（T7 交付） | Brumana 2019（精度须与目标挂钩）+ Lague 2013（裸距离阈值须配置信区间）；**若无判别力须如实报告** |
+| L3/T7 阈值 | OVERLAY_IOU_MIN=0.76；VOID_XC_TOL=0.02 | register_overlay.py | 扰动标定（E2 可接受/不可接受分布中点，Brumana 精度-目标挂钩）；复现 `refs/calibrate_iou.py` |
 
 实现参数（非文物事实，不冻结）: NSEG_ARC=40, NSEG_X=240, SEG=40；建模假定: BODY_BOTTOM=−2.20, BRIDGE_ABUT_TARGET=2.00（GPT v4 未裁决提案，仅属性透传）。
 
@@ -140,7 +140,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | 7 | ~~`shot_auto2.py` 未显式设 seed~~ **已修复（主控 2026-10-04）**: 显式 `cycles.seed=20261004` + 关闭 animated seed，固定了**采样序列**；其"渲染像素级可复现"后续被 §8-11 复测证伪（自适应调度非确定），本条只保留**配置锁定**效力 | 关闭（限配置锁定语义） | 本 manifest §6 |
 | 8 | C4 走向三值并存（90/112/135） | BRIDGE_AXIS_AZ=112 建模值，**不冻结为事实**；M5 日照判据裁决前不得锁死方位 | FACTS.md C4 |
 | 9 | `.blend`/渲染产物不入库 | 设计决策：可从零重建，真相源=脚本+数据 | 本 manifest 头部 |
-| 10 | T7 标定结果 | 占位，T7 交付后回填（含阈值标定与"无判别力"如实报告义务） | §5 L3 行 |
+| 10 | ~~T7 标定结果占位~~ **已闭环（T7 `d30502f`）**: OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02 扰动标定回填，基线 0.8070 PASS 余量 0.047；重渲前后基线 4 位小数不变 | 关闭；细目见 §11 | §5 L3 行 / §11 |
 | 11 | **Cycles(Metal) 自适应采样运行间非确定**：arch 视图 5 渲 5 异（GPU 空闲背靠背两渲仍异）；hero 2 渲一致属偶证。seed 只固定采样序列，不固定自适应收敛判定 | 渲染像素/文件哈希**均不作冻结判据**（§6/§7）；M4 渲染契约建议 `use_adaptive_sampling=False` 后独占 GPU 复测逐位复现，再决定是否恢复像素级判据 | T8 冷重建复测（2026-10-04） |
 | 12 | **竖向比例偏高 27%**（长高比模型 13.61 vs 参考 18.76）：根因是出图裁切口径——`BODY_BOTTOM=−2.20` 水下不可见基座计入渲染高（9.95m），参考照片桥带只到水线；**非本体几何错** | 不阻塞 M2.5 冻结（用户"90% 进下一步"）；列 M3 迭代清单；T7 掩膜 IoU 判据应能抓，待其真实图标定跑通后回归 | body_changelog.md M3 首轮迭代 |
 | 13 | 栏杆望柱锯齿起伏：初判为缺陷，**经与原图对照后推翻**——原图即密排小方块纹理 | 非缺陷；仅高度略高且不匀，列 M3 微调清单 | body_changelog.md M3 首轮迭代 |
@@ -176,9 +176,10 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 
 见 spec `docs/superpowers/specs/2026-10-04-e30-bridge-facts-design.md` §9（由冻结 facts 推导，全部为公式与公式值，无新数字）。M3 附属构件（栏板/望柱/狮/异兽/地形）不得反改本冻结本体。
 
-## 11. T7 配准标定（占位）
+## 11. T7 配准标定（已回填，T7 commit `d30502f`）
 
-- 工具: `3d/register_overlay.py`（已交付，T8 只引用不运行；SHA 见 §2，`OVERLAY_IOU_MIN` 依据数值由 T7 Step1.6 标定后回填）
-- 阈值标定: **待 T7 回填**（扰动标定要求 + 无可分性时如实报告义务）
-- 对叠图路径: 待 T7 交付
-- 渲染像素对照（加分项）结论: **无判别力**（§6/§8-11），已从判据中移除；T7 的 IoU 标定不受影响——其基于候选 `ortho_side.png`（22:54 版）实测，我重渲后若几何/判据不变（已证），标定数值仅受渲染噪声级差异影响，T7 自行复核
+- 判据工具: `3d/register_overlay.py`（SHA256 `2532aaa974057d2ffd0d9fafa6e22ff36697bfa7f03f556906aaab6604694eb4`；T8 只引用不运行）
+- 阈值（扰动标定，依据见常量注释块）: **OVERLAY_IOU_MIN = 0.76**（E2 可分: 可接受[0.8046,0.8373] vs 不可接受[0.0030,0.7216] 取中点；基线实测 **0.8070 PASS，余量 0.047**）；**VOID_XC_TOL = 0.02**（券洞表 xc 轴: 可接受 max 0.0000 vs 缺孔信号 min 0.0442 中点）
+- 复现: `3d/refs/calibrate_iou.py`（SEED 20261004，复现命令见文件 docstring）
+- 对叠图: `3d/refs/overlay_M2.png`；T7 报告: `.superpowers/sdd/e30-briefs/task-task-7-report.md`
+- 渲染对照（加分项）结论: **无判别力**（§6/§8-11），已从判据中移除；T7 实测重渲前后 E2 基线 4 位小数不变（0.8070）——渲染噪声与桥轴 112° 修正对判据无影响（已由 T7 写入 FACTS.md §7）
