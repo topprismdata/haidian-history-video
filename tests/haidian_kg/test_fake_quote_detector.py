@@ -68,6 +68,31 @@ DEAD_VERBATIM = [
     # Q-015 结案：1983 年「京密引水渠沿线古水利工程勘察报告」查无此出版物
     "为全国唯一存世之白浮引水工程地面实物遗构",
     "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存",
+    # Q-016 结案：《大清实录·世宗实录》无觉生寺赐名句（一手源是《敕建觉生寺碑》）
+    "乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨",
+    # Q-017 结案：《御制诗三集》无苏州街联句（E12 冻结书证是《啸亭杂录》卷十）
+    "水木依稀姑苏肆，市廛宛转入楼台",
+    # Q-018 结案：安和桥额石「1781 御题+释义」三重伪（E2：转换时间与机制待考）
+    "桥成，改木为石，额曰‘安和桥’，取安和景泰之义",
+    # Q-019 结案：《北平地名通志》查无此书
+    "安河桥在青龙桥东，因水流安恬、桥跨御河，俗名遂改作‘安河桥’",
+    # Q-021 结案：《日下旧闻考》青龙桥「石闸下注通惠河」——卷次错(实为卷100)
+    # + 水文方向错（青龙桥闸是昆明湖溢洪尾闾，汛期北泄清河，与通惠河不同系）
+    "青龙桥在玉泉山之阴，跨长河水，石闸下注通惠河，水陆要冲，商旅云集",
+    # Q-022 结案：《清高宗御制文二集》一亩园「仿先农坛躬耕籍田」伪
+    # （E5 红线：❌一亩园≠亲耕耤田，真正的耤田礼在先农坛）
+    "圆明园前置一亩园，仿先农坛躬耕籍田之礼，以示重本抑末",
+    # Q-023 结案：政务院文委 1953「选定中关村为科研基地」批复公文查无此件
+    "政务院批准文委与科学院关于选定海淀中关村为科研基地的方案，近代第一座科学城破土动工",
+    # Q-024 结案：《北京历代太监墓石刻考》系年1900（现代机构出版于清末，纪年自证其伪）
+    "中官村地多太监兆域，内廷诸中官合祀刚炳为神，建祠村东，置义地数百亩",
+    # R7 结案：1913《京西图》只零星出现「中关」，不得写成已标绘「中关村」并取代中官村
+    "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落",
+    # R6 结案：《日下旧闻考》卷99「赐名大有庄」伪（官书在卷100且无赐名情节）
+    "大有庄旧名穷八家，高宗纯皇帝临幸，以其名不协吉卜，赐名大有庄",
+    # R2 结案：外火器营「营房四千（余）间」查无实据（E10 冻结：只报分项，不给总数）
+    "建满蒙八旗营房四千余间",
+    "建满蒙八旗营房四千间",
 ]
 
 # 「挂真书名 + 标 VERIFIED」的高危书名 —— 出现时必须人工确认
@@ -86,7 +111,14 @@ class TestNoDeadVerbatimResurrection:
     """已判死的「逐字引文」不得在 corpus 复活。"""
 
     # 判死留档行前缀：显式声明「本条原引…已判死」时，引用原文是**必须的**
-    _QUARANTINE_MARKERS = ("🔴", "已判死", "已结案", "系伪引文", "原引")
+    # 🔴 E26 实测教训：判死留档的表述远不止「原引」一种。本次实测到
+    #    「原写……」「《X》无此句」「字字不符」「降 L4 或删」等写法，
+    #    之前一律误报。这是「判据问错了问题」的第三例。
+    _QUARANTINE_MARKERS = (
+        "🔴", "已判死", "已结案", "系伪引文", "原引",
+        "原写", "无此句", "字字不符", "降 L", "判死",
+        "查无", "伪引文", "非原文", "对不上", "实文",
+    )
 
     def test_dead_quotes_absent_from_corpus(self):
         """已判死的伪引文不得在 corpus 层以**采信身份**复活。
@@ -163,6 +195,77 @@ class TestQuarantineMechanism:
         # 每条至少要有「判死理由」与「核验方式」两类信息
         assert txt.count("理由") >= 3, "隔离条目须写明判死理由"
         assert "核验" in txt, "隔离条目须写明核验方式（查了哪个库/哪一卷）"
+
+
+class TestGateIsNotTautological:
+    """🔴 负控制：证明上面的判据**不是恒真的**。
+
+    一组「全绿」的判据，输出上无法区分三件事：判据对 / 判据恒真 / 判据在测别的东西。
+    本类把 DEAD_VERBATIM 逐条**反向输入**给判据逻辑本身（纯字符串层，不碰真实文件），
+    要求每条都真的被命中；同时要求 DISPROVEN 检测在**干净条目**上不误报。
+
+    纪律来源：`skill://detector-needs-negative-control`。
+    """
+
+    def test_every_dead_entry_is_actually_reachable(self):
+        """每条 DEAD_VERBATIM 至少含一个非空白字符，且互不重复。
+
+        空串会让 `q in line` **恒真** → 判据对任何 corpus 行都「命中」，
+        反而在豁免逻辑下变成永不报错的空转；重复条目会让计数虚高。
+        """
+        for q in DEAD_VERBATIM:
+            assert isinstance(q, str), "DEAD_VERBATIM 必须全是字符串"
+            assert q.strip(), "🔴 DEAD_VERBATIM 混入空串：`%s in line` 恒真，判据空转" % q
+        assert len(set(DEAD_VERBATIM)) == len(DEAD_VERBATIM), (
+            "DEAD_VERBATIM 有重复项，会让计数虚高、掩盖真实条目"
+        )
+
+    def test_detector_fires_when_dead_quote_resurrects(self):
+        """负控制正向：构造「伪引文以采信身份复活」的场景，判据必须报出。
+
+        🔴 这不是假设性检查——Q-001（廉希宪传）在 calibration 层已判死、
+        corpus 层却仍 VERIFIED 的历史，正是本判据要抓的对象。
+        """
+        marker = "中统元年赴开平，三月五日发燕京"  # 无判死标记的上下文行
+        resurrected = marker + "\n" + "引昌平县白浮村神山泉，过双塔、白家圈，出石佛村"
+        markers = TestNoDeadVerbatimResurrection._QUARANTINE_MARKERS
+        hits = []
+        lines = resurrected.splitlines()
+        for i, line in enumerate(lines):
+            for q in DEAD_VERBATIM:
+                if q not in line:
+                    continue
+                if any(mk in line for mk in markers):
+                    continue
+                ctx = "\n".join(lines[max(0, i - 2):i + 1])
+                if any(mk in ctx for mk in markers):
+                    continue
+                hits.append(q)
+        assert hits, (
+            "🔴 判据恒真：把已判死伪句放回 corpus（且无判死标记）竟然零命中，"
+            "说明 DEAD_VERBATIM 与判据逻辑脱节，闸门形同虚设"
+        )
+
+    def test_disproven_detector_not_tautological(self):
+        """负控制反向：判死留档行**有**标记时应被豁免——豁免与命中两条路都得会走。
+
+        「挪不动 ≠ 恒真」：若豁免路径恒不触发，本判据就退化成
+        「伪引文一律不得出现」，那会逼后人删证文，违反「证伪不等于删证」。
+        """
+        markers = TestNoDeadVerbatimResurrection._QUARANTINE_MARKERS
+        line = "🔴 本条原引《宛署杂记》「海甸在城西二十里，平地泉涌，积水如淀」系伪造"
+        exempted = any(mk in line for mk in markers)
+        assert exempted, (
+            "🔴 判死留档行未被豁免 —— 判据退化为「伪引文一律不得出现」，"
+            "会逼后人删除证伪所需的原文（证伪不等于删证）"
+        )
+        # 反向：同样一句话去掉标记后必须被命中，否则豁免标记成了万能免死金牌
+        bare = line.replace("🔴", "").replace("原引", "").replace("系伪造", "")
+        bare_hits = [q for q in DEAD_VERBATIM if q in bare]
+        assert bare_hits, (
+            "🔴 去掉判死标记后判据仍不命中 —— 豁免标记形同万能免死金牌，"
+            "任何人只要打一个标记就能让伪引文复活"
+        )
 
 
 class TestVerbatimQuotesAreNotSelfAuthored:

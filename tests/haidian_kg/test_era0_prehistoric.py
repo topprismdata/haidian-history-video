@@ -23,10 +23,15 @@ def test_era0_prehistoric_sites_and_c14_attestations():
     assert "attest_shandingdong_needle" in atts, "缺失山顶洞人骨针硬证据"
     assert "attest_yiguangsi_axe" in atts, "缺失海淀遗光寺出土磨制石斧证据"
 
+    # 🔴 2026-10-04 订正：旧断言要求遗光寺条目为 `L1_ARCHAEOLOGICAL + VERIFIED` ——
+    # **把一条查无著录的采集点记录保护成「海淀最早考古硬证据」**。外部检索无任何
+    # 「遗光寺出土新石器石器」著录，所挂《北京海淀区出土文物志》书名未获核实，
+    # 且「现藏两馆」无出处。详见 QUARANTINE.md Q-008。
     axe_att = atts["attest_yiguangsi_axe"]
-    assert axe_att.evidence_level == EvidenceLevel.L1_ARCHAEOLOGICAL
-    assert axe_att.epistemic_status == EpistemicStatus.VERIFIED
-    assert "四季青" in axe_att.quote or "遗光寺" in axe_att.quote
+    assert axe_att.epistemic_status == EpistemicStatus.UNSUBSTANTIATED, (
+        "遗光寺采集点查无著录，须为 UNSUBSTANTIATED")
+    assert axe_att.evidence_level != EvidenceLevel.L1_ARCHAEOLOGICAL, (
+        "查无著录的条目不得标 L1 考古硬证据")
 
 
 def test_era0_negative_control_mythology_blocked():

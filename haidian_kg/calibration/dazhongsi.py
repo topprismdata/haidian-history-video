@@ -305,9 +305,15 @@ FACTS: List[TextualFact] = [
     ),
     TextualFact(
         id="tf_dzs_1996", division_id="div_dzs_yange",
-        verbatim_quote="1996年12月27日，国务院公布觉生寺为第四批全国重点文物保护单位，"
+        # 【R12 回灌 2026-10-04】公布日期订正为 **1996-11-20**（国发〔1996〕47号
+        # 《国务院关于公布第四批全国重点文物保护单位的通知》落款「一九九六年十一月二十日」，
+        # 维基文库原件已核）。原写「1996年12月27日」无出处。批次第四批、编号 4-166 均正确。
+        # 按 banners.py 团城演武厅的既有范式「两说并存取国务院文件口径」处理。
+        verbatim_quote="1996年11月20日，国务院公布觉生寺为第四批全国重点文物保护单位，"
                        "编号4-166。",
         attested_string="全国重点文物保护单位",
+        translator_note="公布日期取国发〔1996〕47号落款日期（一九九六年十一月二十日，维基文库"
+                        "原件已核）。旧档「1996年12月27日」查无出处，已撤；批次与编号不变。",
     ),
     TextualFact(
         id="tf_dzs_metro", division_id="div_dzs_yange",
@@ -432,7 +438,7 @@ STATES: List[HistoricalFeatureState] = [
         id="st_js_1996", entity_id="ent_jueshengsi",
         time_span=_ts(1996, 2026, "ts_dzs_h"),
         geometry="中轴线稍向西倾斜（存误差）；北三环西路甲31号",
-        function="第四批全国重点文物保护单位（1996-12-27，编号4-166）；"
+        function="第四批全国重点文物保护单位（1996-11-20 国发〔1996〕47号，编号4-166）；"
                  "13号线大钟寺站站名沿用俗称",
         evidence_fact_ids=["tf_dzs_1996", "tf_dzs_metro"],
     ),

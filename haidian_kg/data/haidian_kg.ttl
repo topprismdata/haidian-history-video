@@ -104,13 +104,13 @@ hd:feat_chexiangqu_canal a hhto:PhysicalFeature,
         hhto:Watercourse ;
     rdfs:label "曹魏车箱渠水利引水古道"@zh ;
     hhto:coordinatesWGS84 "116.3,39.92"^^xsd:string ;
-    rdfs:comment "公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷"@zh .
+    rdfs:comment "公元250年魏刘靖于石景山筑戾陵堰引水，开车箱渠；渠身横穿海淀南部（八里庄、翠微路一带，属渠路考订推断，非碑文所载），据《水经注》卷十四「水流乘車箱渠，自薊西北逕昌平，東盡漁陽潞縣」；灌溉规模以实文为准（岁灌二千顷，后改定田五千九百三十顷）"@zh .
 
 hd:feat_diaoyutai_lake a hhto:PhysicalFeature,
         hhto:Wetland ;
-    rdfs:label "金代钓鱼台行宫蓄水湖遗迹"@zh ;
+    rdfs:label "钓鱼台泉池旧迹（明人记为金主游幸处）"@zh ;
     hhto:coordinatesWGS84 "116.33,39.91"^^xsd:string ;
-    rdfs:comment "金章宗筑台垂钓积水成池之行宫园林湖泽，引玉泉山水蓄为东湖"@zh .
+    rdfs:comment "明人记金代此处有泉有池有台（「金王鬱釣魚臺」「金主逰幸處」），元时称玉渊潭、为丁氏园池。今址为后世园林与御碑，金代水面范围与水源构成均未考。"@zh .
 
 hd:feat_donghulin_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
@@ -126,9 +126,9 @@ hd:feat_guangyuanzha_site a hhto:HydraulicFacility,
 
 hd:feat_linshuogong_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
-    rdfs:label "隋幽州临朔宫行宫遗址"@zh ;
-    hhto:coordinatesWGS84 "116.36,39.92"^^xsd:string ;
-    rdfs:comment "隋大业七年隋炀帝大举北征高句丽于蓟城北郊所建大本营与储粮军事行宫"@zh .
+    rdfs:label "隋幽州临朔宫（遗址未定位）"@zh ;
+    hhto:coordinatesWGS84 "0.0,0.0"^^xsd:string ;
+    rdfs:comment "隋大业七年（611）四月炀帝「至涿郡之臨朔宮」（《隋书·炀帝纪》实文）。**宫址至今无考古定位，本库不赋坐标**；「控扼军都关道」「海淀平原为西北拱卫与军马牧草供应区」为现代推测，无一手书证。"@zh .
 
 hd:feat_longbeicun_weir a hhto:HydraulicFacility,
         hhto:PhysicalFeature ;
@@ -148,17 +148,23 @@ hd:feat_shangzhai_site a hhto:PhysicalFeature,
     hhto:coordinatesWGS84 "117.15,40.17"^^xsd:string ;
     rdfs:comment "距今约7500至6000年北京最早定居农业陶器与石磨盘聚落"@zh .
 
+hd:feat_taizhouwu_dock a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "太舟坞古泊船凹岸台地"@zh ;
+    hhto:coordinatesWGS84 "116.18,40.04"^^xsd:string ;
+    rdfs:comment "西山山麓山前坡水地带，元代白浮引水河道附近之船坞台地"@zh .
+
 hd:feat_wangfujing_paleo a hhto:PhysicalFeature,
-        hhto:Wetland ;
+        hhto:TerrainElevation ;
     rdfs:label "王府井东方广场旧石器晚期古营地"@zh ;
     hhto:coordinatesWGS84 "116.41,39.91"^^xsd:string ;
     rdfs:comment "距今约2.5万年北京平原中心古人类季节性狩猎火塘营地"@zh .
 
 hd:feat_yiguangsi_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
-    rdfs:label "海淀四季青遗光寺新石器遗址"@zh ;
+    rdfs:label "海淀四季青遗光寺新石器石器采集地（存疑）"@zh ;
     hhto:coordinatesWGS84 "116.26,39.95"^^xsd:string ;
-    rdfs:comment "海淀本土新石器时代晚期磨制石斧出土台地，距今约4000年定居农耕遗存"@zh .
+    rdfs:comment "遗光寺村西山山前台地（疑有新石器时代石器采集点，查无著录，存疑待考）"@zh .
 
 hd:feat_yuquanshan a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
@@ -236,6 +242,12 @@ hd:top_longbeicun a hhto:Toponym ;
     hhto:phoneticPinyin "lóng bèi cūn"^^xsd:string ;
     hhto:standardForm "龙背村"^^xsd:string .
 
+hd:top_shangzhai a hhto:Toponym ;
+    rdfs:label "上宅"@zh ;
+    hhto:attestedIn hd:attest_shangzhai_agriculture ;
+    hhto:phoneticPinyin "shàng zhái"^^xsd:string ;
+    hhto:standardForm "上宅"^^xsd:string .
+
 hd:top_taizhouwu a hhto:Toponym ;
     rdfs:label "太舟坞"@zh ;
     hhto:attestedIn hd:attest_taizhouwu_dock_study ;
@@ -244,6 +256,12 @@ hd:top_taizhouwu a hhto:Toponym ;
         hd:hypo_taizhouwu_tang ;
     hhto:phoneticPinyin "tài zhōu wù"^^xsd:string ;
     hhto:standardForm "太舟坞"^^xsd:string .
+
+hd:top_wangfujing a hhto:Toponym ;
+    rdfs:label "王府井"@zh ;
+    hhto:attestedIn hd:attest_wangfujing_camp ;
+    hhto:phoneticPinyin "wáng fǔ jǐng"^^xsd:string ;
+    hhto:standardForm "王府井"^^xsd:string .
 
 hd:top_wanshoushan hhto:attestedIn hd:attest_wanshoushan_rixia .
 
@@ -285,8 +303,6 @@ hd:top_zhongguantun a hhto:Toponym ;
 hd:top_zhoukoudian a hhto:Toponym ;
     rdfs:label "周口店"@zh ;
     hhto:attestedIn hd:attest_shandingdong_needle,
-        hd:attest_shangzhai_agriculture,
-        hd:attest_wangfujing_camp,
         hd:attest_zhoukoudian_peking_man ;
     hhto:phoneticPinyin "zhōu kǒu diàn"^^xsd:string ;
     hhto:standardForm "周口店"^^xsd:string .
@@ -316,12 +332,12 @@ hd:unit_cishousi_temple a hhto:AdministrativeUnit,
 
 hd:unit_daizhou_garrison a hhto:AdministrativeUnit,
         hhto:MilitaryGarrison ;
-    rdfs:label "唐代羁縻带州孤竹县侨置区"@zh ;
-    hhto:locatedAtFeature hd:feat_taizhouwu_dock ;
+    rdfs:label "唐代羁縻带州（寄治昌平县清水店，地望三说并存）"@zh ;
+    hhto:locatedAtFeature hd:feat_gaolianghe ;
     hhto:namedAs hd:top_daizhou_name ;
     hhto:validTimeEnd 755 ;
-    hhto:validTimeStart 705 ;
-    rdfs:comment "唐神龙元年安置东北降户与突厥部众之羁縻州，天宝间寄治昌平县清水店"@zh .
+    hhto:validTimeStart 645 ;
+    rdfs:comment "《旧唐书》卷三十九：贞观十九年（645）于营州界内置，处契丹乙失革部落；万岁通天元年迁青州安置；神龙初放还，隶幽州都督。孤竹县「旧治营州界，州陷契丹后，寄治于昌平县之清水店，为州治」。**清水店今地三说并存（阳坊/太舟坞/清水店），本库未考得定论。**"@zh .
 
 hd:unit_dayouzhuang_village a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -368,7 +384,7 @@ hd:unit_jianruiying_garrison a hhto:AdministrativeUnit,
     rdfs:label "香山健锐营八旗云梯特种部队"@zh ;
     hhto:locatedAtFeature hd:feat_xiangshan ;
     hhto:validTimeStart 1749 ;
-    rdfs:comment "乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼"@zh .
+    rdfs:comment "乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼（官书数：卷102馆臣按『共计六十有七』；逐旗数六十六，两说并存。现存座数无官方测绘档，不列）"@zh .
 
 hd:unit_jicheng_capital a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -450,21 +466,21 @@ hd:unit_qinglongqiao_market a hhto:AdministrativeUnit,
 
 hd:unit_qingshui_court a hhto:AdministrativeUnit,
         hhto:ReligiousSite ;
-    rdfs:label "辽代西山清水院（大觉寺前身）"@zh ;
-    hhto:locatedAtFeature hd:feat_xiangshan ;
+    rdfs:label "辽代旸台山清水院（大觉寺前身）"@zh ;
+    hhto:locatedAtFeature hd:feat_yangtaishan ;
     hhto:namedAs hd:top_dajuesi ;
     hhto:validTimeEnd 1215 ;
-    hhto:validTimeStart 1088 ;
-    rdfs:comment "辽大安四年契丹贵族敕建清水院，后金章宗扩为西山八大行宫水院之一"@zh .
+    hhto:validTimeStart 1068 ;
+    rdfs:comment "辽咸雍四年（1068）碑载：汉人优婆塞南陽鄧公從貴捨錢三十萬葺諸僧舍、又五十萬募印大藏經五百七十九帙；碑言「院之興止于近代」，可证辽代已成院。归入「西山八院」一说出自明人《帝京景物略》追述（数目诸本不一，存疑）。"@zh .
 
 hd:unit_shengshui_court a hhto:AdministrativeUnit,
         hhto:ReligiousSite ;
-    rdfs:label "金章宗西山八大水院之圣水院（香山寺）"@zh ;
+    rdfs:label "圣水院（通行考释作今香山寺，存疑）"@zh ;
     hhto:locatedAtFeature hd:feat_xiangshan ;
     hhto:namedAs hd:top_shengshuiyuan ;
     hhto:validTimeEnd 1215 ;
-    hhto:validTimeStart 1186 ;
-    rdfs:comment "金世宗大安寺、章宗圣水院，为香山最早之皇家敕建行宫水院"@zh .
+    hhto:validTimeStart 1190 ;
+    rdfs:comment "通行考释：香山寺即金代「圣水院」，属明人《帝京景物略》所记金章宗西山院群之一。**该归属为后世考释，本库未考得一手书证；且院群数目诸本不一（原作「六院」亦作「八院」），标存疑。**"@zh .
 
 hd:unit_sifangpujue_temple a hhto:AdministrativeUnit,
         hhto:ReligiousSite ;
@@ -625,8 +641,9 @@ hhto:SpatialExtinctionEvent a owl:Class ;
 
 hd:attest_anhe_republic_record a hhto:PlaceAttestation ;
     rdfs:label "安河桥"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:epistemicNotes "【R11-4 拟托书证】《北平地名通志》**查无此书**（民国北平无此名义出版物，calibration 书目表亦无），引文含解说性断语非原书文句。E2 §1.5 冻结：石额『安和桥』确有旧料，但**近现代通行写『安河桥』，转换时间与机制待考**，不做『和/河通写』的确定性解释。保留原文供审计。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "安河桥在青龙桥东，因水流安恬、桥跨御河，俗名遂改作‘安河桥’"@zh ;
     hhto:recordedYear 1934 ;
     rdfs:comment "断代: 民国二十三年 | 来源: 《北平地名通志》"@zh .
@@ -697,21 +714,14 @@ hd:attest_cishousi_dijing a hhto:PlaceAttestation ;
     hhto:recordedYear 1635 ;
     rdfs:comment "断代: 明崇祯八年 | 来源: 《帝京景物略卷五》"@zh .
 
-hd:attest_daizhou_tang_record a hhto:PlaceAttestation ;
-    rdfs:label "带州"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "带州，神龙元年置，寄治昌平县清水店，领孤竹一县"@zh ;
-    hhto:recordedYear 705 ;
-    rdfs:comment "断代: 唐代（神龙元年） | 来源: 《旧唐书·地理志二》"@zh .
-
 hd:attest_dajuesi_liao_stele a hhto:PlaceAttestation ;
-    rdfs:label "清水院契丹碑"@zh ;
+    rdfs:label "辽咸雍四年《暘臺山清水院創造藏經記》碑（僧志延撰）"@zh ;
+    hhto:epistemicNotes "关键句「**院之興止于近代**」是时序铁证：立碑时（1068）清水院已存在且兴起不远，故「大觉寺始建于金章宗」DISPROVEN（金章宗在位 1189–1208，晚 121 年）。**注意**：1068 是立碑年的**下限**，不是清水院创院纪年。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "大辽大安四年，西山清水院重构佛殿，刻石纪事"@zh ;
-    hhto:recordedYear 1088 ;
-    rdfs:comment "断代: 辽代（大安四年） | 来源: 《大辽大安四年石碑》"@zh .
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "暘臺山者薊壤之名峯清水院者幽都之勝概山之名傳諸前古院之興止于近代將構勝縁旋逢信士今優婆塞南陽鄧公從貴善根生得浄行日嚴咸雍四年三月捨錢三十萬葺諸僧舍又五十萬募同志印大藏經凡五百七十九帙創內外藏而龕措之蕆事既周求為之記聊叙勝因俾信來裔咸雍四年嵗次戊申三月癸酉朔四日丙子记"@zh ;
+    hhto:recordedYear 1068 ;
+    rdfs:comment "断代: 辽道宗咸雍四年（1068） | 来源: 《欽定日下舊聞考卷一百零六所录僧志延《暘臺山清水院創造藏經記》（碑今存大觉寺龙王堂）》"@zh .
 
 hd:attest_dajuesi_stele a hhto:PlaceAttestation ;
     rdfs:label "大觉寺"@zh ;
@@ -739,12 +749,13 @@ hd:attest_dazhongsi_bell_stele a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清代（雍正十一年） | 来源: 《大清实录·世宗实录》"@zh .
 
 hd:attest_diaoyutai_dijing a hhto:PlaceAttestation ;
-    rdfs:label "帝京景物略金章宗钓鱼台记载"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    rdfs:label "帝京景物略卷五·钓鱼台条（金王鬱钓鱼台）"@zh ;
+    hhto:epistemicNotes "「金章宗钓鱼」`UNSUBSTANTIATED`；「明昌元年(1190)」纪年**无书证，撤销**。另一独立书证：《日下旧闻考》卷九十五「原西郊有地名釣魚臺是金主逰幸處」（**卷96 全文「釣魚臺」零命中**，故旧稿卷次亦错）。"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
     hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "钓鱼台在宛平县西十里，章宗钓鱼于此，积水成池，台其后筑也"@zh ;
-    hhto:recordedYear 1190 ;
-    rdfs:comment "断代: 明修记金代事 | 来源: 《帝京景物略卷五》"@zh .
+    hhto:originalQuote "出阜成門南十里，花園村，古花園。其後村，今平疇也。金王鬱釣魚臺，臺其處。鬱前玉淵潭，今池也。有泉湧地出，古今人因之。鬱臺焉，釣焉，釣魚臺以名"@zh ;
+    hhto:recordedYear 1200 ;
+    rdfs:comment "断代: 明万历间成书，记金代旧事（「金主」未指名具体皇帝） | 来源: 《帝京景物略卷五·钓鱼台》"@zh .
 
 hd:attest_donghulin_pottery a hhto:PlaceAttestation ;
     rdfs:label "东胡林人新石器早期墓葬与陶器"@zh ;
@@ -763,12 +774,13 @@ hd:attest_dongsimu_record a hhto:PlaceAttestation ;
     rdfs:comment "断代: 现代志书 | 来源: 《海淀区地名志》"@zh .
 
 hd:attest_gaolianghe_shuijingzhu a hhto:PlaceAttestation ;
-    rdfs:label "高梁水"@zh ;
+    rdfs:label "高梁之水（出薊城西北平地）"@zh ;
+    hhto:epistemicNotes "「泉流東注」四字是「平原泉群、非山洪」判断的**直接书证**。**「积水潭」是后世地名**，用于曹魏叙述须加「今」字限定。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "高梁水出蓟县西北平地，东南流经蓟城北，水色清莹，草木丰茂"@zh ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "㶟水又東南，高梁之水注焉。水出薊城西北平地，泉流東注，逕燕王陵北，又東逕薊城北，又東南流。《魏土地記》曰：薊東十里有高梁之水者也。其水又東南入㶟水"@zh ;
     hhto:recordedYear 527 ;
-    rdfs:comment "断代: 北魏正光至孝昌年间 | 来源: 《水经注卷十三》"@zh .
+    rdfs:comment "断代: 北魏正光至孝昌年间 | 来源: 《水经注卷十三·㶟水（漯水为同音异写）》"@zh .
 
 hd:attest_guajiatun_chenyuan a hhto:PlaceAttestation ;
     rdfs:label "挂甲屯"@zh ;
@@ -806,11 +818,12 @@ hd:attest_hourenzhi_haidian a hhto:PlaceAttestation ;
 
 hd:attest_huoqiying_record a hhto:PlaceAttestation ;
     rdfs:label "外火器营"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场"@zh ;
+    hhto:epistemicNotes "【R2】①『四千（余）间』**查无实据**（E10 冻结）——原引文把《海淀历史地名清单》旧载数字回填成官书原句。**只报分项**：官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座；7196（分项相加）与『四千余间』均不得作官方数字。②卷九十八未核，E16 直核相关卷为**卷73**「外火噐營房在長河西岸藍靛廠後」，故状态 CONTESTED 不作 VERIFIED。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
+    hhto:originalQuote "乾隆三十五年改移外火器营于蓝靛厂，设枪炮演武场"@zh ;
     hhto:recordedYear 1774 ;
-    rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八》"@zh .
+    rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八（卷次待核；E16 直核相关卷为卷73）》"@zh .
 
 hd:attest_jueshengsi_beiwen a hhto:PlaceAttestation ;
     rdfs:label "覺生寺"@zh ;
@@ -826,17 +839,18 @@ hd:attest_ke_lei_bronze a hhto:PlaceAttestation ;
     hhto:epistemicNotes "北京建城史最高规格考古与金文双重互证硬证据"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "盖内铸铭文：周王命太保召公奭长子克‘命克侯于燕’，实证第一代燕侯就封北燕，北京三千年建城信史原点"@zh ;
+    hhto:originalQuote "盖内及口沿内壁铸铭文43字：太保……令克侯于匽……用乍（作）宝尊彝。实证第一代燕侯就封北燕，北京三千年建城信史原点"@zh ;
     hhto:recordedYear -1046 ;
     rdfs:comment "断代: 西周初年（约公元前1046年） | 来源: 《房山琉璃河西周燕都遗址M1193发掘报告》"@zh .
 
 hd:attest_liaoshi_nanjing a hhto:PlaceAttestation ;
-    rdfs:label "辽史会同元年升南京记载"@zh ;
+    rdfs:label "辽史卷四十析津府宛平析津二县建名记载"@zh ;
+    hhto:epistemicNotes "升南京的年代 938 见《金史》卷二十四「中都路，遼會同元年為南京，開泰元年號燕京」；**「幽都→宛平」改名年见《金史》卷二十四「宛平倚。本晉幽都縣，遼開泰元年更今名」**。行政区「长达千年」应自 1012 宛平县得名起算。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "会同元年，太宗升幽州为南京，统宛平、析津二县"@zh ;
-    hhto:recordedYear 938 ;
-    rdfs:comment "断代: 元修记辽代事 | 来源: 《辽史·地理志四》"@zh .
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "析津縣。本晉薊縣，改薊北縣，開泰元年更今名……宛平縣。本晉幽都縣，開泰元年改今名"@zh ;
+    hhto:recordedYear 1012 ;
+    rdfs:comment "断代: 元修记辽代事（辽道宗开泰元年） | 来源: 《辽史·地理志四（卷四十·南京道）》"@zh .
 
 hd:attest_linglongta_yandu a hhto:PlaceAttestation ;
     rdfs:label "玲珑宝塔"@zh ;
@@ -932,18 +946,19 @@ hd:attest_rixia_shucun a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
 
 hd:attest_sanguozhi_liujing a hhto:PlaceAttestation ;
-    rdfs:label "魏刘靖筑戾陵堰车箱渠"@zh ;
+    rdfs:label "魏刘靖修广戾陵渠大堨（《水经注》卷十四引《刘靖碑》）"@zh ;
+    hhto:epistemicNotes "《三国志》本传只记「脩廣戾陵渠大堨，水溉灌薊南北」；工程细节与田亩数出自《水经注》卷十四引碑，两者互补。刘弘重修在**晋元康四年受命、五年刊石**，非泰始元年（265）。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "嘉平二年，刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，灌溉蓟城南北四千余顷"@zh ;
+    hhto:originalQuote "以嘉平二年，立遏於水，導高梁河，造戾陵遏，開車箱渠……灌田歲二千頃……至景元三年辛酉……限田千頃，刻地四千三百一十六頃，出給郡縣，改定田五千九百三十頃。水流乘車箱渠，自薊西北逕昌平，東盡漁陽潞縣……所灌田萬有餘頃"@zh ;
     hhto:recordedYear 250 ;
-    rdfs:comment "断代: 三国曹魏嘉平二年 | 来源: 《三国志·魏书·刘靖传》"@zh .
+    rdfs:comment "断代: 三国曹魏嘉平二年 | 来源: 《水经注卷十四·鮑丘水引《刘靖碑》（魏使持节都督河北道诸军事征北将军刘靖碑）》"@zh .
 
 hd:attest_shandingdong_needle a hhto:PlaceAttestation ;
     rdfs:label "山顶洞人人工骨针与穿孔饰物"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "出土长82毫米磨制穿孔骨针与141件穿孔石珠、海蚶壳随葬饰物，实证缝纫技术与原始埋葬礼仪"@zh ;
+    hhto:originalQuote "出土长82毫米人工穿孔骨针与装饰品共141件（其中穿孔石珠7枚，另有穿孔兽牙125、海蚶壳3、刻沟骨管4、小砾石1、青鱼眼上骨1），实证缝纫技术与原始埋葬礼仪"@zh ;
     hhto:recordedYear -30000 ;
     rdfs:comment "断代: 旧石器时代晚期（距今约3万年） | 来源: 《周口店山顶洞人遗址发掘报告》"@zh .
 
@@ -951,15 +966,16 @@ hd:attest_shangzhai_agriculture a hhto:PlaceAttestation ;
     rdfs:label "上宅文化彩陶与石磨盘"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，确立北京地区首支独立新石器定居农耕考古学文化"@zh ;
+    hhto:originalQuote "出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，为北京地区新石器时代中晚期代表性考古学文化"@zh ;
     hhto:recordedYear -7000 ;
     rdfs:comment "断代: 新石器时代中晚期（距今约7000年） | 来源: 《平谷上宅新石器时代文化遗址发掘简报》"@zh .
 
 hd:attest_shiji_zhou_wuwang a hhto:PlaceAttestation ;
-    rdfs:label "史记武王封燕封蓟记载"@zh ;
+    rdfs:label "史记周本纪武王封燕、追封先王之后记载"@zh ;
+    hhto:epistemicNotes "《史记》/《乐记》对「受封于蓟者」有经典异文（帝尧/黄帝），须分层标注。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟"@zh ;
+    hhto:originalQuote "武王追思先圣王，乃褒封神农之後於焦，黃帝之後於祝，帝堯之後於薊……於是封功臣谋士……封召公奭於燕"@zh ;
     hhto:recordedYear -100 ;
     rdfs:comment "断代: 西汉（记西周初年事） | 来源: 《史记·周本纪》"@zh .
 
@@ -972,10 +988,11 @@ hd:attest_shucun_shishi a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清嘉庆六年 | 来源: 《圆明园史事编年》"@zh .
 
 hd:attest_suishu_linshuogong a hhto:PlaceAttestation ;
-    rdfs:label "隋书炀帝纪置临朔宫记载"@zh ;
+    rdfs:label "隋书炀帝纪大业七年幸涿郡临朔宫记载"@zh ;
+    hhto:epistemicNotes "临朔宫**地望与功能（控扼军都关道、海淀平原为牧草供应区）系现代推测，无考古定位**，不得入书证层（corpus/era3 §1.1 已标 UNSUBSTANTIATED）。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "大业七年春二月乙未，帝自江都驿赴涿郡。幽州置临朔宫，征天下兵集涿郡"@zh ;
+    hhto:originalQuote "（二月）乙亥，上自江都御龍舟入通濟渠，遂幸于涿郡……夏四月庚午，至涿郡之臨朔宮"@zh ;
     hhto:recordedYear 611 ;
     rdfs:comment "断代: 隋大业七年 | 来源: 《隋书·炀帝纪上》"@zh .
 
@@ -998,13 +1015,13 @@ hd:attest_suzhoujie_xiaoting a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清代（乾隆辛巳二十六年） | 来源: 《啸亭杂录卷十·苏州街》"@zh .
 
 hd:attest_tang_jiao_epitaph a hhto:PlaceAttestation ;
-    rdfs:label "唐带州孤竹府焦君墓志铭"@zh ;
-    hhto:epistemicNotes "确证实物：带州寄治昌平清水店而非海淀太舟坞"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店"@zh ;
+    rdfs:label "唐带州孤竹府焦君墓志铭（查无此志，存疑待考）"@zh ;
+    hhto:epistemicNotes "查无此志。恢复条件：给出可核著录（图版/释文/著录书目+页码）。**不得**以伪证坐实太舟坞说。"@zh ;
+    hhto:epistemicStatus "UNSUBSTANTIATED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "（旧稿自撰：君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店）"@zh ;
     hhto:recordedYear 750 ;
-    rdfs:comment "断代: 唐天宝九载 | 来源: 《大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭》"@zh .
+    rdfs:comment "断代: 唐天宝九载（纪年随之存疑） | 来源: 《（旧挂《大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭》，外部查无著录）》"@zh .
 
 hd:attest_wangfujing_camp a hhto:PlaceAttestation ;
     rdfs:label "王府井东方广场旧石器古营地"@zh ;
@@ -1090,29 +1107,31 @@ hd:attest_xierqi_shuntian a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清光绪十一年 | 来源: 《光绪顺天府志·地理志》"@zh .
 
 hd:attest_yiguangsi_axe a hhto:PlaceAttestation ;
-    rdfs:label "海淀四季青遗光寺新石器磨制石斧"@zh ;
-    hhto:epistemicNotes "海淀本土最早物质文化考古信史物证"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛，证实海淀西山山前阶地四千年前已有人类农耕定居活动"@zh ;
+    rdfs:label "海淀四季青遗光寺新石器磨制石斧（查无著录，存疑待考）"@zh ;
+    hhto:epistemicNotes "查无著录。恢复条件：补可核出处（书名+页码，或文物普查档案号/图版著录）。「海淀本土最早物质文化考古信史原点」一说随之撤回——本库最早可信考古层为era1 琉璃河克盉克罍（西周，约前1046）。"@zh ;
+    hhto:epistemicStatus "UNSUBSTANTIATED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "（旧稿自撰：四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛……）"@zh ;
     hhto:recordedYear -4000 ;
-    rdfs:comment "断代: 新石器时代晚期（距今约4000年） | 来源: 《北京海淀区出土文物志》"@zh .
+    rdfs:comment "断代: 新石器时代晚期（距今约4000年——该断代超出材料证明力） | 来源: 《（旧挂「北京海淀区出土文物志」，书名未获核实）》"@zh .
 
 hd:attest_yimuyuan_qianlong a hhto:PlaceAttestation ;
     rdfs:label "一亩园"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:epistemicNotes "【R5 拟托书证】E5 research.md 冻结档全文无此引文，判为伪。❌ 红线：一亩园≠皇帝亲耕耤田/「一亩三分地」——**真正的耤田礼在先农坛**（L1）。「演耕处」仅传说层；L1《八旬万寿盛典》图档见密集建筑区域；功能解释属 L2 现代研究。**建年不锁 1723/1745。** 保留原文供审计。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "圆明园前置一亩园，仿先农坛躬耕籍田之礼，以示重本抑末"@zh ;
     hhto:recordedYear 1745 ;
     rdfs:comment "断代: 清乾隆十年 | 来源: 《清高宗御制文二集》"@zh .
 
 hd:attest_yuquanshan_jinshi a hhto:PlaceAttestation ;
-    rdfs:label "玉泉山芙蓉殿"@zh ;
+    rdfs:label "玉泉山行宫（《金史》宛平县条）"@zh ;
+    hhto:epistemicNotes "**仅「玉泉山行宮」一项为《金史》实书。**「芙蓉殿」及「世宗大定二十六年建、章宗明昌中增葺、引泉注于同乐园洗马沟」**查无书证**（corpus era4 §1.4 已标 UNSUBSTANTIATED），须另考《金史》纪传本纪或《日下旧闻考》，落实前不得回填。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "大兴府宛平县有玉泉山，金世宗、章宗两朝建芙蓉殿及行宫于此，御泉甘冽"@zh ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "宛平倚。本晉幽都縣，遼開泰元年更今名。有玉泉山行宮"@zh ;
     hhto:recordedYear 1344 ;
-    rdfs:comment "断代: 元代修金史 | 来源: 《金史·地理志》"@zh .
+    rdfs:comment "断代: 元代修金史（记金代建置） | 来源: 《金史·地理志上（卷二十四·中都路·大兴府·宛平倚）》"@zh .
 
 hd:attest_zaojunmiao_record a hhto:PlaceAttestation ;
     rdfs:label "皂君庙"@zh ;
@@ -1122,19 +1141,30 @@ hd:attest_zaojunmiao_record a hhto:PlaceAttestation ;
     hhto:recordedYear 1886 ;
     rdfs:comment "断代: 清光绪十二年 | 来源: 《京师坊巷志稿》"@zh .
 
-hd:attest_zgc_1953_decision a hhto:PlaceAttestation ;
-    rdfs:label "中关村科学院园区"@zh ;
+hd:attest_zgc_1951_land a hhto:PlaceAttestation ;
+    rdfs:label "中科院西北郊永久院址"@zh ;
+    hhto:epistemicNotes "【R9①】E13 §二 硬年份表冻结的 1951 年官方院史口径（录式转述，非逐字公文）。1951 年划地后，近代物理所『原子能楼』1951-11 动工、1953 年底竣工、1954-01 启用。⚠️ 与 1953 信笺误植定型、E18 的 1952 院系调整是三件事，不得合并叙述。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "1951年4月经北京市政府同意，在清华大学以南、海淀以东、平绥铁路以西、大泥湾以北地段为中国科学院划拨用地约4500亩，作为科学院永久院址"@zh ;
+    hhto:recordedYear 1951 ;
+    rdfs:comment "断代: 现代新中国 | 来源: 《中国科学院官方院史（中科院院刊纪念文）》"@zh .
+
+hd:attest_zgc_1953_decision a hhto:PlaceAttestation ;
+    rdfs:label "中关村科学院园区"@zh ;
+    hhto:epistemicNotes "【R9① 拟托公文】E13 research.md §硬年份表全档无此件；该批复文件名与文号外部核不出。E13 冻结口径是 **1951 年中科院在北京西北郊征地建科研基地（官方院史）**，1953 年发生的是《中华地理志》编辑部信笺误植『中官屯→中关村』并沿用**定型**（当事人回忆层）。保留原文供审计。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "政务院批准文委与科学院关于选定海淀中关村为科研基地的方案，近代第一座科学城破土动工"@zh ;
     hhto:recordedYear 1953 ;
-    rdfs:comment "断代: 现代新中国 | 来源: 《中国科学院院史资料汇编》"@zh .
+    rdfs:comment "断代: 现代新中国 | 来源: 《政务院文委《关于中国科学院选定海淀中关村为科研基地的方案批复》》"@zh .
 
 hd:attest_zgc_1980_seed a hhto:PlaceAttestation ;
     rdfs:label "中关村第一粒种子"@zh ;
+    hhto:epistemicNotes "【R8/Y7】机构全名补「发展」二字。等级由 L2 降 L4：《科学时报》属报纸报道（二手），非一手档案；E13 冻结该条挂海淀区政府网/经济观察报层级。**等级标签必须与证据源逐条对位**，不得借同块 VERIFIED 搭车。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "1980年10月陈春先创办北京等离子体学会先进技术服务部，开启中关村科技街创业大幕"@zh ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "1980年10月23日陈春先创办北京等离子体学会先进技术发展服务部，开启中关村科技街创业大幕"@zh ;
     hhto:recordedYear 1980 ;
     rdfs:comment "断代: 现代改革开放 | 来源: 《陈春先与北京硅谷破冰史》"@zh .
 
@@ -1156,11 +1186,12 @@ hd:attest_zhenjuesi_shilu a hhto:PlaceAttestation ;
 
 hd:attest_zhongguan_eunuch_stele a hhto:PlaceAttestation ;
     rdfs:label "中官村刚炳祠堂碑"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:epistemicNotes "【R9②】recorded_year=1900 是**审计性保留的错值**：北京石刻博物馆的现代著述被系于清末光绪二十六年，**现代机构不可能出版于清末，纪年自证其伪**——这个不可能的纪年正是判死理由，抹掉就无法复核。著述真实出版年待考。原标 L2（一手官刻金石）亦错：这是现代著述非碑刻本体。碑祠细节（刚炳祠/义地数百亩）**E13 未采**（E13 用『刚秉庙＋侯仁之考证』三角，且不引《宛署杂记》）。保留原文供审计。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "中官村地多太监兆域，内廷诸中官合祀刚炳为神，建祠村东，置义地数百亩"@zh ;
     hhto:recordedYear 1900 ;
-    rdfs:comment "断代: 清末光绪二十六年 | 来源: 《北京历代太监墓石刻考》"@zh .
+    rdfs:comment "断代: 现代著述（原误系清末光绪二十六年——已判死） | 来源: 《北京历代太监墓石刻考》"@zh .
 
 hd:attest_zhongguantun_map a hhto:PlaceAttestation ;
     rdfs:label "中官屯"@zh ;
@@ -1174,17 +1205,15 @@ hd:attest_zhoukoudian_peking_man a hhto:PlaceAttestation ;
     rdfs:label "周口店第一地点北京直立人遗存"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
-    hhto:originalQuote "出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层，确证古人类最早天然用火与石器打制证据"@zh ;
+    hhto:originalQuote "出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层、烧骨烧石，证实北京直立人已具备控制和使用火的能力"@zh ;
     hhto:recordedYear -770000 ;
     rdfs:comment "断代: 旧石器时代初期（距今约77万年） | 来源: 《周口店直立人遗址发掘与定年公报》"@zh .
 
 hd:evt_anhe_imperial a hhto:ImperialNamingEvent,
         hhto:ToponymEvolutionEvent ;
-    rdfs:label "乾隆帝改修石拱桥，御题‘安和桥’石额"@zh ;
-    hhto:recordedYear 1781 ;
+    rdfs:label "【年代与机制待考，勿当定论】石额『安和桥』确有旧料，近现代通行写『安河桥』，但**转换时间与机制无定论**。桥史两套记载并存：系统A（地方文史L3/L4）雍正二年1724始建木桥、乾隆年间改建单孔石拱；系统B（研究论文转引1929年北平市工务局郊区桥梁档案，L1转引暂按L2）『始建于元代以前』、明正统十四年重修、**康熙五十九年1720重建石拱**。『安澜平和』之意属L3地方文史说法。**不锁 1781，不设乾隆御题为触发人。**"@zh ;
     hhto:sourceToponym hd:top_anheqiao_wood ;
-    hhto:targetToponym hd:top_anheqiao_peace ;
-    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+    hhto:targetToponym hd:top_anheqiao_peace .
 
 hd:evt_anhe_river_drift a hhto:PhoneticShiftEvent,
         hhto:ToponymEvolutionEvent ;
@@ -1246,7 +1275,7 @@ hd:evt_haidian_final a hhto:EuphemisticRenamingEvent,
 
 hd:evt_landian_huoqi_shift a hhto:AdministrativeShiftEvent,
         hhto:ToponymEvolutionEvent ;
-    rdfs:label "乾隆三十五年外火器营四千间兵营自城内迁驻蓝靛厂，市镇与兵营空间复合"@zh ;
+    rdfs:label "乾隆三十五年外火器营自城内迁驻蓝靛厂，市镇与兵营空间复合。【R2】营区规模**不给总数**——「四千（余）间」查无实据（E10 冻结）；只报分项：官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座"@zh ;
     hhto:recordedYear 1770 ;
     hhto:sourceToponym hd:top_landianchang_dye ;
     hhto:targetToponym hd:top_huoqiying ;
@@ -1266,11 +1295,9 @@ hd:evt_niulan_to_liulang_willow a hhto:EuphemisticRenamingEvent,
 
 hd:evt_qiongbajia_to_dayouzhuang a hhto:ImperialNamingEvent,
         hhto:ToponymEvolutionEvent ;
-    rdfs:label "乾隆帝巡幸见‘穷八家’村名不吉，取《周易》大有卦‘丰盛富庶’之义御赐改名大有庄"@zh ;
-    hhto:recordedYear 1750 ;
+    rdfs:label "【L3 传说，非史实】地方文史「据载」：乾隆见『穷八家』村名不雅，赐名『大有庄』（取《周易》大有卦丰饶义）。无诏书/御制诗/宫档出处。**另有竞争解释**：人大清史所称村落因圆明园/清漪园/护军营渐富裕后自行更名。官书《日下旧闻考》卷100 只证明乾隆朝已用『大有庄』之名，不证明改名情节。**不锁 1750 年。**"@zh ;
     hhto:sourceToponym hd:top_qiongbajia ;
-    hhto:targetToponym hd:top_dayouzhuang ;
-    hhto:triggeringPerson "清高宗乾隆帝"@zh .
+    hhto:targetToponym hd:top_dayouzhuang .
 
 hd:evt_shucun_garrison_shift a hhto:AdministrativeShiftEvent,
         hhto:ToponymEvolutionEvent ;
@@ -1312,8 +1339,7 @@ hd:evt_zhenjue_wuta_drift a hhto:PhoneticShiftEvent,
 
 hd:evt_zhongguan_euphemism a hhto:EuphemisticRenamingEvent,
         hhto:ToponymEvolutionEvent ;
-    rdfs:label "中官村太监义地因新式学堂进驻，文人与测地局避忌‘中官（宦官）’嫌称，雅化为‘中关村’"@zh ;
-    hhto:recordedYear 1913 ;
+    rdfs:label "「中官（宦官）」为嫌称，改名分两步：①**清末民初测绘图上已零星出现雅化名「中关」**（1913年《京西图》，二万五千分之一）——但1950年代初官方档案与当地习惯写法仍是「中官村／中官邨」，故 1913 **不构成定名**；②**1953年中科院《中华地理志》编辑部迁入**，印制信笺时经办人误将「中官屯」写作「中关村」，各所沿用该通信地址而**定型**（当事人回忆层）。❌ 禁「1913 已取代中官村」；❌ 禁「新式学堂进驻」驱动说（无书证）；❌ 禁「陈垣1930年代独创提议」（流传广但无一手文献，仅『一说』层）。"@zh ;
     hhto:sourceToponym hd:top_zhongguancun_eunuch ;
     hhto:targetToponym hd:top_zhongguancun_modern .
 
@@ -1329,17 +1355,17 @@ hd:feat_liulihe_site a hhto:PhysicalFeature,
     hhto:coordinatesWGS84 "116.03,39.61"^^xsd:string ;
     rdfs:comment "西周早期燕国始封之都城遗址，出土克罍、克盉青铜重器，北京三千年建城信史实证地"@zh .
 
-hd:feat_taizhouwu_dock a hhto:PhysicalFeature,
-        hhto:TerrainElevation ;
-    rdfs:label "太舟坞古泊船凹岸台地"@zh ;
-    hhto:coordinatesWGS84 "116.18,40.04"^^xsd:string ;
-    rdfs:comment "西山山麓山前坡水地带，元代白浮引水河道附近之船坞台地"@zh .
-
 hd:feat_wenquan_spring a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "温泉地热出露带"@zh ;
     hhto:coordinatesWGS84 "116.17,40.03"^^xsd:string ;
     rdfs:comment "西山断裂带地热水出露点，辽金温泉疗养古地"@zh .
+
+hd:feat_yangtaishan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "旸台山（今阳台山）麓北安河一带"@zh ;
+    hhto:coordinatesWGS84 "116.07,40.04"^^xsd:string ;
+    rdfs:comment "辽咸雍四年（1068）《暘臺山清水院創造藏經記》碑所记清水院山名，今海淀北安河大觉寺所在山麓"@zh .
 
 hd:hypo_banquan_yellow_emperor a hhto:CompetingHypothesis ;
     rdfs:label "黄帝炎帝阪泉之战传说（神话传说）"@zh ;
@@ -1362,15 +1388,15 @@ hd:hypo_huangzhuang_emperor a hhto:CompetingHypothesis ;
 
 hd:hypo_taizhouwu_dock a hhto:CompetingHypothesis ;
     rdfs:label "太舟坞源于元代白浮引水河道船坞说"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
     hhto:supportedBy hd:attest_taizhouwu_dock_study ;
-    rdfs:comment "太舟坞地处元代白浮瓮山河漕运停泊带，‘太舟坞’实为大船泊坞之地形实录"@zh .
+    rdfs:comment "太舟坞地处元代白浮瓮山河漕运停泊带，「太舟坞」实为大船泊坞之地形实录（唯一书证查无实书，本库未考得可核出处）"@zh .
 
 hd:hypo_taizhouwu_tang a hhto:CompetingHypothesis ;
     rdfs:label "太舟坞源于唐代羁縻带州音转说"@zh ;
-    hhto:disprovenBy hd:attest_taizhouwu_dock_study ;
     hhto:epistemicStatus "CONTESTED"^^xsd:string ;
-    rdfs:comment "唐神龙元年置羁縻带州，天宝间寄治昌平县清水店，太舟坞即带州之长久音转"@zh .
+    hhto:supportedBy hd:attest_daizhou_tang_record ;
+    rdfs:comment "唐贞观十九年（645）置羁縻带州，州陷契丹后寄治昌平县清水店，太舟坞即带州之长久音转（清水店今地三说并存，本说未证）"@zh .
 
 hd:hypo_xisanqi_manchu a hhto:CompetingHypothesis ;
     rdfs:label "西三旗源自清代满洲八旗驻防说（伪说）"@zh ;
@@ -1614,6 +1640,7 @@ hd:top_zhongdu_daxing a hhto:Toponym ;
 hd:top_zhongguancun_modern a hhto:Toponym ;
     rdfs:label "中关村"@zh ;
     hhto:attestedIn hd:attest_jingxi_map_1913,
+        hd:attest_zgc_1951_land,
         hd:attest_zgc_1953_decision,
         hd:attest_zgc_1980_seed,
         hd:attest_zgc_1988_zone ;
@@ -1623,6 +1650,10 @@ hd:top_zhongguancun_modern a hhto:Toponym ;
     hhto:phoneticPinyin "zhōng guān cūn"^^xsd:string ;
     hhto:standardForm "中关村"^^xsd:string .
 
+hhto:Wetland a owl:Class ;
+    rdfs:label "湖泊沼泽水洼"@zh ;
+    rdfs:subClassOf hhto:PhysicalFeature .
+
 hd:attest_banquan_myth a hhto:PlaceAttestation ;
     rdfs:label "黄帝阪泉之战传说"@zh ;
     hhto:epistemicNotes "远古部落神话传说，未有出土实物信史印证，严格禁止列为确证信史"@zh ;
@@ -1631,6 +1662,15 @@ hd:attest_banquan_myth a hhto:PlaceAttestation ;
     hhto:originalQuote "轩辕乃修德振兵……与炎帝战于阪泉之野，三战然后得其志"@zh ;
     hhto:recordedYear -100 ;
     rdfs:comment "断代: 西汉（追述远古神话） | 来源: 《史记·五帝本纪》"@zh .
+
+hd:attest_daizhou_tang_record a hhto:PlaceAttestation ;
+    rdfs:label "带州（贞观十九年置，州陷契丹后寄治昌平清水店）"@zh ;
+    hhto:epistemicNotes "本条是带州寄治昌平县清水店的**唯一可核书证**（旧稿用以佐证的焦府君墓志查无此志，见 Q-007）。清水店今地三说并存，本库未考得定论。"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "贞观十九年，于营州界内置，处契丹乙失革部落，隶营州都督。万岁通天元年，迁于青州安置。神龙初，放还，隶幽州都督……孤竹：旧治营州界。州陷契丹后，寄治于昌平县之清水店，为州治"@zh ;
+    hhto:recordedYear 645 ;
+    rdfs:comment "断代: 唐代（贞观十九年置；神龙初放还改隶） | 来源: 《旧唐书·地理志二（卷三十九）带州条》"@zh .
 
 hd:attest_gaoliangqiao_979_myth a hhto:PlaceAttestation ;
     rdfs:label "宋太宗中箭之高梁桥说"@zh ;
@@ -1674,6 +1714,15 @@ hd:attest_shuntian_xisanqi a hhto:PlaceAttestation ;
     hhto:originalQuote "宛平北乡有西三旗、西二旗，相传明代卫所小旗分屯之地"@zh ;
     hhto:recordedYear 1885 ;
     rdfs:comment "断代: 清代（光绪十一年） | 来源: 《光绪顺天府志·地理志》"@zh .
+
+hd:attest_taizhouwu_dock_study a hhto:PlaceAttestation ;
+    rdfs:label "太舟坞地名源流考（所挂文献查无实书）"@zh ;
+    hhto:epistemicNotes "查无实书。**不得**用它 VERIFIED 任何假说，也不得用它 DISPROVE 另一说。"@zh ;
+    hhto:epistemicStatus "UNSUBSTANTIATED"^^xsd:string ;
+    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
+    hhto:originalQuote "（旧稿自撰：太舟坞紧邻元代白浮瓮山河引水线，「坞」字自古专指船坞水港……）"@zh ;
+    hhto:recordedYear 1995 ;
+    rdfs:comment "断代: 现代（年份随书证一并存疑） | 来源: 《（旧挂「北京水利史志研究」，书名未考得）》"@zh .
 
 hd:attest_xisanqi_manchu_myth a hhto:PlaceAttestation ;
     rdfs:label "西三旗源自满洲八旗三旗说"@zh ;
@@ -1786,18 +1835,6 @@ hhto:ModernInstitution a owl:Class ;
     rdfs:label "近现代科研教育机构与高新区"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
 
-hhto:Wetland a owl:Class ;
-    rdfs:label "湖泊沼泽水洼"@zh ;
-    rdfs:subClassOf hhto:PhysicalFeature .
-
-hd:attest_taizhouwu_dock_study a hhto:PlaceAttestation ;
-    rdfs:label "太舟坞地名源流考"@zh ;
-    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
-    hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
-    hhto:originalQuote "太舟坞紧邻元代白浮瓮山河引水线，‘坞’字自古专指船坞水港，太舟坞实为元代运石泊舟之官坞"@zh ;
-    hhto:recordedYear 1995 ;
-    rdfs:comment "断代: 现代 | 来源: 《北京水利史志研究》"@zh .
-
 hd:feat_changhe a hhto:PhysicalFeature,
         hhto:Watercourse ;
     rdfs:label "长河皇家水道"@zh ;
@@ -1909,6 +1946,12 @@ hhto:Watercourse a owl:Class ;
     rdfs:label "水系河道"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
 
+hd:feat_xiangshan a hhto:PhysicalFeature,
+        hhto:TerrainElevation ;
+    rdfs:label "香山与金山翠微山麓"@zh ;
+    hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
+    rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
+
 hhto:PhoneticShiftEvent a owl:Class ;
     rdfs:label "语音流变与方言通假事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
@@ -1916,12 +1959,6 @@ hhto:PhoneticShiftEvent a owl:Class ;
 hhto:ReligiousSite a owl:Class ;
     rdfs:label "宗教寺观"@zh ;
     rdfs:subClassOf hhto:AdministrativeUnit .
-
-hd:feat_xiangshan a hhto:PhysicalFeature,
-        hhto:TerrainElevation ;
-    rdfs:label "香山与金山翠微山麓"@zh ;
-    hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
-    rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
 
 hhto:MilitaryGarrison a owl:Class ;
     rdfs:label "军事驻防与军屯"@zh ;

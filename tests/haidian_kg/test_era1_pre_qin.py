@@ -21,12 +21,24 @@ def test_era1_pre_qin_enfeoffment_and_bronze_attestations():
     # 2. 验证核心书证
     atts = {a.id: a for a in ds.place_attestations}
     assert "attest_shiji_zhou_wuwang" in atts, "缺失《史记·周本纪》封燕封蓟书证"
-    assert "attest_ke_lei_bronze" in atts, "缺失房山琉璃河克罍‘命克侯于燕’青铜铭文硬证据"
+    assert "attest_ke_lei_bronze" in atts, "缺失房山琉璃河克盉克罍青铜铭文硬证据"
 
+    # 🔴 2026-10-04 订正：旧断言 `"克侯于燕" in quote` 保护的是**错字释文**——
+    # 首都博物馆藏品页与首博通行释文作「**令**克侯于**匽**」（命→令、燕→匽，匽即古写「燕」），
+    # 且旧稿缀的「克不敢怠」一句不见于通行释文。详见 corpus/era1 §1.2。
     bronze_att = atts["attest_ke_lei_bronze"]
     assert bronze_att.evidence_level == EvidenceLevel.L1_ARCHAEOLOGICAL
     assert bronze_att.epistemic_status == EpistemicStatus.VERIFIED
-    assert "克侯于燕" in bronze_att.quote
+    assert "令克侯于匽" in bronze_att.quote, "克盉铭文通行释文应为「令克侯于匽」"
+    for dead in ("命克侯于燕", "克不敢怠"):
+        assert dead not in bronze_att.quote, "克盉铭文错字释文复活: %s" % dead
+
+    # 《史记·周本纪》：旧稿把相隔两段、顺序相反的两句拼成一句冒充直引，已按实文改
+    shiji = atts["attest_shiji_zhou_wuwang"]
+    for frag in ("帝堯之後於薊", "封召公奭於燕"):
+        assert frag in shiji.quote, "《史记·周本纪》实文缺: %s" % frag
+    assert "武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟" not in shiji.quote, (
+        "《史记》跨段拼接伪引文不得复活")
 
 
 def test_era1_negative_control_gaoliangqiao_not_pre_qin():

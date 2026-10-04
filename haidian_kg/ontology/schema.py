@@ -23,6 +23,12 @@ class EpistemicStatus(str, Enum):
     VERIFIED = "VERIFIED"        # 考据确证
     CONTESTED = "CONTESTED"      # 学术争议/多说并存
     FOLK_LEGEND = "FOLK_LEGEND"  # 民间附会/非真实历史
+    # 无据推论：**查无著录**（连来源都不存在），既非证伪、也非多说并存。
+    # 🔴 不得用 CONTESTED 代替——那会把「不存在材料」误读成「学界有争议」，
+    #    即 absence of evidence ≠ evidence of absence 的反面。
+    #    2026-10-04 补：本成员此前只存在于同名 enum ontology/epistemic.py，
+    #    schema.py 漏定义导致 extractor 等 schema 侧调用方 AttributeError。
+    UNSUBSTANTIATED = "UNSUBSTANTIATED"  # 无据推论/查无著录（未进入可采信层）
     DISPROVEN = "DISPROVEN"      # 已证伪/伪假说（负控制断言）
 
 

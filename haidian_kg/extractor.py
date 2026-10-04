@@ -47,10 +47,13 @@ class HaidianCorpusExtractor:
             ),
             PhysicalFeatureEntity(
                 id="feat_yiguangsi_site",
-                label="海淀四季青遗光寺新石器遗址",
+                label="海淀四季青遗光寺新石器石器采集地（存疑）",
                 feature_type="TerrainElevation",
                 coordinates=[116.26, 39.95],
-                description="海淀本土新石器时代晚期磨制石斧出土台地，距今约4000年定居农耕遗存",
+                # 🔴 2026-10-04 降级（P18）：旧稿「海淀本土新石器时代晚期磨制石斧出土台地，
+                # 距今约4000年**定居农耕遗存**」——该遗存查无著录（Q-008），且「定居农耕遗存」
+                # 是把「采集地点」二次拔高。feature_type 亦非遗址实指，降为存疑表述。
+                description="遗光寺村西山山前台地（疑有新石器时代石器采集点，查无著录，存疑待考）",
             ),
             PhysicalFeatureEntity(
                 id="feat_donghulin_site",
@@ -62,7 +65,10 @@ class HaidianCorpusExtractor:
             PhysicalFeatureEntity(
                 id="feat_wangfujing_paleo",
                 label="王府井东方广场旧石器晚期古营地",
-                feature_type="Wetland",
+                # 🔴 2026-10-04 订正（P29）：旧稿 feature_type="Wetland" —— 该遗址是
+                # **古人类活动面/营地**（出土石器、动物碎骨、烧骨），不是湿地地物；
+                # 「Wetland」承载行宫湖/湿地遗迹会误导类型学查询。改 TerrainElevation。
+                feature_type="TerrainElevation",
                 coordinates=[116.41, 39.91],
                 description="距今约2.5万年北京平原中心古人类季节性狩猎火塘营地",
             ),
@@ -92,21 +98,42 @@ class HaidianCorpusExtractor:
                 label="曹魏车箱渠水利引水古道",
                 feature_type="Watercourse",
                 coordinates=[116.30, 39.92],
-                description="公元250年魏刘靖于石景山筑戾陵堰引永定河水，开车箱渠横贯海淀南部八里庄东流灌溉四千顷",
+                # 🔴 2026-10-04 订正（P05）：旧稿「灌溉四千顷」系把《水经注》卷十四的
+                # 「刻地四千三百一十六顷」（**限田刻地数**）揉成灌溉数。实文三种数各不相同：
+                # **灌田岁二千顷**（原规模）／**改定田五千九百三十顷**（景元三年限田改制定数）／
+                # **所灌田万有馀顷**（含诸渠总润）。此处改用「岁灌二千顷」。
+                # 走向以《水经注》卷十四「水流乘車箱渠，自薊西北逕昌平，東盡漁陽潞縣」为准。
+                description="公元250年魏刘靖于石景山筑戾陵堰引水，开车箱渠；渠身横穿海淀南部"
+                            "（八里庄、翠微路一带，属渠路考订推断，非碑文所载），"
+                            "据《水经注》卷十四「水流乘車箱渠，自薊西北逕昌平，東盡漁陽潞縣」；"
+                            "灌溉规模以实文为准（岁灌二千顷，后改定田五千九百三十顷）",
             ),
             PhysicalFeatureEntity(
                 id="feat_linshuogong_site",
-                label="隋幽州临朔宫行宫遗址",
+                label="隋幽州临朔宫（遗址未定位）",
+                # 🔴 2026-10-04 降级（P22）：临朔宫**至今无考古定位**，旧稿却给了精确坐标
+                # 116.36,39.92——**伪精确度**（比「未考得」更有害：坐标会被下游当作已证事实消费）。
+                # 坐标改置 [0.0, 0.0] 作「未知」占位，并在 label/description 明示未定位。
                 feature_type="TerrainElevation",
-                coordinates=[116.36, 39.92],
-                description="隋大业七年隋炀帝大举北征高句丽于蓟城北郊所建大本营与储粮军事行宫",
+                coordinates=[0.0, 0.0],
+                description="隋大业七年（611）四月炀帝「至涿郡之臨朔宮」（《隋书·炀帝纪》实文）。"
+                            "**宫址至今无考古定位，本库不赋坐标**；"
+                            "「控扼军都关道」「海淀平原为西北拱卫与军马牧草供应区」为现代推测，无一手书证。",
             ),
             PhysicalFeatureEntity(
                 id="feat_diaoyutai_lake",
-                label="金代钓鱼台行宫蓄水湖遗迹",
+                label="钓鱼台泉池旧迹（明人记为金主游幸处）",
+                # 🔴 2026-10-04 订正（P04/P29）：旧稿「金代钓鱼台行宫蓄水湖遗迹」+「引玉泉山水
+                # 蓄为东湖」——①「金章宗筑台垂钓」无书证（《帝京景物略》钓鱼台条作「金王鬱釣魚臺」，
+                #    《日下旧闻考》卷95 作「金主逰幸處」，**均未指名章宗**）；
+                # ②「引玉泉山水蓄为东湖」**金代水源构成未考，本库无任何出处**，属自撰，已删；
+                # ③ feature_type 原作 Wetland 承载「行宫湖遗迹」——今址为后世园林，
+                #    金代水面范围未考，Wetland 的现势含义须注明为现代水系推断。
                 feature_type="Wetland",
                 coordinates=[116.33, 39.91],
-                description="金章宗筑台垂钓积水成池之行宫园林湖泽，引玉泉山水蓄为东湖",
+                description="明人记金代此处有泉有池有台（「金王鬱釣魚臺」「金主逰幸處」），"
+                            "元时称玉渊潭、为丁氏园池。今址为后世园林与御碑，"
+                            "金代水面范围与水源构成均未考。",
             ),
             PhysicalFeatureEntity(
                 id="feat_gaolianghe",
@@ -142,6 +169,17 @@ class HaidianCorpusExtractor:
                 feature_type="TerrainElevation",
                 coordinates=[116.19, 39.99],
                 description="西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地",
+            ),
+            # 🔴 2026-10-04 新增（P17）：大觉寺在**旸台山（今阳台山）**麓、北安河一带，
+            # 与香山/金山翠微山麓（feat_xiangshan）不是同一处。旧稿把清水院挂在香山，
+            # 导致清水院与圣水院（香山寺）在图上共点不可分。
+            PhysicalFeatureEntity(
+                id="feat_yangtaishan",
+                label="旸台山（今阳台山）麓北安河一带",
+                feature_type="TerrainElevation",
+                coordinates=[116.07, 40.04],
+                description="辽咸雍四年（1068）《暘臺山清水院創造藏經記》碑所记清水院山名，"
+                            "今海淀北安河大觉寺所在山麓",
             ),
             PhysicalFeatureEntity(
                 id="feat_changhe",
@@ -262,12 +300,22 @@ class HaidianCorpusExtractor:
             ),
             AdministrativeUnitEntity(
                 id="unit_daizhou_garrison",
-                label="唐代羁縻带州孤竹县侨置区",
+                label="唐代羁縻带州（寄治昌平县清水店，地望三说并存）",
                 unit_type="MilitaryGarrison",
-                located_at_feature_id="feat_taizhouwu_dock",
-                valid_start_year=705,
+                # 🔴 2026-10-04 订正（P16 三层口径互搏）：旧稿 located_at_feature_id="feat_taizhouwu_dock"
+                # ——**在数据层把带州钉死在太舟坞**，与 corpus era3 §1.3「两说竞争保持中立」的裁决
+                # 直接矛盾。带州寄治地《旧唐书》只说「昌平縣之清水店」；清水店今地**阳坊／太舟坞／
+                # 清水店三套口径并存**（本库未考得定论），故**不在数据层择一坐实**，
+                # 改挂中性的 feat_gaolianghe（昌平—蓟城水系轴）并在 description 标三说并存。
+                located_at_feature_id="feat_gaolianghe",
+                # 🔴 纪年订正：《旧唐书》实文为「**貞觀十九年**，于營州界內置」，
+                # 「神龍初」是**放还改隶幽州都督**，不是置州年；寄治清水店是「州陷契丹後」之事。
+                valid_start_year=645,
                 valid_end_year=755,
-                description="唐神龙元年安置东北降户与突厥部众之羁縻州，天宝间寄治昌平县清水店",
+                description="《旧唐书》卷三十九：贞观十九年（645）于营州界内置，处契丹乙失革部落；"
+                            "万岁通天元年迁青州安置；神龙初放还，隶幽州都督。孤竹县「旧治营州界，"
+                            "州陷契丹后，寄治于昌平县之清水店，为州治」。"
+                            "**清水店今地三说并存（阳坊/太舟坞/清水店），本库未考得定论。**",
             ),
             # 辽金
             AdministrativeUnitEntity(
@@ -290,12 +338,25 @@ class HaidianCorpusExtractor:
             ),
             AdministrativeUnitEntity(
                 id="unit_qingshui_court",
-                label="辽代西山清水院（大觉寺前身）",
+                label="辽代旸台山清水院（大觉寺前身）",
                 unit_type="ReligiousSite",
-                located_at_feature_id="feat_xiangshan",
-                valid_start_year=1088,
+                # 🔴 2026-10-04 订正（P17 空间锚定错误）：旧稿挂 feat_xiangshan（香山/金山翠微山麓，
+                # 116.19,39.99），但大觉寺在**旸台山（今阳台山）/北安河**一带（约 116.07,40.04），
+                # 与本库 corpus era4 §1.2「北安河旸台山大觉寺」自相矛盾；且与圣水院（香山寺）共点后
+                # 两院在图上不可分。故另设 feat_yangtaishan。
+                located_at_feature_id="feat_yangtaishan",
+                # 🔴 2026-10-04 订正（P01/P02）：1088「辽大安四年」系伪纪年——
+                # 碑末署「咸雍四年嵗次戊申」，戊申＝**1068**（干支回验；1088＝戊辰，矛盾）。
+                # 1068 是**立碑年的下限**（碑言「院之興止于近代」），非创院纪年，故取 1068 为 valid_start。
+                valid_start_year=1068,
                 valid_end_year=1215,
-                description="辽大安四年契丹贵族敕建清水院，后金章宗扩为西山八大行宫水院之一",
+                # 🔴 三处旧稿失真一并改：①「契丹贵族」——碑载施主是**汉人优婆塞南陽鄧公從貴**；
+                # ②「敕建」——碑无「敕」字，事为**葺諸僧舍＋募印大藏經五百七十九帙**；
+                # ③「后金章宗扩为西山八大行宫水院之一」——「西山八院」是**明人《帝京景物略》追述归纳**
+                # （且该书同书两章互异：法云寺条作「六院」、大觉寺条作「八院」），
+                # 非金代文献自述，故降为「明人追述，存疑」。
+                description="辽咸雍四年（1068）碑载：汉人优婆塞南陽鄧公從貴捨錢三十萬葺諸僧舍、又五十萬募印大藏經五百七十九帙；"
+                            "碑言「院之興止于近代」，可证辽代已成院。归入「西山八院」一说出自明人《帝京景物略》追述（数目诸本不一，存疑）。",
             ),
             AdministrativeUnitEntity(
                 id="unit_sifangpujue_temple",
@@ -308,12 +369,24 @@ class HaidianCorpusExtractor:
             ),
             AdministrativeUnitEntity(
                 id="unit_shengshui_court",
-                label="金章宗西山八大水院之圣水院（香山寺）",
+                # 🔴 2026-10-04 降级：旧稿 label 直接写「金章宗西山**八大水院**之圣水院」，
+                # 等于把「明人追述」当作已定论的建置名。以下三项一并订正：
+                # ①「八大水院」——《帝京景物略》原刻**同书两章互异**（法云寺条作「**六院**」、
+                #    大觉寺条作「**八院**」），四库本《日下旧闻考》卷106转录又作「八院/尚存」；
+                #    该说系 16 世纪明人归纳，**非金代文献自述**；
+                # ②「圣水院＝今香山寺」属**通行考释**，除清水院有辽碑直证外，**其余水院今地对应全部无直证**；
+                # ③「金世宗大安寺、章宗圣水院……皇家敕建行宫水院」无一手书证（本库未考得），
+                #    且「敕建」二字与清水院碑（民办施财）体例相悖。
+                label="圣水院（通行考释作今香山寺，存疑）",
                 unit_type="ReligiousSite",
                 located_at_feature_id="feat_xiangshan",
-                valid_start_year=1186,
+                # 🔴 纪年 1186（大定二十二年）本库**未考得书证**，不得当作确证起始年；
+                # 姑系金章宗明昌年间为「约略下限」，语义见 description。
+                valid_start_year=1190,
                 valid_end_year=1215,
-                description="金世宗大安寺、章宗圣水院，为香山最早之皇家敕建行宫水院",
+                description="通行考释：香山寺即金代「圣水院」，属明人《帝京景物略》所记金章宗"
+                            "西山院群之一。**该归属为后世考释，本库未考得一手书证；且院群数目诸本不一"
+                            "（原作「六院」亦作「八院」），标存疑。**",
             ),
             AdministrativeUnitEntity(
                 id="unit_wenquan_village",
@@ -511,7 +584,13 @@ class HaidianCorpusExtractor:
                 unit_type="MilitaryGarrison",
                 located_at_feature_id="feat_xiangshan",
                 valid_start_year=1749,
-                description="乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼",
+                # 【R3 回灌 2026-10-04】石碉楼数：官书数是 **卷102 馆臣按语「共计六十有七」**
+                # （按卷101/102旗册逐旗相加得六十六，两说并存不取区间值——E9 纪律②）；
+                # corpus 原写「数百座」与官书差一个量级已撤。现代调查「六十八座」无官方
+                # 测绘档不采；现存座数无官方测绘档总数，**不列数字**。
+                description="乾隆平定大小金川特设之精锐部队，营房按八旗翼长排列，广筑演武石碉楼"
+                            "（官书数：卷102馆臣按『共计六十有七』；逐旗数六十六，两说并存。"
+                            "现存座数无官方测绘档，不列）",
             ),
             # 八旗护军营系统（肖家河与树村核心）
             AdministrativeUnitEntity(
@@ -572,6 +651,10 @@ class HaidianCorpusExtractor:
             # 史前古人类与新石器遗址地名
             ToponymEntity(id="top_zhoukoudian", standard_form="周口店", script_hanzi="周口店", phonetic_pinyin="zhōu kǒu diàn", name_type="standard"),
             ToponymEntity(id="top_yiguangsi", standard_form="遗光寺", script_hanzi="遗光寺", phonetic_pinyin="yí guāng sì", name_type="standard"),
+            # 🔴 2026-10-04 新增（P28 接线错误）：旧稿把上宅（平谷）、王府井（东城）两处
+            # 发掘挂到 top_zhoukoudian（房山周口店），属区县级地物张冠李戴，故各建本名。
+            ToponymEntity(id="top_shangzhai", standard_form="上宅", script_hanzi="上宅", phonetic_pinyin="shàng zhái", name_type="standard"),
+            ToponymEntity(id="top_wangfujing", standard_form="王府井", script_hanzi="王府井", phonetic_pinyin="wáng fǔ jǐng", name_type="standard"),
             ToponymEntity(id="top_donghulin", standard_form="东胡林", script_hanzi="东胡林", phonetic_pinyin="dōng hú lín", name_type="standard"),
             ToponymEntity(id="top_banquan", standard_form="阪泉", script_hanzi="阪泉", phonetic_pinyin="bǎn quán", name_type="folk"),
             # 先秦封国与都邑地名
@@ -686,9 +769,12 @@ class HaidianCorpusExtractor:
                 source_author="中国科学院古脊椎动物与古人类研究所",
                 recorded_year=-770000,
                 dynasty="旧石器时代初期（距今约77万年）",
-                quote="出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层，确证古人类最早天然用火与石器打制证据",
+                quote="出土完整北京猿人头盖骨化石、十万余件打制石器及数米厚灰烬层、烧骨烧石，证实北京直立人已具备控制和使用火的能力",
                 evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                # 🔴 2026-10-04 订正：旧稿作「确证古人类**最早**天然用火」——「最早」系绝对化且
+                # 证据不足：全球更早用火证据已通行（南非 Wonderwerk 约100万年前），且
+                # 「灰烬层＝人工用火」在考古界存再检争论（可能为天然火灾）。降为「控制用火的早期重要证据」。
             ),
             PlaceAttestationEntity(
                 id="attest_shandingdong_needle",
@@ -698,13 +784,17 @@ class HaidianCorpusExtractor:
                 source_author="裴文中",
                 recorded_year=-30000,
                 dynasty="旧石器时代晚期（距今约3万年）",
-                quote="出土长82毫米磨制穿孔骨针与141件穿孔石珠、海蚶壳随葬饰物，实证缝纫技术与原始埋葬礼仪",
+                quote="出土长82毫米人工穿孔骨针与装饰品共141件（其中穿孔石珠7枚，另有穿孔兽牙125、海蚶壳3、刻沟骨管4、小砾石1、青鱼眼上骨1），实证缝纫技术与原始埋葬礼仪",
+                # 🔴 2026-10-04 订正：旧稿「141件穿孔石珠」易被误读为 141 枚石珠。
+                # 141 是**装饰品总数**，其中穿孔石珠仅 7 枚。
                 evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
                 id="attest_wangfujing_camp",
-                toponym_id="top_zhoukoudian",
+                # 🔴 2026-10-04 订正（P28 接线错误）：旧稿挂 top_zhoukoudian（房山周口店），
+                # 但本条是**东城区**王府井发掘，属区县级地物张冠李戴，已建各自 toponym。
+                toponym_id="top_wangfujing",
                 attested_name="王府井东方广场旧石器古营地",
                 source_title="北京王府井东方广场旧石器时代晚期遗址发掘简报",
                 source_author="北京市文物研究所",
@@ -728,28 +818,45 @@ class HaidianCorpusExtractor:
             ),
             PlaceAttestationEntity(
                 id="attest_shangzhai_agriculture",
-                toponym_id="top_zhoukoudian",
+                # 🔴 2026-10-04 订正（P28 接线错误）：旧稿挂 top_zhoukoudian（房山周口店），
+                # 本条为**平谷**上宅遗址，已建各自 toponym。
+                toponym_id="top_shangzhai",
                 attested_name="上宅文化彩陶与石磨盘",
                 source_title="平谷上宅新石器时代文化遗址发掘简报",
                 source_author="北京市文物研究所",
                 recorded_year=-7000,
                 dynasty="新石器时代中晚期（距今约7000年）",
-                quote="出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，确立北京地区首支独立新石器定居农耕考古学文化",
+                # 🔴 2026-10-04 订正：旧稿「确立北京地区**首支**独立新石器定居农耕考古学文化」——
+                # 「首支/第一支」系绝对化：东胡林（距今约1万–9000年）更早且已有农业萌芽。
+                quote="出土鸟头形陶把、镂孔陶豆、石磨盘及磨棒，为北京地区新石器时代中晚期代表性考古学文化",
                 evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
                 id="attest_yiguangsi_axe",
                 toponym_id="top_yiguangsi",
-                attested_name="海淀四季青遗光寺新石器磨制石斧",
-                source_title="北京海淀区出土文物志",
-                source_author="海淀区文物管理所、首都博物馆",
+                attested_name="海淀四季青遗光寺新石器磨制石斧（查无著录，存疑待考）",
+                # 🔴 2026-10-04 判死（P18，详见 QUARANTINE.md Q-008）：
+                # ① 所挂书源「北京海淀区出土文物志」**未获核实**（无书名、无页码、无普查档案号）；
+                # ② 外部检索**无任何「遗光寺出土新石器石器」的考古著录**；
+                # ③ 「现藏首都博物馆与海淀区文管所」**无出处**，故从 source_author 撤下；
+                # ④ 地表采集石器只能按类型学**粗断代**，旧稿断到「距今约4000年龙山时期」**超出材料证明力**；
+                # ⑤ 旧稿「证实……已有人类**农耕定居活动**」是**二次拔高**：采集地点≠聚落≠农耕定居。
+                # ⑥ 层级混淆须防重犯：遗光寺的已知身份是**明正德三年（1508）古建**，
+                #    「寺名地名层」与「史前遗物层」是两回事，不得因同名为寺即认定该处有史前遗址。
+                source_title="（旧挂「北京海淀区出土文物志」，书名未获核实）",
+                source_author="（旧挂海淀区文物管理所、首都博物馆，未考得）",
                 recorded_year=-4000,
-                dynasty="新石器时代晚期（距今约4000年）",
-                quote="四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛，证实海淀西山山前阶地四千年前已有人类农耕定居活动",
-                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
-                epistemic_status=EpistemicStatus.VERIFIED,
-                notes="海淀本土最早物质文化考古信史物证",
+                dynasty="新石器时代晚期（距今约4000年——该断代超出材料证明力）",
+                quote="（旧稿自撰：四季青遗光寺台地出土新石器时代晚期磨制石斧与石锛……）",
+                evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
+                # 「查无著录」用 UNSUBSTANTIATED 而非 CONTESTED：后者语义是「学界多说并存」，
+                # 会把「不存在材料」误读成「有争议说」。
+                epistemic_status=EpistemicStatus.UNSUBSTANTIATED,
+                notes="查无著录。恢复条件：补可核出处"
+                      "（书名+页码，或文物普查档案号/图版著录）。"
+                      "「海淀本土最早物质文化考古信史原点」一说随之撤回——本库最早可信考古层为"
+                      "era1 琉璃河克盉克罍（西周，约前1046）。",
             ),
             PlaceAttestationEntity(
                 id="attest_banquan_myth",
@@ -773,7 +880,11 @@ class HaidianCorpusExtractor:
                 source_author="北京市文物研究所、中国社会科学院考古研究所",
                 recorded_year=-1046,
                 dynasty="西周初年（约公元前1046年）",
-                quote="盖内铸铭文：周王命太保召公奭长子克‘命克侯于燕’，实证第一代燕侯就封北燕，北京三千年建城信史原点",
+                # 🔴 2026-10-04 订正（P23）：旧稿作「命克侯于燕」——用字皆误（命→**令**、
+                # 燕→**匽**，匽即古写「燕」国名）。依首都博物馆藏品页与首博通行释文，
+                # 克盉克罍盖内及口沿内壁所铸同为 43 字，大意「令克侯于匽……用乍（作）宝尊彝」；
+                # 旧稿缀的「克不敢怠」一句**不见于通行释文**，已删。
+                quote="盖内及口沿内壁铸铭文43字：太保……令克侯于匽……用乍（作）宝尊彝。实证第一代燕侯就封北燕，北京三千年建城信史原点",
                 evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
                 epistemic_status=EpistemicStatus.VERIFIED,
                 notes="北京建城史最高规格考古与金文双重互证硬证据",
@@ -781,14 +892,21 @@ class HaidianCorpusExtractor:
             PlaceAttestationEntity(
                 id="attest_shiji_zhou_wuwang",
                 toponym_id="top_jicheng",
-                attested_name="史记武王封燕封蓟记载",
+                attested_name="史记周本纪武王封燕、追封先王之后记载",
                 source_title="史记·周本纪",
                 source_author="司马迁",
                 recorded_year=-100,
                 dynasty="西汉（记西周初年事）",
-                quote="武王褒封功臣谋士，封召公奭于燕，封帝尧之后于蓟",
+                # 🔴 2026-10-04 订正（P11，详见 QUARANTINE.md Q-006）：旧稿「武王褒封功臣谋士，
+                # 封召公奭于燕，封帝尧之后于蓟」是**把相隔两段、顺序相反的两句拼成一句冒充直引**。
+                # 实文次序为：先「武王追思先聖王，乃褒封神農之後於焦，黃帝之後於祝，帝堯之後於薊……」
+                # 「於是封功臣謀士……封召公奭於燕」。改按实文截取，省略号标明删节。
+                quote="武王追思先圣王，乃褒封神农之後於焦，黃帝之後於祝，帝堯之後於薊……於是封功臣谋士……封召公奭於燕",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                # ⚠ 异文并存：《史记》作「帝堯之後於薊」，《礼记·乐记》作「黃帝之後於薊」。
+                # 库内两说并存，不得择一作定论（见 corpus/era1_pre_qin.md §1.1）。
+                notes="《史记》/《乐记》对「受封于蓟者」有经典异文（帝尧/黄帝），须分层标注。",
             ),
             # Era 2 秦汉魏晋与六朝考古与文献书证
             PlaceAttestationEntity(
@@ -806,65 +924,113 @@ class HaidianCorpusExtractor:
             PlaceAttestationEntity(
                 id="attest_sanguozhi_liujing",
                 toponym_id="top_chexiangqu",
-                attested_name="魏刘靖筑戾陵堰车箱渠",
-                source_title="三国志·魏书·刘靖传",
-                source_author="陈寿",
+                attested_name="魏刘靖修广戾陵渠大堨（《水经注》卷十四引《刘靖碑》）",
+                # 🔴 2026-10-04 订正（P05，详见 QUARANTINE.md Q-006）：旧稿所引
+                # 「嘉平二年，镇北将军刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，
+                # 灌溉蓟城南北四千余顷」——**《三国志》卷十五本传无此句**（本传实文仅「都督河北諸軍事」
+                # 「又脩廣戾陵渠大堨，水溉灌薊南北」）；**「循漯水之崖」不见于本传**；
+                # 工程细节在**《水经注》卷十四·鮑丘水**（非「漯水」）引《刘靖碑》；
+                # 「四千余顷」是把「刻地四千三百一十六頃」（限田刻地数）揉成灌溉数的产物，
+                # 实文三种数各不相同：灌田岁二千顷／改定田五千九百三十顷／所灌田万有馀顷。
+                # 书源改挂《水经注》卷十四，纪年保留嘉平二年（碑文明载「以嘉平二年，立遏於水」）。
+                source_title="水经注卷十四·鮑丘水引《刘靖碑》（魏使持节都督河北道诸军事征北将军刘靖碑）",
+                source_author="郦道元（碑文撰者刘靖，郦氏录引）",
                 recorded_year=250,
                 dynasty="三国曹魏嘉平二年",
-                quote="嘉平二年，刘靖都督幽州军事，乃循漯水之崖，筑戾陵堰，起车箱渠，灌溉蓟城南北四千余顷",
+                quote="以嘉平二年，立遏於水，導高梁河，造戾陵遏，開車箱渠……灌田歲二千頃……至景元三年辛酉……限田千頃，刻地四千三百一十六頃，出給郡縣，改定田五千九百三十頃。水流乘車箱渠，自薊西北逕昌平，東盡漁陽潞縣……所灌田萬有餘頃",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="《三国志》本传只记「脩廣戾陵渠大堨，水溉灌薊南北」；工程细节与田亩数出自"
+                      "《水经注》卷十四引碑，两者互补。刘弘重修在**晋元康四年受命、五年刊石**，"
+                      "非泰始元年（265）。",
             ),
             # Era 3 隋唐五代幽州文献与墓志硬证据
             PlaceAttestationEntity(
                 id="attest_suishu_linshuogong",
                 toponym_id="top_linshuogong",
-                attested_name="隋书炀帝纪置临朔宫记载",
+                attested_name="隋书炀帝纪大业七年幸涿郡临朔宫记载",
                 source_title="隋书·炀帝纪上",
                 source_author="魏徵等",
                 recorded_year=611,
                 dynasty="隋大业七年",
-                quote="大业七年春二月乙未，帝自江都驿赴涿郡。幽州置临朔宫，征天下兵集涿郡",
+                # 🔴 2026-10-04 订正（P09，详见 QUARANTINE.md Q-006）：旧稿「大业七年春二月乙未，
+                # 帝自江都驿赴涿郡。幽州置临朔宫，征天下兵集涿郡」**于《隋书》卷三无此文**：
+                # 实文二月作「乙亥，上自江都御龍舟入通濟渠，遂幸于涿郡」，四月「庚午，至涿郡之臨朔宮」；
+                # 无「乙未」、无「驿赴」、**无「幽州置临朔宫」**（宫当先已存在，此年只是「至」宫）、
+                # 无「征天下兵集涿郡」。
+                quote="（二月）乙亥，上自江都御龍舟入通濟渠，遂幸于涿郡……夏四月庚午，至涿郡之臨朔宮",
+                notes="临朔宫**地望与功能（控扼军都关道、海淀平原为牧草供应区）系现代推测，无考古定位**，"
+                      "不得入书证层（corpus/era3 §1.1 已标 UNSUBSTANTIATED）。",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
                 id="attest_tang_jiao_epitaph",
                 toponym_id="top_daizhou_name",
-                attested_name="唐带州孤竹府焦君墓志铭",
-                source_title="大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭",
-                source_author="唐官刻",
+                attested_name="唐带州孤竹府焦君墓志铭（查无此志，存疑待考）",
+                # 🔴 2026-10-04 判死（P10，详见 QUARANTINE.md Q-007）：三重不成立——
+                # ① 外部检索**无任何著录/图版/释文**（未考得），L1 考古硬证据无实物可指；
+                # ② 以「**君讳某**」代讳名，真实墓志不会如此；
+                # ③ 引文句式与两唐书地理志**逐字同构**，而志书语言不会出现在墓志里，系拼装。
+                # **「确证实物」之语已删**：伪证不得充当坐实太舟坞说的第二重互证。
+                # 带州寄治清水店改由《旧唐书》孤竹注实文支撑（见 attest_daizhou_tang_record）。
+                source_title="（旧挂《大唐幽州昌平县孤竹府带州故折冲焦府君墓志铭》，外部查无著录）",
+                source_author="（旧挂唐官刻，未考得）",
                 recorded_year=750,
-                dynasty="唐天宝九载",
-                quote="君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店",
-                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
-                epistemic_status=EpistemicStatus.VERIFIED,
-                notes="确证实物：带州寄治昌平清水店而非海淀太舟坞",
+                dynasty="唐天宝九载（纪年随之存疑）",
+                quote="（旧稿自撰：君讳某，幽州昌平县孤竹府带州折冲。带州本析营州契丹降户置，寄治昌平县清水店）",
+                evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
+                # 「查无此志」用 UNSUBSTANTIATED 而非 CONTESTED（同上，避免语义反向）。
+                epistemic_status=EpistemicStatus.UNSUBSTANTIATED,
+                notes="查无此志。恢复条件：给出可核著录"
+                      "（图版/释文/著录书目+页码）。**不得**以伪证坐实太舟坞说。",
             ),
             # Era 4 辽南京与金中都史料书证
             PlaceAttestationEntity(
                 id="attest_diaoyutai_dijing",
                 toponym_id="top_diaoyutai",
-                attested_name="帝京景物略金章宗钓鱼台记载",
-                source_title="帝京景物略卷五",
+                attested_name="帝京景物略卷五·钓鱼台条（金王鬱钓鱼台）",
+                source_title="帝京景物略卷五·钓鱼台",
                 source_author="刘侗",
-                recorded_year=1190,
-                dynasty="明修记金代事",
-                quote="钓鱼台在宛平县西十里，章宗钓鱼于此，积水成池，台其后筑也",
+                # 🔴 2026-10-04 订正（P04，详见 QUARANTINE.md Q-005）：旧稿
+                # 「钓鱼台在宛平县西十里，**章宗**钓鱼于此，积水成池，台其后筑也」系伪造——
+                # ①《帝京景物略》钓鱼台条**全条无「章宗」、无「宛平」**（该书「章宗」三处命中
+                #    全在法云寺条与大觉寺条），金代人物是文人**王鬱**不是章宗；
+                # ②「积水成池」查无此语。
+                # 旧稿另标 recorded_year=1190（明昌元年）——**「金主」未指名章宗，此纪年本库无书证**，
+                # 明昌元年系把「西山八院」叙事具体化到钓鱼台的产物，故撤销该纪年。
+                # 成立层只有：「金代此处有泉有池有台，为金主游幸之地」（明人记金事）。
+                recorded_year=1200,
+                dynasty="明万历间成书，记金代旧事（「金主」未指名具体皇帝）",
+                quote="出阜成門南十里，花園村，古花園。其後村，今平疇也。金王鬱釣魚臺，臺其處。鬱前玉淵潭，今池也。有泉湧地出，古今人因之。鬱臺焉，釣焉，釣魚臺以名",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                epistemic_status=EpistemicStatus.CONTESTED,
+                notes="「金章宗钓鱼」`UNSUBSTANTIATED`；「明昌元年(1190)」纪年**无书证，撤销**。"
+                      "另一独立书证：《日下旧闻考》卷九十五「原西郊有地名釣魚臺是金主逰幸處」"
+                      "（**卷96 全文「釣魚臺」零命中**，故旧稿卷次亦错）。",
             ),
             PlaceAttestationEntity(
                 id="attest_liaoshi_nanjing",
                 toponym_id="top_nanjing_xijin",
-                attested_name="辽史会同元年升南京记载",
-                source_title="辽史·地理志四",
+                attested_name="辽史卷四十析津府宛平析津二县建名记载",
+                source_title="辽史·地理志四（卷四十·南京道）",
                 source_author="脱脱等",
-                recorded_year=938,
-                dynasty="元修记辽代事",
-                quote="会同元年，太宗升幽州为南京，统宛平、析津二县",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                # 🔴 2026-10-04 订正（P13，详见 QUARANTINE.md Q-004/era4 §1.1）：
+                # ① 旧稿引文「会同元年，太宗升幽州为南京，统宛平、析津二县」**非《辽史》原文**——
+                #    《辽史》卷四十**全卷「會同元年」零命中**，仅作「太宗升為南京，又曰燕京」；
+                # ② **宛平、析津二县名始于开泰元年（1012）**：「析津縣。本晉薊縣，改薊北縣，開泰元年更今名」
+                #    「宛平縣。本晉幽都縣，開泰元年改今名」。会同元年（938）时本名为幽都县、薊北县，
+                #    故「统宛平、析津二县」不能系于 938 年。
+                # ③ 「遼會同元年為南京，開泰元年號燕京」一语实出**《金史》卷二十四·中都路**，非《辽史》。
+                # 据此 recorded_year 由 938 改为 1012（宛平县得名的确切纪年）。
+                recorded_year=1012,
+                dynasty="元修记辽代事（辽道宗开泰元年）",
+                quote="析津縣。本晉薊縣，改薊北縣，開泰元年更今名……宛平縣。本晉幽都縣，開泰元年改今名",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="升南京的年代 938 见《金史》卷二十四「中都路，遼會同元年為南京，開泰元年號燕京」；"
+                      "**「幽都→宛平」改名年见《金史》卷二十四「宛平倚。本晉幽都縣，遼開泰元年更今名」**。"
+                      "行政区「长达千年」应自 1012 宛平县得名起算。",
             ),
             PlaceAttestationEntity(
                 id="attest_anheqiao_wood_c14",
@@ -1233,14 +1399,18 @@ class HaidianCorpusExtractor:
             PlaceAttestationEntity(
                 id="attest_taizhouwu_dock_study",
                 toponym_id="top_taizhouwu",
-                attested_name="太舟坞地名源流考",
-                source_title="北京水利史志研究",
-                source_author="北京市水利学会",
+                attested_name="太舟坞地名源流考（所挂文献查无实书）",
+                # 🔴 2026-10-04 判死（P16，详见 QUARANTINE.md Q-009）：所挂
+                # 「北京水利史志研究／北京市水利学会／1995」**外部检索查无此出版物**（未考得），
+                # 不得以「北京市水利考古研究」这一权威口吻的来源出现。降 UNSUBSTANTIATED。
+                source_title="（旧挂「北京水利史志研究」，书名未考得）",
+                source_author="（旧挂北京市水利学会，未考得）",
                 recorded_year=1995,
-                dynasty="现代",
-                quote="太舟坞紧邻元代白浮瓮山河引水线，‘坞’字自古专指船坞水港，太舟坞实为元代运石泊舟之官坞",
+                dynasty="现代（年份随书证一并存疑）",
+                quote="（旧稿自撰：太舟坞紧邻元代白浮瓮山河引水线，「坞」字自古专指船坞水港……）",
                 evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
-                epistemic_status=EpistemicStatus.CONTESTED,
+                epistemic_status=EpistemicStatus.UNSUBSTANTIATED,
+                notes="查无实书。**不得**用它 VERIFIED 任何假说，也不得用它 DISPROVE 另一说。",
             ),
             # L5 民间传说与附会
             PlaceAttestationEntity(
@@ -1479,6 +1649,14 @@ class HaidianCorpusExtractor:
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
             PlaceAttestationEntity(
+                # 【R5 回灌 2026-10-04】拟托书证：原挂《清高宗御制文二集》（1745）
+                # 「圆明园前置一亩园，仿先农坛躬耕籍田之礼」标 L2 VERIFIED——
+                # 该书证在 **E5 闸门过的任何源里都不存在**（E5 research.md 冻结全文无此条），
+                # 且它把 E5 红线事项（❌一亩园＝亲耕耤田）当官书原句坐实 → 判 DISPROVEN，
+                # 保留原文供审计。**E5 红线**：明清皇帝正式亲耕耤田礼在**先农坛**（L1），
+                # 一亩园「演耕处」只是传说层（北京日报：传说为雍正帝演耕处，但缺少依据）；
+                # 乾隆朝《八旬万寿盛典》图档（L1）显示该处是圆明园大宫门前有建筑院落、
+                # 道路、水渠、土山的密集区域；功能解释属 L2 现代研究。**建年不锁 1723/1745。**
                 id="attest_yimuyuan_qianlong",
                 toponym_id="top_yimuyuan",
                 attested_name="一亩园",
@@ -1487,8 +1665,12 @@ class HaidianCorpusExtractor:
                 recorded_year=1745,
                 dynasty="清乾隆十年",
                 quote="圆明园前置一亩园，仿先农坛躬耕籍田之礼，以示重本抑末",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R5 拟托书证】E5 research.md 冻结档全文无此引文，判为伪。❌ 红线："
+                      "一亩园≠皇帝亲耕耤田/「一亩三分地」——**真正的耤田礼在先农坛**（L1）。"
+                      "「演耕处」仅传说层；L1《八旬万寿盛典》图档见密集建筑区域；"
+                      "功能解释属 L2 现代研究。**建年不锁 1723/1745。** 保留原文供审计。",
             ),
             PlaceAttestationEntity(
                 id="attest_niangniangfu_gazetteer",
@@ -1550,17 +1732,46 @@ class HaidianCorpusExtractor:
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
+            # 【R9① 回灌 2026-10-04】拟托公文：原挂「政务院文委《关于中国科学院选定海淀
+            # 中关村为科研基地的方案批复》（1953）」标 L2 VERIFIED——**E13 全档无此件**，
+            # 文件名与文号外部核不出 → 判 DISPROVEN，原文留档。
+            # 真实事实改由下方 attest_zgc_1951_land 承载（1951 年中科院征地，官方院史口径）。
+            # 另注：**1951 选址**与**1953 信笺误植定型**是两件事，E13 冻结为「两步走」，
+            # 不得合并成「1953 政务院批复」。
             PlaceAttestationEntity(
                 id="attest_zgc_1953_decision",
                 toponym_id="top_zhongguancun_modern",
                 attested_name="中关村科学院园区",
-                source_title="中国科学院院史资料汇编",
-                source_author="中科院院史馆",
+                source_title="政务院文委《关于中国科学院选定海淀中关村为科研基地的方案批复》",
+                source_author="政务院文委",
                 recorded_year=1953,
                 dynasty="现代新中国",
                 quote="政务院批准文委与科学院关于选定海淀中关村为科研基地的方案，近代第一座科学城破土动工",
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R9① 拟托公文】E13 research.md §硬年份表全档无此件；该批复文件名与"
+                      "文号外部核不出。E13 冻结口径是 **1951 年中科院在北京西北郊征地建科研"
+                      "基地（官方院史）**，1953 年发生的是《中华地理志》编辑部信笺误植"
+                      "『中官屯→中关村』并沿用**定型**（当事人回忆层）。保留原文供审计。",
+            ),
+            # ✅ 中科院选址真实口径（补入，替代上面的伪公文）
+            PlaceAttestationEntity(
+                id="attest_zgc_1951_land",
+                toponym_id="top_zhongguancun_modern",
+                attested_name="中科院西北郊永久院址",
+                source_title="中国科学院官方院史（中科院院刊纪念文）",
+                source_author="中国科学院",
+                recorded_year=1951,
+                dynasty="现代新中国",
+                quote="1951年4月经北京市政府同意，在清华大学以南、海淀以东、"
+                      "平绥铁路以西、大泥湾以北地段为中国科学院划拨用地约4500亩，"
+                      "作为科学院永久院址",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="【R9①】E13 §二 硬年份表冻结的 1951 年官方院史口径（录式转述，"
+                      "非逐字公文）。1951 年划地后，近代物理所『原子能楼』1951-11 动工、"
+                      "1953 年底竣工、1954-01 启用。⚠️ 与 1953 信笺误植定型、E18 的 1952 "
+                      "院系调整是三件事，不得合并叙述。",
             ),
             PlaceAttestationEntity(
                 id="attest_zgc_1980_seed",
@@ -1570,9 +1781,18 @@ class HaidianCorpusExtractor:
                 source_author="科学时报",
                 recorded_year=1980,
                 dynasty="现代改革开放",
-                quote="1980年10月陈春先创办北京等离子体学会先进技术服务部，开启中关村科技街创业大幕",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                # 【R8 回灌 2026-10-04】原漏「发展」二字，机构全名应为
+                # 「北京等离子体学会先进技术**发展**服务部」（1980-10-23，
+                # 海淀区政府网/北京日报口径）。
+                quote="1980年10月23日陈春先创办北京等离子体学会先进技术发展服务部，"
+                      "开启中关村科技街创业大幕",
+                # 【Y7】等级与证据源对位：《科学时报》是报纸（E13 挂 L4 层级），
+                # 原标 L2（"一手档案"）属等级虚标 → 降 L4。
+                evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="【R8/Y7】机构全名补「发展」二字。等级由 L2 降 L4：《科学时报》属"
+                      "报纸报道（二手），非一手档案；E13 冻结该条挂海淀区政府网/经济观察报"
+                      "层级。**等级标签必须与证据源逐条对位**，不得借同块 VERIFIED 搭车。",
             ),
             PlaceAttestationEntity(
                 id="attest_zgc_1988_zone",
@@ -1589,26 +1809,45 @@ class HaidianCorpusExtractor:
             PlaceAttestationEntity(
                 id="attest_dajuesi_liao_stele",
                 toponym_id="top_dajuesi",
-                attested_name="清水院契丹碑",
-                source_title="大辽大安四年石碑",
-                source_author="辽燕京宛平县清水院",
-                recorded_year=1088,
-                dynasty="辽代（大安四年）",
-                quote="大辽大安四年，西山清水院重构佛殿，刻石纪事",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                attested_name="辽咸雍四年《暘臺山清水院創造藏經記》碑（僧志延撰）",
+                # 🔴 2026-10-04 判死改写（P01/P02，详见 QUARANTINE.md Q-004）：
+                # 旧稿四项全错——①碑名实为《暘臺山清水院創造藏經記》，无「大辽大安四年…石碑记」；
+                # ②纪年实为**咸雍四年**（碑末「嵗次戊申」＝1068，干支回验：大安四年1088＝戊辰，矛盾）；
+                # ③碑文实载施主为**汉人优婆塞南陽鄧公從貴**（非契丹贵族），事为**葺諸僧舍＋募印大藏經
+                #    五百七十九帙**（非「重构佛殿」）；④旧稿 quote「西山清水院重构佛殿，刻石纪事」
+                #    **不见于任何著录，系伪造碑文**。
+                # 书源改挂可直核底本：清《欽定日下舊聞考》卷一百零六录碑文全文。
+                source_title="欽定日下舊聞考卷一百零六所录僧志延《暘臺山清水院創造藏經記》（碑今存大觉寺龙王堂）",
+                source_author="僧志延撰（郦道元式录引：于敏中《日下旧闻考》卷一百零六）",
+                recorded_year=1068,
+                dynasty="辽道宗咸雍四年（1068）",
+                quote="暘臺山者薊壤之名峯清水院者幽都之勝概山之名傳諸前古院之興止于近代將構勝縁旋逢信士今優婆塞南陽鄧公從貴善根生得浄行日嚴咸雍四年三月捨錢三十萬葺諸僧舍又五十萬募同志印大藏經凡五百七十九帙創內外藏而龕措之蕆事既周求為之記聊叙勝因俾信來裔咸雍四年嵗次戊申三月癸酉朔四日丙子记",
+                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                # 🔴 等级订正：旧稿标 L2_PRIMARY_DOC，与 corpus 的 Level 1（现存实物石碑）自相矛盾。
+                # 本条是**现存原石**（大觉寺龙王堂内），按实物应为 L1_ARCHAEOLOGICAL。
+                notes="关键句「**院之興止于近代**」是时序铁证：立碑时（1068）清水院已存在且兴起不远，"
+                      "故「大觉寺始建于金章宗」DISPROVEN（金章宗在位 1189–1208，晚 121 年）。"
+                      "**注意**：1068 是立碑年的**下限**，不是清水院创院纪年。",
             ),
             PlaceAttestationEntity(
                 id="attest_daizhou_tang_record",
                 toponym_id="top_daizhou_name",
-                attested_name="带州",
-                source_title="旧唐书·地理志二",
+                attested_name="带州（贞观十九年置，州陷契丹后寄治昌平清水店）",
+                # 🔴 2026-10-04 订正（P10，详见 QUARANTINE.md Q-006）：旧稿引文
+                # 「带州，神龙元年置，寄治昌平县清水店，领孤竹一县」**于《旧唐书》卷三十九无此文**。
+                # 实文：置州在**贞观十九年（645）**于营州界内置；**「神龍初」是「放還」改隶幽州都督**，
+                # 不是置州年；**寄治清水店是「州陷契丹後」（万岁通天元年后）之事**。
+                # 「领孤竹一县」实为「旧领县一…孤竹舊治營州界，州陷契丹後寄治於昌平縣之清水店」。
+                source_title="旧唐书·地理志二（卷三十九）带州条",
                 source_author="刘昫等",
-                recorded_year=705,
-                dynasty="唐代（神龙元年）",
-                quote="带州，神龙元年置，寄治昌平县清水店，领孤竹一县",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                recorded_year=645,
+                dynasty="唐代（贞观十九年置；神龙初放还改隶）",
+                quote="贞观十九年，于营州界内置，处契丹乙失革部落，隶营州都督。万岁通天元年，迁于青州安置。神龙初，放还，隶幽州都督……孤竹：旧治营州界。州陷契丹后，寄治于昌平县之清水店，为州治",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="本条是带州寄治昌平县清水店的**唯一可核书证**（旧稿用以佐证的焦府君墓志"
+                      "查无此志，见 Q-007）。清水店今地三说并存，本库未考得定论。",
             ),
             PlaceAttestationEntity(
                 id="attest_xierqi_shuntian",
@@ -1622,17 +1861,33 @@ class HaidianCorpusExtractor:
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
+            # 【R9② 回灌 2026-10-04】**纪年即露馅**：现代著述《北京历代太监墓石刻考》
+            # （北京石刻博物馆）被记为 recorded_year=1900 / 「清末光绪二十六年」——
+            # 现代机构不可能出版于清末。原标 L2（一手官刻金石）亦错：这是**现代研究著述**，
+            # 不是碑刻本身。按 test_full_chronology_audit 的「DISPROVEN ⇒ L6」不变量，
+            # 等级降到 L6；**原引文里那句著述本身的 L4 性质记在 notes 里**。
+            # 碑祠细节（刚炳祠/义地数百亩）E13 未采信（E13 用「刚秉庙＋侯仁之考证」三角，
+            # 且不引《宛署杂记》），本条不得作为 VERIFIED 依据。
             PlaceAttestationEntity(
                 id="attest_zhongguan_eunuch_stele",
                 toponym_id="top_zhongguancun_eunuch",
                 attested_name="中官村刚炳祠堂碑",
                 source_title="北京历代太监墓石刻考",
                 source_author="北京石刻博物馆",
+                # ⚠️ 审计性保留 1900：DISPROVEN 条目必须留下**它当初错在哪**的证据
+                # （test_e27_e28 的可审计闸门），1900 这个不可能的纪年正是判死理由本身，
+                # 抹掉就无法复核「当时错在哪」。真实著述出版年另见 notes（待考）。
                 recorded_year=1900,
-                dynasty="清末光绪二十六年",
+                dynasty="现代著述（原误系清末光绪二十六年——已判死）",
                 quote="中官村地多太监兆域，内廷诸中官合祀刚炳为神，建祠村东，置义地数百亩",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R9②】recorded_year=1900 是**审计性保留的错值**：北京石刻博物馆"
+                      "的现代著述被系于清末光绪二十六年，**现代机构不可能出版于清末，"
+                      "纪年自证其伪**——这个不可能的纪年正是判死理由，抹掉就无法复核。"
+                      "著述真实出版年待考。原标 L2（一手官刻金石）亦错：这是现代著述非碑刻"
+                      "本体。碑祠细节（刚炳祠/义地数百亩）**E13 未采**（E13 用『刚秉庙＋"
+                      "侯仁之考证』三角，且不引《宛署杂记》）。保留原文供审计。",
             ),
             PlaceAttestationEntity(
                 id="attest_zhongguantun_map",
@@ -1646,6 +1901,12 @@ class HaidianCorpusExtractor:
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
+            # 【R11-4 回灌 2026-10-04】拟托书证：原挂《北平地名通志》（北平特别市政府
+            # 1934）——**查无此书**（民国北平无此名义的出版物；calibration bibliography
+            # 亦无该书目），引文「因水流安恬、桥跨御河，俗名遂改作」是**解说性断语**，
+            # 不是任何书的原文 → 判 DISPROVEN，原文留档。
+            # 安和/安河之名的转换本身**待考**（E2 §1.5 冻结：石额『安和桥』确有旧料，
+            # 但转换时间与机制待考，不做『和/河通写』的确定性解释）。
             PlaceAttestationEntity(
                 id="attest_anhe_republic_record",
                 toponym_id="top_anheqiao_river",
@@ -1655,20 +1916,42 @@ class HaidianCorpusExtractor:
                 recorded_year=1934,
                 dynasty="民国二十三年",
                 quote="安河桥在青龙桥东，因水流安恬、桥跨御河，俗名遂改作‘安河桥’",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R11-4 拟托书证】《北平地名通志》**查无此书**（民国北平无此名义"
+                      "出版物，calibration 书目表亦无），引文含解说性断语非原书文句。"
+                      "E2 §1.5 冻结：石额『安和桥』确有旧料，但**近现代通行写『安河桥』，"
+                      "转换时间与机制待考**，不做『和/河通写』的确定性解释。保留原文供审计。",
             ),
+            # 【R2 回灌 2026-10-04】两处错：
+            # ①**「营房四千（余）间」查无实据**（E10 冻结，《海淀历史地名清单》旧载）。
+            #   分项记载为官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座；
+            #   纪律＝**不给总数**。原引文把「四千间」当官书原句，是把旧清单数字
+            #   回填进官书引文——属「现代数字冒充古籍原文」，与 R11 同族。
+            # ②**卷次存疑**：E16 已直核的相关卷为卷73（「外火噐營房在長河西岸藍靛廠後」），
+            #   原引卷九十八未核；卷次未核前不冒称官书逐字原文 → 降 CONTESTED。
+            # 保留原文供审计；真实可核部分（蓝靛厂西岸、外火器营驻此）由
+            # calibration/banners.py 卷73 分条承担。
             PlaceAttestationEntity(
                 id="attest_huoqiying_record",
                 toponym_id="top_huoqiying",
                 attested_name="外火器营",
-                source_title="日下旧闻考卷九十八",
+                source_title="日下旧闻考卷九十八（卷次待核；E16 直核相关卷为卷73）",
                 source_author="于敏中",
                 recorded_year=1774,
                 dynasty="清乾隆三十九年",
-                quote="乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                # 🔴 R2/E10 结案：「建满蒙八旗营房四千间」查无实据（总数系后人回填），
+                #    官书口径只记分项（官廨千余/炮甲连房六千余/门楼三千一百余）。
+                #    证伪不等于删证——原句已入 QUARANTINE.md。
+                quote="乾隆三十五年改移外火器营于蓝靛厂，设枪炮演武场",
+                # DISPROVEN 条目的证据层级随之降为 L6（伪句已剥离，存证于隔离区）
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R2】①『四千（余）间』**查无实据**（E10 冻结）——原引文把《海淀历史"
+                      "地名清单》旧载数字回填成官书原句。**只报分项**：官廨一千余间、炮甲"
+                      "连房六千余间、周围门楼三千一百多座；7196（分项相加）与『四千余间』"
+                      "均不得作官方数字。②卷九十八未核，E16 直核相关卷为**卷73**"
+                      "「外火噐營房在長河西岸藍靛廠後」，故状态 CONTESTED 不作 VERIFIED。",
             ),
             PlaceAttestationEntity(
                 id="attest_linglongta_yandu",
@@ -1712,26 +1995,41 @@ class HaidianCorpusExtractor:
             PlaceAttestationEntity(
                 id="attest_gaolianghe_shuijingzhu",
                 toponym_id="top_gaolianghe",
-                attested_name="高梁水",
-                source_title="水经注卷十三",
+                attested_name="高梁之水（出薊城西北平地）",
+                # 🔴 2026-10-04 订正（P30，详见 corpus/era2 §1.4）：旧稿引文
+                # 「高梁水出**蓟县**西北平地，东南流经蓟城北，**水色清莹，草木丰茂**」——
+                # ① 实文作「水出**薊城**西北平地」（城，非县）；② **「水色清莹，草木丰茂」
+                # 在《水经注》全卷检索零命中**，属自撰，已删；③ 卷次：水名本作「㶟水」，
+                # 卷十三「漯」字零命中（漯水为同音异写之一），故标卷十三·㶟水。
+                source_title="水经注卷十三·㶟水（漯水为同音异写）",
                 source_author="郦道元",
                 recorded_year=527,
                 dynasty="北魏正光至孝昌年间",
-                quote="高梁水出蓟县西北平地，东南流经蓟城北，水色清莹，草木丰茂",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                quote="㶟水又東南，高梁之水注焉。水出薊城西北平地，泉流東注，逕燕王陵北，又東逕薊城北，又東南流。《魏土地記》曰：薊東十里有高梁之水者也。其水又東南入㶟水",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="「泉流東注」四字是「平原泉群、非山洪」判断的**直接书证**。"
+                      "**「积水潭」是后世地名**，用于曹魏叙述须加「今」字限定。",
             ),
             PlaceAttestationEntity(
                 id="attest_yuquanshan_jinshi",
                 toponym_id="top_yuquanshan",
-                attested_name="玉泉山芙蓉殿",
-                source_title="金史·地理志",
+                attested_name="玉泉山行宫（《金史》宛平县条）",
+                # 🔴 2026-10-04 判死改写（P03，详见 QUARANTINE.md Q-005）：旧稿所引
+                # 「大兴府宛平县有玉泉山，金世宗、章宗两朝建芙蓉殿及行宫于此，御泉甘冽」**于
+                # 《金史》卷二十四无此文**——该卷宛平县条实文仅「宛平倚。本晉幽都縣，遼開泰元年
+                # 更今名。**有玉泉山行宮。**」；**芙蓉殿、大定二十六年、明昌增葺、同乐园洗马沟
+                # 全部零命中**。且本条与 corpus era4 §1.4 旧稿的「金史引文」**文字互不相同**，
+                # 等于同源证伪（两处至少一处是编的）。
+                # 芙蓉殿及其年代**本库未考得可核出处**，不得挂《金史》名下，语义见 notes。
+                source_title="金史·地理志上（卷二十四·中都路·大兴府·宛平倚）",
                 source_author="脱脱等",
                 recorded_year=1344,
-                dynasty="元代修金史",
-                quote="大兴府宛平县有玉泉山，金世宗、章宗两朝建芙蓉殿及行宫于此，御泉甘冽",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                dynasty="元代修金史（记金代建置）",
+                quote="宛平倚。本晉幽都縣，遼開泰元年更今名。有玉泉山行宮",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="**仅「玉泉山行宮」一项为《金史》实书。**「芙蓉殿」及「世宗大定二十六年建、章宗明昌中增葺、引泉注于同乐园洗马沟」**查无书证**（corpus era4 §1.4 已标 UNSUBSTANTIATED），须另考《金史》纪传本纪或《日下旧闻考》，落实前不得回填。",
             ),
             PlaceAttestationEntity(
                 id="attest_wanshoushan_rixia",
@@ -1834,15 +2132,26 @@ class HaidianCorpusExtractor:
                 description="民间借谐音附会宋将杨六郎抗辽驻兵之英雄传说，遂讹写作六郎庄",
             ),
             # 大有庄演变
+            # 【R6 回灌 2026-10-04】E4 冻结：官书《日下旧闻考》卷100 证明**乾隆朝已用
+            # 『大有庄』之名**；『乾隆见穷八家不吉而御赐改名』是**地方文史「据载」说
+            # （L3）**，无诏书/御制诗/宫档出处。原 event 建 ImperialNamingEvent +
+            # occurred_year=1750 + triggering_person=乾隆帝 = 把传说当史实写进事件层
+            # （撤证不撤结论的变体）。现改为传闻层事件，**不锁年份、不设触发人**。
+            # 事件类型仍保留 ImperialNamingEvent 以维持 schema 枚举（该字段是自由
+            # 字符串，但生产导出按类型分支，改动面过大），语义以 description 为准。
             ToponymEventEntity(
                 id="evt_qiongbajia_to_dayouzhuang",
                 event_type="ImperialNamingEvent",
                 source_toponym_id="top_qiongbajia",
                 target_toponym_id="top_dayouzhuang",
-                dynasty="清乾隆年间",
-                occurred_year=1750,
-                description="乾隆帝巡幸见‘穷八家’村名不吉，取《周易》大有卦‘丰盛富庶’之义御赐改名大有庄",
-                triggering_person="清高宗乾隆帝",
+                dynasty="清乾隆年间（说法层）",
+                occurred_year=None,
+                description="【L3 传说，非史实】地方文史「据载」：乾隆见『穷八家』村名不雅，"
+                            "赐名『大有庄』（取《周易》大有卦丰饶义）。无诏书/御制诗/宫档"
+                            "出处。**另有竞争解释**：人大清史所称村落因圆明园/清漪园/护军营"
+                            "渐富裕后自行更名。官书《日下旧闻考》卷100 只证明乾隆朝已用"
+                            "『大有庄』之名，不证明改名情节。**不锁 1750 年。**",
+                triggering_person=None,
             ),
             # 魏公村演变
             ToponymEventEntity(
@@ -1855,25 +2164,51 @@ class HaidianCorpusExtractor:
                 description="‘畏吾村’经数百年方言口传音转为‘畏兀村’、‘魏家村’，民国四年《实测四郊图》谐音定名‘魏公村’",
             ),
             # 中关村演变
+            # 【R7 回灌 2026-10-04】E13 冻结：改名是「**清末民初地图雅化 + 1950年代
+            # 机构定名**」**两步走**。原事件把 1913 定为改名年、并写「因新式学堂进驻」
+            # 的驱动叙事——①1913 图上只有零星「中关」，**不是定名年**（且 1950 年代初
+            # 官方档案仍作「中官村／中官邨」）；②「学堂进驻」无任何书证，属自撰机制。
+            # 现拆语义：occurred_year 置空（跨清末民初至 1950 年代），触发机制改写为
+            # E13 冻结的两步走，定型锚点挂 1953。
             ToponymEventEntity(
                 id="evt_zhongguan_euphemism",
                 event_type="EuphemisticRenamingEvent",
                 source_toponym_id="top_zhongguancun_eunuch",
                 target_toponym_id="top_zhongguancun_modern",
-                dynasty="清末民初",
-                occurred_year=1913,
-                description="中官村太监义地因新式学堂进驻，文人与测地局避忌‘中官（宦官）’嫌称，雅化为‘中关村’",
+                dynasty="清末民初至1950年代（两步走，非一次性事件）",
+                occurred_year=None,
+                description="「中官（宦官）」为嫌称，改名分两步：①**清末民初测绘图上已"
+                            "零星出现雅化名「中关」**（1913年《京西图》，二万五千分之一）——"
+                            "但1950年代初官方档案与当地习惯写法仍是「中官村／中官邨」，"
+                            "故 1913 **不构成定名**；②**1953年中科院《中华地理志》编辑部"
+                            "迁入**，印制信笺时经办人误将「中官屯」写作「中关村」，"
+                            "各所沿用该通信地址而**定型**（当事人回忆层）。"
+                            "❌ 禁「1913 已取代中官村」；❌ 禁「新式学堂进驻」驱动说（无书证）；"
+                            "❌ 禁「陈垣1930年代独创提议」（流传广但无一手文献，仅『一说』层）。",
+                triggering_person=None,
             ),
             # 安河桥演变
+            # 【R11-3 回灌 2026-10-04】E2 §1 冻结：石额「安和桥」确有旧料，但**转换
+            # 时间与机制待考**；「安澜平和」只是 L3 地方文史释义。桥史本身两套记载
+            # 并存（系统A 雍正二年建木桥/乾隆年间改建石桥 L3-L4 vs 系统B 康熙五十九年
+            # 1720重建石拱 L1转引），E2 要求**保留冲突不制造确定性**。KB 原把
+            # 「1781＋乾隆御题」当定论写进事件层，现撤下：occurred_year 置空、
+            # 触发人置空、描述改为两说并存。
             ToponymEventEntity(
                 id="evt_anhe_imperial",
                 event_type="ImperialNamingEvent",
                 source_toponym_id="top_anheqiao_wood",
                 target_toponym_id="top_anheqiao_peace",
-                dynasty="清乾隆四十六年",
-                occurred_year=1781,
-                description="乾隆帝改修石拱桥，御题‘安和桥’石额",
-                triggering_person="清高宗乾隆帝",
+                dynasty="清代（年代两说并存）",
+                occurred_year=None,
+                description="【年代与机制待考，勿当定论】石额『安和桥』确有旧料，"
+                            "近现代通行写『安河桥』，但**转换时间与机制无定论**。"
+                            "桥史两套记载并存：系统A（地方文史L3/L4）雍正二年1724始建木桥、"
+                            "乾隆年间改建单孔石拱；系统B（研究论文转引1929年北平市工务局"
+                            "郊区桥梁档案，L1转引暂按L2）『始建于元代以前』、明正统十四年重修、"
+                            "**康熙五十九年1720重建石拱**。『安澜平和』之意属L3地方文史说法。"
+                            "**不锁 1781，不设乾隆御题为触发人。**",
+                triggering_person=None,
             ),
             ToponymEventEntity(
                 id="evt_anhe_river_drift",
@@ -1958,7 +2293,9 @@ class HaidianCorpusExtractor:
                 target_toponym_id="top_huoqiying",
                 dynasty="清乾隆三十五年",
                 occurred_year=1770,
-                description="乾隆三十五年外火器营四千间兵营自城内迁驻蓝靛厂，市镇与兵营空间复合",
+                description="乾隆三十五年外火器营自城内迁驻蓝靛厂，市镇与兵营空间复合。"
+                            "【R2】营区规模**不给总数**——「四千（余）间」查无实据（E10 冻结）；"
+                            "只报分项：官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座",
                 triggering_person="清高宗乾隆帝",
             ),
             ToponymEventEntity(
@@ -2006,19 +2343,31 @@ class HaidianCorpusExtractor:
                 id="hypo_taizhouwu_tang",
                 toponym_id="top_taizhouwu",
                 hypothesis_title="太舟坞源于唐代羁縻带州音转说",
-                claim_summary="唐神龙元年置羁縻带州，天宝间寄治昌平县清水店，太舟坞即带州之长久音转",
-                supported_by_attestation_ids=[],
-                disproven_by_attestation_ids=["attest_taizhouwu_dock_study"],
+                # 🔴 2026-10-04 订正（P16，详见 QUARANTINE.md Q-006/Q-009）：
+                # ① 置州年改「唐神龙元年置」——《旧唐书》实文为**贞观十九年（645）于营州界内置**，
+                #    神龙初是「放还改隶幽州都督」，不是置州；
+                # ② **disproven_by 置空**——旧稿指向 attest_taizhouwu_dock_study，而该书证
+                #    所挂文献查无实书（Q-009），**CONTESTED/UNSUBSTANTIATED 证据不能执行 DISPROVE**。
+                claim_summary="唐贞观十九年（645）置羁縻带州，州陷契丹后寄治昌平县清水店，"
+                              "太舟坞即带州之长久音转（清水店今地三说并存，本说未证）",
+                supported_by_attestation_ids=["attest_daizhou_tang_record"],
+                # 🔴 置空：不得用存疑书证执行 DISPROVE（否则等于「以存疑证否另一说」）。
+                disproven_by_attestation_ids=[],
                 confidence_status=EpistemicStatus.CONTESTED,
             ),
             CompetingHypothesisEntity(
                 id="hypo_taizhouwu_dock",
                 toponym_id="top_taizhouwu",
                 hypothesis_title="太舟坞源于元代白浮引水河道船坞说",
-                claim_summary="太舟坞地处元代白浮瓮山河漕运停泊带，‘太舟坞’实为大船泊坞之地形实录",
+                # 🔴 2026-10-04 降级（P16，详见 QUARANTINE.md Q-009）：旧稿 confidence_status=VERIFIED，
+                # 而其**唯一支撑书证** attest_taizhouwu_dock_study 所挂「北京水利史志研究／
+                # 北京市水利学会1995」**查无实书**——用伪证证实，是本库最典型的「伪证升格」形态。
+                # 两说正面对立且**都无一手书证**，故一律 CONTESTED。
+                claim_summary="太舟坞地处元代白浮瓮山河漕运停泊带，「太舟坞」实为大船泊坞之地形实录"
+                              "（唯一书证查无实书，本库未考得可核出处）",
                 supported_by_attestation_ids=["attest_taizhouwu_dock_study"],
                 disproven_by_attestation_ids=[],
-                confidence_status=EpistemicStatus.VERIFIED,
+                confidence_status=EpistemicStatus.CONTESTED,
             ),
             CompetingHypothesisEntity(
                 id="hypo_xisanqi_manchu",

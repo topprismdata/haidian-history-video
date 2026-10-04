@@ -30,9 +30,14 @@ def test_era2_qin_han_archaeology_and_watercourse_attestations():
     assert qinghe_att.evidence_level == EvidenceLevel.L1_ARCHAEOLOGICAL
     assert qinghe_att.epistemic_status == EpistemicStatus.VERIFIED
 
+    # 🔴 2026-10-04 订正：旧断言 `"出蓟县西北平地" in quote` 是在**保护伪引文**——
+    # 《水经注》卷十三实文作「水出**薊城**西北平地」（城，非县），且旧稿缀的
+    # 「水色清莹，草木丰茂」在《水经注》全卷检索零命中、属自撰。详见 corpus/era2 §1.4。
     sjz_att = atts["attest_gaolianghe_shuijingzhu"]
-    assert "出蓟县西北平地" in sjz_att.quote
-    assert "经蓟城北" in sjz_att.quote
+    assert "水出薊城西北平地" in sjz_att.quote
+    assert "泉流東注" in sjz_att.quote, "「泉流东注」是平原泉群判断的直接书证"
+    for dead in ("水色清莹", "草木丰茂", "出蓟县"):
+        assert dead not in sjz_att.quote, "《水经注》伪引文片段复活: %s" % dead
 
 
 def test_era2_negative_control_canal_spatial_integrity():
