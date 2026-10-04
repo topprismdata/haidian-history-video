@@ -66,14 +66,14 @@ RELATIONS = {
 }
 
 SOURCES = {
-    "BRIDGE_LEN": ("官方", "北京青年报/中新网2025-12-09 '长150米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing 同值 https://s.visitbeijing.com.cn/attraction/120842"),
-    "N_SPAN": ("官方", "中新网2025-12-09 '17个拱形桥洞' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing '桥由17个桥洞组成' https://s.visitbeijing.com.cn/attraction/120842"),
+    "BRIDGE_LEN": ("官方散文", "科普口径无测点无基准, 不得直接映射到几何元素; 见 C9(OSM 实测桥体直线仅134.0m, 差16m 口径未定) 北京青年报/中新网2025-12-09 '长150米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing 同值 https://s.visitbeijing.com.cn/attraction/120842"),
+    "N_SPAN": ("官方实测", "中新网2025-12-09 '17个拱形桥洞' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing '桥由17个桥洞组成' https://s.visitbeijing.com.cn/attraction/120842 ; 孔数可逐孔实测点数验证(实拍与渲染均可见), 无测点争议"),
     "DECK_Z_TOP": ("工作值", "现脚本值; 官方高7米基准未注明(C3)"),
     "DECK_Z_END": ("工作值", "现脚本值"),
-    "DECK_UP_W": ("官方", "北京青年报/中新网2025-12-09 '桥面上宽6.56米'; 公园管理中心2019原始页未检回, 以中新网转载为URL锚"),
-    "DECK_DOWN_W": ("官方", "北京青年报/中新网2025-12-09 '桥面下宽14.6米'(与 DECK_UP_W 同篇, 各自独立引用原文)"),
-    "PUBLISHED_GENERAL_WIDTH": ("官方", "公园管理中心'科普公园'2023-12-01 '桥身宽8米' https://gygl.beijing.gov.cn/xxgk/xxgk_gyxx/202312/t20231201_3336230.html ; 北京日报引颐和园科普讲师 '桥面宽是8米'; 与6.56口径冲突(C2)"),
-    "PUBLISHED_BRIDGE_HEIGHT": ("官方", "中新网2025-12-09 '高7米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; 北京日报引颐和园讲师'桥洞最高点有7米'; 科普公园'桥洞最高达7米' 表述互异(C3), 禁映射DECK_Z_TOP"),
+    "DECK_UP_W": ("官方散文", "科普口径无测点(未注明量于何处/是否含栏板), 不得直接映射; 见 C2(与'宽八米'并存) 北京青年报/中新网2025-12-09 '桥面上宽6.56米'; 公园管理中心2019原始页未检回, 以中新网转载为URL锚"),
+    "DECK_DOWN_W": ("官方散文", "科普口径无基准面, 不得直接映射到水线处可见几何; 见 C7(若为水线宽则总长247.5m>>150 算术互斥, 疑为水下基础/含燕翅基底宽) 北京青年报/中新网2025-12-09 '桥面下宽14.6米'(与 DECK_UP_W 同篇, 各自独立引用原文)"),
+    "PUBLISHED_GENERAL_WIDTH": ("官方散文", "公园管理中心'科普公园'2023-12-01 '桥身宽8米' https://gygl.beijing.gov.cn/xxgk/xxgk_gyxx/202312/t20231201_3336230.html ; 北京日报引颐和园科普讲师 '桥面宽是8米'; 科普概称无测点, 不得直接映射到几何; 与6.56口径冲突(C2)"),
+    "PUBLISHED_BRIDGE_HEIGHT": ("官方散文", "中新网2025-12-09 '高7米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; 北京日报引颐和园讲师'桥洞最高点有7米'; 科普公园'桥洞最高达7米' 表述互异(C3); 科普口径无测点无基准面, 禁映射DECK_Z_TOP(C3b: 若指主孔洞内净高则误差3.6%, 优于'桥面顶'口径的10.7%)"),
     "ARCH_RATIO": ("图像推导", "近正面原始照比例假设; ESRGAN退出计量链"),
     "SPRINGER": ("工作值", "无文献, 沿用现脚本值; M0 检索矢高/起拱线无数字命中"),
     "RING_T": ("工作值", "无文献, 沿用现脚本值; M0 无命中"),

@@ -12,7 +12,7 @@
 
 | 文件 | SHA256 | 说明 |
 |---|---|---|
-| `3d/facts.py` | `df4252160e13688e0dace5d34b091afd30a2238a91b510340e1a3464f1c6d509` | 22 条本体条目（终审 I12 新增 3 条判据阈值参数）；等级分布见 §9 |
+| `3d/facts.py` | `72fd90d529454852f5c475b097689a94de7b13f08e73f3da66b6882ae8cab3f2` | 22 条本体条目（终审 I12 新增 3 条判据阈值参数）；等级分布见 §9 |
 | `3d/assumptions.py` | `c6e8002911c6a2401a7b44b2030b3db9f42bb1444c412c0e013c2de213a26e7e` | 假设层，不进冻结，改动须记录（终审 I13 删 `BRIDGE_ABUT_TARGET`、I9/I12 外置 `VOID_CUT_MARGIN`） |
 
 等级分布（facts.SOURCES 22 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 1**（ARCH_RATIO）、**工作值 15**（12 条本体尺寸 + 3 条判据阈值参数 CLOSURE_TOL / ARCH_RATIO_TARGET / ARCH_RATIO_TOL，清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。

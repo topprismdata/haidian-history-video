@@ -18,7 +18,8 @@
 """
 from . import derive as _derive
 from .schema import (Finding, MissingFactError, is_number, has, get,
-                     REQUIRED, REQUIRED_LISTS, GRADES, validate_facts_module)
+                     REQUIRED, REQUIRED_LISTS, GRADES, ALL_GRADES, LEGACY_GRADES,
+                     validate_facts_module)
 
 EPS = 1e-9   # 纯浮点等值容差(实现参数, 非文物尺寸)
 
@@ -301,7 +302,7 @@ def imp_sources_cover(f):
 
 
 def imp_grades_legal(f):
-    """来源等级必须落在 GRADES 五级内(含"待核"在内的一切等级外写法都非法)。
+    """来源等级必须落在 GRADES 六级内(含"待核"在内的一切等级外写法都非法)。
     SOURCES 形状非法 → skip(由 IMP_REGS_SHAPE 报告)。"""
     if not has(f, "SOURCES"):
         return _skip("IMP_GRADES_LEGAL", "缺 SOURCES, 由 IMP_REGS_MISSING 报告")
@@ -311,11 +312,31 @@ def imp_grades_legal(f):
     bad = []
     for k, v in src.items():
         grade = v[0] if isinstance(v, (tuple, list)) and v else None
-        if grade not in GRADES:
+        if grade not in ALL_GRADES:
             bad.append((k, grade))
     if bad:
         return [Finding("fail", "IMP_GRADES_ILLEGAL",
-                        "等级不在五级(%s)内: %r" % ("/".join(GRADES), bad))]
+                        "等级不在合法来源等级(%s)内: %r" % ("/".join(ALL_GRADES), bad))]
+    return []
+
+def imp_grade_unsplit(f):
+    """"官方"未细化为实测/散文 → warn(不阻塞, 但必须点名)。
+
+    背景: E30 六个"官方"值里五个是科普散文口径(无测点无基准面), 与测绘同列会让
+    下游误判可直接映射到几何。故旧写法仍合法(向后兼容), 但逐条点名要求细化。
+    """
+    code = "IMP_GRADE_UNSPLIT"
+    if not has(f, "SOURCES"):
+        return _skip(code, "缺 SOURCES, 未执行")
+    src = get(f, "SOURCES")
+    if not hasattr(src, "items"):
+        return _skip(code, "SOURCES 形状非法, 未执行")
+    legacy = sorted(k for k, v in src.items()
+                    if isinstance(v, (tuple, list)) and v and v[0] in LEGACY_GRADES)
+    if legacy:
+        return [Finding("warn", code,
+                        "「官方」需逐条细化为 官方实测(有测点/基准面) 或 官方散文(科普口径, "
+                        "禁止直接映射到几何元素): %r" % (legacy,))]
     return []
 
 
@@ -373,6 +394,7 @@ INV_CHECKS = (inv_n_span, inv_spans_len, inv_spans_positive, inv_supports_len)
 MET_CHECKS = (met_closure, met_deck_camber, met_taper, met_arch_ratio,
               met_ring_fit, met_springer)
 IMP_CHECKS = (imp_contract, imp_dims, imp_tolerance, imp_sources_cover,
+              imp_grade_unsplit,
               imp_grades_legal, imp_assumptions_isolated, imp_relations)
 
 

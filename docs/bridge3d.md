@@ -41,7 +41,7 @@ RELATIONS = {                         # [可选] 项目自声明的关系型不�
       lambda f: all(list(f.SPAN_DISTINCT)[i] <= list(f.SPAN_DISTINCT)[i+1] + 1e-9
                     for i in range(len(f.SPAN_DISTINCT) - 1)),
 }
-SOURCES = {                           # 来源五级: 测绘>档案>官方>图像推导>工作值
+SOURCES = {                           # 来源六级: 测绘 > 档案 > 官方实测 > 官方散文 > 图像推导 > 工作值（旧写法「官方」仍合法但由 IMP_GRADE_UNSPLIT 报 warn 要求逐条细化）
     "BRIDGE_LEN": ("官方", "县志 1993 卷三 http://..."),
     "N_SPAN": ("官方", "文保碑 2019 照片转记 http://..."),
     "PIER_W": ("工作值", "无文献, 沿用设计稿值"),   # 工作值必须写明"为什么没来源"

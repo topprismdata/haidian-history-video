@@ -19,7 +19,8 @@ skip=未执行, 不算通过。
 """
 import re
 
-from .schema import Finding, has, get, REQUIRED, REQUIRED_LISTS, GRADES
+from .schema import (Finding, has, get, REQUIRED, REQUIRED_LISTS,
+                     GRADES, ALL_GRADES, LEGACY_GRADES)
 
 WORKING = "工作值"
 
@@ -86,14 +87,14 @@ def check_source_shape(f):
 
 
 def check_grades_legal(f):
-    """等级必须落在 GRADES 五级内(任何等级外写法, 含[待核], 都非法)。"""
+    """等级必须落在来源等级内(任何等级外写法, 含[待核], 都非法)。"""
     src = _sources(f)
     if src is None:
         return [Finding("skip", "FS_GRADE_ILLEGAL", "缺 SOURCES 台账, 未执行")]
-    bad = [(n, g) for n, g, _note in _well_formed_entries(src) if g not in GRADES]
+    bad = [(n, g) for n, g, _note in _well_formed_entries(src) if g not in ALL_GRADES]
     if bad:
         return [Finding("fail", "FS_GRADE_ILLEGAL",
-                        "等级不在五级(%s)内: %r" % ("/".join(GRADES), bad))]
+                        "等级不在合法来源等级(%s)内: %r" % ("/".join(ALL_GRADES), bad))]
     return []
 
 
@@ -141,7 +142,7 @@ def check_no_grade_inflation(f):
         return [Finding("skip", "FS_GRADE_INFLATED", "缺 SOURCES 台账, 未执行")]
     inflated = []
     for name, grade, note in _well_formed_entries(src):
-        if grade in GRADES and grade != WORKING and any(k in note for k in _SELF_NO_SOURCE):
+        if grade in ALL_GRADES and grade != WORKING and any(k in note for k in _SELF_NO_SOURCE):
             inflated.append((name, grade, note))
     if inflated:
         return [Finding("fail", "FS_GRADE_INFLATED",
@@ -149,15 +150,23 @@ def check_no_grade_inflation(f):
     return []
 
 
+OFFICIAL_GRADES = ("官方", "官方实测", "官方散文")
+# 「官方实测」必须交代测点/基准; 「官方散文」必须自带"不得直接映射"警示。
+# 这是拆级的实际牙齿 —— 只改名不加分级要求等于没拆。
+_MEASURE_MARK = ("测点", "基准", "测绘", "实测", "公告", "竣工", "验收", "检测")
+_PROSE_MARK = ("散文", "科普", "无测点", "无基准", "简介", "讲解", "报道", "不得映射", "禁映射", "概称")
+
+
 def check_official_citation(f):
-    """[官方] 等级必须在说明里给出正面可追溯出处: URL, 或 机构+年份 且不在否定语境。
+    """[官方*] 三个等级都必须在说明里给出正面可追溯出处: URL, 或 机构+年份 且不在否定语境。
+    另: [官方实测] 须含测点/基准字样; [官方散文] 须含"无测点/不得映射"类警示。
     (E30 负控实证: 只查"有年份"会漏网 —— 否定语境"未检回"里的年份不算出处。)"""
     src = _sources(f)
     if src is None:
         return [Finding("skip", "FS_OFFICIAL_UNCITED", "缺 SOURCES 台账, 未执行")]
     bad = []
     for name, grade, note in _well_formed_entries(src):
-        if grade != "官方":
+        if grade not in OFFICIAL_GRADES:
             continue
         cited = [seg for seg in re.split(r"[;；,，]", note) if seg.strip()]
         positive = False
@@ -174,7 +183,17 @@ def check_official_citation(f):
             bad.append((name, note))
     if bad:
         return [Finding("fail", "FS_OFFICIAL_UNCITED",
-                        "[官方] 缺正面可追溯出处(URL 或 机构+年份, 非否定语境): %r" % (bad,))]
+                        "[官方*] 缺正面可追溯出处(URL 或 机构+年份, 非否定语境): %r" % (bad,))]
+    # 拆级的实际要求: 实测要有测点, 散文要自带警示
+    mis = []
+    for name, grade, note in _well_formed_entries(src):
+        if grade == "官方实测" and not any(k in note for k in _MEASURE_MARK):
+            mis.append((name, grade, "官方实测须交代测点/基准/测绘口径"))
+        elif grade == "官方散文" and not any(k in note for k in _PROSE_MARK):
+            mis.append((name, grade, "官方散文须自带『无测点/不得直接映射到几何』警示"))
+    if mis:
+        return [Finding("fail", "FS_OFFICIAL_GRADE_UNSPLIT",
+                        "官方等级细化要求未满足: %r" % (mis,))]
     return []
 
 
