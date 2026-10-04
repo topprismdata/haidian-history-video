@@ -389,3 +389,51 @@ class TestNegativeControlGate:
         assert len(labels) == 7, "七个名号必须互不相同，实际 %s" % labels
         assert "寿安禅林" in labels, "🔴 寿安禅林是独立名号，不得并入寿安山寺"
         assert "寿安山寺" in labels, "寿安山寺是元代敕建名，必须独立存在"
+
+
+class TestPropositionTextPinned:
+    """🔴 回归（WriteFixLedgers 审出）：命题层文本曾残留订正前错误六名链。
+
+    Appellation 层改七名后，命题 statement / inference_method / 采信 rationale
+    三处仍是旧六名链（昭孝寺系至治、寿安山寺系正统）—— 同一事实多处手写
+    必然漂移，且当时没有任何测试钉命题文本，1207 全绿照样漏。
+    本类把命题文本钉死。
+    """
+
+    def test_prop_statement_has_seven_names_in_order(self):
+        p = [x for x in S.PROPOSITIONS
+             if x.id == "prop_e26_six_names_chain"][0]
+        expected = ["兜率寺", "寿安山寺", "昭孝寺", "洪庆寺",
+                    "寿安禅林", "永安寺", "十方普觉寺"]
+        # 🔴 判据自纠：statement 开头是「今十方普觉寺自…」——
+        #    「十方普觉寺」在句首也出现，index() 会命中开头导致顺序断言必假。
+        #    只在「先后用过」之后的枚举段内查顺序。
+        enum_start = p.statement.index("先后用过")
+        seg = p.statement[enum_start:]
+        pos = [seg.index(nm) for nm in expected]
+        assert pos == sorted(pos), "七名必须按时间顺序出现在 statement 枚举段中"
+        assert "七个名号" in p.statement and "六次易名" in p.statement
+
+    def test_prop_method_binds_dynasty_to_name(self):
+        """🔴 负控制：寿安山寺＝元、寿安禅林＝明，绑定关系必须显式。"""
+        p = [x for x in S.PROPOSITIONS
+             if x.id == "prop_e26_six_names_chain"][0]
+        m = p.inference_method
+        assert "延祐七年" in m and "寿安山寺" in m, "寿安山寺须系元延祐七年"
+        assert "正统八年" in m and "寿安禅林" in m, "寿安禅林须系明正统八年"
+        assert "不可跨朝代焊接" in m, "须显式写明不可跨朝代焊接"
+
+    def test_prop_no_stale_wrong_pairing(self):
+        """🔴 负控制：把数据改回错误配对（正统八年·寿安山寺）必失败。"""
+        p = [x for x in S.PROPOSITIONS
+             if x.id == "prop_e26_six_names_chain"][0]
+        assert not ("正统八年" in p.inference_method
+                    and "寿安山寺" in p.inference_method
+                    and "寿安禅林" not in p.inference_method), \
+            "🔴 旧错误配对回归：正统八年配寿安山寺、且无寿安禅林"
+
+    def test_adoption_rationale_seven_names(self):
+        ad = [x for x in S.ADOPTIONS
+              if x.proposition_id == "prop_e26_six_names_chain"][0]
+        assert "七个名号" in ad.rationale
+        assert "寿安禅林" in ad.rationale, "采信理由须含寿安禅林"
