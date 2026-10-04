@@ -270,39 +270,6 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(void, do_unlink=True)
-    # ── 布尔后修正券洞内壁法线 ──
-    # EXACT 求解器会打乱内壁法线 -> 朝外的面渲染成黑楔/死黑洞。
-    # 判据(几何上严格): 空腔内的面, 法线必须指向该洞的"内法线方向":
-    #   拱段(z>SPRINGER): 圆弧内法线 = 面心 -> 圆心(xc, SPRINGER)
-    #   矩形段(z<=SPRINGER): 内法线 = 水平指向洞轴 x=xc
-    me = body.data
-    cavities = [(G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0 for i in range(G.N_SPAN)]
-    flipped = 0
-    for poly in me.polygons:
-        c = poly.center
-        for xc in cavities:
-            a = None
-            for i in range(G.N_SPAN):
-                if (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0 == xc:
-                    a = G.SPANS[i] / 2.0; break
-            if a is None or abs(c.x - xc) > a + 0.05: continue
-            n = poly.normal
-            if abs(n.y) < 0.05: continue          # 径向面才需要判
-            if c.z > G.SPRINGER + 0.05:
-                b = a * 2.0 * G.ARCH_RATIO
-                dx, dz = c.x - xc, c.z - G.SPRINGER
-                if dz > b or (dx*dx + dz*dz) > (a + 0.2) ** 2: continue
-                ax_, az_ = -dx, -dz
-            else:
-                if abs(c.x - xc) > a - 0.02: continue
-                ax_, az_ = (xc - c.x), 0.0
-            L = math.hypot(ax_, az_)
-            if L < 1e-6: continue
-            if n.x * ax_ / L + n.z * az_ / L < 0.0:
-                poly.flip(); flipped += 1
-            break
-    me.update()
-    print("  翻转券洞内壁破面: %d" % flipped)
     # 桥台加长(GPT v4 第4刀): 每端 BRIDGE_ABUT=1.35m 且向岸收分。
     # 值取 facts.BRIDGE_ABUT(T2b 闭合归因唯一解: 107.3+16*2.50+2*1.35=150.0 精确闭合);
     # GPT 设计提案 2.00(assumptions.BRIDGE_ABUT_TARGET)未获事实地位, 不进生成器。
@@ -327,6 +294,42 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m2.name)
     bpy.data.objects.remove(abut, do_unlink=True)
+    # ── 布尔后修正券洞内壁法线 ──
+    # EXACT 求解器会打乱内壁法线 -> 朝外的面渲染成黑楔/死黑洞(实测 494/494 拱腹面背心)。
+    # 判据(几何上严格): 空腔内的面, 法线必须指向该洞的"内法线方向":
+    #   拱段(z>SPRINGER): 圆弧内法线 = 面心 -> 圆心(xc, SPRINGER)
+    #   矩形段(z<=SPRINGER): 内法线 = 水平指向洞轴 x=xc
+    #
+    # 2026-10-04 两处修正(由 L2 判据 qa_l2.py 的真阳性暴露, 见 .superpowers/sdd/e30-briefs/task-task-5-report.md):
+    #  ①过滤条件曾写成 `if abs(n.y) < 0.05: continue` 并注"径向面才需要判"——注释与代码相反,
+    #    |n.y|≈0 正是径向面(拱腹面)却被跳过, 264 次翻转全打在 ±y 侧墙面上, 拱腹 0→0 不变。
+    #    现改为 `> 0.05: continue`: 只处理侧墙面, 拱腹面由下面的"指向圆心"判据负责。
+    #  ②本工序原先在桥台 UNION **之前**, 防护不了 UNION 引入的新破面; 现移到 UNION 之后。
+    me = body.data
+    cavities = [(G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0 for i in range(G.N_SPAN)]
+    flipped = 0
+    for poly in me.polygons:
+        c = poly.center
+        for idx, xc in enumerate(cavities):
+            a = G.SPANS[idx] / 2.0
+            if abs(c.x - xc) > a + 0.05: continue
+            n = poly.normal
+            if abs(n.y) > 0.05: continue          # 侧墙面(|y|法线)不判, 只判径向面
+            if c.z > G.SPRINGER + 0.05:
+                b = a * 2.0 * G.ARCH_RATIO
+                dx, dz = c.x - xc, c.z - G.SPRINGER
+                if dz > b or (dx*dx + dz*dz) > (a + 0.2) ** 2: continue
+                ax_, az_ = -dx, -dz
+            else:
+                if abs(c.x - xc) > a - 0.02: continue
+                ax_, az_ = (xc - c.x), 0.0
+            L = math.hypot(ax_, az_)
+            if L < 1e-6: continue
+            if n.x * ax_ / L + n.z * az_ / L < 0.0:
+                poly.flip(); flipped += 1
+            break
+    me.update()
+    print("  翻转券洞内壁破面: %d" % flipped)
     # ── 起拱线石 impost (GPT v4 建议第3项) ──
     # 直边墙 -> 半圆券的转折处本该有一块横向凸出的承托石。
     # 缺它时该处法线突变成锐棱, 在洞内形成一条贯通的黑色暗带(实测复现)。
