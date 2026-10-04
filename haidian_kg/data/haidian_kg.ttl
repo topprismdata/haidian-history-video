@@ -686,7 +686,7 @@ hd:attest_chengfulu_gazetteer a hhto:PlaceAttestation ;
     rdfs:label "成府路"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
-    hhto:originalQuote "成府路东起五道口，西至清华大学西门南，因原成府村得名，现为中关村主干道"@zh ;
+    hhto:originalQuote "成府路东起五道口，西至清华大学西门南，因原成府村得名"@zh ;
     hhto:recordedYear 1992 ;
     rdfs:comment "断代: 现代 | 来源: 《北京市海淀区地名志》"@zh .
 

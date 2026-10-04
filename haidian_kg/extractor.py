@@ -1469,7 +1469,7 @@ class HaidianCorpusExtractor:
                 source_author="海淀区地名办",
                 recorded_year=1992,
                 dynasty="现代",
-                quote="成府路东起五道口，西至清华大学西门南，因原成府村得名，现为中关村主干道",
+                quote="成府路东起五道口，西至清华大学西门南，因原成府村得名",
                 evidence_level=EvidenceLevel.L4_MODERN_SCHOLARSHIP,
                 epistemic_status=EpistemicStatus.VERIFIED,
             ),
