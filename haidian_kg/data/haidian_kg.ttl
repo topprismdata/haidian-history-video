@@ -122,7 +122,7 @@ hd:feat_guangyuanzha_site a hhto:HydraulicFacility,
         hhto:PhysicalFeature ;
     rdfs:label "广源闸水利遗址"@zh ;
     hhto:coordinatesWGS84 "116.31,39.94"^^xsd:string ;
-    rdfs:comment "元至元二十六年通惠河头闸，郭守敬主持修建之节制水柜水闸"@zh .
+    rdfs:comment "元代长河节制闸，通惠河闸系之首（至元二十九年 1292 工程）；建年双徽：1289《水部备考》转引称建／1292《元史》通惠河工程开工列入闸系；元史实名见《元史·河渠志》闸名序列「廣源牐」"@zh .
 
 hd:feat_linshuogong_site a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
@@ -132,9 +132,9 @@ hd:feat_linshuogong_site a hhto:PhysicalFeature,
 
 hd:feat_longbeicun_weir a hhto:HydraulicFacility,
         hhto:PhysicalFeature ;
-    rdfs:label "白浮堰龙背村段古水利遗构"@zh ;
+    rdfs:label "白浮堰龙背村段古水利遗构（待考）"@zh ;
     hhto:coordinatesWGS84 "116.27,40.03"^^xsd:string ;
-    rdfs:comment "全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存"@zh .
+    rdfs:comment "龙背村一带白浮引水线路上的待考地面遗存；无实物勘测档案支撑，不得作元代堰堤实体定性（L1 已撤），更禁「全国唯一存世」；白浮泉引水系统元延祐元年（1314）起已淤塞（E29）"@zh .
 
 hd:feat_qinghe_han_tombs a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
@@ -328,8 +328,7 @@ hd:unit_dayouzhuang_village a hhto:AdministrativeUnit,
     rdfs:label "大有庄（清代改名村落）"@zh ;
     hhto:locatedAtFeature hd:feat_wanshoushan ;
     hhto:namedAs hd:top_qiongbajia ;
-    hhto:validTimeStart 1750 ;
-    rdfs:comment "乾隆御赐名农耕村落，前身为清初贫民合居之‘穷八家’"@zh .
+    rdfs:comment "皇家园林/仓廪/马政体系服务的村落；清初曾称『穷八家』，乾隆朝官书已作『大有庄』（《日下旧闻考》卷100，L1）。❌ 不得写成『乾隆1750御赐改名』的已确证事实——赐名说属 L3 据载层"@zh .
 
 hd:unit_dazhongsi_temple a hhto:AdministrativeUnit,
         hhto:ReligiousSite ;
@@ -403,7 +402,7 @@ hd:unit_landianchang_town a hhto:AdministrativeUnit,
     hhto:locatedAtFeature hd:feat_changhe ;
     hhto:namedAs hd:top_landianchang_dye ;
     hhto:validTimeStart 1770 ;
-    rdfs:comment "明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之四千间兵营市镇"@zh .
+    rdfs:comment "明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之兵营市镇；营区规模只报分项（官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座），❌ 不给总数（『四千余间』查无实据）"@zh .
 
 hd:unit_liao_nanjing a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -554,11 +553,10 @@ hd:unit_yan_fiefdom a hhto:AdministrativeUnit,
 
 hd:unit_yimuyuan_fields a hhto:AdministrativeUnit,
         hhto:Settlement ;
-    rdfs:label "一亩园御田与庙会"@zh ;
+    rdfs:label "一亩园与娘娘庙会"@zh ;
     hhto:locatedAtFeature hd:feat_wanquanhe ;
     hhto:namedAs hd:top_yimuyuan ;
-    hhto:validTimeStart 1723 ;
-    rdfs:comment "圆明园大宫门外皇帝躬耕演礼之籍田与京西著名娘娘庙会所在地"@zh .
+    rdfs:comment "圆明园大宫门前附属空间与现代社区；乾隆朝图档见建筑院落、道路、水渠、土山（L1）。京西娘娘庙会（泰山圣母庙，『康熙重建、光绪再建』L2/L3）所在地。❌ 禁称『皇帝躬耕演礼之籍田』；耤田礼在先农坛"@zh .
 
 hd:unit_youzhou_commandery a hhto:AdministrativeUnit,
         hhto:Settlement ;
@@ -635,8 +633,9 @@ hd:attest_anhe_republic_record a hhto:PlaceAttestation ;
 
 hd:attest_anheqiao_stone_tablet a hhto:PlaceAttestation ;
     rdfs:label "安和桥"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:epistemicNotes "【R11-3 拟托书证】E2 research.md §1 冻结：①石额『安和桥』确有旧料，但**近现代通行写『安河桥』，转换时间与机制待考**；②『安澜平和』之意仅 L3 地方文史说法，非档案；③改建石桥有两套记载（系统A 乾隆年间 L3/L4 vs 系统B 康熙五十九年1720 L1转引），**保留冲突不制造确定性**。原「1781＋乾隆御题＋取…之义」三者已拍死。保留原文供审计。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "桥成，改木为石，额曰‘安和桥’，取安和景泰之义"@zh ;
     hhto:recordedYear 1781 ;
     rdfs:comment "断代: 清代（乾隆四十六年） | 来源: 《安和桥额石题字》"@zh .
@@ -722,10 +721,19 @@ hd:attest_dajuesi_stele a hhto:PlaceAttestation ;
     hhto:recordedYear 1428 ;
     rdfs:comment "断代: 明宣德三年 | 来源: 《大觉寺宣德重修碑记》"@zh .
 
+hd:attest_dayouzhuang_imperial_naming_lore a hhto:PlaceAttestation ;
+    rdfs:label "穷八家→大有庄赐名说"@zh ;
+    hhto:epistemicNotes "【R6】L3 地方文史『据载』层，**不是已确证事实**。❌ KB 原红线：禁写『乾隆把穷八家改名为大有庄』作事实陈述。竞争解释：人大清史所『村落因圆明园/清漪园/护军营渐富裕，遂更名为大有庄』（L3，无赐名情节）。「大有卦丰饶」之义属释义联想[L3]，非命名档案。**不锁 1750 年。**"@zh ;
+    hhto:epistemicStatus "FOLK_LEGEND"^^xsd:string ;
+    hhto:evidenceLevel "Level 5 (民间口碑传说)"^^xsd:string ;
+    hhto:originalQuote "乾隆观《西郊胜景图》嫌『穷八家』不雅，赐名『大有庄』"@zh ;
+    rdfs:comment "断代: 清代（乾隆年间流传） | 来源: 《地方文史『据载』（无诏书/御制诗/宫档出处）》"@zh .
+
 hd:attest_dazhongsi_bell_stele a hhto:PlaceAttestation ;
     rdfs:label "御制觉生寺碑文"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:epistemicNotes "【R11-1 拟托书证】原标 L2 VERIFIED，判为伪：库内一手书证是《敕建觉生寺碑》（calibration/dazhongsi.py 碑文分条 tf_beiwen_ciming「爰賜名覺生寺」/ tf_beiwen_xuankuang「高朗乾爽，林木佳茂」），calibration 全层零「世宗实录」书证。保留原文供审计，不作采信。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨"@zh ;
     hhto:recordedYear 1733 ;
     rdfs:comment "断代: 清代（雍正十一年） | 来源: 《大清实录·世宗实录》"@zh .
@@ -772,20 +780,21 @@ hd:attest_guajiatun_chenyuan a hhto:PlaceAttestation ;
 
 hd:attest_guangyuanzha_stele a hhto:PlaceAttestation ;
     rdfs:label "广源闸"@zh ;
+    hhto:epistemicNotes "广源闸之名有元史实名，非后人追记（E16 直核）。建年取 E16 双徽口径：「1289：《水部备考》转引称建」／「1292：《元史》通惠河工程开工，广源闸列入其闸系」——《元史》无「广源闸建于1292」一句，禁单年定论、禁「700 多年历史」。原「广源闸重修碑记」已判死，原文见 haidian_kg/QUARANTINE.md。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "广源闸者，长河上游巨闸也，通漕蓄水以济都城，乃元至元旧制"@zh ;
-    hhto:recordedYear 1577 ;
-    rdfs:comment "断代: 明代（万历五年） | 来源: 《广源闸重修碑记》"@zh .
+    hhto:originalQuote "其壩牐之名曰：廣源牐"@zh ;
+    hhto:recordedYear 1292 ;
+    rdfs:comment "断代: 元代（至元二十九年通惠河工程闸名序列） | 来源: 《元史·河渠志（卷六十四）》"@zh .
 
 hd:attest_haidian_1260 a hhto:PlaceAttestation ;
     rdfs:label "海店"@zh ;
-    hhto:epistemicNotes "海淀区名文献最早确凿出处"@zh ;
+    hhto:epistemicNotes "海淀区名文献最早确凿出处。「京城」= 金中都旧城（通元门为其北门），非大都城；干支「六日丁卯」为今人推得，五日丙寅之次日，与三日行程不合，具体年份（中统元年1260/二年1261）本库未考得定论，暂系 1260。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "六日丁卯，午憩海店，距京城廿里"@zh ;
+    hhto:originalQuote "六日午憩海店，距京城廿里"@zh ;
     hhto:recordedYear 1260 ;
-    rdfs:comment "断代: 元代（中统元年） | 来源: 《中堂事记》"@zh .
+    rdfs:comment "断代: 元代（中统元年三月） | 来源: 《中堂事记（日下旧闻考卷三十七转引）》"@zh .
 
 hd:attest_hourenzhi_haidian a hhto:PlaceAttestation ;
     rdfs:label "海淀湿地水文考"@zh ;
@@ -802,6 +811,15 @@ hd:attest_huoqiying_record a hhto:PlaceAttestation ;
     hhto:originalQuote "乾隆三十五年改移外火器营于蓝靛厂，建满蒙八旗营房四千间，设枪炮演武场"@zh ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清乾隆三十九年 | 来源: 《日下旧闻考卷九十八》"@zh .
+
+hd:attest_jueshengsi_beiwen a hhto:PlaceAttestation ;
+    rdfs:label "覺生寺"@zh ;
+    hhto:epistemicNotes "雍正御制碑（一手石刻），引文按碑石原字核对。勒碑纪年雍正十二年(1734)，与 calibration/dazhongsi.py「雍正十一年(1733)正月开工、十二年冬告成」相合（开工/告成/勒碑三事分年，勿混）。E8 纪律：碑铭为「铭铸」非「刻」。"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "爰賜名覺生寺"@zh ;
+    hhto:recordedYear 1734 ;
+    rdfs:comment "断代: 清代（雍正十二年） | 来源: 《敕建觉生寺碑文》"@zh .
 
 hd:attest_ke_lei_bronze a hhto:PlaceAttestation ;
     rdfs:label "西周琉璃河克罍克盉青铜铭文"@zh ;
@@ -839,11 +857,12 @@ hd:attest_liulang_legend a hhto:PlaceAttestation ;
 
 hd:attest_longbeicun_weir_site a hhto:PlaceAttestation ;
     rdfs:label "白浮堰龙背村引水残段"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:epistemicNotes "无实物勘测档案支撑；白浮泉引水系统元代中期已衰败（E29）。禁语：「全国唯一存世」「龙背村白浮堰遗址为国保」。国保正确表述为「白浮泉遗址（昌平龙山）」。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "龙背村段现存白浮堰古堤为郭守敬引水渠仅存之地面实物实体，条石固堤痕迹昭然"@zh ;
     hhto:recordedYear 1983 ;
-    rdfs:comment "断代: 元代（至元二十九年遗构） | 来源: 《京密引水渠沿线古水利工程勘察报告》"@zh .
+    rdfs:comment "断代: 元代（至元二十九年遗构——年份本身未获遗构证据支持） | 来源: 《京密引水渠沿线古水利工程勘察报告（查无此出版物）》"@zh .
 
 hd:attest_niangniangfu_gazetteer a hhto:PlaceAttestation ;
     rdfs:label "娘娘府"@zh ;
@@ -871,19 +890,30 @@ hd:attest_qinghe_tianfu a hhto:PlaceAttestation ;
 
 hd:attest_qinglongqiao_rixia a hhto:PlaceAttestation ;
     rdfs:label "青龙桥"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:epistemicNotes "【R11-6 拟托书证】两处错：①E3 冻结官书卷次为**卷100**，原引卷九十九无据；②「下注通惠河」**水文方向错误**——青龙桥闸是昆明湖溢洪枢纽（弘历称『昆明湖之尾闾』），汛期**北泄清河**，与通惠河不同系。保留原文供审计，不作采信。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "青龙桥在玉泉山之阴，跨长河水，石闸下注通惠河，水陆要冲，商旅云集"@zh ;
     hhto:recordedYear 1774 ;
     rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
 
-hd:attest_rixia_dayouzhuang a hhto:PlaceAttestation ;
-    rdfs:label "大有庄"@zh ;
+hd:attest_qinglongqiao_rixia100 a hhto:PlaceAttestation ;
+    rdfs:label "青龙桥"@zh ;
+    hhto:epistemicNotes "【R11-6】E3 research.md §文献表冻结的**卷100**官书原句。口播：七里泊/碾庄是旧地名，后『青龙桥』成通称；**桥名『青龙』的由来没有定论**（❌ 禁『郭守敬以祥瑞青龙命名』『水势如青龙腾跃』）。另据 2024 官方传统地名名录，『青龙桥』名称出现年代标为**明代**。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "大有庄旧名穷八家，高宗纯皇帝临幸，以其名不协吉卜，赐名大有庄"@zh ;
+    hhto:originalQuote "七里泊、碾庄系旧地名，今土人惟通称曰青龙桥"@zh ;
     hhto:recordedYear 1774 ;
-    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷九十九》"@zh .
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷一百》"@zh .
+
+hd:attest_rixia_dayouzhuang a hhto:PlaceAttestation ;
+    rdfs:label "大有庄"@zh ;
+    hhto:epistemicNotes "【R6】E4 research.md §1-1 冻结的官书原句，**卷100**（原 KB 误标卷九十九，E4 已直核为卷100）。证明乾隆朝官书已用『大有庄』之名；御道条为全片最硬证据之一。E4 内部层级记 L1（清代官书），映射到本 schema 取 L3（正史方志纪实）。"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:originalQuote "达官村西南里许为大有庄，庄前为御道，道北有观音庵、关帝庙"@zh ;
+    hhto:recordedYear 1774 ;
+    rdfs:comment "断代: 清代（乾隆三十九年） | 来源: 《日下旧闻考卷一百》"@zh .
 
 hd:attest_rixia_landianchang a hhto:PlaceAttestation ;
     rdfs:label "蓝靛厂"@zh ;
@@ -951,11 +981,21 @@ hd:attest_suishu_linshuogong a hhto:PlaceAttestation ;
 
 hd:attest_suzhoujie_qianlong_poem a hhto:PlaceAttestation ;
     rdfs:label "万寿山买卖街"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:epistemicNotes "【R11-2 拟托书证】原标 L2 VERIFIED，判为伪：E12 research.md §2 冻结书证为昭梿《啸亭杂录》卷十「苏州街」条（维基文库原文已核）＋卷77 御制诗自注（干支自证辛巳=1761七旬大庆），《御制诗三集》无此联句。事件（1761 仿苏州山塘街造买卖街）另由 attest_suzhoujie_xiaoting 承载。"@zh ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "水木依稀姑苏肆，市廛宛转入楼台"@zh ;
     hhto:recordedYear 1761 ;
     rdfs:comment "断代: 清代（乾隆二十六年） | 来源: 《御制诗三集》"@zh .
+
+hd:attest_suzhoujie_xiaoting a hhto:PlaceAttestation ;
+    rdfs:label "万寿寺旁苏州街"@zh ;
+    hhto:epistemicNotes "E12 research.md §2 冻结书证（维基文库原文已核）。干支自证链：卷77 御制诗自注「辛未年辛未为圣母六旬大庆」(1751) → 《清史稿》「十六年六十寿、二十六年七十寿」→ 辛巳=1761 七旬。⚠️ 干支凡涉及必回原文自证。"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "乾隆辛巳，孝聖憲皇后七旬誕辰，純皇以後素喜江南風景，以年邁不宜遠行，因於萬壽寺旁造屋，仿江南式樣。市廛坊巷，無不畢具，長至數里，以奉鑾輿往來遊行，俗名曰蘇州街云"@zh ;
+    hhto:recordedYear 1761 ;
+    rdfs:comment "断代: 清代（乾隆辛巳二十六年） | 来源: 《啸亭杂录卷十·苏州街》"@zh .
 
 hd:attest_tang_jiao_epitaph a hhto:PlaceAttestation ;
     rdfs:label "唐带州孤竹府焦君墓志铭"@zh ;
@@ -976,11 +1016,12 @@ hd:attest_wangfujing_camp a hhto:PlaceAttestation ;
 
 hd:attest_wanping_niulanzhuang a hhto:PlaceAttestation ;
     rdfs:label "牛栏庄"@zh ;
+    hhto:epistemicNotes "【R11-5】原挂《宛平县志·舆地志》系**书名人名错配**，原引文后半「地滨泉源，居民引水种稻」**书中无此句**，已撤。现挂沈榜《宛署杂记》卷五街道条里程并列原句。⚠️ 本条只证明『万历二十一年牛栏庄为北海店（海淀）旁村落之一』；不得据此推出种稻/水利形态。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "宛平县城外西乡牛栏庄，地滨泉源，居民引水种稻"@zh ;
+    hhto:originalQuote "縣之西北，出西直門一里曰高良橋，又五里曰籬笆房，曰葦孤村，又二十里曰韃子營。又十里曰北海店，其旁曰小南莊、曰八里溝、曰牛欄莊"@zh ;
     hhto:recordedYear 1593 ;
-    rdfs:comment "断代: 明代（万历二十一年） | 来源: 《宛平县志·舆地志》"@zh .
+    rdfs:comment "断代: 明代（万历二十一年刊） | 来源: 《宛署杂记卷五·德字·街道》"@zh .
 
 hd:attest_wanshoushan_rixia a hhto:PlaceAttestation ;
     rdfs:label "瓮山"@zh ;
@@ -992,19 +1033,21 @@ hd:attest_wanshoushan_rixia a hhto:PlaceAttestation ;
 
 hd:attest_wanshousi_mingshi a hhto:PlaceAttestation ;
     rdfs:label "万寿寺"@zh ;
+    hhto:epistemicNotes "敕建者为司礼监太监冯保奉慈圣皇太后出帑卜地（野获编、张居正碑文同）；寺在真觉寺西二里、万寿寺在广源闸之西（帝京景物略）。原「明史·神宗本纪」引文已判死，原文见 haidian_kg/QUARANTINE.md；严禁再以《明史》书名承载万寿寺敕建事。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "万历五年三月，敕建万寿寺于都城西直门外高梁河畔，为圣母祝寿之所"@zh ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "工始於萬曆五年三月，竣於明年六月，以內臣張進主寺事。賜名曰萬壽。"@zh ;
     hhto:recordedYear 1577 ;
-    rdfs:comment "断代: 明万历五年 | 来源: 《明史·神宗本纪》"@zh .
+    rdfs:comment "断代: 明万历五年 | 来源: 《敕建万寿寺碑文（张居正撰，日下旧闻考卷七十七转引）》"@zh .
 
 hd:attest_weiwucun_yuanshi a hhto:PlaceAttestation ;
     rdfs:label "畏吾村"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
-    hhto:originalQuote "恒阳王廉希宪卒，葬于大都城西高梁河畔，族人环墓而居，号畏吾村"@zh ;
+    hhto:epistemicNotes "卷126 可核者仅「卒年五十」「追封魏国公、谥文正、加赠恒阳王」三项（逐字直核）。「号畏吾村」无一手书证，标 UNSUBSTANTIATED，禁作 VERIFIED（见 prop_yuanshi_burial_quote=DISPROVEN）。葬地真书证：元明善《廉希宪神道碑》「葬于宛平之西原」（党宝海文转引，L3）＋查礼《畏吾村考》守冢廉姓（L3）；族源锚《元史》卷125「布魯海牙畏吾人也」/「子孫皆姓廉氏」。音转链 canon（E21）：畏吾村→苇孤村/畏兀村→魏吴村/卫伍→1915《实测京师四郊图》魏公村；「魏家村」「廉家村」书证待核，禁入指称层。"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
+    hhto:originalQuote "追封魏國公，諡文正。加贈推忠佐理翊運功臣、太師、開府儀同三司、上柱國、恒陽王，諡如故。"@zh ;
     hhto:recordedYear 1370 ;
-    rdfs:comment "断代: 明代修元史（记元代事） | 来源: 《元史·廉希宪传》"@zh .
+    rdfs:comment "断代: 元代（廉希宪至元十七年 1280 卒，大德八年 1304 追封恒阳王） | 来源: 《元史·卷一百二十六·廉希宪传（伪引文已判死）》"@zh .
 
 hd:attest_wenquan_dijing a hhto:PlaceAttestation ;
     rdfs:label "温泉"@zh ;
@@ -1360,7 +1403,8 @@ hd:top_chengfulu a hhto:Toponym ;
 
 hd:top_dayouzhuang a hhto:Toponym ;
     rdfs:label "大有庄"@zh ;
-    hhto:attestedIn hd:attest_rixia_dayouzhuang ;
+    hhto:attestedIn hd:attest_dayouzhuang_imperial_naming_lore,
+        hd:attest_rixia_dayouzhuang ;
     hhto:evolutionTriggeredBy hd:evt_qiongbajia_to_dayouzhuang ;
     hhto:evolvedFrom hd:top_qiongbajia ;
     hhto:phoneticPinyin "dà yǒu zhuāng"^^xsd:string ;
@@ -1475,7 +1519,8 @@ hd:top_qinghezhen a hhto:Toponym ;
 
 hd:top_qinglongqiao a hhto:Toponym ;
     rdfs:label "青龙桥"@zh ;
-    hhto:attestedIn hd:attest_qinglongqiao_rixia ;
+    hhto:attestedIn hd:attest_qinglongqiao_rixia,
+        hd:attest_qinglongqiao_rixia100 ;
     hhto:phoneticPinyin "qīng lóng qiáo"^^xsd:string ;
     hhto:standardForm "青龙桥"^^xsd:string .
 
@@ -1598,11 +1643,12 @@ hd:attest_gaoliangqiao_979_myth a hhto:PlaceAttestation ;
 
 hd:attest_gaoliangzha_1292 a hhto:PlaceAttestation ;
     rdfs:label "高梁闸"@zh ;
+    hhto:epistemicNotes "西城牐即高梁桥闸（E8「高粱闸又称西城闸」同源互证）；《元史》河渠志闸名序列未把高梁闸写作「高梁闸」，亦未见「广源闸建于1292」一句——广源闸建年取 E16 双徽口径"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "又于高梁河创设水闸，节水利漕，赐名通惠河"@zh ;
+    hhto:originalQuote "其壩牐之名曰：廣源牐；西城牐二，上牐在和義門外西北一里，下牐在和義水門西三步"@zh ;
     hhto:recordedYear 1292 ;
-    rdfs:comment "断代: 元代（至元二十九年） | 来源: 《元史·郭守敬传》"@zh .
+    rdfs:comment "断代: 元代（至元二十九年通惠河工程） | 来源: 《元史·河渠志（卷六十四）》"@zh .
 
 hd:attest_huangzhuang_hunt a hhto:PlaceAttestation ;
     rdfs:label "黄庄"@zh ;
@@ -1613,13 +1659,13 @@ hd:attest_huangzhuang_hunt a hhto:PlaceAttestation ;
     rdfs:comment "断代: 清代 | 来源: 《日下旧闻考卷一百》"@zh .
 
 hd:attest_jingxi_map_1913 a hhto:PlaceAttestation ;
-    rdfs:label "中关村"@zh ;
-    hhto:epistemicNotes "推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说"@zh ;
+    rdfs:label "中关"@zh ;
+    hhto:epistemicNotes "【R7】E13 research.md §1-2 冻结论据。**只证『图上已见雅化名』这一层**；改名是『清末民初地图雅化 ＋ 1950年代机构定名』两步走，不得据本条宣称 1913 已『取代』中官村。证伪『陈垣1930年代独创提议』单一学说的依据是「雅化早于 1930 年代」，不是「1913 已定名」。⚠️ 与 1915 五万分之一《实测京师四郊图》（魏公村定名）是两张图，不得互证。"@zh ;
     hhto:epistemicStatus "VERIFIED"^^xsd:string ;
     hhto:evidenceLevel "Level 2 (一手官刻金石)"^^xsd:string ;
-    hhto:originalQuote "海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落"@zh ;
+    hhto:originalQuote "清末民初测绘图上零星出现雅化名『中关』"@zh ;
     hhto:recordedYear 1913 ;
-    rdfs:comment "断代: 民国二年 | 来源: 《实测北京四郊图（京西图）》"@zh .
+    rdfs:comment "断代: 民国二年 | 来源: 《京西图（二万五千分之一）》"@zh .
 
 hd:attest_shuntian_xisanqi a hhto:PlaceAttestation ;
     rdfs:label "西三旗"@zh ;
@@ -1697,7 +1743,8 @@ hd:top_sifangpujue a hhto:Toponym ;
 
 hd:top_suzhoujie a hhto:Toponym ;
     rdfs:label "苏州街"@zh ;
-    hhto:attestedIn hd:attest_suzhoujie_qianlong_poem ;
+    hhto:attestedIn hd:attest_suzhoujie_qianlong_poem,
+        hd:attest_suzhoujie_xiaoting ;
     hhto:evolutionTriggeredBy hd:evt_suzhoujie_imperial_build ;
     hhto:evolvedFrom hd:top_maimaijie ;
     hhto:phoneticPinyin "sū zhōu jiē"^^xsd:string ;
@@ -1792,7 +1839,8 @@ hd:top_haidian_dian2 a hhto:Toponym ;
 
 hd:top_jueshengsi a hhto:Toponym ;
     rdfs:label "觉生寺"@zh ;
-    hhto:attestedIn hd:attest_dazhongsi_bell_stele ;
+    hhto:attestedIn hd:attest_dazhongsi_bell_stele,
+        hd:attest_jueshengsi_beiwen ;
     hhto:phoneticPinyin "jué shēng sì"^^xsd:string ;
     hhto:standardForm "觉生寺"^^xsd:string .
 

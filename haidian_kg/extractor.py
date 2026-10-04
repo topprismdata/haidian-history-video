@@ -176,7 +176,12 @@ class HaidianCorpusExtractor:
                 label="广源闸水利遗址",
                 feature_type="HydraulicFacility",
                 coordinates=[116.31, 39.94],
-                description="元至元二十六年通惠河头闸，郭守敬主持修建之节制水柜水闸",
+                # 🔴 2026-10-04 订正：原写「元至元二十六年通惠河头闸」——时序自相矛盾
+                # （通惠河 1292 才开工，1289 年不可能已有「通惠河头闸」），
+                # 且把 E16 冻结的建年双徽压成了单年定论。
+                description="元代长河节制闸，通惠河闸系之首（至元二十九年 1292 工程）；"
+                            "建年双徽：1289《水部备考》转引称建／1292《元史》通惠河工程开工列入闸系；"
+                            "元史实名见《元史·河渠志》闸名序列「廣源牐」",
             ),
             PhysicalFeatureEntity(
                 id="feat_anheqiao_site",
@@ -187,10 +192,15 @@ class HaidianCorpusExtractor:
             ),
             PhysicalFeatureEntity(
                 id="feat_longbeicun_weir",
-                label="白浮堰龙背村段古水利遗构",
+                label="白浮堰龙背村段古水利遗构（待考）",
                 feature_type="HydraulicFacility",
                 coordinates=[116.27, 40.03],
-                description="全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存",
+                # 🔴 2026-10-04 订正：原写「全国唯一存世之郭守敬白浮引水工程古堰实体残段遗存」——
+                # 「全国唯一存世」属最高危现状断言，且所挂勘察报告查无此出版物。
+                # 详见 attest_longbeicun_weir_site（已判 DISPROVEN）与 corpus/era5_yuan.md §1.4bis。
+                description="龙背村一带白浮引水线路上的待考地面遗存；"
+                            "无实物勘测档案支撑，不得作元代堰堤实体定性（L1 已撤），"
+                            "更禁「全国唯一存世」；白浮泉引水系统元延祐元年（1314）起已淤塞（E29）",
             ),
             PhysicalFeatureEntity(
                 id="feat_taizhouwu_dock",
@@ -440,16 +450,30 @@ class HaidianCorpusExtractor:
                 label="大有庄（清代改名村落）",
                 unit_type="Settlement",
                 located_at_feature_id="feat_wanshoushan",
-                valid_start_year=1750,
-                description="乾隆御赐名农耕村落，前身为清初贫民合居之‘穷八家’",
+                valid_start_year=None,
+                # 【R6 回灌 2026-10-04】E4 冻结：官书 L1 是《日下旧闻考》**卷100**
+                # 「达官村西南里许为大有庄，庄前为御道」，乾隆朝已用其名；
+                # 赐名故事为 L3 地方文史「据载」，无诏书/御制诗/宫档出处；
+                # 另有竞争解释（人大清史所：渐富裕后自行更名）。**不锁 1750**。
+                description="皇家园林/仓廪/马政体系服务的村落；清初曾称『穷八家』，"
+                            "乾隆朝官书已作『大有庄』（《日下旧闻考》卷100，L1）。"
+                            "❌ 不得写成『乾隆1750御赐改名』的已确证事实——赐名说属 L3 据载层",
             ),
             AdministrativeUnitEntity(
                 id="unit_yimuyuan_fields",
-                label="一亩园御田与庙会",
+                label="一亩园与娘娘庙会",
                 unit_type="Settlement",
                 located_at_feature_id="feat_wanquanhe",
-                valid_start_year=1723,
-                description="圆明园大宫门外皇帝躬耕演礼之籍田与京西著名娘娘庙会所在地",
+                valid_start_year=None,
+                # 【R5 回灌 2026-10-04】E5 冻结红线：❌ 一亩园＝皇帝亲耕耤田／一亩三分地
+                # （真正的耤田礼在先农坛，L1）；「演耕处」仅传说层（北京日报：传说为雍正帝
+                # 演耕处，但缺少依据）。L1《八旬万寿盛典》图档显示为圆明园大宫门前
+                # 有建筑院落/道路/水渠/土山的密集区域；功能解释属 L2 现代研究。
+                # **不锁建年 1723/1745。** 原挂《清高宗御制文二集》引文已撤（拟托书证）。
+                description="圆明园大宫门前附属空间与现代社区；乾隆朝图档见建筑院落、"
+                            "道路、水渠、土山（L1）。京西娘娘庙会（泰山圣母庙，"
+                            "『康熙重建、光绪再建』L2/L3）所在地。"
+                            "❌ 禁称『皇帝躬耕演礼之籍田』；耤田礼在先农坛",
             ),
             AdministrativeUnitEntity(
                 id="unit_qinglongqiao_market",
@@ -474,7 +498,12 @@ class HaidianCorpusExtractor:
                 unit_type="MilitaryGarrison",
                 located_at_feature_id="feat_changhe",
                 valid_start_year=1770,
-                description="明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之四千间兵营市镇",
+                # 【R2 回灌 2026-10-04】E10 冻结：外火器营营房「四千（余）间」查无实据
+                # （《海淀历史地名清单》旧载）。分项记载为官廨一千余间、炮甲连房六千余间、
+                # 周围门楼三千一百多座。**纪律＝不给总数。**
+                description="明代染蓝靛作坊，乾隆三十五年特种清军外火器营移驻形成之兵营市镇；"
+                            "营区规模只报分项（官廨一千余间、炮甲连房六千余间、周围门楼三千一百多座），"
+                            "❌ 不给总数（『四千余间』查无实据）",
             ),
             AdministrativeUnitEntity(
                 id="unit_jianruiying_garrison",
@@ -854,52 +883,111 @@ class HaidianCorpusExtractor:
                 id="attest_longbeicun_weir_site",
                 toponym_id="top_longbeicun",
                 attested_name="白浮堰龙背村引水残段",
-                source_title="京密引水渠沿线古水利工程勘察报告",
-                source_author="北京市水利古籍整理小组",
+                # 🔴 2026-10-04 三重证伪，判死留档（证伪≠删证，保留 quote 原文供审计）：
+                #   ① 所挂「京密引水渠沿线古水利工程勘察报告／北京市水利古籍整理小组／1983」
+                #      **查无此出版物**——无档案不能支撑 L1 考古硬证据；
+                #   ② E1 研究档案明令「不建立木桩与白浮堰遗存的归属关系」，本库对同一地面从未敢立遗构归属；
+                #   ③ E29 直核：延祐元年（1314）《元史》已书「多淤澱淺塞，源泉微細，不能通流」，
+                #      乾隆己巳（1749）御制文自承「時皆湮沒不可詳」——「全国唯一存世」属最高危表述。
+                # 国保对应物是**昌平龙山白浮泉遗址**（2013 第七批国保），保护对象≠所在地点。
+                source_title="京密引水渠沿线古水利工程勘察报告（查无此出版物）",
+                source_author="北京市水利古籍整理小组（未考得）",
                 recorded_year=1983,
-                dynasty="元代（至元二十九年遗构）",
+                dynasty="元代（至元二十九年遗构——年份本身未获遗构证据支持）",
                 quote="龙背村段现存白浮堰古堤为郭守敬引水渠仅存之地面实物实体，条石固堤痕迹昭然",
-                evidence_level=EvidenceLevel.L1_ARCHAEOLOGICAL,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="无实物勘测档案支撑；白浮泉引水系统元代中期已衰败（E29）。"
+                      "禁语：「全国唯一存世」「龙背村白浮堰遗址为国保」。"
+                      "国保正确表述为「白浮泉遗址（昌平龙山）」。",
             ),
             # L2 一手官刻金石与文人亲历文集
             PlaceAttestationEntity(
                 id="attest_haidian_1260",
                 toponym_id="top_haidian_dian1",
                 attested_name="海店",
-                source_title="中堂事记",
+                # 🔴 2026-10-04 订正：引文逐字无误，但**月份与参照系**原被写错。
+                #   《日下旧闻考》卷37（四库本直核）：「考元王惲中堂事記載中統元年赴開平，
+                #   三月五日發燕京，宿通元北郭，六日午憩海店，距京城廿里，海店即今海淀。」
+                #   ——月份为**三月**（原 KB 写「八月」）；「京城」指**金中都旧城**
+                #   （大都至元四年 1267 才始城，1260 年无大都城）；干支「六日丁卯」
+                #   由三日句式推得，原书转引层未系干支，此处仅录四库本可核部分。
+                source_title="中堂事记（日下旧闻考卷三十七转引）",
                 source_author="王恽",
                 recorded_year=1260,
-                dynasty="元代（中统元年）",
-                quote="六日丁卯，午憩海店，距京城廿里",
+                dynasty="元代（中统元年三月）",
+                quote="六日午憩海店，距京城廿里",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
-                notes="海淀区名文献最早确凿出处",
+                notes="海淀区名文献最早确凿出处。「京城」= 金中都旧城（通元门为其北门），非大都城；"
+                      "干支「六日丁卯」为今人推得，五日丙寅之次日，与三日行程不合，"
+                      "具体年份（中统元年1260/二年1261）本库未考得定论，暂系 1260。",
             ),
             PlaceAttestationEntity(
                 id="attest_gaoliangzha_1292",
                 toponym_id="top_gaoliangzha",
                 attested_name="高梁闸",
-                source_title="元史·郭守敬传",
+                # 🔴 2026-10-04 订正：原引文「又于高梁河创设水闸，节水利漕，赐名通惠河」
+                # 系自撰拼句——《元史》卷164·郭守敬传「高梁」二字**零命中**；
+                # 「賜名通惠河」实为三十年至元三十年「帝還自上都…大悅，名曰通惠河」句。
+                # 现改挂可直核的闸名实名书证：《元史》卷64·河渠志·通惠河条。
+                source_title="元史·河渠志（卷六十四）",
                 source_author="宋濂等",
                 recorded_year=1292,
-                dynasty="元代（至元二十九年）",
-                quote="又于高梁河创设水闸，节水利漕，赐名通惠河",
+                dynasty="元代（至元二十九年通惠河工程）",
+                quote="其壩牐之名曰：廣源牐；西城牐二，上牐在和義門外西北一里，下牐在和義水門西三步",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="西城牐即高梁桥闸（E8「高粱闸又称西城闸」同源互证）；"
+                      "《元史》河渠志闸名序列未把高梁闸写作「高梁闸」，"
+                      "亦未见「广源闸建于1292」一句——广源闸建年取 E16 双徽口径",
             ),
             PlaceAttestationEntity(
                 id="attest_guangyuanzha_stele",
                 toponym_id="top_guangyuanzha",
                 attested_name="广源闸",
-                source_title="广源闸重修碑记",
-                source_author="明万历工部",
-                recorded_year=1577,
-                dynasty="明代（万历五年）",
-                quote="广源闸者，长河上游巨闸也，通漕蓄水以济都城，乃元至元旧制",
+                # 🔴 2026-10-04 订正：本条原挂「广源闸重修碑记／明万历工部／1577」，
+                # 标 L2 一手官刻金石 + VERIFIED——但**检索查无此碑**。
+                # 广源闸伴生碑实为明正德六年《重修龙王庙记》；1577 年长河沿岸名碑是
+                # 张居正《敕建万寿寺碑文》（E15 直核）。原引文句式为现代概括体。
+                # 现改挂真正可核的元代闸名实名书证：《元史》卷64·河渠志闸名序列。
+                # id 保留不改（下游引用不断），但**书证实体已更换**。
+                source_title="元史·河渠志（卷六十四）",
+                source_author="宋濂等",
+                recorded_year=1292,
+                dynasty="元代（至元二十九年通惠河工程闸名序列）",
+                quote="其壩牐之名曰：廣源牐",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="广源闸之名有元史实名，非后人追记（E16 直核）。"
+                      "建年取 E16 双徽口径：「1289：《水部备考》转引称建」／"
+                      "「1292：《元史》通惠河工程开工，广源闸列入其闸系」——"
+                      "《元史》无「广源闸建于1292」一句，禁单年定论、禁「700 多年历史」。"
+                      "原「广源闸重修碑记」已判死，原文见 haidian_kg/QUARANTINE.md。",
             ),
+            # ✅ 觉生寺赐名/选址的真实一手书证（补入，替代 R11-1 的伪引文）
+            #    逐字引文取自 calibration/dazhongsi.py 碑文分条（tf_beiwen_ciming 等，
+            #    按碑石原字核对），非自撰。
+            PlaceAttestationEntity(
+                id="attest_jueshengsi_beiwen",
+                toponym_id="top_jueshengsi",
+                attested_name="覺生寺",
+                source_author="清世宗雍正帝",
+                source_title="敕建觉生寺碑文",
+                recorded_year=1734,
+                dynasty="清代（雍正十二年）",
+                quote="爰賜名覺生寺",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                epistemic_status=EpistemicStatus.VERIFIED,
+                notes="雍正御制碑（一手石刻），引文按碑石原字核对。勒碑纪年雍正十二年(1734)，"
+                      "与 calibration/dazhongsi.py「雍正十一年(1733)正月开工、十二年冬告成」"
+                      "相合（开工/告成/勒碑三事分年，勿混）。E8 纪律：碑铭为「铭铸」非「刻」。",
+            ),
+            # 【R11-1 回灌 2026-10-04】拟托书证：原挂《大清实录·世宗实录》「乃于都城西
+            # 直门外高梁河北建寺，赐名觉生，设坛祈雨」——库内觉生寺权威一手源是
+            # **《敕建觉生寺碑》（雍正御制碑，calibration/dazhongsi.py:68,85,130）**，
+            # calibration 全层无「世宗实录」书证，该引文查无出处 → 判 DISPROVEN，
+            # 保留原文供审计。赐名史实改由上方 attest_jueshengsi_beiwen（碑文）承载。
             PlaceAttestationEntity(
                 id="attest_dazhongsi_bell_stele",
                 toponym_id="top_jueshengsi",
@@ -909,9 +997,18 @@ class HaidianCorpusExtractor:
                 recorded_year=1733,
                 dynasty="清代（雍正十一年）",
                 quote="乃于都城西直门外高梁河北建寺，赐名觉生，设坛祈雨",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R11-1 拟托书证】原标 L2 VERIFIED，判为伪：库内一手书证是"
+                      "《敕建觉生寺碑》（calibration/dazhongsi.py 碑文分条 tf_beiwen_ciming"
+                      "「爰賜名覺生寺」/ tf_beiwen_xuankuang「高朗乾爽，林木佳茂」），"
+                      "calibration 全层零「世宗实录」书证。保留原文供审计，不作采信。",
             ),
+            # 【R11-2 回灌 2026-10-04】拟托书证：原挂《御制诗三集》联句
+            # 「水木依稀姑苏肆，市廛宛转入楼台」——E12 冻结书证是昭梿《啸亭杂录》卷十
+            # （「乾隆辛巳…於萬壽寺旁造屋，仿江南式樣。市廛坊巷，無不畢具，長至數里」，
+            # 维基文库原文已核）＋卷77 御制诗自注干支自证链（辛未1751六旬→辛巳1761七旬），
+            # **无此联句** → 判 DISPROVEN。建成年份 1761 本身仍成立，由下方卷十条承载。
             PlaceAttestationEntity(
                 id="attest_suzhoujie_qianlong_poem",
                 toponym_id="top_suzhoujie",
@@ -921,9 +1018,37 @@ class HaidianCorpusExtractor:
                 recorded_year=1761,
                 dynasty="清代（乾隆二十六年）",
                 quote="水木依稀姑苏肆，市廛宛转入楼台",
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R11-2 拟托书证】原标 L2 VERIFIED，判为伪：E12 research.md §2 冻结"
+                      "书证为昭梿《啸亭杂录》卷十「苏州街」条（维基文库原文已核）＋卷77 "
+                      "御制诗自注（干支自证辛巳=1761七旬大庆），《御制诗三集》无此联句。"
+                      "事件（1761 仿苏州山塘街造买卖街）另由 attest_suzhoujie_xiaoting 承载。",
+            ),
+            # ✅ E12 冻结的真实书证（补入，替代上面的伪联句）
+            PlaceAttestationEntity(
+                id="attest_suzhoujie_xiaoting",
+                toponym_id="top_suzhoujie",
+                attested_name="万寿寺旁苏州街",
+                source_author="昭梿",
+                source_title="啸亭杂录卷十·苏州街",
+                recorded_year=1761,
+                dynasty="清代（乾隆辛巳二十六年）",
+                quote="乾隆辛巳，孝聖憲皇后七旬誕辰，純皇以後素喜江南風景，"
+                      "以年邁不宜遠行，因於萬壽寺旁造屋，仿江南式樣。市廛坊巷，無不畢具，"
+                      "長至數里，以奉鑾輿往來遊行，俗名曰蘇州街云",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="E12 research.md §2 冻结书证（维基文库原文已核）。干支自证链："
+                      "卷77 御制诗自注「辛未年辛未为圣母六旬大庆」(1751) → 《清史稿》"
+                      "「十六年六十寿、二十六年七十寿」→ 辛巳=1761 七旬。⚠️ 干支凡涉及必回原文自证。",
             ),
+            # 【R11-3 回灌 2026-10-04】拟托书证：原挂「安和桥额石题字」1781「取安和景泰
+            # 之义」标 L2 VERIFIED——E2 research.md §1.5 冻结：**石额「安和桥」确有旧料，
+            # 但转换时间与机制待考**；「安澜平和」只是 L3 地方文史释义；桥史本身有两套
+            # 记载（系统A 乾隆年间改建石桥 L3/L4 vs 系统B 康熙五十九年1720重建 L1转引），
+            # KB 此前已拍死「1781＋御题＋释义」三者捆绑。现仅保留「石额旧料」这层事实，
+            # 1781/御题/释义全部撤下 → 判 DISPROVEN，原文留档。
             PlaceAttestationEntity(
                 id="attest_anheqiao_stone_tablet",
                 toponym_id="top_anheqiao_peace",
@@ -933,21 +1058,51 @@ class HaidianCorpusExtractor:
                 recorded_year=1781,
                 dynasty="清代（乾隆四十六年）",
                 quote="桥成，改木为石，额曰‘安和桥’，取安和景泰之义",
-                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R11-3 拟托书证】E2 research.md §1 冻结：①石额『安和桥』确有旧料，"
+                      "但**近现代通行写『安河桥』，转换时间与机制待考**；②『安澜平和』之意"
+                      "仅 L3 地方文史说法，非档案；③改建石桥有两套记载（系统A 乾隆年间 L3/L4 "
+                      "vs 系统B 康熙五十九年1720 L1转引），**保留冲突不制造确定性**。"
+                      "原「1781＋乾隆御题＋取…之义」三者已拍死。保留原文供审计。",
             ),
-            # L3 正史方志纪实
+            # 【R6 回灌 2026-10-04】E4 冻结：官书原句是**卷100**「达官村西南里许为大有庄，
+            # 庄前为御道，道北有观音庵、关帝庙」，原引**卷九十九卷次错误**；且原引文中
+            # 「赐名」情节属 L3 地方文史「据载」，无诏书/御制诗/宫档出处，不得挂官书。
+            # 拆成两条：卷100 官书原句 + 赐名故事（传说层）。
+            # ⚠️ 等级保持 L3（正史方志纪实），不升 L2：E19 已定此纪律——本 schema 的
+            # L2 定义域是「一手官刻金石」，官修方志书不属此域，升 L2 会让层级语义失真。
             PlaceAttestationEntity(
                 id="attest_rixia_dayouzhuang",
                 toponym_id="top_dayouzhuang",
                 attested_name="大有庄",
-                source_title="日下旧闻考卷九十九",
+                source_title="日下旧闻考卷一百",
                 source_author="于敏中等",
                 recorded_year=1774,
                 dynasty="清代（乾隆三十九年）",
-                quote="大有庄旧名穷八家，高宗纯皇帝临幸，以其名不协吉卜，赐名大有庄",
+                quote="达官村西南里许为大有庄，庄前为御道，道北有观音庵、关帝庙",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="【R6】E4 research.md §1-1 冻结的官书原句，**卷100**（原 KB 误标"
+                      "卷九十九，E4 已直核为卷100）。证明乾隆朝官书已用『大有庄』之名；"
+                      "御道条为全片最硬证据之一。E4 内部层级记 L1（清代官书），"
+                      "映射到本 schema 取 L3（正史方志纪实）。",
+            ),
+            PlaceAttestationEntity(
+                id="attest_dayouzhuang_imperial_naming_lore",
+                toponym_id="top_dayouzhuang",
+                attested_name="穷八家→大有庄赐名说",
+                source_title="地方文史『据载』（无诏书/御制诗/宫档出处）",
+                source_author=None,
+                recorded_year=None,
+                dynasty="清代（乾隆年间流传）",
+                quote="乾隆观《西郊胜景图》嫌『穷八家』不雅，赐名『大有庄』",
+                evidence_level=EvidenceLevel.L5_FOLK_LEGEND,
+                epistemic_status=EpistemicStatus.FOLK_LEGEND,
+                notes="【R6】L3 地方文史『据载』层，**不是已确证事实**。❌ KB 原红线："
+                      "禁写『乾隆把穷八家改名为大有庄』作事实陈述。竞争解释：人大清史所"
+                      "『村落因圆明园/清漪园/护军营渐富裕，遂更名为大有庄』（L3，无赐名情节）。"
+                      "「大有卦丰饶」之义属释义联想[L3]，非命名档案。**不锁 1750 年。**",
             ),
             PlaceAttestationEntity(
                 id="attest_rixia_shucun",
@@ -989,38 +1144,78 @@ class HaidianCorpusExtractor:
                 id="attest_wanping_niulanzhuang",
                 toponym_id="top_niulanzhuang",
                 attested_name="牛栏庄",
-                source_title="宛平县志·舆地志",
+                # 【R11-5 回灌 2026-10-04】**书名与人名错配 + 引文伪造**：
+                # ①沈榜著《宛署杂记》（万历二十一年1593刊），**不叫《宛平县志》**——
+                #   《宛平县志》另有其书（康熙间官修），两者不可混挂；
+                # ②原引文「宛平县城外西乡牛栏庄，地滨泉源，居民引水种稻」**书中无此句**——
+                #   卷五《德字·街道》只有西出西直门的里程村落并列，无「地滨泉源/引水种稻」
+                #   之描写（后半句是后人据地理想补的解说）。
+                # 改挂真实书证：卷五街道条里程并列句（已对党宝海《魏公村考》转录与
+                # 维基文库/人大 iqh 全文交叉核过）。仅证明「万历间牛栏庄已是北海店旁
+                # 村落之一」，**不**证明「引水种稻」或任何经济形态。
+                # 更早书证见 E18：《明太宗实录》卷58 永乐四年(1406)——不由本条承担。
+                source_title="宛署杂记卷五·德字·街道",
                 source_author="沈榜",
                 recorded_year=1593,
-                dynasty="明代（万历二十一年）",
-                quote="宛平县城外西乡牛栏庄，地滨泉源，居民引水种稻",
+                dynasty="明代（万历二十一年刊）",
+                quote="縣之西北，出西直門一里曰高良橋，又五里曰籬笆房，曰葦孤村，"
+                      "又二十里曰韃子營。又十里曰北海店，其旁曰小南莊、曰八里溝、曰牛欄莊",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="【R11-5】原挂《宛平县志·舆地志》系**书名人名错配**，原引文后半"
+                      "「地滨泉源，居民引水种稻」**书中无此句**，已撤。现挂沈榜《宛署杂记》"
+                      "卷五街道条里程并列原句。⚠️ 本条只证明『万历二十一年牛栏庄为北海店"
+                      "（海淀）旁村落之一』；不得据此推出种稻/水利形态。",
             ),
             PlaceAttestationEntity(
                 id="attest_weiwucun_yuanshi",
                 toponym_id="top_weiwucun",
                 attested_name="畏吾村",
-                source_title="元史·廉希宪传",
-                source_author="宋濂",
+                # 🔴 2026-10-04 判死（Q-001，理由见 haidian_kg/QUARANTINE.md）。
+                # 《元史》卷126·廉希宪传全文直核：「畏吾」「畏兀」「宛平」「高梁」**零命中**。
+                # 原引文与 corpus 版（"葬大都宛平之西高梁河畔，子孙家焉，号畏吾村"）
+                # 是同一伪句的两个「版本」，互相还不一致——皆系自撰转写冒充古籍。
+                # 处置：按 E21 定案链换书证（葬地=神道碑转引 L3，守冢廉姓=查礼 L3），
+                # 原伪引文保留在本行注释中供审计，不作逐字引文。
+                source_title="元史·卷一百二十六·廉希宪传（伪引文已判死）",
+                source_author="宋濂等",
                 recorded_year=1370,
-                dynasty="明代修元史（记元代事）",
-                quote="恒阳王廉希宪卒，葬于大都城西高梁河畔，族人环墓而居，号畏吾村",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
-                epistemic_status=EpistemicStatus.VERIFIED,
+                dynasty="元代（廉希宪至元十七年 1280 卒，大德八年 1304 追封恒阳王）",
+                quote="追封魏國公，諡文正。加贈推忠佐理翊運功臣、太師、開府儀同三司、上柱國、恒陽王，諡如故。",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
+                epistemic_status=EpistemicStatus.CONTESTED,
+                notes="卷126 可核者仅「卒年五十」「追封魏国公、谥文正、加赠恒阳王」三项（逐字直核）。"
+                      "「号畏吾村」无一手书证，标 UNSUBSTANTIATED，禁作 VERIFIED（见 prop_yuanshi_burial_quote=DISPROVEN）。"
+                      "葬地真书证：元明善《廉希宪神道碑》「葬于宛平之西原」（党宝海文转引，L3）"
+                      "＋查礼《畏吾村考》守冢廉姓（L3）；族源锚《元史》卷125「布魯海牙畏吾人也」/「子孫皆姓廉氏」。"
+                      "音转链 canon（E21）：畏吾村→苇孤村/畏兀村→魏吴村/卫伍→1915《实测京师四郊图》魏公村；"
+                      "「魏家村」「廉家村」书证待核，禁入指称层。",
             ),
             PlaceAttestationEntity(
                 id="attest_jingxi_map_1913",
                 toponym_id="top_zhongguancun_modern",
-                attested_name="中关村",
-                source_title="实测北京四郊图（京西图）",
+                attested_name="中关",
+                # 【R7 回灌 2026-10-04】三重失实修正：
+                # ①**两种图捏成一张**：E13 冻结论据是 **1913 年《京西图》（二万五千分之一）**
+                #   「中关」；五万分之一《实测京师四郊图》是 **1915**（E21/guajiatun.py:117、
+                #   bibliography.py:725「实测京师四郊图（1915）」）。年份/比例尺/书名三者
+                #   原 KB 全部混挂。
+                # ②**图面内容夸大**：E13 冻结口径是「『中关』**零星出现**」，**不是**
+                #   「白纸黑字明确标绘『中关村』」；且 1950 年代初官方档案与当地习惯
+                #   写法仍是「中官村／中官邨」——**不得写「取代」**。
+                # ③「魏公村 1913」同错，E21＝**1915** 图定名。
+                source_title="京西图（二万五千分之一）",
                 source_author="民国北洋陆军测地局",
                 recorded_year=1913,
                 dynasty="民国二年",
-                quote="海淀镇东二里图注标绘‘中关村’，明确标注为村落民居聚落",
+                quote="清末民初测绘图上零星出现雅化名『中关』",
                 evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
-                notes="推翻了‘中关村改名系1930年代陈垣独创提议’的单一学说",
+                notes="【R7】E13 research.md §1-2 冻结论据。**只证『图上已见雅化名』这一层**；"
+                      "改名是『清末民初地图雅化 ＋ 1950年代机构定名』两步走，"
+                      "不得据本条宣称 1913 已『取代』中官村。证伪『陈垣1930年代独创提议』"
+                      "单一学说的依据是「雅化早于 1930 年代」，不是「1913 已定名」。"
+                      "⚠️ 与 1915 五万分之一《实测京师四郊图》（魏公村定名）是两张图，不得互证。",
             ),
             # L4 近现代学界考据
             PlaceAttestationEntity(
@@ -1066,13 +1261,43 @@ class HaidianCorpusExtractor:
                 id="attest_qinglongqiao_rixia",
                 toponym_id="top_qinglongqiao",
                 attested_name="青龙桥",
+                # 【R11-6 回灌 2026-10-04】两处错：
+                # ①**卷次错**：E3 research.md §文献表冻结的官书是《钦定日下旧闻考》**卷100**，
+                #   原引卷九十九有误；
+                # ②**水文方向错**：「石闸**下注通惠河**」把青龙桥闸并入通惠河水系。
+                #   E3 冻结：青龙桥闸是**昆明湖溢洪尾闾**，汛期**北泄清河**（北长河—清河
+                #   体系），与通惠河（城内南向水系）**不是一条河**。E3 §7：水流方向两段式
+                #   ——元代白浮堰向南给瓮山泊供水 → 明清以后残存故道转为向北入清河。
+                #   原引文既无卷次支撑又含解说性水文断语，判 DISPROVEN，原文留档；
+                #   真实书证由下方 attest_qinglongqiao_rixia100 承载。
                 source_title="日下旧闻考卷九十九",
                 source_author="于敏中等",
                 recorded_year=1774,
                 dynasty="清代（乾隆三十九年）",
                 quote="青龙桥在玉泉山之阴，跨长河水，石闸下注通惠河，水陆要冲，商旅云集",
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
+                epistemic_status=EpistemicStatus.DISPROVEN,
+                notes="【R11-6 拟托书证】两处错：①E3 冻结官书卷次为**卷100**，原引卷九十九"
+                      "无据；②「下注通惠河」**水文方向错误**——青龙桥闸是昆明湖溢洪枢纽"
+                      "（弘历称『昆明湖之尾闾』），汛期**北泄清河**，与通惠河不同系。"
+                      "保留原文供审计，不作采信。",
+            ),
+            # ✅ E3 冻结的真实官书书证（补入，替代上面的伪引文）
+            PlaceAttestationEntity(
+                id="attest_qinglongqiao_rixia100",
+                toponym_id="top_qinglongqiao",
+                attested_name="青龙桥",
+                source_title="日下旧闻考卷一百",
+                source_author="于敏中等",
+                recorded_year=1774,
+                dynasty="清代（乾隆三十九年）",
+                quote="七里泊、碾庄系旧地名，今土人惟通称曰青龙桥",
                 evidence_level=EvidenceLevel.L3_GAZETTEER,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="【R11-6】E3 research.md §文献表冻结的**卷100**官书原句。"
+                      "口播：七里泊/碾庄是旧地名，后『青龙桥』成通称；**桥名『青龙』的"
+                      "由来没有定论**（❌ 禁『郭守敬以祥瑞青龙命名』『水势如青龙腾跃』）。"
+                      "另据 2024 官方传统地名名录，『青龙桥』名称出现年代标为**明代**。",
             ),
             PlaceAttestationEntity(
                 id="attest_xiaojiahe_daqing",
@@ -1102,13 +1327,24 @@ class HaidianCorpusExtractor:
                 id="attest_wanshousi_mingshi",
                 toponym_id="top_wanshousi",
                 attested_name="万寿寺",
-                source_title="明史·神宗本纪",
-                source_author="张廷玉等",
+                # 🔴 2026-10-04 订正：本条原挂《明史·神宗本纪》，quote 为
+                # 「万历五年三月，敕建万寿寺于都城西直门外高梁河畔，为圣母祝寿之所」标 VERIFIED。
+                # 维基文库《明史》卷20（神宗本纪）直核：「萬壽」「壽寺」**零命中**，
+                # 万历五年三月条只有「三月乙巳，賜沈懋學等進士及第」——伪句系现代概括语体。
+                # 现改挂 E15 已直核的真书证：张居正《敕建万寿寺碑文》（原碑乾隆朝已无存，
+                # 经《日下旧闻考》卷77 转引）＋《帝京景物略》＋《万历野获编》三源互证。
+                # id 保留不改（下游引用不断），但**书证实体已更换**。
+                source_title="敕建万寿寺碑文（张居正撰，日下旧闻考卷七十七转引）",
+                source_author="张居正",
                 recorded_year=1577,
                 dynasty="明万历五年",
-                quote="万历五年三月，敕建万寿寺于都城西直门外高梁河畔，为圣母祝寿之所",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                quote="工始於萬曆五年三月，竣於明年六月，以內臣張進主寺事。賜名曰萬壽。",
+                evidence_level=EvidenceLevel.L2_PRIMARY_DOC,
                 epistemic_status=EpistemicStatus.VERIFIED,
+                notes="敕建者为司礼监太监冯保奉慈圣皇太后出帑卜地（野获编、张居正碑文同）；"
+                      "寺在真觉寺西二里、万寿寺在广源闸之西（帝京景物略）。"
+                      "原「明史·神宗本纪」引文已判死，原文见 haidian_kg/QUARANTINE.md；"
+                      "严禁再以《明史》书名承载万寿寺敕建事。",
             ),
             PlaceAttestationEntity(
                 id="attest_cishousi_dijing",
