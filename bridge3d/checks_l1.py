@@ -176,15 +176,24 @@ def met_deck_camber(f):
 
 
 def met_taper(f):
-    """收分方向: 0 < 顶宽 < 底宽。缺失 → skip。"""
+    """桥宽方向: 0 < 顶宽 <= 底宽。缺失 → skip。
+
+    2026-10-04 框架化时放宽: 原判据写 `0 < 顶 < 底`(强制收分), 那是把十七孔桥
+    (上宽 6.56 / 下宽 14.6)的构型误当普适律。**等宽桥是合法构型**(薄墩联拱石桥
+    桥面宽基本不变), 强制收分会让这类桥在基线就报 fail —— 只有"通用框架"这条要求
+    才会暴露, E30 自身永远碰不到。
+    真正的物理约束只有"顶宽不得大于底宽"(否则是倒悬, 砌体桥不成立);
+    等宽(=)与收分(<)都放行。
+    """
     code = "MET_TAPER"
     guard = _prereq_skip_for(code, f, num_names=("DECK_UP_W", "DECK_DOWN_W"))
     if guard:
         return guard
     up, down = get(f, "DECK_UP_W"), get(f, "DECK_DOWN_W")
-    if not (0 < up < down):
+    if not (0 < up <= down):
         return [Finding("fail", code,
-                        "收分关系非法: 顶宽 %.3f 底宽 %.3f (须 0 < 顶 < 底)" % (up, down))]
+                        "桥宽关系非法: 顶宽 %.3f 底宽 %.3f (须 0 < 顶 <= 底; "
+                        "等宽合法, 仅倒悬非法)" % (up, down))]
     return []
 
 

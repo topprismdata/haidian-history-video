@@ -295,3 +295,38 @@ def test_no_always_true_in_l1(make):
         ])
     assert "INV_SPANS_SYM" in rep["kills"], "SYM 必须由 derive 级破坏杀死"
     assert "INV_SUPPORTS_LEN" in rep["kills"], "支承数护栏必须由 derive 级破坏杀死"
+
+
+
+# ══════════ MET_TAPER 边界（2026-10-04 框架化时发现的过度约束）══════════
+# 原判据 `0 < 顶 < 底` 强制收分, 把十七孔桥(6.56/14.6)的构型误当普适律。
+# 等宽桥(薄墩联拱石桥桥面宽基本不变)是合法构型, 强制收分会让它在基线就 fail。
+
+def _fail_codes(f):
+    return {fd.code for fd in C.run_l1(f) if fd.level == "fail"}
+
+
+def _with(**over):
+    import copy
+    f = copy.copy(make_5())
+    for k, v in over.items():
+        setattr(f, k, v)
+    return f
+
+
+def test_met_taper_equal_width_is_legal():
+    """等宽桥必须放行 —— 框架化核心要求: 不得把单项目构型当普适律。"""
+    assert "MET_TAPER" not in _fail_codes(_with(DECK_UP_W=4.1, DECK_DOWN_W=4.1)), \
+        "等宽桥被误判 fail; 顶宽=底宽是合法构型"
+
+
+def test_met_taper_still_catches_inverted():
+    """倒悬(顶宽 > 底宽)必须仍被抓 —— 放宽不能变成恒真。"""
+    assert "MET_TAPER" in _fail_codes(_with(DECK_UP_W=9.9, DECK_DOWN_W=4.1)), \
+        "倒悬未被抓, 判据被放宽成恒真"
+
+
+def test_met_taper_still_catches_zero_and_negative():
+    for bad in (0.0, -1.0):
+        assert "MET_TAPER" in _fail_codes(_with(DECK_UP_W=bad, DECK_DOWN_W=4.1)), \
+            "顶宽 %s 未被抓" % bad
