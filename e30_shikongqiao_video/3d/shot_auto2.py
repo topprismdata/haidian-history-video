@@ -1,0 +1,90 @@
+"""自动构图 v2: 用 Blender 内置 camera_to_view_selected 对准, 不手算方向。"""
+import bpy, os, sys, math
+from mathutils import Vector
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+a = sys.argv[sys.argv.index("--")+1:]
+view = a[0] if a else "hero"
+res = int(a[1]) if len(a) > 1 and a[1].isdigit() else 1600
+smp = int(a[2]) if len(a) > 2 and a[2].isdigit() else 64
+bpy.ops.wm.open_mainfile(filepath=os.path.join(HERE, "e30_bridge.blend"))
+sc = bpy.context.scene
+cp = bpy.context.preferences.addons['cycles'].preferences
+try: cp.compute_device_type = 'METAL'
+except Exception: pass
+for d in cp.devices: d.use = (d.type == 'METAL')
+sc.cycles.device = 'GPU'; sc.cycles.samples = smp
+# ── 渲染可复现（2026-10-04 主控修, T8 冷重建硬门前置）──
+# 原设置无 seed 且用 GPU 采样: 同一 blend 两次渲出的像素不会逐位相同,
+# 冷启动重建(T8)的渲染哈希对照必然失败——不是流程不可复现, 是采样不确定。
+# 官方依据(Cycles Sampling 页): Seed 控制积分器噪声分布; Use Animated Seed
+# 会每帧改 seed, 静帧必须关掉, 否则同机位同帧号也会变。
+SEED = 20261004
+sc.cycles.seed = SEED
+sc.cycles.use_animated_seed = False
+# 确定性去噪: OIDN 的 Prefilter/Quality 固定; 关掉 animated seed 后单帧仍应稳定
+sc.cycles.use_denoising = True
+sc.render.resolution_x = res
+sc.render.resolution_y = int(res * 9 / 16)
+sc.render.image_settings.file_format = 'PNG'
+print("SHOT_SEED %d (animated_seed=%s, device=%s, samples=%d)"
+      % (SEED, sc.cycles.use_animated_seed, sc.cycles.device, smp))
+
+BRIDGE = [bpy.data.objects[n] for n in
+          ("bridge_body","voussoir","deck_rail","beasts") if bpy.data.objects.get(n)]
+mn = Vector((1e9,)*3); mx = Vector((-1e9,)*3)
+for o in BRIDGE:
+    for c in o.bound_box:
+        w = o.matrix_world @ Vector(c)
+        for k in range(3):
+            mn[k]=min(mn[k],w[k]); mx[k]=max(mx[k],w[k])
+ctr = (mn+mx)/2.0; size = mx-mn
+# 桥的世界轴向(从 mesh 局部 X 实测)
+_b = BRIDGE[0]
+AX = math.atan2(_b.matrix_world[1][0], _b.matrix_world[0][0])
+Bv = Vector((math.cos(AX), math.sin(AX), 0.0))
+Nv = Vector((-Bv.y, Bv.x, 0.0))
+print("bbox 尺寸 %.1f x %.1f x %.1f  桥轴向 %.1f 度" % (size.x,size.y,size.z, math.degrees(AX)))
+
+cd = bpy.data.cameras.new("C"); cd.lens = 50
+cam = bpy.data.objects.new("C", cd); bpy.context.collection.objects.link(cam)
+sc.camera = cam
+# 先全部选中再 auto frame
+bpy.ops.object.select_all(action='DESELECT')
+for o in BRIDGE: o.select_set(True)
+bpy.context.view_layer.objects.active = BRIDGE[0]
+
+VIEWS = {   # 方向(单位向量) : 拉远倍数
+  "hero":  (Nv*0.90 + Bv*0.42 + Vector((0,0,0.06)), 1.02),
+  "side":  (Nv, 1.10),
+  "front": (Bv, 1.00),
+  "low":   (Nv*0.86 + Bv*0.50 + Vector((0,0,0.10)), 1.25),
+  "arch":  (Nv*0.50 + Bv*0.86, 0.55),
+  "top":   (Vector((0,0,1)), 1.20),
+}
+dirv, dist_k = VIEWS[view]
+dirv = dirv.normalized()
+radius = size.length/2.0
+# 从目标点往 dirv 反方向退, 并抬到桥面之上
+pos = ctr - dirv*(radius*dist_k)
+if view in ("hero","low","arch"):
+    pos.z = 3.0 + size.z*0.06              # 近水面低机位(实拍摄影位)
+else:
+    pos.z = max(pos.z, mx.z + size.z*0.15)
+cam.location = pos
+cam.rotation_euler = (ctr - pos).to_track_quat('-Z','Y').to_euler()
+
+# 自动取景: 反复微调距离直到全桥入画
+for _ in range(14):
+    bpy.context.view_layer.update()
+    bpy.ops.view3d.camera_to_view_selected()
+    pos2 = cam.matrix_world.translation.copy()
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in BRIDGE: o.select_set(True)
+    bpy.context.view_layer.objects.active = BRIDGE[0]
+
+out = os.path.join(HERE, "shot_%s.png" % view)
+sc.render.filepath = out
+print("SHOT %s pos=(%.0f,%.0f,%.0f) lens=%d" % (view, cam.location.x, cam.location.y, cam.location.z, cd.lens))
+bpy.ops.render.render(write_still=True)
+print("WROTE", out)
