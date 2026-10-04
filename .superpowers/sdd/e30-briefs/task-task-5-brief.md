@@ -24,6 +24,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import facts as F
 import bridge_geom2 as G
+from assumptions import MESH_TOL
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 out_path = argv[0] if argv else "qa_l2_report.json"
@@ -46,21 +47,36 @@ def main():
         return ob, ob.to_mesh()
     body_ev, me = evaluated("bridge_body")
     mw = body_ev.matrix_world
-    # 2) 券石不入净空(voussoir 顶点禁入任何洞口矩形区)
-    d = G
+    # 2) 券石不入净空 —— 2026-10-04 修正(主控实测): 原判据缺径向条件, 会误杀整条券石。
+    #    券石骑跨在拱圈上, 内缘就是拱腹(半径 a), 其顶点本就落在"孔的矩形范围"内, 那是
+    #    正常构造不是缺陷。实测: 半圆券上 15°~90° 的券石顶点全部满足原判据的入净空条件。
+    #    正确判据: 顶点落在净空内 **且** 到圆心的距离 **小于** a-MESH_TOL 才算侵入净空
+    #    (即券石吃进了拱腹以内), 券石在 r >= a-MESH_TOL 全部合法。
+    eps = MESH_TOL
     vos = bpy.data.objects["voussoir"]
-    for v in vos.data.vertices:
-        p = mw.inverted() @ (vos.matrix_world @ v.co)  # 局部即同坐标系
+    vos_ev = vos.evaluated_get(dg)
+    vos_me = vos_ev.to_mesh()
+    vos_mw = vos_ev.matrix_world
+    for v in vos_me.vertices:
+        p = vos_mw @ v.co
         for i in range(G.N_SPAN):
             xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
             a = G.SPANS[i] / 2.0
-            eps = __import__("assumptions").MESH_TOL
-            if abs(p.x - xc) < a - 0.02 + eps and p.z < G.SPRINGER + 0.02 and p.z > G.BODY_BOTTOM:
-                fail("VOUSSOIR_IN_VOID", "券石顶点入净空超eps 孔%d (%.2f,%.2f)" % (i + 1, p.x, p.z))
+            if abs(p.x - xc) >= a:
+                continue                      # 横向已在孔外, 不是本孔的事
+            dz = p.z - G.SPRINGER
+            if dz < 0.0 or dz > a:
+                continue                      # 纵向不在起拱线以上
+            r = math.hypot(p.x - xc, dz)
+            if r < a - eps:
+                fail("VOUSSOIR_IN_VOID",
+                     "券石侵入净空 孔%d 顶点(%.2f,%.2f) 到心距%.4f < 拱腹半径%.4f-eps"
+                     % (i + 1, p.x, p.z, r, a))
                 break
         else:
             continue
         break
+    vos_ev.to_mesh_clear()
     # 3) 券洞内壁法线朝心 —— G2 修订: 全部17孔, 非只第9孔。
     #    判据语义: 拱腹采样面的法线与"指向圆心"夹角 < θ_tol(G2: 面法线不能要求精确0°),
     #    离散弦面与圆心连线的理论夹角 = 半扇形角 = π/NSEG_ARC/2 ≈ 2.25°, 取 6° 容差。
@@ -136,6 +152,15 @@ cd /Volumes/macstudio/video-projects/e30_shikongqiao_video/3d
 blender -b --factory-startup --python build_scene2.py 2>&1 | grep -E "SAVED|Error"
 ```
 T4 已把 `bridge_geom2` 接到 facts，所以这次重建产出的是**消费 facts 的新几何**。若重建失败（`bridge_geom2` 尚有 facts 未覆盖的字面量），记录缺哪个名字并在报告里列出，**不要**为了让 T5 跑通而手改 blend。
+
+- [ ] **Step 2.8: VOUSSOIR_IN_VOID 的双向负控（调度者 2026-10-04 要求）**
+
+原判据会误杀正常券石（券石本就骑在拱腹上）。必须证明修正后的判据**两个方向都对**：
+- **放行侧**：现有几何的券石顶点到圆心距离**全部 ≥ a** → 正检必须零 fail（若报 fail 说明判据又写错了）
+- **抓错侧**：人工把某个券石顶点沿径向**向内推 0.05m**（吃进净空 5cm，远超 MESH_TOL=5mm）→ 判据必须抓到
+  做法：在正检前临时改 `voussoir` 对象的一个顶点位置，判完还原，或用 `--negative` 模式实现
+
+**禁止**用"正检零 fail"当作判据正确的证据——必须同时证明它抓得住真侵入。
 
 - [ ] **Step 3: 正检跑通 + 负控必须抓到**
 
