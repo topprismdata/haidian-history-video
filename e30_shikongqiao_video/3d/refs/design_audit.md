@@ -61,3 +61,19 @@ G1 落改: spec §1 重写(五级+datum+ESRGAN禁令+assumptions分家+冻结范
 | L3 需完整摄影测量配准元数据(内参/位姿/整饰) | ⚠️ 部分否决: 正交渲染 vs 照片无真值位姿, 全套摄影测量在本项目不可达; 采纳其精神: bbox 配准+扰动实验把配准误差并入标定, calibration.md 声明近似性 | **部分接受** |
 | 17 孔逐孔 IoU | ⚠️ 部分: 改为逐孔中心/宽度偏差表(等价判别力, 实现更稳) | **部分接受** |
 | G2 裁决"不通过" | 同 G1: 判据工具建设不等冻结; 三刀全部落进计划后该裁决自然解除 | **接受实质, 否决阻断** |
+
+### G3 计划可执行性与遗漏（总裁决: 条件通过）
+| GPT 意见 | 我的核实 | 处置 |
+|---|---|---|
+| **阻断项: T4 抢跑**——闭合差未归因就把桥台 1.35→2.00, generator 不得为凑长自选值 | ✅ 职责分离正确, 且 2.00 并无依据(闭合推导给 2.60) | **接受**: T4 只接线 facts.BRIDGE_ABUT(初值1.35不变), T2b 归因后定稿; 增设 Task 2b |
+| L2 须查 evaluated mesh(depsgraph), 否则活修改器下查布尔前网格=假绿 | ✅ 当前管线修改器已 apply, obj.data 恰好是终态, 但这是脆弱巧合非保证 | **接受**: qa_l2 改 evaluated_get+to_mesh |
+| 参考掩膜整饬放 T7 有"看完模型修答案"风险 → 参考资产先冻结(T3.5) | ✅ 方法论正确 | **接受**: 增 Task 3.5(选图+掩膜, 禁看本体重渲) |
+| 冻结前定义附属构件接口契约, 否则计划二反改本体 | ✅ 已在 spec 有意识, 但缺任务 | **接受**: spec 增接口契约条款, 计划二前置任务 |
+| 冷启动重建+manifest 才算可审计冻结 | ✅ | **接受**: T8 增 Step4 冷重建+freeze_manifest.md |
+| FACTUAL_FREEZE vs CONDITIONAL_RECONSTRUCTION_FREEZE 两态 | ✅ 诚实(本体预期是后者) | **接受**: spec 增条款 |
+| fast-ci/blender-ci 两档 | ✅ 与现有 pytest/blender 分工一致 | **接受**: plan 文字化 |
+| --factory-startup/--python-exit-code/禁 bpy.ops 验证/干净scene/坐标空间声明/seed固定 | ✅ 工程卫生 | **接受**: 命令行补 --python-exit-code; 其余写入 T5 注记 |
+| 数字字面量应查"几何语义流"而非全扫; YAML/JSON审计; FactValue 类型化 provenance | ⚠️ 三道防线+类型机制对本项目规模过度工程 | **否决(部分)**: 保持 AST float 扫描+治理注记+闭合判据; 理由: facts.py 单文件+AST lint+MET_CLOSURE 已覆盖同类风险, 类型机制收益不抵复杂度。整数离散参量(NSEG)移入 assumptions |
+| Conflict Register + Traceability Matrix | ✅ 轻量版可行 | **接受**: FACTS.md 增冲突登记(C1/C2/C3)+判据↔facts 消费表 |
+| 生成器/验证器独立 oracle | ✅ qa_bridge.derive 本就是独立实现; L1 圆拟合用 facts 公式采样属"假设自检", 真独立 oracle 是 L2 mesh 采样 | **接受**: 明确两层语义写进 T5 注记 |
+| T6/T7 不得合并 | ✅ 本就分离 | 维持 |

@@ -43,7 +43,10 @@
 
 产出：`facts.py` + `assumptions.py` + `3d/refs/FACTS.md`（人读版，逐条来源）。
 
-**冻结范围（M2.5）**：仅锁 facts.py 中非 [工作值] 条目；[工作值] 与 assumptions.py 永不锁死，但改动须记录。
+**冻结范围与状态（M2.5，G3 修订）**：冻结=可复现构建状态整体——facts/assumptions 快照、生成器与判据 commit、Blender 版本、参考资产与掩膜哈希、容差配置、5 机位渲染、冷启动重建验证；不只锁 facts。冻结分两态：
+- `FACTUAL_FREEZE`：本体关键尺寸全部有 [测绘]/[档案] 级来源
+- `CONDITIONAL_RECONSTRUCTION_FREEZE`：仍依赖 [工作值]，逐条列出（预期本体走此态）
+附属构件（计划二）开工前须先冻结**接口契约**（桥面边界/栏板基线/望柱·狮·异兽锚点/水位线），防止计划二反改已冻结本体。
 
 ## 2. 几何层
 
