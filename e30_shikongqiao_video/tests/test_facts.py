@@ -3,7 +3,7 @@
 
 判据语义: 只有 fail 阻塞; skip 不算通过。
 - 核心判据: facts 本体常量必须逐个登记进 SOURCES(漏一即 fail)。
-- 旗标闸门: RESEARCH_DONE=False 允许[待核]/[工作值]; True 禁止二者。
+- 旗标闸门(T2 裁决): RESEARCH_DONE=True 后禁[待核]; [工作值]允许但必须写明出处状态。
 - G1 分家: assumptions 的名字不得出现在 SOURCES(假设层不参与冻结)。
 - 文档禁令可执行化: facts docstring 必须写明 ESRGAN / 计量 禁令。
 """
@@ -60,14 +60,41 @@ def test_research_done_is_monotonic_lock():
     届时套件必红而测试本身没有任何错。改为锁"旗标一旦为 True 就不再有 [待核]/[工作值]",
     并在本文件顶部用 REVIEW_DONE 常量记录 T1 时点的初值断言, 由 T2 明确退役。"""
     assert isinstance(facts.RESEARCH_DONE, bool)
-    # 初值断言已迁移到 T2(旗标翻 True 后本断言由 test_no_pending_after_research 接管):
-    """旗标闸门(随 RESEARCH_DONE 变化):
-    False 期间允许[待核]/[工作值]; 置 True 后二者一律禁止。"""
-    forbidden = ("待核", "工作值") if facts.RESEARCH_DONE else ()
+    # T2 裁决(2026-10-04): 旗标闸门收窄为"禁待核"。
+    # T1 原设计是"RESEARCH_DONE=True 后禁待核+工作值"——那条规则把"无公开测绘值"
+    # 当成了研究失败。T2 实测 12 项(逐孔净跨/墩厚/起拱线/矢高/纵坡/桥台)确实无公开
+    # 测绘值, 按约定诚实落 [工作值]。禁止它们存在 == 逼着实现者谎标等级换假绿。
+    # 正确语义: 待核 = 还没查(研究未完成), 必须清零;
+    #           工作值 = 查过了确实无公开来源, 允许存在, 但必须被显式登记为已知偏离。
+    forbidden = ("待核",)
     offenders = sorted(
         n for n, (lvl, _note) in facts.SOURCES.items() if lvl in forbidden)
-    assert not offenders, "RESEARCH_DONE=%s 时仍存在禁用等级条目: %s" % (
+    assert not offenders, "RESEARCH_DONE=%s 时仍存在[待核]条目(该查的没查完): %s" % (
         facts.RESEARCH_DONE, offenders)
+
+
+def test_working_values_are_registered_as_known_deviations():
+    """工作值允许存在, 但每一条都必须说清"为什么没有来源"。
+    这条锁住诚实: 防止有人把无来源的数字写成 [工作值] 然后悄悄改数值。"""
+    import re as _re
+    doc = Path(facts.__file__).read_text(encoding="utf-8")
+    working = [n for n, (lvl, _note) in facts.SOURCES.items() if lvl == "工作值"]
+    assert working, "M0 后应仍有工作值(12项无公开测绘值); 若全清说明有人编造了来源"
+    for n in working:
+        m = _re.search(r"^%s\s*=.*$" % _re.escape(n), doc, _re.M)
+        assert m, "工作值 %s 在 facts.py 中找不到定义行" % n
+        line = m.group(0)
+        assert "[" in line and "]" in line, \
+            "工作值 %s 的定义行缺少 [等级] 标注: %s" % (n, line.strip())
+        assert "现脚本" in line or "无文献" in line or "沿用" in line, \
+            "工作值 %s 必须写明出处状态(现脚本/无文献/沿用): %s" % (n, line.strip())
+
+
+def test_no_pending_remains():
+    """独立于旗标: 任何时候都不得存在 [待核]——那是'还没查'的占位符。"""
+    offenders = sorted(
+        n for n, (lvl, _note) in facts.SOURCES.items() if lvl == "待核")
+    assert not offenders, "仍存在[待核]: %s" % offenders
 
 
 def test_span_distinct_shape_and_symmetric_closure():
@@ -125,3 +152,42 @@ def test_prohibitions_are_three_distinct_sentences():
     doc = (facts.__doc__ or "").replace("\n", " ")
     hits = [doc.count(k) for k in ("照片", "ESRGAN", "GPT")]
     assert all(h >= 1 for h in hits), "禁令关键词缺失: %s" % hits
+
+
+# ── T2 负控制补漏: 等级造假锁(调度者 2026-10-04 亲自做负控制时发现漏网) ──
+# 实测: 把 SOURCES 里 PIER_W 的 "工作值" 改成 "官方", 13 条测试全绿。
+# 因为没有任何测试检查"登记的等级与该条的证据说明是否相符"——
+# 而等级造假恰恰是本项目最严重的缺陷类型(它会让后续所有冻结与交付文档基于假事实)。
+
+_GRADE_RANK = {"工作值": 0, "图像推导": 1, "官方": 2, "档案": 3, "测绘": 4}
+
+
+def test_grades_are_not_inflated():
+    """等级不得高于其证据说明所能支撑的上限。
+
+    规则: 说明文字里若出现"无文献/现脚本/沿用/工作值"等词, 说明作者自己承认没有正式来源,
+    那么等级**必须**是 [工作值]——把它标成更高等级就是造假, 必须红。
+    """
+    self_admitted_no_source = ("无文献", "现脚本", "沿用", "GPT设计", "无出处")
+    inflated = []
+    for n, (lvl, note) in facts.SOURCES.items():
+        if lvl not in _GRADE_RANK:
+            continue
+        if any(k in note for k in self_admitted_no_source) and lvl != "工作值":
+            inflated.append((n, lvl, note))
+    assert not inflated, \
+        "等级造假: 说明自认无正式来源却标了更高等级: %s" % inflated
+
+
+def test_official_grade_requires_citation_in_note():
+    """[官方] 等级必须在说明里给出可追溯出处(URL 或 机构+年份), 否则不予认定。"""
+    import re as _re
+    bad = []
+    for n, (lvl, note) in facts.SOURCES.items():
+        if lvl != "官方":
+            continue
+        has_url = "http" in note
+        has_org_year = bool(_re.search(r"(19|20)\d{2}", note))
+        if not (has_url or has_org_year):
+            bad.append((n, note))
+    assert not bad, "[官方] 等级缺可追溯出处(需 URL 或 机构+年份): %s" % bad
