@@ -574,6 +574,177 @@ def build_mec4_eras(out_path):
     return out_path.stat().st_size
 
 
+# --------------------------------------------- 11. MEC-3 瓶湖懋斋记盛证据链（存疑不定案）
+def build_pilhu_evidence_chain(out_path):
+    w, h = 1920, 1080
+    im = Image.new("RGB", (w, h), (243, 236, 220))
+    draw = ImageDraw.Draw(im)
+    draw.rectangle([60, 60, w - 60, h - 60], outline=(120, 104, 82), width=5)
+
+    PAPER = (250, 246, 234)
+    INK = (46, 38, 30)
+    MUT = (110, 92, 70)
+    ACC = (150, 62, 40)
+    NEU = (104, 94, 112)  # 两派共用同一中性色：不暗示任何一方占优
+
+    def chip(x, y, text, color, size=28):
+        tw = len(text) * size + 40
+        th = size + 18
+        draw.rectangle([x, y, x + tw, y + th], fill=color)
+        draw.text((x + 20, y + 6), text, fill=PAPER, font=_load_font(size, medium=True))
+
+    def card(x0, y0, x1, y1):
+        draw.rectangle([x0, y0, x1, y1], fill=PAPER, outline=(96, 78, 56), width=4)
+
+    def down_arrow(cx, y0, y1):
+        draw.line([(cx, y0), (cx, y1 - 14)], fill=(120, 104, 82), width=5)
+        draw.polygon([(cx - 12, y1 - 16), (cx + 12, y1 - 16), (cx, y1)], fill=(120, 104, 82))
+
+    draw.text((100, 90), "《瓶湖懋斋记盛》 · 一桩没有原件的公案",
+              fill=(52, 44, 34), font=_load_font(50, medium=True))
+    draw.text((100, 164), "过录本证据链 · 两派并列呈现，不作定论 · 制作组示意 · 非实物照片",
+              fill=ACC, font=_load_font(28, medium=True))
+
+    # 层一：唯一书证
+    card(100, 216, w - 100, 362)
+    chip(128, 232, "唯一书证", (96, 104, 84))
+    draw.text((140, 286), "敦敏《瓶湖懋斋记盛》（据传作于乾隆二十三年后）：",
+              fill=INK, font=_load_font(30, medium=True))
+    draw.text((140, 324), "「春间，芹圃曾过舍以告，将徙居白家疃」——曹雪芹徙居白家疃的唯一书证（过录本 · 真伪存争）",
+              fill=(74, 62, 50), font=_load_font(26))
+    down_arrow(960, 362, 394)
+
+    # 层二：原件不存，仅存过录本
+    card(100, 394, w - 100, 572)
+    chip(128, 410, "原件不存 · 仅存过录本", (122, 88, 72))
+    draw.text((140, 464), "所据《废艺斋集稿》八卷（署「芹圃曹霑」）——原件旋佚，从未公开",
+              fill=INK, font=_load_font(30, medium=True))
+    draw.text((140, 502), "一九四三年孔祥泽日占北平期间，经日本教员高见嘉十短暂过手抄录",
+              fill=MUT, font=_load_font(25))
+    draw.text((140, 534), "一九七三年吴恩裕于《文物》撰文披露残文——学界所见仅此过录本",
+              fill=MUT, font=_load_font(25))
+
+    # 分叉：两派并列（同一中性色，不分主次）
+    draw.line([(960, 572), (960, 586)], fill=(120, 104, 82), width=5)
+    draw.line([(512, 586), (1408, 586)], fill=(120, 104, 82), width=5)
+    down_arrow(512, 586, 602)
+    down_arrow(1408, 586, 602)
+
+    card(100, 602, 925, 822)
+    chip(128, 618, "主真一派", NEU)
+    draw.text((140, 676), "吴恩裕 冯其庸 胡文彬 胡德平",
+              fill=INK, font=_load_font(30, medium=True))
+    draw.text((140, 722), "主张《废艺斋集稿》为曹雪芹著作", fill=(74, 62, 50), font=_load_font(26))
+    draw.text((140, 760), "其考订：曹约乾隆二十三年（一七五八）春徙居，居约一年",
+              fill=MUT, font=_load_font(24))
+
+    card(995, 602, 1820, 822)
+    chip(1023, 618, "质疑一派", NEU)
+    draw.text((1035, 672), "陈毓罴 刘世德——孤证难凭，文风、节气记载难对证",
+              fill=INK, font=_load_font(26, medium=True))
+    draw.text((1035, 714), "郭若愚——比对认为过录书法出自近人之手",
+              fill=(74, 62, 50), font=_load_font(26))
+    draw.text((1035, 756), "邓云乡——或系旗人精手艺者托名",
+              fill=(74, 62, 50), font=_load_font(26))
+
+    # 两说并存徽记（骑缝）
+    draw.polygon([(960, 650), (1006, 712), (960, 774), (914, 712)], fill=(122, 88, 72))
+    draw.text((932, 698), "并存", fill=PAPER, font=_load_font(26, medium=True))
+
+    down_arrow(512, 822, 850)
+    down_arrow(1408, 822, 850)
+
+    # 结论条：存疑 · 非定论（不判真不判伪）
+    draw.rectangle([100, 850, w - 100, 1010], fill=(232, 222, 198), outline=(96, 78, 56), width=4)
+    draw.text((150, 868), "存疑 · 非定论", fill=ACC, font=_load_font(56, medium=True))
+    draw.text((150, 944), "无原件传世，笔迹鉴定两说并存——既未证真，亦未证伪；凡引必带「据传／存疑」框架，不得写成定论",
+              fill=(90, 76, 58), font=_load_font(26))
+
+    im.save(out_path, optimize=True)
+    _assert_ink(im, (140, 858, 740, 936), thresh=120, min_dark=400, tag="pilhu conclusion stamp")
+    _assert_ink(im, (130, 222, 900, 352), thresh=120, min_dark=200, tag="pilhu sole evidence")
+    return out_path.stat().st_size
+
+
+# --------------------------------------------- 12. MEC-3 鹫峰台—白家疃台双时间轴
+def build_seismic_timeline(out_path):
+    w, h = 1920, 1080
+    im = Image.new("RGB", (w, h), (240, 234, 218))
+    draw = ImageDraw.Draw(im)
+    draw.rectangle([60, 60, w - 60, h - 60], outline=(120, 104, 82), width=5)
+
+    INK = (46, 38, 30)
+    MUT = (110, 92, 70)
+    ACC = (150, 62, 40)
+    GREY = (106, 96, 88)   # 鹫峰台（已停测）
+    OLI = (96, 104, 84)    # 白家疃台（在运行）
+
+    def chip(x, y, text, color, size=28):
+        tw = len(text) * size + 40
+        draw.rectangle([x, y, x + tw, y + size + 18], fill=color)
+        draw.text((x + 20, y + 6), text, fill=(250, 246, 234), font=_load_font(size, medium=True))
+
+    def node(cx, ay, era, ecolor, big, name, notes):
+        r = 19 if big else 15
+        draw.ellipse([cx - r, ay - r, cx + r, ay + r], fill=ecolor)
+        draw.ellipse([cx - 7, ay - 7, cx + 7, ay + 7], fill=(240, 234, 218))
+        f_e = _load_font(34, medium=True)
+        draw.text((cx - len(era) * 17, ay - 96), era, fill=ecolor, font=f_e)
+        draw.text((cx - len(name) * 13, ay + 34), name, fill=INK, font=_load_font(26, medium=True))
+        ny = ay + 78
+        for txt, col in notes:
+            draw.text((cx - len(txt) * 11.5, ny), txt, fill=col, font=_load_font(23))
+            ny += 34
+
+    draw.text((100, 90), "从鹫峰到白家疃 · 京西地震观测的搬家",
+              fill=(52, 44, 34), font=_load_font(50, medium=True))
+    draw.text((100, 164), "两条时间轴分开看 · 依北京国家地球观象台官网机构口径 · 制作组示意",
+              fill=(122, 96, 66), font=_load_font(28))
+
+    # ---------- 上轴：鹫峰地震台（1930—1937，今为遗址）
+    chip(100, 214, "鹫峰地震台 · 鹫峰山麓（今苏家坨镇北安河村西）", GREY)
+    ay = 420
+    draw.line([(180, ay), (805, ay)], fill=(96, 84, 66), width=8)
+    for dx in range(835, 1325, 26):
+        draw.line([(dx, ay - 12), (dx + 14, ay + 12)], fill=ACC, width=6)  # 停测虚线段
+    draw.line([(1355, ay), (1430, ay)], fill=(96, 84, 66), width=8)
+    draw.line([(1430, ay - 20), (1430, ay + 20)], fill=(96, 84, 66), width=8)  # 终点止线
+
+    node(300, ay, "一九三零", GREY, False, "建于鹫峰山麓",
+         [("中国人自行设计建设管理的第一座地震台", MUT)])
+    node(820, ay, "一九三七", ACC, True, "因抗战停测",
+         [("运行七年 · 记录地震二四七二个", MUT)])
+    node(1340, ay, "今", GREY, False, "遗址 · 海淀区文物保护单位",
+         [("停测 · 不再观测", ACC)])
+
+    # 换轴连接线
+    draw.line([(1430, 452), (1430, 596)], fill=(120, 104, 82), width=5)
+    draw.line([(1430, 596), (300, 596)], fill=(120, 104, 82), width=5)
+    draw.line([(300, 596), (300, 636)], fill=(120, 104, 82), width=5)
+    draw.polygon([(288, 634), (312, 634), (300, 650)], fill=(120, 104, 82))
+    draw.text((810, 560), "台站易地重建", fill=MUT, font=_load_font(26, medium=True))
+
+    # ---------- 下轴：白家疃台（1955 决定重建 → 今仍在运行）
+    chip(100, 664, "白家疃台 · 温泉镇白家疃村", OLI)
+    by = 830
+    draw.line([(180, by), (1690, by)], fill=(96, 84, 66), width=8)
+    draw.polygon([(1690, by - 16), (1722, by), (1690, by + 16)], fill=(96, 84, 66))  # 仍在进行
+
+    node(340, by, "一九五五", OLI, False, "决定易地重建于白家疃",
+         [("承接鹫峰台观测事业", MUT)])
+    node(980, by, "一九五七", OLI, True, "正式恢复观测（国际地球物理年）",
+         [("台名：北京地震基准台 · 地磁台", MUT)])
+    node(1580, by, "今", OLI, False, "北京国家地球观象台",
+         [("二零零零年后改称 · 仍在运行", MUT), ("机构官方口径", MUT)])
+
+    draw.text((100, 948), "注意：「至今仍在观测」仅指白家疃台——鹫峰台一九三七年已停测，今为遗址",
+              fill=ACC, font=_load_font(28, medium=True))
+
+    im.save(out_path, optimize=True)
+    _assert_ink(im, (95, 940, 1060, 986), thresh=120, min_dark=300, tag="seismic redline note")
+    return out_path.stat().st_size
+
+
 # --------------------------------------------- main
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -601,6 +772,10 @@ def main():
          "疃字释义卡（制作组绘制，非实物照片）"),
         ("mec4_era_overlay.png", build_mec4_eras, "MEC-4",
          "六段时代叠合图（旧名滩/雍正初别业/雍正十年敕建贤王祠/1915实测图作「白」＋疃/灘族字/1957地震台/今；别业年代两说并存；制作组示意，非测绘拓扑）"),
+        ("mec3_pilhu_evidence_chain.png", build_pilhu_evidence_chain, "MEC-3",
+         "瓶湖懋斋记盛过录本证据链示意：唯一书证（据传作于乾隆二十三年后，凡引带存疑框架）→废艺斋集稿原件旋佚→一九四三年孔祥泽过录本、一九七三年吴恩裕文物撰文披露；主真一派（吴恩裕冯其庸胡文彬胡德平）与质疑一派（陈毓罴刘世德郭若愚邓云乡）同色并列，结论存疑非定论，不判真伪（制作组示意，非实物照片）"),
+        ("mec3_seismic_timeline.png", build_seismic_timeline, "MEC-3",
+         "鹫峰台与白家疃台双时间轴：鹫峰地震台一九三零建/一九三七因抗战停测（运行七年记录二四七二个地震）/今为区保遗址不再观测；白家疃台一九五五决定易地重建/一九五七正式恢复观测（国际地球物理年，台名北京地震基准台地磁台）/今北京国家地球观象台仍在运行；图面明确标注至今仍在观测仅指白家疃台（依机构官方口径；制作组示意）"),
     ]
 
     rows = []

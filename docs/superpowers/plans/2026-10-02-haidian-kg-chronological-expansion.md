@@ -1,5 +1,7 @@
 # 海淀历史地名知识图谱·六大断代全域史料考据与扩建工程计划 (HHTO Chronological Expansion Plan)
 
+> **勘误横幅（2026-10-04）**：本文件为历史过程文档，正文保留当时原貌、不作回写；文中下列引用结论此后已订正——①大觉寺辽碑纪年为**咸雍四年（1068）**、碑名《暘臺山清水院創造藏經記》（旧文「大辽大安四年 1088」三重伪，Q-004）；②《金史》玉泉山条仅「有玉泉山行宫」（「芙蓉殿引水」整句系伪，Q-005）；③水院/钓鱼台所引《日下旧闻考》卷次订正为**卷106 / 卷95**（旧标 101/96）。详见 `haidian_kg/QUARANTINE.md`。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 摒弃模板化抽样，严格以中国历史地理地层学方法，按六大断代全面翻检一手文献、正史方志、金石碑刻与考古报告，系统扩充海淀历史地名知识图谱，实现 150+ 核心地名、200+ 建制与地物、300+ 原始书证与全生命周期演变链条的真实考据与结构化入库。

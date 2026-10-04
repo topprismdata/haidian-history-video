@@ -267,10 +267,12 @@ def test_chinese_num_rejects_malformed():
 
 def test_real_frame_juan_values_are_plausible():
     """真实语料的卷号必须落在《日下旧闻考》160 卷范围内，且与长编
-    已知引用一致（96/98/101/103/104 + 前导区间 76-104）。"""
+    已知引用一致（95/98/103/104/106 + 前导区间 76-104）。
+    2026-10-04 考订：水院卷次 101→106、钓鱼台 96→95（QUARANTINE.md
+    Q-004/Q-005）；96/101 现仅存于考订批注引录的旧误文，不作断言。"""
     records, _ = hs.sample_holdout(str(CORPUS_DIR))
     all_juans = set()
     for r in records:
         all_juans.update(r["rxjwkc_juan"])
     assert all_juans and all(1 <= j <= 160 for j in all_juans)
-    assert {96, 98, 101, 103, 104, 76} <= all_juans
+    assert {95, 98, 103, 104, 76, 106} <= all_juans

@@ -611,6 +611,89 @@ def _wrap(text, n):
     return [l for l in out if l]
 
 
+# --------------------------------------------- 11. VEC-4 伪引文 vs 原文同框对照卡
+def build_falsified_vs_original(out_path):
+    w, h = 1920, 1080
+    im = Image.new("RGB", (w, h), (247, 242, 228))
+    draw = ImageDraw.Draw(im)
+    draw.rectangle([60, 60, w - 60, h - 60], outline=(120, 104, 82), width=5)
+    draw.text((100, 90), "伪引文 vs 原文 · 同框对照",
+              fill=(52, 44, 34), font=_load_font(50, medium=True))
+    draw.text((100, 164), "《帝京景物略》「温泉」条证伪对照 · 制作组排印示意 · 非原刊扫描",
+              fill=(122, 96, 66), font=_load_font(28))
+
+    top, bot = 214, 856
+
+    # ---- 左卡：伪引文（灰化底 + 虚线框）
+    lx0, lx1 = 96, 906
+    draw.rectangle([lx0, top, lx1, bot], fill=(213, 209, 201))
+    dash = (126, 118, 108)
+    for x in range(lx0, lx1 - 12, 26):
+        draw.line([(x, top), (x + 14, top)], fill=dash, width=5)
+        draw.line([(x, bot), (x + 14, bot)], fill=dash, width=5)
+    for y in range(top, bot - 12, 26):
+        draw.line([(lx0, y), (lx0, y + 14)], fill=dash, width=5)
+        draw.line([(lx1, y), (lx1, y + 14)], fill=dash, width=5)
+    draw.text((510, 450), "伪", fill=(225, 221, 213), font=_load_font(260, medium=True))
+    draw.rectangle([lx0 + 26, top + 24, lx0 + 26 + 3 * 32 + 44, top + 24 + 56], fill=(104, 98, 90))
+    draw.text((lx0 + 48, top + 32), "伪引文", fill=(247, 242, 228), font=_load_font(32, medium=True))
+
+    fy = top + 128
+    for ln in _wrap("「平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所」", 19):
+        draw.text((lx0 + 46, fy), ln, fill=(72, 68, 62), font=_load_font(30, medium=True))
+        fy += 46
+    fy += 18
+    draw.text((lx0 + 46, fy), "旧挂：明 · 刘侗《帝京景物略》卷五（库内旧条，保留供审计）",
+              fill=(110, 104, 96), font=_load_font(24))
+    fy += 116
+    draw.text((lx0 + 46, fy), "《帝京景物略》无此句", fill=(150, 62, 40), font=_load_font(40, medium=True))
+    fy += 66
+    draw.text((lx0 + 46, fy), "全书检索无此句，系近代人据「温泉有热泉」编写",
+              fill=(96, 88, 80), font=_load_font(24))
+    fy += 40
+    draw.text((lx0 + 46, fy), "「辽金帝王驻跸沐浴」无任何一手书证",
+              fill=(96, 88, 80), font=_load_font(24))
+
+    # ---- 右卡：原文（实底实线框）
+    rx0, rx1 = 1014, 1824
+    draw.rectangle([rx0, top, rx1, bot], fill=(250, 246, 234), outline=(96, 78, 56), width=6)
+    draw.rectangle([rx0 + 26, top + 24, rx0 + 26 + 2 * 32 + 44, top + 24 + 56], fill=(96, 104, 84))
+    draw.text((rx0 + 48, top + 32), "原文", fill=(250, 246, 234), font=_load_font(32, medium=True))
+
+    ditjing = ("山北十里，平畴良苗，温泉出焉。泉如汤未至沸时，甃而为池，以待浴者。"
+               "泉虽温乎，其出，能藻，能虫鱼，禾黍早成，早于他之秋再旬。"
+               "林后凋，草色久驻，晚于他之秋再旬。资泉之民，无苦疡躄。"
+               "泉前数武，有碧霞殿，单楹板扉。泉而东六十里，大汤山，又一温泉。"
+               "再东三里，小汤山，又一温泉。")
+    draw.line([(rx0 + 52, top + 118), (rx0 + 52, top + 520)], fill=(150, 62, 40), width=6)
+    qy = top + 112
+    for ln in _wrap(ditjing, 17):
+        draw.text((rx0 + 82, qy), ln, fill=(46, 38, 30), font=_load_font(28))
+        qy += 42
+    qy += 16
+    draw.text((rx0 + 82, qy), "——明 · 刘侗 于奕正《帝京景物略》「温泉」条",
+              fill=(90, 76, 58), font=_load_font(25, medium=True))
+    qy += 40
+    draw.text((rx0 + 82, qy), "崇祯八年（一六三五）刊 · ctext 电子文本核录",
+              fill=(110, 92, 70), font=_load_font(24))
+    qy += 36
+    draw.text((rx0 + 82, qy), "卷次待与刻本复核（通行归卷五「西城外」）",
+              fill=(110, 92, 70), font=_load_font(24))
+
+    # ---- 中缝 VS 徽记
+    draw.ellipse([908, 483, 1012, 587], fill=(150, 62, 40), outline=(120, 52, 36), width=4)
+    draw.text((934, 506), "VS", fill=(250, 246, 234), font=_load_font(44, medium=True))
+
+    _note_bar(im, draw, [
+        ("库内伪引条目已判死，收入知识库隔离档案 QUARANTINE.md（Q-002）", "t"),
+        ("判死理由：全书检索无此句；「温泉」条实载语句见右卡（逐字照录）", "b"),
+        ("左卡伪引文逐字照录自库内旧条，保留供审计，严禁再引", "b"),
+        ("伪引文与原文同框对照 · 制作组排印示意 · 非原刊扫描", "r"),
+    ], bar_h=200)
+    im.save(out_path, optimize=True)
+    return out_path.stat().st_size
+
+
 # --------------------------------------------- main
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -638,6 +721,8 @@ def main():
          "石窝村→温泉村地名置换时间轴（制作组矢量示意）"),
         ("mec4_quanming_chain.png", build_quanming_chain, "MEC-4",
          "泉→堂→山→村→镇命名链拓扑（制作组示意 · 非测绘拓扑）"),
+        ("falsified_vs_original_card.png", build_falsified_vs_original, "VEC-4",
+         "伪引文与原文同框对照卡：左卡伪引文（平地温泉如沸句，逐字照录自库内 attest_wenquan_dijing 保留供审计）标《帝京景物略》无此句；右卡温泉条实载语句逐字录入（ctext 电子文本核录，卷次待刻本复核）；判死条目已收入 haidian_kg QUARANTINE.md Q-002；制作组排印示意，非原刊扫描"),
     ]
 
     rows = []
