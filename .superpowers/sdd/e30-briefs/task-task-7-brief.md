@@ -9,20 +9,33 @@
 - Create: `e30_shikongqiao_video/tests/test_register.py`
 
 **Interfaces:**
-- Consumes: `ortho_side.png`（Task 6）、参考图（M0 认可的近正面/立面照, 存 `3d/refs/ref_elevation.jpg`）
-- Produces: `overlay(image_a, image_b) -> (iou: float, out_png: str)`；常量 `OVERLAY_IOU_MIN`
+- Consumes: `ortho_side.png`（Task 6 渲染）、**T3.5 已冻结的人工掩膜 `3d/refs/ref_mask.png`**（不要重跑自动阈值）
+- Produces: `overlay(mask_a, mask_b) -> (iou: float, out_png: str)`；`void_table(mask) -> list[(xc, w)]`；常量 `OVERLAY_IOU_MIN`
 
-- [ ] **Step 1: 写工具（掩膜=非天空非水像素；归一化对齐：按桥体包围盒宽度缩放+底线对齐）**
+**关键约束（2026-10-04 主控量化后确立）**：T3.5 实测 `ref_mask.png` 的桥带 bbox 仅 **843×44 px**，按宽度缩放到 1200 后桥带只有 **62 px 高**，单拱 25-38 px。在这个尺度上，简报原本的自动 `_mask()`（RGB 亮度+饱和度双阈）必然把桥身/水面/天空混在一起——**所以参考侧必须直接读 T3.5 的人工掩膜，禁止重新自动阈值**。渲染侧（`ortho_side.png`）是净色背景，可以自动阈值，也可以让 T6 一并输出人工确认过的掩膜。
+
+- [ ] **Step 1: 写工具（参考侧读人工掩膜；渲染侧自动阈值；两者统一到同尺度）**
 
 ```python
 # -*- coding: utf-8 -*-
 """L3: 渲染正交立面 vs 参考立面 掩膜 IoU 比对。
-掩膜定义: 桥体像素 = 亮度非(天空高亮)且非(水面暗蓝) -> 用饱和度+亮度双阈。
-阈值是判据参数, 标定后写死并注明依据。"""
+
+参考侧: 直接读 T3.5 冻结的人工掩膜 refs/ref_mask.png(桥带仅 62px 高, 自动阈值必然混桥/水)
+渲染侧: 净色背景, 可自动阈值
+两者按各自掩膜 bbox 的**宽与高各自独立**归一化到 1200x300(消除比例失配, 见 Step 1.5)
+"""
 from PIL import Image
 import numpy as np, os
 
-OVERLAY_IOU_MIN = 0.60   # [工作值] 初值; Task 7 Step 3 用当前基线标定后可修订, 修订须写依据
+OVERLAY_IOU_MIN = 0.60   # [工作值] 初值; Task 7 Step 1.6 扰动标定后修订, 修订须写依据
+
+def _load_mask(path, is_ref):
+    """参考侧: 读人工掩膜(白=桥体)。渲染侧: 净色背景自动阈值。"""
+    if is_ref:
+        a = np.asarray(Image.open(path).convert("L"), np.float32) > 127
+        return a.astype(np.uint8)
+    return _mask(Image.open(path))
+
 
 def _mask(im):
     a = np.asarray(im.convert("RGB"), np.float32)
@@ -36,16 +49,18 @@ def _crop_bbox(m):
     ys, xs = np.where(m > 0)
     return m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
 
-def overlay(path_a, path_b, out_png):
-    ma = _crop_bbox(_mask(Image.open(path_a)))
-    mb = _crop_bbox(_mask(Image.open(path_b)))
-    W = 1200
-    ma_r = np.asarray(Image.fromarray(ma * 255).resize((W, int(ma.shape[0] * W / ma.shape[1])))) > 127
-    mb_r = np.asarray(Image.fromarray(mb * 255).resize((W, int(mb.shape[0] * W / mb.shape[1])))) > 127
-    H = max(ma_r.shape[0], mb_r.shape[0])
-    def _pad(m):
-        o = np.zeros((H, W), bool); o[:m.shape[0], :] = m; return o
-    A, B = _pad(ma_r), _pad(mb_r)
+W, H = 1200, 300   # 宽高各自独立归一化(见 Step 1.5: 比例失配不该由 IoU 承担)
+
+
+def _norm(m):
+    """按 bbox 归一化到 (W,H): 宽高各自独立缩放, 消除两图比例失配。"""
+    return np.asarray(Image.fromarray(m * 255).resize((W, H), Image.BILINEAR)) > 127
+
+
+def overlay(path_a, path_b, out_png, a_is_ref=False, b_is_ref=True):
+    ma = _norm(_crop_bbox(_load_mask(path_a, a_is_ref)))
+    mb = _norm(_crop_bbox(_load_mask(path_b, b_is_ref)))
+    A, B = ma, mb
     inter = (A & B).sum(); union = (A | B).sum()
     iou = float(inter) / max(1, float(union))
     vis = np.zeros((H, W, 3), np.uint8)
@@ -96,14 +111,15 @@ def _save(arr, p):
 def test_perfect_overlap(tmp_path):
     m = np.zeros((200, 800), np.uint8); m[50:150, 50:750] = 255
     a = _save(m, str(tmp_path / "a.png")); b = _save(m.copy(), str(tmp_path / "b.png"))
-    iou, _ = R.overlay(a, b, str(tmp_path / "v.png"))
+    iou, _ = R.overlay(a, b, str(tmp_path / "v.png"), a_is_ref=True, b_is_ref=True)
     assert iou > 0.99
 
 def test_shift_lowers_iou(tmp_path):
     m = np.zeros((200, 800), np.uint8); m[50:150, 50:750] = 255
     m2 = np.zeros((200, 800), np.uint8); m2[50:150, 90:790] = 255   # 平移40px
+    # 纯 bbox 比例差(实体相同)必须被归一化吸收, 不该拉低 IoU
     a = _save(m, str(tmp_path / "a.png")); b = _save(m2, str(tmp_path / "b.png"))
-    iou, _ = R.overlay(a, b, str(tmp_path / "v.png"))
+    iou, _ = R.overlay(a, b, str(tmp_path / "v.png"), a_is_ref=True, b_is_ref=True)
     assert iou < 0.95
 ```
 
