@@ -10,7 +10,7 @@ export const Page02: React.FC = () => (
       p2_photo_folio: {
         mode: "frame",
         src: staticFile("shifangpujue/yuanshi_folio.png"),
-        caption: "古籍书影 · 寺之始建与元代改建所记 · VEC-1",
+        caption: "元史·英宗本纪冶铜条 · 转引排印 · 非原刊扫描",
       },
     }}
   />

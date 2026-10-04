@@ -10,7 +10,7 @@ export const Page03: React.FC = () => (
       p3_photo_wofoe: {
         mode: "frame",
         src: staticFile("shifangpujue/shifangpujue_wofoe_photo.png"),
-        caption: "元代释迦牟尼涅槃铜卧佛 · 长约五米 · VEC-3",
+        caption: "元代释迦牟尼涅槃铜卧佛 · 制作组绘制示意 · 非实物照片",
       },
     }}
   />

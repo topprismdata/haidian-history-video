@@ -97,3 +97,39 @@ def test_number_unknown_rate_flags_garbage():
     """归一函数出 bug 时要能被察觉，而不是静默通过。"""
     rate = number_unknown_rate("一七二四 9999 一二三四五六七")
     assert rate > 0.1
+
+
+# ==================================================================
+# 🔴 E26 回归：简写年号不得吞掉时长量
+# ==================================================================
+
+class TestReignYearVsDuration:
+    """「不到四十年」是时长不是年号。
+
+    旧实现把「四十年」整段删掉，症状是 L4-c 报
+    「屏显纪年 [40] 未在当页口播念出」，而口播明明念了「不到四十年」——
+    这是两侧口径不对称造成的**必假 fail**（E25 C2 教训的同型复发）。
+    """
+
+    def test_duration_not_stripped(self):
+        assert 40 in extract_numbers("两次改名的间隔不算长, 不到四十年。"), \
+            "「不到四十年」是时长量，40 必须保留"
+        assert 40 in extract_numbers("相隔四十余年"), "「四十余年」是时长量，40 必须保留"
+
+    def test_reign_year_still_stripped(self):
+        """修复不得放松真年号的剥离。"""
+        assert 12 not in extract_numbers("清朝的, 雍正十二年重修"), "「雍正十二年」仍须剥离"
+        assert extract_numbers("嘉庆四年设总兵 · 五年十一月十七日下诏 · 六年移驻") == [11, 17], \
+            "「· 五年」「· 六年」是并列省略年号，必须剥离"
+
+    def test_dot_prefix_beats_duration_context(self):
+        """中间点是强年号信号：即使上下文像时长也须按年号处理。"""
+        # 必须先有一个真年号名，has_reign 才会打开简写年号分支
+        txt = "雍正十二年某事 · 五年 · 六年"
+        got = extract_numbers(txt)
+        assert 5 not in got and 6 not in got, "「· 五年」「· 六年」必须剥离"
+
+    def test_comma_prefix_does_not_force_reign(self):
+        """🔴 反向：逗号不是强年号信号——「，不到四十年」必须保留 40。"""
+        assert 40 in extract_numbers("间隔不算长, 不到四十年。"), \
+            "逗号前缀不得把时长量误判为年号"

@@ -108,10 +108,10 @@ class TestScreenNumbersInNarration:
 # ==================================================================
 
 class TestKeyProperNouns:
-    def test_six_names_spoken(self):
-        """🔴 V-NC01：六个名号必须在口播中出现（屏显有不算数）。"""
+    def test_seven_names_spoken(self):
+        """🔴 V-NC01：七个名号必须在口播中出现（屏显有不算数）。"""
         n = " ".join(_narration().values())
-        for nm in ("兜率寺", "昭孝寺", "洪庆寺", "寿安山寺", "永安寺", "十方普觉寺"):
+        for nm in ("兜率寺", "寿安山寺", "昭孝寺", "洪庆寺", "寿安禅林", "永安寺", "十方普觉寺"):
             assert nm in n, "口播缺少名号「%s」" % nm
 
     def test_key_proper_nouns_spoken(self):
@@ -175,7 +175,7 @@ class TestGuobaoBatch:
 
     def test_batch_date_spoken(self):
         n = " ".join(_narration().values())
-        assert "二〇〇一年六月二十五日" in n or "2001" in n, "必须口播公布日期"
+        assert "二零零一年六月二十五日" in n, "必须口播公布日期（全字形，禁 U+3007）"
 
     def test_not_misplaced_to_first_batch(self):
         n = " ".join(_narration().values())
@@ -191,6 +191,12 @@ class TestGuobaoBatch:
 # ==================================================================
 
 class TestLocationAndFolkName:
+    def test_shi_fang_is_ten_not_six(self):
+        """🔴 R2：「十方」是十个方位，原口播「六个方向」是算术错误。"""
+        n = " ".join(_narration().values())
+        assert "六个方向" not in n and "六方" not in n, "🔴 「十方」是十个方位"
+        assert "十个方位" in n, "必须说清十方＝四方＋四维＋上下＝十个方位"
+
     def test_shuoan_spoken(self):
         n = " ".join(_narration().values())
         assert "寿安山" in n, "必须口播寿安山"

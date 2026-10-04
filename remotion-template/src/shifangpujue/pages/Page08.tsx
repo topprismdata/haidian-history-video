@@ -10,7 +10,7 @@ export const Page08: React.FC = () => (
       p8_composite: {
         mode: "frame",
         src: staticFile("shifangpujue/mec4_composite_eras.png"),
-        caption: "四时代叠合图 · 唐创寺/元铸佛/明清易名/当代国保 · MEC-4",
+        caption: "四时代叠合图 · 制作组示意 · 非测绘拓扑",
       },
     }}
   />

@@ -625,11 +625,16 @@ class HaidianCorpusExtractor:
             ToponymEntity(id="top_dajuesi", standard_form="大觉寺", script_hanzi="大觉寺", phonetic_pinyin="dà jué sì", name_type="official", associated_unit_id="unit_qingshui_court"),
             ToponymEntity(id="top_sifangpujue", standard_form="十方普觉寺", script_hanzi="十方普觉寺", phonetic_pinyin="shí fāng pǔ jué sì", name_type="official", associated_unit_id="unit_sifangpujue_temple"),
             ToponymEntity(id="top_wofosi", standard_form="卧佛寺", script_hanzi="卧佛寺", phonetic_pinyin="wò fó sì", name_type="vulgar", predecessor_toponym_id="top_sifangpujue"),
-            ToponymEntity(id="top_doushuai", standard_form="兜率寺", script_hanzi="兜率寺", phonetic_pinyin="dōu shuài sì", name_type="official", predecessor_toponym_id="top_sifangpujue"),
-            ToponymEntity(id="top_shuanshansi", standard_form="寿安山寺", script_hanzi="寿安山寺", phonetic_pinyin="shòu ān shān sì", name_type="official", predecessor_toponym_id="top_sifangpujue"),
-            ToponymEntity(id="top_zhaoxiaoshi", standard_form="昭孝寺", script_hanzi="昭孝寺", phonetic_pinyin="zhāo xiào sì", name_type="official", predecessor_toponym_id="top_sifangpujue"),
-            ToponymEntity(id="top_hongqingsi", standard_form="洪庆寺", script_hanzi="洪庆寺", phonetic_pinyin="hóng qìng sì", name_type="official", predecessor_toponym_id="top_sifangpujue"),
-            ToponymEntity(id="top_yongansi", standard_form="永安寺", script_hanzi="永安寺", phonetic_pinyin="yǒng ān sì", name_type="official", predecessor_toponym_id="top_sifangpujue"),
+            # 🔴 G2 订正：兜率寺是**最早**的初建名（唐），无前身，不应指向现名
+            ToponymEntity(id="top_doushuai", standard_form="兜率寺", script_hanzi="兜率寺", phonetic_pinyin="dōu shuài sì", name_type="official"),
+            # 🔴 E26 审核订正：寿安山寺是**元延祐七年(1320)敕建名**，前身是唐代的兜率寺
+            ToponymEntity(id="top_shuanshansi", standard_form="寿安山寺", script_hanzi="寿安山寺", phonetic_pinyin="shòu ān shān sì", name_type="official", predecessor_toponym_id="top_doushuai"),
+            ToponymEntity(id="top_zhaoxiaoshi", standard_form="昭孝寺", script_hanzi="昭孝寺", phonetic_pinyin="zhāo xiào sì", name_type="official", predecessor_toponym_id="top_shuanshansi"),
+            ToponymEntity(id="top_hongqingsi", standard_form="洪庆寺", script_hanzi="洪庆寺", phonetic_pinyin="hóng qìng sì", name_type="official", predecessor_toponym_id="top_shuanshansi"),
+            # 🔴 E26 审核订正：永安寺（明成化十八年）前身是明正统八年的寿安禅林
+            # 🔴 E26 审核新增：明正统八年(1443)朝廷赐名「寿安禅林」并颁《大藏经》
+            ToponymEntity(id="top_shouanchanlin", standard_form="寿安禅林", script_hanzi="寿安禅林", phonetic_pinyin="shòu ān chán lín", name_type="official", predecessor_toponym_id="top_shuanshansi"),
+            ToponymEntity(id="top_yongansi", standard_form="永安寺", script_hanzi="永安寺", phonetic_pinyin="yǒng ān sì", name_type="official", predecessor_toponym_id="top_shouanchanlin"),
             ToponymEntity(id="top_guangyuanzha", standard_form="广源闸", script_hanzi="广源闸", phonetic_pinyin="guǎng yuán zhá", name_type="official"),
             ToponymEntity(id="top_chengfu", standard_form="成府", script_hanzi="成府", phonetic_pinyin="chéng fǔ", name_type="standard"),
             ToponymEntity(id="top_chengfulu", standard_form="成府路", script_hanzi="成府路", phonetic_pinyin="chéng fǔ lù", name_type="standard", predecessor_toponym_id="top_chengfu"),
@@ -1197,7 +1202,8 @@ class HaidianCorpusExtractor:
                 recorded_year=1635,
                 dynasty="明代",
                 quote="平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所",
-                evidence_level=EvidenceLevel.L3_GAZETTEER,
+                # 🔴 证伪条目的证据层级随之降为 L6（该「引文」并非真出该书）
+                evidence_level=EvidenceLevel.L6_DISPROVEN,
                 epistemic_status=EpistemicStatus.DISPROVEN,
             ),
             PlaceAttestationEntity(
@@ -1827,11 +1833,29 @@ class HaidianCorpusExtractor:
 
     @classmethod
     def load_or_extract(cls) -> HaidianDataset:
+        """读缓存 entities.json；**过期则自动重算**。
+
+        🔴 G7（E26/E27 横切审计发现，2026-10-04）：原实现只要文件存在就直接读，
+        永不比对新鲜度。结果 extractor.py 里所有修正（伪引文 DISPROVEN、
+        E26 七名号节点、E27 三条拆分的 attest）**在运行时全部无效** ——
+        源里是 DISPROVEN，导出的 entities.json 里仍是 VERIFIED。
+        典型症状：改完代码、跑测试全绿，但知识图谱/查询仍给出旧答案。
+
+        处置：比对 entities.json 与 extractor.py 的 mtime，源更新即重算并回写。
+        """
         data_file = pathlib.Path("haidian_kg/data/entities.json")
-        if data_file.exists():
+        src_file = pathlib.Path(__file__)
+        if data_file.exists() and data_file.stat().st_mtime >= src_file.stat().st_mtime:
             with open(data_file, "r", encoding="utf-8") as f:
                 d = json.load(f)
             return HaidianDataset(**d)
+        dataset = cls.extract_all()
+        cls.save_dataset(dataset)
+        return dataset
+
+    @classmethod
+    def force_refresh(cls) -> HaidianDataset:
+        """强制重算并回写 entities.json（改完 extractor.py 后应显式调用）。"""
         dataset = cls.extract_all()
         cls.save_dataset(dataset)
         return dataset
@@ -1845,8 +1869,9 @@ class HaidianCorpusExtractor:
 
 
 if __name__ == "__main__":
-    ds = HaidianCorpusExtractor.extract_all()
-    HaidianCorpusExtractor.save_dataset(ds)
+    # 🔴 改完 extractor.py 后跑 `python3 -m haidian_kg.extractor` 强制回写导出，
+    #    否则下游（builder/visualizer/查询）读到的仍是旧快照。
+    ds = HaidianCorpusExtractor.force_refresh()
     print(f"Extracted: {len(ds.physical_features)} features, {len(ds.administrative_units)} units, "
           f"{len(ds.toponyms)} toponyms, {len(ds.place_attestations)} attestations, "
           f"{len(ds.evolution_events)} events, {len(ds.competing_hypotheses)} hypotheses.")

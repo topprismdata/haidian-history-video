@@ -126,19 +126,19 @@ def test_runtime_data_synced():
 # E26 专属红线（🔴 三条判据纪律）
 # ==================================================================
 
-SIX_NAMES = ["兜率寺", "昭孝寺", "洪庆寺", "寿安山寺", "永安寺", "十方普觉寺"]
+SEVEN_NAMES = ["兜率寺", "寿安山寺", "昭孝寺", "洪庆寺", "寿安禅林", "永安寺", "十方普觉寺"]
 
 
-class TestE26SixNames:
-    """V-NC01：六个名号与年号一一对应，严禁笼统「数次易名」。"""
+class TestE26SevenNames:
+    """V-NC01：七个名号与年号一一对应，严禁笼统「数次易名」。"""
 
-    def test_all_six_names_on_screen(self):
+    def test_all_seven_names_on_screen(self):
         cfg = _cfg()
         blob = " ".join(
             it.text for items in cfg.values() for it in items
             if not it.slot_id or "photo" not in (it.slot_id or "")
         )
-        for nm in SIX_NAMES:
+        for nm in SEVEN_NAMES:
             assert nm in blob, "V-NC01：屏显必须出现名号「%s」" % nm
 
     def test_no_vague_wording(self):
@@ -187,6 +187,13 @@ class TestE26GuobaoAndLocation:
         cfg = _cfg()
         p7 = " ".join(it.text for it in cfg[7])
         assert "1-75" not in p7, "🔴 1961 年首批无编号体系，严禁引用"
+
+    def test_shi_fang_is_ten_not_six(self):
+        """🔴 R2：原写「东西南北与四维上下六方」是算术错误（4+4+2=10）。"""
+        cfg = _cfg()
+        p6 = " ".join(it.text for it in cfg[6])
+        assert "六方" not in p6, "🔴 「十方」是十个方位，屏显不得写成「六方」"
+        assert "十个方位" in p6 or "十方" in p6
 
     def test_shuoan_not_xiangshan(self):
         cfg = _cfg()

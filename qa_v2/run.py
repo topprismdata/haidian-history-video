@@ -186,6 +186,40 @@ def exit_code(findings: List[Finding]) -> int:
     return 1 if summarize(findings).get("fail") else 0
 
 
+def check_delivery_freshness(ep_name: str) -> List[Finding]:
+    """🔴 C1 闸门：交付成片必须比全部输入都新。
+
+    E26 实测事故：成片 09:23 渲染，之后修了 P4 纯图形与若干文案（10:18），
+    QA 用**新源**重抽帧报 fail 0，但**交付的 mp4 从未回炉** ——
+    观众拿到的是修之前的版本，而验收报告是修之后的。「双档零错误通过」
+    验的根本不是交付物。
+
+    处置：成片缺失或早于任一输入即报 fail（缺失报 skip 视作未交付）。
+    """
+    out = ROOT / "out" / ("%s.mp4" % ep_name)
+    if not out.exists():
+        return [Finding(
+            level="skip", layer="delivery", page="-", slot="-",
+            code="DELIVERY_MISSING",
+            message="未找到交付成片 %s（QA 只验源，抽帧不验成片）" % out.name,
+        )]
+    src_newest = _source_freshness(ep_name)
+    mp4_mtime = out.stat().st_mtime
+    if mp4_mtime < src_newest:
+        import datetime as _dt
+        gap = int(src_newest - mp4_mtime)
+        return [Finding(
+            level="fail", layer="delivery", page="-", slot="-",
+            code="DELIVERY_STALE",
+            message=("🔴 交付成片早于源文件 %d 秒——验收验的不是交付物。"
+                     "成片 %s，新源 %s。请重渲成片后再验收。"
+                     % (gap,
+                        _dt.datetime.fromtimestamp(mp4_mtime).strftime("%H:%M"),
+                        _dt.datetime.fromtimestamp(src_newest).strftime("%H:%M"))),
+        )]
+    return []
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     rc = 0
@@ -196,6 +230,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             continue
         findings = run_episode(name, use_ocr=(args.use_ocr or args.full),
                               full=args.full)
+        findings = findings + check_delivery_freshness(name)
         print(render_json(findings, name) if args.as_json
               else render_text(findings, name))
         if exit_code(findings):

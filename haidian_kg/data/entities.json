@@ -314,6 +314,15 @@
       "description": "辽大安四年契丹贵族敕建清水院，后金章宗扩为西山八大行宫水院之一"
     },
     {
+      "id": "unit_sifangpujue_temple",
+      "label": "十方普觉寺（寿安山南麓；唐贞观始建兜率寺，今为国家植物园内古建）",
+      "unit_type": "ReligiousSite",
+      "located_at_feature_id": "feat_xiangshan",
+      "valid_start_year": 627,
+      "valid_end_year": 2026,
+      "description": "唐太宗贞观年间始建，时名兜率寺；元至治元年改昭孝寺、后改洪庆寺并铸释迦牟尼涅槃铜卧佛；明正统八年改寿安山寺、成化十八年改永安寺；清雍正十二年御赐名十方普觉寺。第五批全国重点文物保护单位（2001-06-25，编号5-205）"
+    },
+    {
       "id": "unit_shengshui_court",
       "label": "金章宗西山八大水院之圣水院（香山寺）",
       "unit_type": "ReligiousSite",
@@ -1108,6 +1117,78 @@
       "predecessor_toponym_id": null
     },
     {
+      "id": "top_sifangpujue",
+      "standard_form": "十方普觉寺",
+      "script_hanzi": "十方普觉寺",
+      "phonetic_pinyin": "shí fāng pǔ jué sì",
+      "name_type": "official",
+      "associated_unit_id": "unit_sifangpujue_temple",
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_wofosi",
+      "standard_form": "卧佛寺",
+      "script_hanzi": "卧佛寺",
+      "phonetic_pinyin": "wò fó sì",
+      "name_type": "vulgar",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_sifangpujue"
+    },
+    {
+      "id": "top_doushuai",
+      "standard_form": "兜率寺",
+      "script_hanzi": "兜率寺",
+      "phonetic_pinyin": "dōu shuài sì",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": null
+    },
+    {
+      "id": "top_shuanshansi",
+      "standard_form": "寿安山寺",
+      "script_hanzi": "寿安山寺",
+      "phonetic_pinyin": "shòu ān shān sì",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_doushuai"
+    },
+    {
+      "id": "top_zhaoxiaoshi",
+      "standard_form": "昭孝寺",
+      "script_hanzi": "昭孝寺",
+      "phonetic_pinyin": "zhāo xiào sì",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_shuanshansi"
+    },
+    {
+      "id": "top_hongqingsi",
+      "standard_form": "洪庆寺",
+      "script_hanzi": "洪庆寺",
+      "phonetic_pinyin": "hóng qìng sì",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_shuanshansi"
+    },
+    {
+      "id": "top_shouanchanlin",
+      "standard_form": "寿安禅林",
+      "script_hanzi": "寿安禅林",
+      "phonetic_pinyin": "shòu ān chán lín",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_shuanshansi"
+    },
+    {
+      "id": "top_yongansi",
+      "standard_form": "永安寺",
+      "script_hanzi": "永安寺",
+      "phonetic_pinyin": "yǒng ān sì",
+      "name_type": "official",
+      "associated_unit_id": null,
+      "predecessor_toponym_id": "top_shouanchanlin"
+    },
+    {
       "id": "top_guangyuanzha",
       "standard_form": "广源闸",
       "script_hanzi": "广源闸",
@@ -1680,6 +1761,32 @@
       "notes": null
     },
     {
+      "id": "attest_baijiatuan_founding",
+      "toponym_id": "top_baijiatuan",
+      "attested_name": "白家疃",
+      "source_title": "海淀区地名志（1992）与现代通行说法",
+      "source_author": "（转述，非一手）",
+      "recorded_year": 1992,
+      "dynasty": "现代",
+      "quote": "白家疃成村于辽金或更早；一说为明洪武屯田移民聚落（两说并存，无定向书证）",
+      "evidence_level": "Level 5 (民间口碑传说)",
+      "epistemic_status": "CONTESTED",
+      "notes": null
+    },
+    {
+      "id": "attest_baijiatuan_yixianqin",
+      "toponym_id": "top_baijiatuan",
+      "attested_name": "白家疃",
+      "source_title": "怡贤亲王祠残碑碑额（实物）",
+      "source_author": "（一手金石）",
+      "recorded_year": 1732,
+      "dynasty": "清雍正十年",
+      "quote": "怡贤亲王祠残碑（碑额存「怡贤亲王祠」五字，白家疃境内，海淀区文物保护单位）",
+      "evidence_level": "Level 1 (考古硬证据)",
+      "epistemic_status": "VERIFIED",
+      "notes": null
+    },
+    {
       "id": "attest_baijiatuan_caoxueqin",
       "toponym_id": "top_baijiatuan",
       "attested_name": "白家疃",
@@ -1687,9 +1794,9 @@
       "source_author": "红楼梦研究所",
       "recorded_year": 1978,
       "dynasty": "现代学术专著",
-      "quote": "白家疃为明洪武屯田移民聚落，清代怡亲王胤祥有祠邸于此，曹雪芹晚年曾徙居西山白家疃著书行医",
+      "quote": "曹雪芹乾隆二十三年至二十四年初曾徙居西山白家疃著书行医（居留约一年，非定居）",
       "evidence_level": "Level 4 (近代学界考订)",
-      "epistemic_status": "VERIFIED",
+      "epistemic_status": "CONTESTED",
       "notes": null
     },
     {
@@ -1701,8 +1808,8 @@
       "recorded_year": 1635,
       "dynasty": "明代",
       "quote": "平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所",
-      "evidence_level": "Level 3 (正史方志纪实)",
-      "epistemic_status": "VERIFIED",
+      "evidence_level": "Level 6 (明确证伪伪说)",
+      "epistemic_status": "DISPROVEN",
       "notes": null
     },
     {

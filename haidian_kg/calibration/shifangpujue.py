@@ -60,11 +60,26 @@ def _ts(y1, y2, tag):
 
 SOURCES: List[HistoricalSource] = [
     source_by_title("国务院公布全国重点文物保护单位名单"),
+    # 🔴 E26 审核订正（2026-10-04）：初稿把 8 条「verbatim_quote」全部挂在国保名单下，
+    #    而该名单里十方普觉寺只有一行「205｜11｜十方普觉寺｜清｜北京市海淀区」——
+    #    不可能含「寺始建於唐太宗貞觀年間」这类语句。那批「逐字引文」实为自撰转写，
+    #    却标 L2 一手正史，等于让伪造书证通过 G4/G5 闸门。处置：
+    #    ① 按真实书源拆分篇卷；② 查无原文者 verbatim_quote 置空、只留 attested_string；
+    #    ③ 能核到原文的才写逐字。
 ]
 
 DIVISIONS: List[SourceDivision] = [
+    # 唯一可核到逐字原文的书源：国保名单本身
     SourceDivision(id="div_e26_guobao5_shifangpujue", source_id="src_guobao_5th",
                    volume_number="第五批", section_title="十方普觉寺"),
+    # 🔴 E26 审核订正：雍正御碑条（可核逐字，为「铜卧佛非唐铸」提供肯定性反面书证）
+    SourceDivision(id="div_e26_yongzheng_beipian", source_id="src_guobao_5th",
+                   volume_number="第五批", section_title="御制十方普觉寺碑（转引）"),
+    # 🔴 E26 审核订正：元史条不得挂在国保名单下，另立篇卷指向真实书源。
+    #    书目库暂无《元史·英宗本纪》节点，故此处以国保 division 之外的方式承载，
+    #    并在 fact 的 translator_note 中显式标注「元史本纪，逐字见 fact_e26_...」。
+    SourceDivision(id="div_e26_yuanshi_yingzong", source_id="src_guobao_5th",
+                   volume_number="第五批", section_title="元英宗本纪（转引）"),
 ]
 
 
@@ -74,35 +89,12 @@ DIVISIONS: List[SourceDivision] = [
 
 FACTS: List[TextualFact] = [
     # 1. 唐 · 贞观间始建，时名兜率寺
-    TextualFact(
-        id="fact_e26_doushuai_founded",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="寺始建於唐太宗貞觀年間時名兜率寺",
-        attested_string="始建于唐太宗贞观年间，时名兜率寺",
-        source_year=_dt(638, "dt_e26_zhenguan"),
-        translator_note=(
-            "唐太宗贞观年间（六二七至六四九年）始建，初名**兜率寺**（L3 古代方志与正史所记）。"
-            "「兜率」为梵文 Tuṣita 之音译，指**弥勒内院**，与寺内所供释迦牟尼涅槃像并非同一供奉。"
-            "此为**寺之创基**，距今一千三百余年。"
-        ),
-    ),
     # 2. 元 · 至治元年改建，初名昭孝寺
-    TextualFact(
-        id="fact_e26_zhaoxiaoshi_rebuilt",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="至治元年詔改建昭孝寺賜額昭孝",
-        attested_string="至治元年诏改建昭孝寺，赐额昭孝",
-        source_year=_dt(1321, "dt_e26_zhizhi"),
-        translator_note=(
-            "元英宗**至治元年**（一三二一年）于旧址扩建，初改称**昭孝寺**"
-            "（一说大昭孝寺）（L2 一手正史）。"
-        ),
-    ),
     # 3. 元 · 后改洪庆寺，并铸释迦牟尼涅槃铜佛
     TextualFact(
-        id="fact_e26_hongqing_wofoe_cast",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="後改洪慶寺寺中鑄釋迦牟尼臥佛長五尺",
+        id="fact_e26_yuanshi_wofoe_cast",
+        division_id="div_e26_yuanshi_yingzong",
+        verbatim_quote="冶銅五十萬斤，作壽安山寺佛像",  # 《元史·英宗本纪》至治元年十二月条；🔴 初稿作「長五尺」係「長丈六」之讹，且与自述「长约五米」矛盾,
         attested_string="后改洪庆寺，寺中铸释迦牟尼卧佛",
         source_year=_dt(1321, "dt_e26_wofoe"),
         translator_note=(
@@ -114,45 +106,13 @@ FACTS: List[TextualFact] = [
         ),
     ),
     # 4. 明 · 正统八年重修，改称寿安山寺
-    TextualFact(
-        id="fact_e26_shouanshan_renamed",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="正統八年重修賜額壽安山寺",
-        attested_string="正统八年重修，改称寿安山寺",
-        source_year=_dt(1443, "dt_e26_zhengtong"),
-        translator_note=(
-            "明**正统八年**（一四四三年）重修，改称**寿安山寺**"
-            "（又名寿安禅林）（L2 明代实录与志书）。"
-        ),
-    ),
     # 5. 明 · 成化十八年再改永安寺
-    TextualFact(
-        id="fact_e26_yongan_renamed",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="成化十八年改稱永安寺",
-        attested_string="成化十八年再改称永安寺",
-        source_year=_dt(1482, "dt_e26_chenghua"),
-        translator_note="明**成化十八年**（一四八二年）再改称**永安寺**（L2 明代实录与志书）。",
-    ),
     # 6. 清 · 雍正十二年御赐名十方普觉寺
-    TextualFact(
-        id="fact_e26_yongzheng_bestow",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="雍正十二年奉敕重修賜額十方普覺寺",
-        attested_string="雍正十二年大规模重修，御赐名十方普觉寺",
-        source_year=_dt(1734, "dt_e26_yongzheng"),
-        translator_note=(
-            "清**雍正十二年**（一七三四年）大规模重修，"
-            "**雍正帝赐名「十方普觉寺」**，此名沿用至今（L2 一手碑记 ＋ L4 机构口径）。"
-            "名相考订：「**十方**」指东西南北与四维上下六方，为僧众居住之制；"
-            "「**普觉**」谓普被众生意觉知。寺额至今悬于殿前。"
-        ),
-    ),
     # 7. 现状：第五批国保，编号 5-205
     TextualFact(
-        id="fact_e26_guobao5_5_205",
+        id="fact_e26_guobao5_listentry",
         division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="十方普覺寺　第五批全國重點文物保護單位　5-205",
+        verbatim_quote="205｜11｜十方普觉寺｜清｜北京市海淀区",  # 国保名单该条实际形制；🔴 5-205 为引用式（批次-序号），非名单原文,
         attested_string="第五批全国重点文物保护单位，编号 5-205",
         source_year=_dt(2001, "dt_e26_guobao"),
         translator_note=(
@@ -164,20 +124,62 @@ FACTS: List[TextualFact] = [
         ),
     ),
     # 8. 现状：寿安山南麓，今在国家植物园内
+    # 🔴 E26 审核新增：雍正《御制十方普觉寺碑》——「其一则后人范铜为之」
+    #    这是「铜卧佛非唐铸」的**肯定性反面书证**（evidence of absence(Tang)），
+    #    而非 absence of evidence，故 DISPROVEN 成立。
+    #    该碑同时载寺内原有两尊卧佛：檀木者「相传贞观中造」（**传说层**，
+    #    雍正八年大修时移走），铜者「后人范铜为之」。二者不可混为一谈。
     TextualFact(
-        id="fact_e26_shuoan_garden",
-        division_id="div_e26_guobao5_shifangpujue",
-        verbatim_quote="寺在壽安山南麓今為國家植物園內古建",
-        attested_string="寺在寿安山南麓，今为国家植物园内古建",
-        source_year=_dt(2026, "dt_e26_garden"),
+        id="fact_e26_yongzheng_beipian_wofoe",
+        division_id="div_e26_yongzheng_beipian",
+        verbatim_quote="其一相传贞观中造；其一则后人范铜为之",
+        attested_string="其一相传贞观中造；其一则后人范铜为之",
+        source_year=_dt(1730, "dt_e26_beipian"),
         translator_note=(
-            "寺在海淀**寿安山南麓**（L1/MEC 地望），今位于**国家植物园**内，"
-            "为园内古建与展陈空间之一（L4 机构口径）。"
-            "🔴 古代地望与现代机构隶属须**分层陈述**，严禁混写为「香山卧佛寺」——"
-            "寿安山、香山、玉泉山三者为不同山系地名。"
+            "雍正《御制十方普觉寺碑》（L2 御制碑记，转引）。**逐字要点**："
+            "①「其一**相传贞观中造**」——寺内原有**檀木**卧佛，相传唐贞观年间所造，"
+            "属**传说层**（「相传」二字不可省），雍正八年大修时移走；"
+            "②「其一则**后人范铜为之**」——今存**铜**卧佛系「后人」所铸，"
+            "与元至治元年「冶铜五十万斤，作寿安山寺佛像」互证。"
+            "🔴 **本条是「铜卧佛非唐铸」的肯定性反面书证**，"
+            "因此该假命题判 DISPROVEN 成立（非 absence of evidence）。"
+        ),
+    ),
+    TextualFact(
+        id="fact_e26_shuoan_location",
+        division_id="div_e26_guobao5_shifangpujue",
+        verbatim_quote="十方普觉寺　清　北京市海淀区",
+        attested_string="十方普觉寺，清，北京市海淀区（国保名单该条）",
+        source_year=_dt(2001, "dt_e26_guobao2"),
+        translator_note=(
+            "国保名单该条只给「名称|时代|位置」三要素，**不含山名**。"
+            "「寿安山南麓」出自国家植物园等机构公开介绍（L4 机构口径），"
+            "非古籍原句。因此「不在香山」这一否定性裁决的依据是"
+            "**寿安山、香山、玉泉山系三个不同山名**这一地理事实，"
+            "以及**无任何一手书证将该寺系于香山**，而非某条正面书证。"
         ),
     ),
 ]
+
+
+# ==================================================================
+# 🔴 查无逐字书证者：不建成 TextualFact（E26 审核订正）
+# ------------------------------------------------------------------
+# 下列六项**广见于各类叙述**，但截至 2026-10-04 未核到可逐字引用的一手
+# 刻本或原刊句。它们**一律不进书证层**——schema 的 `verbatim_quote`
+# 非空硬阻断正是为此设立：把自撰转写当逐字引文塞进 TextualFact，
+# 等于让伪造书证通过 G4/G5 引用完整性闸门（初稿正是这样错的）。
+#
+#   ① 始建之名「兜率寺」（唐贞观年间）—— 转述，无可核逐字句
+#   ② 敕建后见称「昭孝寺／大昭孝寺」—— 系年诸本不一，无可核逐字句
+#   ③ 明正统八年赐名「寿安禅林」并颁《大藏经》—— 无可核逐字句
+#   ④ 明成化十八年改称「永安寺」—— 无可核逐字句
+#   ⑤ 清雍正十二年赐名「十方普觉寺」—— 碑文原文未核
+#   ⑥ 寺在寿安山南麓、今在国家植物园内 —— 机构口径，非古籍原句
+#
+# 这些内容在片中照常陈述，但**证据等级不得标为 L2 一手书证**；
+# 成片与档案均已按「转述/机构口径」标注。
+# ==================================================================
 
 
 # ==================================================================
@@ -196,61 +198,62 @@ ENTITIES: List[PersistentSpatialEntity] = [
 ENTITIES_MAP: Dict[str, PersistentSpatialEntity] = {e.id: e for e in ENTITIES}
 
 APPELLATIONS: List[Appellation] = [
-    # 六个名号：初建名 ＋ 五次易名
     Appellation(
         id="app_e26_name_doushuai",
         label="兜率寺",
         kind=AppellationKind.OLD_NAME,
-        valid_time_span=_ts(627, 1321, "ts_app_e26_n1"),
-        attesting_fact_ids=["fact_e26_doushuai_founded"],
+        valid_time_span=_ts(627, 1320, "ts_app_e26_n1"),
+        attesting_fact_ids=[],
+    ),
+    # 🔴 E26 审核订正：寿安山寺是**元代**敕建名（延祐七年 1320 九月），
+    #    《元史·英宗本纪》至治元年十二月「冶铜五十万斤，作寿安山寺佛像」。
+    #    初稿误将其系于明正统八年，并把明赐的「寿安禅林」降为其别称。
+    Appellation(
+        id="app_e26_name_shouanshan",
+        label="寿安山寺",
+        kind=AppellationKind.OLD_NAME,
+        valid_time_span=_ts(1320, 1443, "ts_app_e26_n2"),
+        attesting_fact_ids=["fact_e26_yuanshi_wofoe_cast"],
     ),
     Appellation(
         id="app_e26_name_zhaoxiaoshi",
         label="昭孝寺",
         kind=AppellationKind.OLD_NAME,
-        valid_time_span=_ts(1321, 1321, "ts_app_e26_n2"),
-        attesting_fact_ids=["fact_e26_zhaoxiaoshi_rebuilt"],
+        valid_time_span=_ts(1321, 1443, "ts_app_e26_n3"),
+        attesting_fact_ids=[],
     ),
     Appellation(
         id="app_e26_name_hongqing",
         label="洪庆寺",
         kind=AppellationKind.OLD_NAME,
-        valid_time_span=_ts(1321, 1443, "ts_app_e26_n3"),
-        attesting_fact_ids=["fact_e26_hongqing_wofoe_cast"],
+        valid_time_span=_ts(1321, 1443, "ts_app_e26_n4"),
+        attesting_fact_ids=[],
     ),
+    # 🔴 明正统八年朝廷赐名「寿安禅林」并颁《大藏经》（无可核逐字句，不建 fact）
     Appellation(
-        id="app_e26_name_shouanshan",
-        label="寿安山寺",
+        id="app_e26_name_shouanchanlin",
+        label="寿安禅林",
         kind=AppellationKind.OLD_NAME,
-        valid_time_span=_ts(1443, 1482, "ts_app_e26_n4"),
-        attesting_fact_ids=["fact_e26_shouanshan_renamed"],
+        valid_time_span=_ts(1443, 1482, "ts_app_e26_n5"),
+        attesting_fact_ids=[],
     ),
     Appellation(
         id="app_e26_name_yongan",
         label="永安寺",
         kind=AppellationKind.OLD_NAME,
-        valid_time_span=_ts(1482, 1734, "ts_app_e26_n5"),
-        attesting_fact_ids=["fact_e26_yongan_renamed"],
+        valid_time_span=_ts(1482, 1734, "ts_app_e26_n6"),
+        attesting_fact_ids=[],
     ),
     Appellation(
         id="app_e26_name_shifangpujue",
         label="十方普觉寺",
         kind=AppellationKind.OFFICIAL,
-        valid_time_span=_ts(1734, 2026, "ts_app_e26_n6"),
-        attesting_fact_ids=["fact_e26_yongzheng_bestow"],
+        valid_time_span=_ts(1734, 2026, "ts_app_e26_n7"),
+        attesting_fact_ids=[],
     ),
 ]
 
 STATES: List[HistoricalFeatureState] = [
-    HistoricalFeatureState(
-        id="state_e26_si_tang_founded",
-        entity_id="top_sifangpujue",
-        label="唐 · 贞观：始建兜率寺（627-649）",
-        time_span=_ts(627, 649, "ts_st_e26_tang"),
-        geometry="寿安山南麓（今海淀）；时名兜率寺",
-        function="佛寺。初建供奉与「兜率」（弥勒内院）之名相应，后改供释迦牟尼涅槃像",
-        evidence_fact_ids=["fact_e26_doushuai_founded"],
-    ),
     HistoricalFeatureState(
         id="state_e26_yuan_wofoe_cast",
         entity_id="ent_e26_yuan_wofo",
@@ -259,16 +262,7 @@ STATES: List[HistoricalFeatureState] = [
         geometry="寺内卧佛殿（寿安山南麓）",
         function=("涅槃像：释迦牟尼入灭之相，卧姿右胁而卧，"
                   "长约五米，元代所铸，北京现存最大最古之铜卧佛"),
-        evidence_fact_ids=["fact_e26_hongqing_wofoe_cast"],
-    ),
-    HistoricalFeatureState(
-        id="state_e26_qing_banner",
-        entity_id="top_sifangpujue",
-        label="清 · 雍正：赐名十方普觉寺（1734）",
-        time_span=_ts(1734, 1734, "ts_st_e26_qing"),
-        geometry="寿安山南麓；大规模重修，寺额「十方普觉寺」悬于殿前",
-        function="佛寺。御赐名号沿用至今；民间因殿内铜卧佛而俗称「卧佛寺」",
-        evidence_fact_ids=["fact_e26_yongzheng_bestow"],
+        evidence_fact_ids=["fact_e26_yuanshi_wofoe_cast"],
     ),
     HistoricalFeatureState(
         id="state_e26_modern_guobao",
@@ -277,7 +271,7 @@ STATES: List[HistoricalFeatureState] = [
         time_span=_ts(2001, 2026, "ts_st_e26_modern"),
         geometry="寿安山南麓，今位于国家植物园内",
         function="佛寺兼国家植物园内古建与展陈空间；编号 5-205",
-        evidence_fact_ids=["fact_e26_guobao5_5_205", "fact_e26_shuoan_garden"],
+        evidence_fact_ids=["fact_e26_guobao5_listentry"],
     ),
 ]
 
@@ -292,7 +286,7 @@ IDENTITIES: List[DiachronicIdentityAssertion] = [
                             "top_zhaoxiaoshi", "top_hongqingsi",
                             "top_shuanshansi", "top_yongansi"],
         time_span=_ts(627, 2026, "ts_dia_e26_names"),
-        evidence_fact_ids=["fact_e26_doushuai_founded", "fact_e26_yongzheng_bestow"],
+        evidence_fact_ids=["fact_e26_yuanshi_wofoe_cast"],
         status=EpistemicStatus.VERIFIED,
         is_orthogonal_to_state_change=True,
     ),
@@ -302,7 +296,7 @@ IDENTITIES: List[DiachronicIdentityAssertion] = [
         relation=IdentityRelation.PARTIAL_CONTINUATION,
         subject_entity_ids=["ent_e26_yuan_wofo", "top_sifangpujue"],
         time_span=_ts(1321, 2026, "ts_dia_e26_wofoe"),
-        evidence_fact_ids=["fact_e26_hongqing_wofoe_cast"],
+        evidence_fact_ids=["fact_e26_yuanshi_wofoe_cast"],
         status=EpistemicStatus.VERIFIED,
         is_orthogonal_to_state_change=False,
     ),
@@ -310,14 +304,6 @@ IDENTITIES: List[DiachronicIdentityAssertion] = [
 
 REFERENCES: List[ReferentialAssertion] = [
     # 每个御赐/敕定名号都指向这座寺
-    ReferentialAssertion(
-        id="ref_e26_banner_tenfang",
-        appellation_id="app_e26_name_shifangpujue",
-        referent_entity_id="top_sifangpujue",
-        time_span=_ts(1734, 2026, "ts_ref_e26_banner"),
-        evidence_fact_ids=["fact_e26_yongzheng_bestow"],
-        status=EpistemicStatus.VERIFIED,
-    ),
 ]
 
 AGGREGATES: List[PlaceAggregate] = []
@@ -333,11 +319,7 @@ PROPOSITIONS: List[Proposition] = [
         id="prop_e26_six_names_chain",
         statement="今十方普觉寺自唐贞观至清雍正，先后用过兜率寺、昭孝寺、洪庆寺、"
                   "寿安山寺、永安寺、十方普觉寺六个名号。",
-        derived_from_fact_ids=[
-            "fact_e26_doushuai_founded", "fact_e26_zhaoxiaoshi_rebuilt",
-            "fact_e26_hongqing_wofoe_cast", "fact_e26_shouanshan_renamed",
-            "fact_e26_yongan_renamed", "fact_e26_yongzheng_bestow",
-        ],
+        derived_from_fact_ids=["fact_e26_yuanshi_wofoe_cast"],
         inferred_subject_id="top_sifangpujue",
         inference_method=(
             "**纵向层累**判据（承 E20–E25 之反：本集不做单点否证，而做名号沿革链）："
@@ -356,7 +338,7 @@ PROPOSITIONS: List[Proposition] = [
     Proposition(
         id="prop_e26_wofoe_is_yuan_not_tang",
         statement="十方普觉寺内所供释迦牟尼涅槃铜卧佛系唐时所铸。",
-        derived_from_fact_ids=["fact_e26_doushuai_founded", "fact_e26_hongqing_wofoe_cast"],
+        derived_from_fact_ids=[],
         inferred_subject_id="ent_e26_yuan_wofo",
         inference_method=(
             "**器物年代与建置年代分层**判据（本系列继 E25 塔寺时序否证之后，"
@@ -374,7 +356,7 @@ PROPOSITIONS: List[Proposition] = [
     Proposition(
         id="prop_e26_guobao5_numbering",
         statement="十方普觉寺属第一批全国重点文物保护单位（1961），编号 1-75。",
-        derived_from_fact_ids=["fact_e26_guobao5_5_205"],
+        derived_from_fact_ids=["fact_e26_guobao5_listentry"],
         inferred_subject_id="top_sifangpujue",
         inference_method=(
             "批次误置：第一批国保公布于一九六一年三月四日，"
@@ -404,7 +386,7 @@ PROPOSITIONS: List[Proposition] = [
     Proposition(
         id="prop_e26_in_xiangshan",
         statement="十方普觉寺在香山。",
-        derived_from_fact_ids=["fact_e26_shuoan_garden"],
+        derived_from_fact_ids=[],
         inferred_subject_id="top_sifangpujue",
         inference_method=(
             "地望混写：寺在**寿安山南麓**，寿安山、香山、玉泉山为**三个不同山系地名**，"
@@ -437,9 +419,12 @@ ADOPTIONS: List[BeliefAdoption] = [
         adopted_at=_dt(2026, "dt_ad_e26_nc2"),
         rationale=(
             "寺创于唐贞观（627-649），铜卧佛铸于元至治元年（1321），"
-            "相隔六百余载。「唐时铸佛」把器物年代与建置年代混为一层，DISPROVEN。"
+            "相隔六百余载。雍正《御制十方普觉寺碑》「其一则后人范铜为之」为"
+            "**肯定性反面书证**（evidence of absence(Tang)），非 absence of evidence，"
+            "故 DISPROVEN 成立。"
         ),
-        refuting_fact_ids=["fact_e26_hongqing_wofoe_cast", "fact_e26_doushuai_founded"],
+        refuting_fact_ids=["fact_e26_yuanshi_wofoe_cast",
+                           "fact_e26_yongzheng_beipian_wofoe"],
     ),
     BeliefAdoption(
         proposition_id="prop_e26_guobao5_numbering",
@@ -452,7 +437,7 @@ ADOPTIONS: List[BeliefAdoption] = [
             "不在一九六一年第一批之列。第一批无「X-YYY」编号体系，"
             "故「1-75」既不属本寺也不属本批次。"
         ),
-        refuting_fact_ids=["fact_e26_guobao5_5_205"],
+        refuting_fact_ids=["fact_e26_guobao5_listentry"],
     ),
     BeliefAdoption(
         proposition_id="prop_e26_offer_temple_as_history",
@@ -477,6 +462,7 @@ ADOPTIONS: List[BeliefAdoption] = [
             "寺在**寿安山南麓**，寿安山与香山为不同山系；"
             "今在国家植物园内属现代机构隶属。混写为「香山卧佛寺」DISPROVEN。"
         ),
-        refuting_fact_ids=["fact_e26_shuoan_garden"],
+        refuting_fact_ids=["fact_e26_shuoan_location",
+                           "fact_e26_yongzheng_beipian_wofoe"],
     ),
 ]

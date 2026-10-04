@@ -196,22 +196,22 @@ def _draw_folio(out_path, paper, border, columns, center_text, seal_text,
 
 # --------------------------------------------- 3. 元史书影
 def build_yuanshi_folio(out_path):
+    """《元史·英宗本纪》至治元年冶铜条。
+
+    🔴 E26 判据层审核 C2 订正：原版伪造「長五尺」与「北京現存最大最古銅臥佛」，
+       前者与实测 5.3m 差三倍（实为「長丈六」之讹），后者是**现代断语**混进古籍书影。
+       现只保留可核的原文四句，并显式标注「依公開文本排印·非原刊掃描」。
+    """
     columns = [
-        "元史卷二十八",
-        "英宗睿皇帝",
-        "至治元年",
-        "詔改建昭孝寺",
-        "賜額昭孝",
-        "後改洪慶寺",
-        "寺中鑄釋迦牟尼臥佛",
-        "長五尺",
-        "北京現存最大最古銅臥佛",
+        "至治元年十二月",
+        "冶銅五十萬斤",
+        "作壽安山寺佛像",
+        "依公開文本排印",
+        "非原刊掃描",
     ]
-    center_text = "元\n史\n\n卷\n二\n十\n八"
+    center_text = "元\n史\n\n英\n宗\n本\n紀"
     return _draw_folio(out_path, paper=(243, 237, 221), border=(54, 38, 26),
-                       columns=columns, center_text=center_text, seal_text="元\n正史")
-
-
+                       columns=columns, center_text=center_text, seal_text="")
 # --------------------------------------------- 4. 清代重修寺记碑记拓影
 def build_shi_ji_bei(out_path):
     w, h = 1400, 1900
@@ -270,7 +270,7 @@ def build_shie_tuoying(out_path):
     # 下方说明条
     bar = Image.new("RGB", (w, 140), (247, 240, 223))
     bd = ImageDraw.Draw(bar)
-    bd.text((60, 26), "寺额拓影 · 御赐名号 · 雍正十二年（一七三四年）",
+    bd.text((60, 26), "寺额排印示意 · 非实物拓片 · 雍正十二年（一七三四年）",
             fill=(58, 50, 38), font=_load_font(38, medium=True))
     bd.text((60, 82), "此名沿用至今，民间称「卧佛寺」",
             fill=(122, 60, 40), font=_load_font(32))
@@ -437,7 +437,7 @@ def build_garden_view(out_path):
     # 说明条
     bar = Image.new("RGB", (w, 130), (247, 240, 223))
     bd = ImageDraw.Draw(bar)
-    bd.text((60, 24), "卧佛寺与国家植物园共存实景",
+    bd.text((60, 24), "卧佛寺与国家植物园 · 制作组绘制示意 · 非实物照片",
             fill=(58, 50, 38), font=_load_font(40, medium=True))
     bd.text((60, 80), "寺在寿安山南麓，今为国家植物园内古建与展陈空间",
             fill=(122, 60, 40), font=_load_font(32))
@@ -562,7 +562,7 @@ def main():
     built = [
         ("sanshanyuan_shuoan_roi_4000.png", build_sanshanyuan_roi, "MEC-1", "《清 佚名 三山五园图》寿安山段切片（公有领域）"),
         ("beijing_1915_shuoan_roi.png", build_1915_roi, "MEC-2", "民国四年(1915)《實測京師四郊地圖》寿安山段切片（公有领域）"),
-        ("yuanshi_folio.png", build_yuanshi_folio, "VEC-1", "《元史》卷二十八书影示意（依据公开文本排印，非原刊扫描）"),
+        ("yuanshi_folio.png", build_yuanshi_folio, "VEC-1", "《元史·英宗本纪》至治元年冶铜条·依公开文本排印，非原刊扫描"),
         ("shi_ji_bei_tuoying.png", build_shi_ji_bei, "VEC-1", "清代重修寺记碑记拓影示意（依据公开文本排印，非原石拓片）"),
         ("shie_yaodian_tuoying.png", build_shie_tuoying, "VEC-1", "寺额「十方普觉寺」拓影示意（依据公开图文，非实物扫描）"),
         ("shifangpujue_wofoe_photo.png", build_wofoe_photo, "VEC-3", "元代释迦牟尼涅槃铜卧佛影像示意（制作组绘制，非实物照片）"),

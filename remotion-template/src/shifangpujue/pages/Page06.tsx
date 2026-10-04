@@ -10,7 +10,7 @@ export const Page06: React.FC = () => (
       p6_photo_banner: {
         mode: "frame",
         src: staticFile("shifangpujue/shie_yaodian_tuoying.png"),
-        caption: "寺额「十方普觉寺」拓影 · 雍正十二年御赐 · VEC-1",
+        caption: "寺额「十方普觉寺」· 排印示意 · 非实物拓片",
       },
     }}
   />

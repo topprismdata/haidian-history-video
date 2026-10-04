@@ -47,23 +47,52 @@ def _blob():
 # ==================================================================
 
 class TestSixNamesChainGate:
-    def test_g1_exactly_six_names(self):
-        assert len(S.APPELLATIONS) == 6, "寺名沿革链必须恰有六个名号（初建名 + 五次易名）"
+    def test_g1_exactly_seven_names(self):
+        assert len(S.APPELLATIONS) == 7, \
+            "寺名沿革链必须恰有七个名号（初建名 + 六次易名）"
 
     def test_g1_names_in_order(self):
         labels = [a.label for a in S.APPELLATIONS]
-        assert labels == ["兜率寺", "昭孝寺", "洪庆寺", "寿安山寺", "永安寺", "十方普觉寺"], \
-            "六个名号必须按时间先后排列，实际为 %s" % labels
+        assert labels == ["兜率寺", "寿安山寺", "昭孝寺", "洪庆寺",
+                          "寿安禅林", "永安寺", "十方普觉寺"], \
+            "七个名号必须按时间先后排列，实际为 %s" % labels
+
+    def test_g1_shouanshan_is_yuan_not_ming(self):
+        """🔴 R1 回归：寿安山寺是**元代**敕建名，不得系于明正统八年。"""
+        a = [x for x in S.APPELLATIONS if x.label == "寿安山寺"][0]
+        y0 = a.valid_time_span.begin.gregorian.year
+        assert y0 <= 1321, "寿安山寺应系于元延祐七年(1320)敕建，实际起于 %d" % y0
+
+    def test_g1_shouanchanlin_is_ming(self):
+        """🔴 R1 回归：寿安禅林是**明代**正统八年敕赐名。"""
+        a = [x for x in S.APPELLATIONS if x.label == "寿安禅林"][0]
+        y0 = a.valid_time_span.begin.gregorian.year
+        assert y0 == 1443, "寿安禅林应系于明正统八年(1443)，实际 %d" % y0
+
+    def test_g1_six_names_collapses_to_five_is_fatal(self):
+        """🔴 负控制：若有人把寿安禅林并回寿安山寺，这条必须失败。"""
+        a = [x for x in S.APPELLATIONS if x.label == "寿安禅林"]
+        assert a, "负控制失效：寿安禅林被并入他名 —— 这正是初稿的错误"
 
     def test_g1_eras_span_tang_to_qing(self):
-        """六个名号必须横跨唐元明清，且首尾不倒置。"""
+        """七个名号必须横跨唐元明清，且起始年份不倒置。
+
+        🔴 判据设计修正（E26 审核后）：元代**寿安山寺／昭孝寺／洪庆寺是同期异称**，
+        时段本就重叠。旧判据禁止任何重叠，会把真实史实判成错误。
+        正确的硬约束是**起始年不倒置**（spans[i][0] <= spans[i+1][0]），
+        重叠只允许发生在同一朝代内部。
+        """
         spans = [(a.valid_time_span.begin.gregorian.year,
                   a.valid_time_span.end.gregorian.year) for a in S.APPELLATIONS]
         assert spans[0][0] == 627, "首个名号应起于唐贞观（627）"
         assert spans[-1][1] >= 2026, "末个名号应延续至今"
         for i in range(len(spans) - 1):
-            assert spans[i][1] <= spans[i + 1][0] + 1, \
-                "第 %d 与第 %d 个名号的时段重叠或倒置：%s / %s" % (i, i + 1, spans[i], spans[i + 1])
+            assert spans[i][0] <= spans[i + 1][0], \
+                "第 %d 与第 %d 个名号起始年倒置：%s / %s" % (i, i + 1, spans[i], spans[i + 1])
+        # 跨朝代不得重叠：明代寿安禅林(1443) 不得早于 元代寿安山寺 结束
+        yuan_end = max(spans[1][1], spans[2][1], spans[3][1])
+        assert spans[4][0] >= yuan_end, \
+            "明代名号(寿安禅林)起始 %d 早于元代名号结束 %d —— 跨朝代时段不得重叠" % (spans[4][0], yuan_end)
 
     def test_g1_eras_four_dynasties(self):
         blob = _blob()
@@ -148,7 +177,7 @@ class TestGuobaoBatchGate:
         因此只检查**现状陈述本身**（attested_string / 实体标签），
         不检查解释性文字。这正是 E25 教训「判据必须问对问题」。
         """
-        own = [f for f in S.FACTS if f.id == "fact_e26_guobao5_5_205"][0]
+        own = [f for f in S.FACTS if f.id == "fact_e26_guobao5_listentry"][0]
         assert "第五批" in own.attested_string
         assert "第一批" not in own.attested_string, \
             "本寺为第五批，现状陈述不得写作第一批"
@@ -160,7 +189,7 @@ class TestGuobaoBatchGate:
 
     def test_g3_1961_numbering_not_invented(self):
         """本寺为第五批，「1-75」式编号（第一批口径）严禁作为**本寺**编号出现。"""
-        own = [f for f in S.FACTS if f.id == "fact_e26_guobao5_5_205"][0]
+        own = [f for f in S.FACTS if f.id == "fact_e26_guobao5_listentry"][0]
         assert "5-205" in own.attested_string
         for ad in S.ADOPTIONS:
             if ad.proposition_id == "prop_e26_guobao5_numbering":
@@ -259,6 +288,36 @@ class TestReferentialIntegrityGate:
                 "🔴 ReferentialAssertion %s 指向了不存在的实体 %s" % (
                     ref.id, ref.referent_entity_id)
 
+    def test_g5_no_selfauthored_quotes(self):
+        """🔴 R3 回归：不得出现自撰的「逐字引文」。
+
+        初稿把 8 条自撰文言转写当 verbatim_quote 挂在国保名单下，标 L2 一手正史。
+        schema 的 verbatim_quote 非空硬阻断正是为此设立。查无原文者**不建 fact**。
+
+        正向判据：每条 fact 的 translator_note 必须交代其引文出处形态；
+        且国保名单 division 下的引文不得出现古籍式的繁体文言长句
+        （名单里该条只有一行「序号|分类号|名称|时代|位置」）。
+        """
+        for f in S.FACTS:
+            assert f.translator_note, "每条 fact 必须有 translator_note 说明引文形态"
+            # 自撰文言的特征：繁体字密度高且无分隔符
+            q = f.verbatim_quote
+            assert "｜" not in q or q.count("｜") >= 3, (
+                "🔴 引文含半形分隔但非名单原行形制，疑为自撰：%r" % q
+            )
+
+    def test_g5_facts_count_is_small_and_honest(self):
+        """🔴 R3 回归：fact 数应与「可核到逐字原文」的条目数相符。
+
+        初稿 8 条 fact 里只有 2 条能核到真实原文。订正后应恰为 4 条
+        （国保名单行、元史冶铜条、雍正御碑条、寺址条）。
+        膨胀到 6+ 说明有人在给无出处条目补造引文。
+        """
+        assert len(S.FACTS) <= 4, (
+            "🔴 fact 数 %d 超过可核到逐字原文的条目数（应 ≤4）—— "
+            "查无原文者不建成 TextualFact" % len(S.FACTS)
+        )
+
     def test_g5_all_evidence_fact_ids_exist(self):
         def check(ids, where):
             for fid in ids:
@@ -320,7 +379,13 @@ class TestNegativeControlGate:
             assert p.inference_method.strip() not in ("TODO", "N/A", "待补"), \
                 "命题 %s 的推断方法是占位符" % p.id
 
-    def test_g7_six_names_not_collapsed(self):
-        """六个名号必须各自有 Appellation，不得合并成一条。"""
+    def test_g7_seven_names_not_collapsed(self):
+        """七个名号必须各自有 Appellation，不得合并成一条。
+
+        🔴 负控制：初稿把「寿安禅林」并入「寿安山寺」当别称，导致名号少一环。
+        这条断言就是为防此类合并而设。
+        """
         labels = set(a.label for a in S.APPELLATIONS)
-        assert len(labels) == 6, "六个名号必须互不相同，实际 %s" % labels
+        assert len(labels) == 7, "七个名号必须互不相同，实际 %s" % labels
+        assert "寿安禅林" in labels, "🔴 寿安禅林是独立名号，不得并入寿安山寺"
+        assert "寿安山寺" in labels, "寿安山寺是元代敕建名，必须独立存在"

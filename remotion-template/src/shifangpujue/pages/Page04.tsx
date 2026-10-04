@@ -28,7 +28,7 @@ export const Page04: React.FC = () => (
       p4_photo_face: {
         mode: "frame",
         src: staticFile("shifangpujue/shifangpujue_wofoe_face.png"),
-        caption: "铜卧佛面部特写 · 元代所铸 · VEC-3",
+        caption: "铜卧佛面部 · 制作组绘制示意 · 非实物照片",
       },
     }}
   />

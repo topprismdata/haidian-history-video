@@ -1,0 +1,11 @@
+file,class,note,bytes,sha256,status
+sanshanyuan_xiangshan_roi.png,MEC-1,《清 佚名 三山五园图》香山北坡带切片（公有领域）：碧云寺·过街塔·静宜园北坡一线，即该图幅所绘北界；温泉村在图幅之外，画面不加温泉标注,9102409,8205ec04660cc387c8f00f5c4da5199ea7b2ddad4e60f09467b8305c8d111071,OK
+beijing_1915_shiwo_roi.png,MEC-2,民国四年(1915)《實測京師四郊地圖》温泉村一带切片（公有领域）。清晰可辨注记：『石窝』（小型聚落，图幅西缘县界上）、『白』＋疃/灘族复杂字形（白家疃村标注，『家』字未获确认）、『杨家村』『黑龙潭』（附庙宇符号）『福山』及昌平『界』。本幅未见可确读的『溫泉』注记；图幅存在非线性畸变，与今坐标仅可作趋势比对，不作点位断言,2453602,34caa2ee777e2cabb5fbdf6ee42ace0ebfb3e30ac2d9543f73115b43bd6e0e6b,OK
+wanshu_zaji_folio.png,VEC-1,明·沈榜《宛署杂记》「温泉堂」条书影示意（依据公开文本排印，非原刊扫描）,66397,b775bb7ca60b23d766d5ffe5214067a8e683103bf9530d78d08c959488232223,OK
+dijing_jingwulue_folio.png,VEC-1,明·刘侗 于奕正《帝京景物略》「温泉」条书影示意（依据公开文本排印，非原刊扫描）,76947,8b86717541d4bde7b113872300952186826ed7e0a702e28db4c29614faaaac24,OK
+caishi_moyai_shiyi.png,VEC-1,显龙山明代采石题记摩崖示意（制作组绘制，非实物照片；刻痕非释文）,107400,f77c9019ce3f2726400b153847937b41cc51c8f63611a34ddc8d0738e5b58bd5,OK
+shuiliu_yunzai_moyai.png,VEC-1,「水流云在」摩崖示意（制作组绘制，非实物照片；字体排印非手迹）,126019,1fbc64677e56d433182baa165072f86b521333981ba4de10208880062ecaa45f,OK
+heilongtan_longwangmiao.png,VEC-3,黑龙潭龙王庙示意（制作组绘制，非实物照片）,99391,c9a0c1ca93f604f822a45680c56f10e55e50c654cecd42cfc0f7fac5b29eb825,OK
+luanzhou_jinianta.png,VEC-3,辛亥滦州起义纪念园纪念塔示意（制作组绘制，非实物照片）,117196,2adfc216a7e791898baa9f2a72a3d3c88d6569e3f88befe246b720ba624c450b,OK
+mec3_diming_timeline.png,MEC-3,石窝村→温泉村地名置换时间轴（制作组矢量示意）,138393,925f3340aad0db6d5e208fc3cd1ab089d72df3fcb75a0fa7c8af401aa816eabb,OK
+mec4_quanming_chain.png,MEC-4,泉→堂→山→村→镇命名链拓扑（制作组示意 · 非测绘拓扑）,134217,3e75996306f8ea1070c438535dbf306c26e1e0cf8cd251defbe77c87acf753d4,OK

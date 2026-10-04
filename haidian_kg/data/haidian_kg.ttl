@@ -174,7 +174,9 @@ hd:feat_zhoukoudian a hhto:PhysicalFeature,
 
 hd:top_baijiatuan a hhto:Toponym ;
     rdfs:label "白家疃"@zh ;
-    hhto:attestedIn hd:attest_baijiatuan_caoxueqin ;
+    hhto:attestedIn hd:attest_baijiatuan_caoxueqin,
+        hd:attest_baijiatuan_founding,
+        hd:attest_baijiatuan_yixianqin ;
     hhto:phoneticPinyin "bái jiā tuǎn"^^xsd:string ;
     hhto:standardForm "白家疃"^^xsd:string .
 
@@ -215,6 +217,12 @@ hd:top_guangyuanzha a hhto:Toponym ;
     hhto:phoneticPinyin "guǎng yuán zhá"^^xsd:string ;
     hhto:standardForm "广源闸"^^xsd:string .
 
+hd:top_hongqingsi a hhto:Toponym ;
+    rdfs:label "洪庆寺"@zh ;
+    hhto:evolvedFrom hd:top_shuanshansi ;
+    hhto:phoneticPinyin "hóng qìng sì"^^xsd:string ;
+    hhto:standardForm "洪庆寺"^^xsd:string .
+
 hd:top_huangzhuang a hhto:Toponym ;
     rdfs:label "黄庄"@zh ;
     hhto:attestedIn hd:attest_huangzhuang_hunt ;
@@ -239,6 +247,12 @@ hd:top_taizhouwu a hhto:Toponym ;
 
 hd:top_wanshoushan hhto:attestedIn hd:attest_wanshoushan_rixia .
 
+hd:top_wofosi a hhto:Toponym ;
+    rdfs:label "卧佛寺"@zh ;
+    hhto:evolvedFrom hd:top_sifangpujue ;
+    hhto:phoneticPinyin "wò fó sì"^^xsd:string ;
+    hhto:standardForm "卧佛寺"^^xsd:string .
+
 hd:top_xiangshan hhto:attestedIn hd:attest_xiangshan_jinshi .
 
 hd:top_yiguangsi a hhto:Toponym ;
@@ -247,7 +261,19 @@ hd:top_yiguangsi a hhto:Toponym ;
     hhto:phoneticPinyin "yí guāng sì"^^xsd:string ;
     hhto:standardForm "遗光寺"^^xsd:string .
 
+hd:top_yongansi a hhto:Toponym ;
+    rdfs:label "永安寺"@zh ;
+    hhto:evolvedFrom hd:top_shouanchanlin ;
+    hhto:phoneticPinyin "yǒng ān sì"^^xsd:string ;
+    hhto:standardForm "永安寺"^^xsd:string .
+
 hd:top_yuquanshan hhto:attestedIn hd:attest_yuquanshan_jinshi .
+
+hd:top_zhaoxiaoshi a hhto:Toponym ;
+    rdfs:label "昭孝寺"@zh ;
+    hhto:evolvedFrom hd:top_shuanshansi ;
+    hhto:phoneticPinyin "zhāo xiào sì"^^xsd:string ;
+    hhto:standardForm "昭孝寺"^^xsd:string .
 
 hd:top_zhongguantun a hhto:Toponym ;
     rdfs:label "中官屯"@zh ;
@@ -441,6 +467,15 @@ hd:unit_shengshui_court a hhto:AdministrativeUnit,
     hhto:validTimeStart 1186 ;
     rdfs:comment "金世宗大安寺、章宗圣水院，为香山最早之皇家敕建行宫水院"@zh .
 
+hd:unit_sifangpujue_temple a hhto:AdministrativeUnit,
+        hhto:ReligiousSite ;
+    rdfs:label "十方普觉寺（寿安山南麓；唐贞观始建兜率寺，今为国家植物园内古建）"@zh ;
+    hhto:locatedAtFeature hd:feat_xiangshan ;
+    hhto:namedAs hd:top_sifangpujue ;
+    hhto:validTimeEnd 2026 ;
+    hhto:validTimeStart 627 ;
+    rdfs:comment "唐太宗贞观年间始建，时名兜率寺；元至治元年改昭孝寺、后改洪庆寺并铸释迦牟尼涅槃铜卧佛；明正统八年改寿安山寺、成化十八年改永安寺；清雍正十二年御赐名十方普觉寺。第五批全国重点文物保护单位（2001-06-25，编号5-205）"@zh .
+
 hd:unit_suzhoujie_market a hhto:AdministrativeUnit,
         hhto:ImperialGarden ;
     rdfs:label "清漪园万寿山后湖苏州街买卖街"@zh ;
@@ -617,11 +652,27 @@ hd:attest_anheqiao_wood_c14 a hhto:PlaceAttestation ;
 
 hd:attest_baijiatuan_caoxueqin a hhto:PlaceAttestation ;
     rdfs:label "白家疃"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
     hhto:evidenceLevel "Level 4 (近代学界考订)"^^xsd:string ;
-    hhto:originalQuote "白家疃为明洪武屯田移民聚落，清代怡亲王胤祥有祠邸于此，曹雪芹晚年曾徙居西山白家疃著书行医"@zh ;
+    hhto:originalQuote "曹雪芹乾隆二十三年至二十四年初曾徙居西山白家疃著书行医（居留约一年，非定居）"@zh ;
     hhto:recordedYear 1978 ;
     rdfs:comment "断代: 现代学术专著 | 来源: 《白家疃怡亲王交辉园题记与曹雪芹行迹考》"@zh .
+
+hd:attest_baijiatuan_founding a hhto:PlaceAttestation ;
+    rdfs:label "白家疃"@zh ;
+    hhto:epistemicStatus "CONTESTED"^^xsd:string ;
+    hhto:evidenceLevel "Level 5 (民间口碑传说)"^^xsd:string ;
+    hhto:originalQuote "白家疃成村于辽金或更早；一说为明洪武屯田移民聚落（两说并存，无定向书证）"@zh ;
+    hhto:recordedYear 1992 ;
+    rdfs:comment "断代: 现代 | 来源: 《海淀区地名志（1992）与现代通行说法》"@zh .
+
+hd:attest_baijiatuan_yixianqin a hhto:PlaceAttestation ;
+    rdfs:label "白家疃"@zh ;
+    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
+    hhto:evidenceLevel "Level 1 (考古硬证据)"^^xsd:string ;
+    hhto:originalQuote "怡贤亲王祠残碑（碑额存「怡贤亲王祠」五字，白家疃境内，海淀区文物保护单位）"@zh ;
+    hhto:recordedYear 1732 ;
+    rdfs:comment "断代: 清雍正十年 | 来源: 《怡贤亲王祠残碑碑额（实物）》"@zh .
 
 hd:attest_chengfu_shunzhi a hhto:PlaceAttestation ;
     rdfs:label "成府"@zh ;
@@ -957,8 +1008,8 @@ hd:attest_weiwucun_yuanshi a hhto:PlaceAttestation ;
 
 hd:attest_wenquan_dijing a hhto:PlaceAttestation ;
     rdfs:label "温泉"@zh ;
-    hhto:epistemicStatus "VERIFIED"^^xsd:string ;
-    hhto:evidenceLevel "Level 3 (正史方志纪实)"^^xsd:string ;
+    hhto:epistemicStatus "DISPROVEN"^^xsd:string ;
+    hhto:evidenceLevel "Level 6 (明确证伪伪说)"^^xsd:string ;
     hhto:originalQuote "平地温泉如沸，冬月白气滃然，辽金帝王驻跸沐浴之所"@zh ;
     hhto:recordedYear 1635 ;
     rdfs:comment "断代: 明代 | 来源: 《帝京景物略卷五》"@zh .
@@ -1328,6 +1379,11 @@ hd:top_dongsimu a hhto:Toponym ;
     hhto:phoneticPinyin "dǒng sì mù"^^xsd:string ;
     hhto:standardForm "董四墓"^^xsd:string .
 
+hd:top_doushuai a hhto:Toponym ;
+    rdfs:label "兜率寺"@zh ;
+    hhto:phoneticPinyin "dōu shuài sì"^^xsd:string ;
+    hhto:standardForm "兜率寺"^^xsd:string .
+
 hd:top_gaolianghe a hhto:Toponym ;
     rdfs:label "高梁河"@zh ;
     hhto:attestedIn hd:attest_gaolianghe_shuijingzhu ;
@@ -1427,6 +1483,12 @@ hd:top_shengshuiyuan a hhto:Toponym ;
     rdfs:label "圣水院"@zh ;
     hhto:phoneticPinyin "shèng shuǐ yuàn"^^xsd:string ;
     hhto:standardForm "圣水院"^^xsd:string .
+
+hd:top_shouanchanlin a hhto:Toponym ;
+    rdfs:label "寿安禅林"@zh ;
+    hhto:evolvedFrom hd:top_shuanshansi ;
+    hhto:phoneticPinyin "shòu ān chán lín"^^xsd:string ;
+    hhto:standardForm "寿安禅林"^^xsd:string .
 
 hd:top_wanshousi a hhto:Toponym ;
     rdfs:label "万寿寺"@zh ;
@@ -1628,6 +1690,11 @@ hd:top_shucun a hhto:Toponym ;
     hhto:phoneticPinyin "shù cūn"^^xsd:string ;
     hhto:standardForm "树村"^^xsd:string .
 
+hd:top_sifangpujue a hhto:Toponym ;
+    rdfs:label "十方普觉寺"@zh ;
+    hhto:phoneticPinyin "shí fāng pǔ jué sì"^^xsd:string ;
+    hhto:standardForm "十方普觉寺"^^xsd:string .
+
 hd:top_suzhoujie a hhto:Toponym ;
     rdfs:label "苏州街"@zh ;
     hhto:attestedIn hd:attest_suzhoujie_qianlong_poem ;
@@ -1753,6 +1820,12 @@ hd:top_qiongbajia a hhto:Toponym ;
     hhto:phoneticPinyin "qióng bā jiā"^^xsd:string ;
     hhto:standardForm "穷八家"^^xsd:string .
 
+hd:top_shuanshansi a hhto:Toponym ;
+    rdfs:label "寿安山寺"@zh ;
+    hhto:evolvedFrom hd:top_doushuai ;
+    hhto:phoneticPinyin "shòu ān shān sì"^^xsd:string ;
+    hhto:standardForm "寿安山寺"^^xsd:string .
+
 hhto:EuphemisticRenamingEvent a owl:Class ;
     rdfs:label "文人雅化避嫌更名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
@@ -1784,23 +1857,23 @@ hhto:ImperialNamingEvent a owl:Class ;
     rdfs:label "官方赐名改名事件"@zh ;
     rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
-hhto:ReligiousSite a owl:Class ;
-    rdfs:label "宗教寺观"@zh ;
-    rdfs:subClassOf hhto:AdministrativeUnit .
-
 hhto:Watercourse a owl:Class ;
     rdfs:label "水系河道"@zh ;
     rdfs:subClassOf hhto:PhysicalFeature .
+
+hhto:PhoneticShiftEvent a owl:Class ;
+    rdfs:label "语音流变与方言通假事件"@zh ;
+    rdfs:subClassOf hhto:ToponymEvolutionEvent .
+
+hhto:ReligiousSite a owl:Class ;
+    rdfs:label "宗教寺观"@zh ;
+    rdfs:subClassOf hhto:AdministrativeUnit .
 
 hd:feat_xiangshan a hhto:PhysicalFeature,
         hhto:TerrainElevation ;
     rdfs:label "香山与金山翠微山麓"@zh ;
     hhto:coordinatesWGS84 "116.19,39.99"^^xsd:string ;
     rdfs:comment "西山余脉，明代皇室妃嫔陵寝带与清代静宜园所在地"@zh .
-
-hhto:PhoneticShiftEvent a owl:Class ;
-    rdfs:label "语音流变与方言通假事件"@zh ;
-    rdfs:subClassOf hhto:ToponymEvolutionEvent .
 
 hhto:MilitaryGarrison a owl:Class ;
     rdfs:label "军事驻防与军屯"@zh ;
@@ -1846,13 +1919,13 @@ hhto:AdministrativeUnit a owl:Class ;
     rdfs:comment "具有制度身份、赋税职能或社群建制的历史组织单元 (Declarative Place)"@zh ;
     rdfs:subClassOf hhto:HistoricalEntity .
 
-hhto:Toponym a owl:Class ;
-    rdfs:label "地名称号实体"@zh ;
-    rdfs:comment "作为语言符号、社会称谓而存在的专有地名字符串与名号 (Appellation)"@zh ;
-    rdfs:subClassOf hhto:HistoricalEntity .
-
 hhto:PlaceAttestation a owl:Class ;
     rdfs:label "史料书证凭证"@zh ;
     rdfs:comment "具体史料文本在特定断代对该地名的一次实证用例 (Attestation as a First-class Node)"@zh ;
+    rdfs:subClassOf hhto:HistoricalEntity .
+
+hhto:Toponym a owl:Class ;
+    rdfs:label "地名称号实体"@zh ;
+    rdfs:comment "作为语言符号、社会称谓而存在的专有地名字符串与名号 (Appellation)"@zh ;
     rdfs:subClassOf hhto:HistoricalEntity .
 

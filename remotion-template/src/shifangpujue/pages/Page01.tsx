@@ -33,7 +33,7 @@ export const Page01: React.FC = () => (
       p1_photo_gate: {
         mode: "frame",
         src: staticFile("shifangpujue/shifangpujue_garden_view.png"),
-        caption: "卧佛寺山门实景 · 寿安山南麓 · VEC-3",
+        caption: "卧佛寺与国家植物园 · 制作组绘制示意 · 非实物照片",
       },
     }}
   />
