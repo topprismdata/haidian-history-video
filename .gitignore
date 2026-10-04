@@ -81,6 +81,9 @@
 !e30_shikongqiao_video/3d/refs/
 !e30_shikongqiao_video/3d/refs/*.md
 !e30_shikongqiao_video/3d/refs/*.json
+# T3.5 参考资产冻结（G3 防污染闸）：仅这两个文件精确放行，其余图片仍不入库
+!e30_shikongqiao_video/3d/refs/ref_elevation.jpg
+!e30_shikongqiao_video/3d/refs/ref_mask.png
 !e30_shikongqiao_video/tests/
 !e30_shikongqiao_video/tests/*.py
 !e30_shikongqiao_video/research/
