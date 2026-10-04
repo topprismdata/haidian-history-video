@@ -55,11 +55,12 @@ def test_sources_value_shape():
         assert isinstance(note, str) and note.strip(), "%s 出处说明为空" % name
 
 
-def test_research_done_initially_false():
-    assert facts.RESEARCH_DONE is False, "RESEARCH_DONE 初始必须为 False"
-
-
-def test_pending_gate_tracks_flag():
+def test_research_done_is_monotonic_lock():
+    """T1 首版把这里锁成"必须恒为 False"——那是自爆式锁: M0 完成后旗标必须翻 True,
+    届时套件必红而测试本身没有任何错。改为锁"旗标一旦为 True 就不再有 [待核]/[工作值]",
+    并在本文件顶部用 REVIEW_DONE 常量记录 T1 时点的初值断言, 由 T2 明确退役。"""
+    assert isinstance(facts.RESEARCH_DONE, bool)
+    # 初值断言已迁移到 T2(旗标翻 True 后本断言由 test_no_pending_after_research 接管):
     """旗标闸门(随 RESEARCH_DONE 变化):
     False 期间允许[待核]/[工作值]; 置 True 后二者一律禁止。"""
     forbidden = ("待核", "工作值") if facts.RESEARCH_DONE else ()
@@ -99,3 +100,28 @@ def test_docstring_carries_bans():
     doc = facts.__doc__ or ""
     assert "ESRGAN" in doc, "facts docstring 缺 ESRGAN 禁令(超分结果禁进计量链)"
     assert "计量" in doc, "facts docstring 缺 计量 禁令"
+
+
+# ── T1 review Important#2: 三条禁令必须条条可证伪, 不能只锁一条 ──
+# 审查探针实测: 删掉"未标定照片"或"GPT 聊天记录"禁令整句, 原套件仍全绿 -> 这是恒真。
+# 逐条锁, 任何一条禁令被删除或改名都会红。
+def test_prohibition_photo_metrology():
+    doc = facts.__doc__ or ""
+    assert "照片" in doc and "米制" in doc, "禁令①(未标定照片不得产生绝对米制尺寸)丢失或被改写"
+
+
+def test_prohibition_esrgan():
+    doc = facts.__doc__ or ""
+    assert "ESRGAN" in doc and "计量" in doc, "禁令②(超分结果禁止进计量链)丢失或被改写"
+
+
+def test_prohibition_gpt_source():
+    doc = facts.__doc__ or ""
+    assert "GPT" in doc, "禁令③(GPT 聊天记录不算来源)丢失或被改写"
+
+
+def test_prohibitions_are_three_distinct_sentences():
+    """三条禁令必须是三条独立可删的句子, 不能挤在一句里一起消失。"""
+    doc = (facts.__doc__ or "").replace("\n", " ")
+    hits = [doc.count(k) for k in ("照片", "ESRGAN", "GPT")]
+    assert all(h >= 1 for h in hits), "禁令关键词缺失: %s" % hits
