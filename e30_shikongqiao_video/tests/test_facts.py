@@ -180,14 +180,30 @@ def test_grades_are_not_inflated():
 
 
 def test_official_grade_requires_citation_in_note():
-    """[官方] 等级必须在说明里给出可追溯出处(URL 或 机构+年份), 否则不予认定。"""
+    """[官方] 等级必须在说明里给出**正面**可追溯出处, 否则不予认定。
+
+    负控制实测(2026-10-04): 只按"有年份字样"判定会漏网——把 DECK_UP_W 的说明整条
+    换成"据说"仍全绿, 因为原文里"2019原始页未检回"这句**否定语境**里也带年份。
+    因此判定必须要求出处是**正面陈述**: URL, 或"机构名+年份"且不在否定语境里。
+    """
     import re as _re
+    negation = ("未检回", "未公开", "查无", "无来源", "不可", "未找到")
     bad = []
     for n, (lvl, note) in facts.SOURCES.items():
         if lvl != "官方":
             continue
-        has_url = "http" in note
-        has_org_year = bool(_re.search(r"(19|20)\d{2}", note))
-        if not (has_url or has_org_year):
+        cited = [seg for seg in _re.split(r"[;；,，]", note) if seg.strip()]
+        positive = False
+        for seg in cited:
+            if "http" in seg:
+                positive = True
+                break
+            if any(neg in seg for neg in negation):
+                continue          # 否定语境里的年份不算出处
+            if _re.search(r"(19|20)\d{2}", seg) and _re.search(
+                    r"(北京|公园管理|日报|中心|局|政府|院|园|中心)", seg):
+                positive = True
+                break
+        if not positive:
             bad.append((n, note))
-    assert not bad, "[官方] 等级缺可追溯出处(需 URL 或 机构+年份): %s" % bad
+    assert not bad, "[官方] 等级缺**正面**可追溯出处(需 URL 或 机构+年份, 且非否定语境): %s" % bad
