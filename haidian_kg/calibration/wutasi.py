@@ -64,7 +64,7 @@ SOURCES: List[HistoricalSource] = [
 ]
 
 DIVISIONS: List[SourceDivision] = [
-    SourceDivision(id="div_e25_guobao1_zhenjuesi", source_id="src_guobao_1st",
+    SourceDivision(id="div_e25_guobao1_zhenjuesi", source_id="src_guobao_5th",
                    volume_number="第一批", section_title="真觉寺金刚宝座"),
 ]
 
