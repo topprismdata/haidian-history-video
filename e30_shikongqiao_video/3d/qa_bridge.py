@@ -9,14 +9,16 @@ import math
 def derive(f):
     """由 facts 推导 SPANS/PIER_X。递推规则必须与 bridge_geom2 完全一致:
     墩台宽 = f.BRIDGE_ABUT(T2b 终审定稿维持 1.35, 16内墩口径;
-    Task 4 已把 geom 的 BRIDGE_ABUT 回填机制废除断点)。"""
+    Task 4 已把 geom 的 BRIDGE_ABUT 回填机制废除断点)。
+    防御(终审 I11): SPAN_DISTINCT 不足 N_SPAN 项时不得 IndexError 崩溃 ——
+    按 len(spans) 截断递推, 让 check_body 的 INV_SPANS_LEN 去"报告"这个破坏。"""
     spans = list(f.SPAN_DISTINCT) + list(reversed(f.SPAN_DISTINCT[:-1]))
     pier_x, acc = [], -f.BRIDGE_LEN / 2.0
-    for i in range(f.N_SPAN + 1):
+    for i in range(min(f.N_SPAN, len(spans)) + 1):
         w = f.BRIDGE_ABUT if i in (0, f.N_SPAN) else f.PIER_W
         pier_x.append(acc + w / 2.0)
         acc += w
-        if i < f.N_SPAN:
+        if i < f.N_SPAN and i < len(spans):
             acc += spans[i]
     def deck_z(x):
         half = f.BRIDGE_LEN / 2.0
@@ -37,12 +39,40 @@ def circle_fit_residual(pts):
     err = max(abs(math.hypot(x - cx, z - cz) - r) for x, z in pts)
     return err / r, (cx, cz, r)
 
+def _is_num(v):
+    """实数(排除 bool —— bool 是 int 的子类, 必须显式排除; 与 bridge3d.schema.is_number 同口径)。"""
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+# check_body 逐项要求为数值的事实字段(终审 I11 前置校验; N_SPAN 另要求整型)
+_NUMERIC_FIELDS = ("BRIDGE_LEN", "DECK_Z_TOP", "DECK_Z_END", "DECK_UP_W",
+                   "DECK_DOWN_W", "SPRINGER", "ARCH_RATIO", "RING_T",
+                   "PIER_W", "BRIDGE_ABUT")
+
+
 def check_body(f):
-    """三层: INV(拓扑不变量) / MET(度量, 阈值须有依据) / IMP(实现完整性)。"""
+    """三层: INV(拓扑不变量) / MET(度量, 阈值须有依据) / IMP(实现完整性)。
+    判据契约(终审 I11): 损坏 facts 必须"报告"(fail/skip)而非崩溃 —— 
+    与框架 run_l1 同行为; 真实破坏不得从 fail 降级为 skip。"""
     import assumptions as A
     out = []
     def add(lvl, name, msg):
         out.append((lvl, name, msg))
+    # ── 前置类型/形状校验: 不足以下推时报 IMP_TYPES fail 并返回(不抛异常) ──
+    if not isinstance(getattr(f, "N_SPAN", None), int) or isinstance(f.N_SPAN, bool):
+        add("fail", "IMP_TYPES", "N_SPAN 须为 int, 实为 %r" % (getattr(f, "N_SPAN", None),))
+    else:
+        bad = [(n, type(getattr(f, n, None)).__name__) for n in _NUMERIC_FIELDS
+               if not _is_num(getattr(f, n, None))]
+        sd = getattr(f, "SPAN_DISTINCT", None)
+        if not isinstance(sd, (list, tuple)):
+            bad.append(("SPAN_DISTINCT", type(sd).__name__))
+        elif any(not _is_num(x) for x in sd):
+            bad.append(("SPAN_DISTINCT", "含非数值元素"))
+        if bad:
+            add("fail", "IMP_TYPES", "facts 字段类型非法, 判据无法执行: %s" % bad)
+    if any(x[1] == "IMP_TYPES" for x in out):
+        return out
     d = derive(f)
     # ── INV 拓扑不变量 ──
     if f.N_SPAN != 17:
@@ -60,9 +90,15 @@ def check_body(f):
     # 口径 = T2b 终审(2026-10-04): 内墩数 = N_SPAN - 1(17 孔之间是 16 个墩;
     # n-1 拓扑 + 卢沟桥10墩11孔/宝带桥53孔52墩文献佐证 + bridge_geom2 闭合断言同口径)。
     # 初版误按 15 墩硬编码产生 -2.50m 假闭合差(及"桥台 2.60"凑数解, 已作废);
-    # 改用 (N_SPAN-1) 使判据随 facts 变化。阈值 0.5m 维持不变。
+    # 改用 (N_SPAN-1) 使判据随 facts 变化。
+    # 阈值(终审 I12): 消费 facts.CLOSURE_TOL(登记于 SOURCES, 工作值); 缺失 → skip(未执行不算通过)。
     total = sum(d.SPANS) + (f.N_SPAN - 1) * f.PIER_W + 2 * f.BRIDGE_ABUT
-    if abs(total - f.BRIDGE_LEN) > 0.5:
+    closure_tol = getattr(f, "CLOSURE_TOL", None)
+    if closure_tol is None:
+        add("skip", "MET_CLOSURE", "facts 未声明 CLOSURE_TOL, 未执行(阈值必须有依据且进台账)")
+    elif not _is_num(closure_tol) or closure_tol <= 0:
+        add("fail", "IMP_TOLERANCE", "CLOSURE_TOL=%r 须为正数(坏容差会让闭合判据形同虚设)" % (closure_tol,))
+    elif abs(total - f.BRIDGE_LEN) > closure_tol:
         add("fail", "MET_CLOSURE",
             "几何闭合差 %+.2fm: 跨和+墩+台=%.1f != 桥长%.1f "
             "(n-1 拓扑: 17 孔之间是 16 个墩; 蓝本文献佐证 卢沟桥10墩11孔/宝带桥53孔52墩。"
@@ -81,9 +117,18 @@ def check_body(f):
         rtol, _ = circle_fit_residual(pts)
         if rtol > A.CIRCLE_FIT_RTOL:
             add("fail", "MET_ARCH_FAMILY", "孔%d 圆拟合残差/R=%.4f 超限(非圆弧?)" % (i + 1, rtol))
-        # f/l 只留宽幅 sanity(设计意图半圆)
-        if abs(f.ARCH_RATIO - 0.50) > 0.05:
-            add("fail", "MET_ARCH_RATIO", "f/l=%.3f 偏离半圆设计意图" % f.ARCH_RATIO)
+        # f/l 设计意图(终审 I12): 消费 facts.ARCH_RATIO_TARGET±ARCH_RATIO_TOL(原 0.50±0.05 硬写)。
+        # 缺任一 → skip(未执行不算通过); 与框架 met_arch_ratio 同语义。
+        ratio_target = getattr(f, "ARCH_RATIO_TARGET", None)
+        ratio_tol = getattr(f, "ARCH_RATIO_TOL", None)
+        if ratio_target is None or ratio_tol is None:
+            add("skip", "MET_ARCH_RATIO", "facts 未声明 ARCH_RATIO_TARGET/ARCH_RATIO_TOL, 未执行")
+        elif not (_is_num(ratio_target) and _is_num(ratio_tol)) or ratio_tol <= 0:
+            add("fail", "IMP_TOLERANCE",
+                "ARCH_RATIO_TARGET/TOL 非法: %r/%r(容差须为正数)" % (ratio_target, ratio_tol))
+        elif abs(f.ARCH_RATIO - ratio_target) > ratio_tol:
+            add("fail", "MET_ARCH_RATIO", "f/l=%.3f 偏离设计意图 %.2f±%.2f"
+                % (f.ARCH_RATIO, ratio_target, ratio_tol))
         # MET 结构自洽(G2 修订): 拱背=拱腹+RING_T 须低于桥面, 替代无据的0.30
         crown_i = f.SPRINGER + a
         if crown_i + f.RING_T > d.deck_z(xc) + 1e-9:
