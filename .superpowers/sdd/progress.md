@@ -15,9 +15,16 @@
 - [x] Task 3.5: 参考资产冻结 (commit 21c6cd8; 冻结 frontal_2011.jpg+ref_mask.png, **未看本体重渲即冻结**; 主动落选观感最佳的 IMG_0398——实测跨桥 px/m 梯度 15.8→11.2 证明有透视, 不可证<15°; 落选审计表入 FACTS §6.3 防后续偷换)
 - [x] Task 4: bridge_geom2 从 facts 取数 (commit 78c3cc3; **几何前后 SHA 逐字节相同** 桥体964v/960f sha e8cd1ced, 证明接线零漂移; 37测试; 发现C6桥台双值)
 - [ ] Task 5: qa_l2 Blender 网格判据 + 独立 validator
-- [ ] Task 6: 桥体重建 + 5 机位渲染
-- [ ] Task 7: 正交立面对叠 + 扰动标定阈值
-- [ ] Task 8: 冷启动重建 + manifest + M2.5 冻结闸门
+- [x] Task 6: 桥体重建+5机位出图 (commit cf11ac3; **修出图桥轴 103.15→112.0 差8.85°** 此前立面全被压缩; 17孔序列实测对称递减正确; 主控另修 abutment_ground 漏旋转 bc485a5)
+- [x] Task 7: L3 配准比对 (commit d30502f; 53测试; OVERLAY_IOU_MIN=0.76 由扰动标定取中点非拍脑袋; **诚实申报4项无判别力**并逐条归因; 渲染侧弃 RGB 阈值改 alpha(实测与真值 IoU 仅0.15); 主控补正券洞表效力边界——只跑渲染侧, facts错了会一致地错)
+- [x] Task 8: 冷重建+manifest (commit 6d8a838 + 0b346e5; **几何硬门全 MATCH 主控独立复核**; 渲染像素复现**被 agent 证伪**(arch 5渲5异, 自适应采样调度非确定)→如实降级为配置锁定; 冻结态 CONDITIONAL_RECONSTRUCTION_FREEZE 待用户裁决)
+
+## 通用框架 bridge3d（用户 2026-10-04 追加要求："十七孔桥只是第一个项目"）
+
+- commit `7510737`：`bridge3d/`（schema 契约 / derive 拓扑推导 / checks_l1 18 条三层判据 / facts_schema 五级来源校验 / negative_control 负控制+恒真检测）+ `tests/bridge3d/` 169 条 + `docs/bridge3d.md`
+- 源码 `grep -rn "\b17\b" bridge3d/*.py` **零命中**；合成 5 孔/23 孔桥证明不依赖 17
+- **主控独立验证**（造一个框架测试里没有的构型：53 孔薄墩联拱桥）→ 暴露 **`MET_TAPER` 过度约束**（原强制收分，等宽桥非法）→ 修 `8f549c2`，53 孔桥基线 fail 2→0，1555 测试全绿
+- **主控已定位、待裁定**：`inv_spans_sym` + `REQUIRED_LISTS=("SPAN_DISTINCT",)` 强制对称，但**卢沟桥（十七孔桥官方蓝本）实测左右不对称**（东拱 11.40 ≠ 西拱 12.35，两端墩距 16.49 ≠ 16.64，见 FACTS.md S6 引文）——框架当前契约接不了自己第一个项目的蓝本。影响比 MET_TAPER 大（写进了 schema 层）。已发审查员独立确认。
 
 ## Minor Findings 累积
 
