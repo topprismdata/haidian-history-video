@@ -40,8 +40,10 @@ else:
 out = os.path.join(HERE, "ortho_%s.png" % which)
 # 配准视图保洁净: water 大平面在正交投影只贡献背景, 隐藏以免污染掩膜。
 # (abutment_ground 曾未跟随桥轴旋转而横在河道里遮挡立面, 已于 bc485a5 修复为随本体
-#  一起转 -112°; 仍留在隐藏名单里, 因为它是引道楔形块、不属于桥体本体轮廓。)
-for _n in ("abutment_ground", "water"):
+#  一起转 -112°; 仍留在隐藏名单里, 因为它是引道楔形块、不属于桥体本体轮廓。
+#  2026-10-05 M4: 新增岸坡地形与体积雾盒同属环境/表现层, 一并隐藏——
+#  正交立面是本体轮廓比对图, L3 掩膜只认本体。)
+for _n in ("abutment_ground", "water", "shore_bank", "fog_volume"):
     _o = bpy.data.objects.get(_n)
     if _o:
         _o.hide_render = True

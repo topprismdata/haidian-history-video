@@ -24,12 +24,12 @@
 | 文件 | SHA256 | 角色 |
 |---|---|---|
 | `3d/bridge_geom2.py` | `d672173a4f88f774d506dd6af2869014fccc13609dbaa0a109ab7a63a85a991c` | 纯几何（消费 facts，零字面尺寸；终审 I13 删 BRIDGE_ABUT_TARGET 死透传、I14 闭合自检改 (N_SPAN−1) 口径、I9/I12 券洞余量改引用 assumptions.VOID_CUT_MARGIN —— 几何 SHA 不变，冷重建 A/B 实测 bridge_body sha_sorted 与冻结候选逐位一致） |
-| `3d/build_scene2.py` | `b93c93f063b0357ebabf24a0d5cb75b623dfd75fe472c65188641a0fba015068` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变，见 body_changelog.md） |
+| `3d/build_scene2.py` | `d3eebd846c97ea452a61bc7f20dd9f042cf1744d5a543b321e4eb66e66964ff4` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变；2026-10-05 M4 表现层：abutment_ground 改燕翅型桥台(前墙+八字燕翅墙)、新增 shore_bank/fog_volume 环境件——本体 bridge_body/voussoir/impost 顶点未动，qa_l2 正检 QA_L2_OK、register VERDICT PASS(IoU 0.8070 与冻结基线一致、void max\|Δxc\|=0.0181 不变)，见 body_changelog.md M4 节） |
 | `3d/qa_bridge.py` | `22edb160edaacdff8316fb51ac41accf7b20e03f92456a050c14ff1a2603a530` | L1 判据（纯数据；终审 I11 损坏 facts 报告不崩溃、I12 阈值消费 facts.CLOSURE_TOL/ARCH_RATIO_TARGET/ARCH_RATIO_TOL） |
 | `3d/qa_l2.py` | `4457508cee6e53d5b5c6f0e03b932ab3ff7e6088115db614b6923bab8fa5beb2` | L2 判据（开 blend 查 evaluated mesh；2026-10-05 终审 I4/I6：零采样记 skip 且 ok=false，负控脱靶/未抓到一律 exit 1） |
-| `3d/materials.py` | `590c528508637a25e330d9fb67c1bb0bf2cc3554f1383cf28589f2357b99b35b` | 程序化材质（无 random，节点内置噪声同版本确定） |
+| `3d/materials.py` | `dcb97107bd90333697677c57d0f91dc3b39af2ff326b740ee1d12b0c8e8b2aba` | 程序化材质（无 random，节点内置噪声同版本确定；2026-10-05 M4 表现层：stone 增逐块色差+bump 砌缝凹槽、water 三频波纹+粗糙度斑块、新增 earth/fog 材质——纯 shader 层，不触 mesh） |
 | `3d/lions.py` | `aa4c3b3e3f0314da3594a4c070aee4722660ee581a88b5122f5db5406610d627` | 狮母题（自带 LCG，seed 显式入参，确定） |
-| `3d/ortho.py` | `1a44bcd3e5880fc8b7cb6e6f2a3f7b66562cd1d82d470aacbbc66f618cefdf4a` | 正交出图（T6 当日演进：新增 top/arch 机位，首采哈希 2fe76ce0… 已被取代；2026-10-05 终审 I2 回填——`4ce8475` M3-1 加水线 sidecar 后未同步 manifest，旧 8 项闸门覆盖不到） |
+| `3d/ortho.py` | `6291a3af8fb169a4018da244caa91548556a9392e2ed80e87e0bdf9e2eed76b4` | 正交出图（T6 当日演进：新增 top/arch 机位，首采哈希 2fe76ce0… 已被取代；2026-10-05 终审 I2 回填——`4ce8475` M3-1 加水线 sidecar 后未同步 manifest；2026-10-05 M4 隐藏名单补 shore_bank/fog_volume 环境件，正交立面只认本体轮廓，IoU 0.8070 不变） |
 | `3d/render_shot.py` | `bef2368ccecb732aff765930aed3c7165e813d691eb849c0741b73630c647275` | 机位渲染（seed 显式；2026-10-05 终审 I2 回填实际盘上哈希——原记录 `95732262…` 是 `cf11ac3` 改文件前的旧值） |
 | `3d/shot_auto2.py` | `1b74f5bafeaf95f9710daf62b0c1a66729db7e4e90a1ba89bc926e3ff7845a8a` | 自动取景渲染（主控 2026-10-04 补 seed 显式化，已提交） |
 | `3d/freeze_hash.py` | `120e8e40be6d0992410809dbf5cd8b8347176f8308a61716884d45e154c4f370` | 核心几何哈希唯一定义点（随冻结包 commit `6d8a838`） |

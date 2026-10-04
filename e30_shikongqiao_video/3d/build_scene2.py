@@ -209,15 +209,18 @@ def build_beast_bm():
 
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    # GPT v4 第3刀: 大块石作。层高 0.45-0.60m, 灰缝压到 8-15mm,
-    # 风化噪声降 50% —— 原参数像"规则砖墙+云斑噪声", 石头颗粒太碎。
-    # 实拍订正(RM-123108 4x): 墙身=暖灰白大块砌石, 券圈=明显更白的汉白玉
-    m_body = MAT.stone_material("stone_body", (0.640, 0.600, 0.520),
-                                joint=0.007, course_h=0.68, weather=0.22)
-    m_ring = MAT.stone_material("stone_ring", (0.850, 0.828, 0.775),
-                                joint=0.010, course_h=0.24, weather=0.14)
+    # GPT v4 第3刀: 大块石作。层高 0.45-0.60m, 灰缝压到 8-15mm。
+    # 2026-10-05 M4 基色订正(主控采样 ref_elevation.jpg 实测): 桥身亮部 RGB(252,245,227),
+    # R-B=+25 暖白 —— 「青石筑桥体」是石材种类, 渲染基色走实拍: 提亮+偏暖。
+    # 栏杆/望柱/狮/靠山兽=汉白玉(京报网2025-12-24 口径), 比桥身更白一档。
+    m_body = MAT.stone_material("stone_body", (0.790, 0.765, 0.700),
+                                joint=0.007, course_h=0.68, weather=0.24, block_var=0.07,
+                                bump_strength=0.24)
+    m_ring = MAT.stone_material("stone_ring", (0.845, 0.830, 0.785),
+                                joint=0.010, course_h=0.24, weather=0.14, block_var=0.07)
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
+    m_earth = MAT.earth_material("shore_earth")
 
     # ── 墩脚基石带(实拍: 水上约1m 一道通长凸带, 其下有阴影线) ──
     def hwz(z):
@@ -359,32 +362,112 @@ def build():
     bm_to_obj(deck_bm, "deck_rail", m_rail)
     bm_to_obj(build_lions_bm(spots), "lions", m_rail)   # 蹲狮独立层
     bm_to_obj(build_beast_bm(), "beasts", m_rail)
-    # ── 第4刀: 两端地形接口 (GPT v4) ──
-    # 真桥一端接东堤、一端接南湖岛, 不是 150m 桥体独立漂在水里。
-    # 每端接 5m 石铺缓坡 + 微隆起地面, 埋掉大部 14.6m 端面。
+    # ── 第4刀改版(2026-10-05, 燕翅型桥台): 引道缓坡 + 两侧八字燕翅墙 + 岸坡地形 ──
+    # 文献: 桥台形式三型——带燕翅(古籍"雁翅")/凹字/一字; 前墙古称金刚墙, 两侧八字形
+    # 挡墙称燕翅墙(顺水金刚墙) —— 茅以升基金会《中国古代石拱桥——古桥各部名称》
+    # (https://www.mysf.org.cn/Detail/index.html?id=691&aid=291)。
+    # 视觉根因: 原楔形块垂直插水, 桥像漂着; 燕翅墙向岸斜展 + 岸坡承接才形成"接岸"读感。
+    # 数值地位: 展开角35°/翼长24m/墙厚1.4m/岸坡顶2.1m 均为[工作值](无文献数值, 常见做法30-45°);
+    # 本体端部1.35m桥台(facts.BRIDGE_ABUT, 已UNION进bridge_body)属本体, 不在此列, 未动。
+    WING_L = 24.0            # 翼墙水平投影长
+    WING_ANG = math.radians(35.0)
+    WING_T = 1.4             # 翼墙厚
+    BANK_Z = 2.1             # 岸坡顶标高(实拍两端岸线高于水面约2m)
     ab = bmesh.new()
     for sgn in (-1, 1):
         x_e = sgn * G.BRIDGE_LEN / 2.0
-        x_o = x_e + sgn * 42.0                     # 长堤延伸到画外, 读作接岸
         z_e = G.deck_z(x_e)
-        z_o = 0.8                                   # 堤远端接近水面
-        S = 9.0                                     # 堤面宽度渐扩
-        v = [ab.verts.new(p) for p in (
-            (x_e, -G.DECK_DOWN_W/2, G.BODY_BOTTOM), (x_e, G.DECK_DOWN_W/2, G.BODY_BOTTOM),
-            (x_o,  G.DECK_DOWN_W/2 + S, G.BODY_BOTTOM), (x_o, -G.DECK_DOWN_W/2 - S, G.BODY_BOTTOM),
-            (x_e, -G.DECK_DOWN_W/2, z_e), (x_e, G.DECK_DOWN_W/2, z_e),
-            (x_o,  G.DECK_DOWN_W/2 + S, z_o), (x_o, -G.DECK_DOWN_W/2 - S, z_o))]
+        dy0 = G.DECK_DOWN_W / 2.0
+        dxw = WING_L * math.cos(WING_ANG)
+        dyw = dy0 + WING_L * math.sin(WING_ANG)
+        # (1) 引道缓坡: 根部断面与本体端墙收分齐平(底=下宽半+0.06埋入, 顶=上宽半+0.12),
+        #     坡面拍 battered 斜面 -> 与端墙无 V 形凹槽(垂直裙曾留黑三角缝, 实测复现)。
+        #     2026-10-05 收窄: 原全下宽14.6m 读成"混凝土平台"; 真引道是路面宽,
+        #     下部展开的端面由燕翅墙夹持(前墙/金刚墙读感)。
+        RT0, RT1, RAMP_L = G.DECK_UP_W / 2.0 + 0.12, 5.2, 14.0
+        B0W = dy0 + 0.06                       # 根部底半宽(埋入本体端墙)
+        x_r = x_e - sgn * 0.06
+        x_o = x_e + sgn * RAMP_L
+        zt_tip = BANK_Z + 0.85                 # 坡端没入岸坡顶下
+        vs = [ab.verts.new(p) for p in (
+            (x_r, -B0W, G.BODY_BOTTOM), (x_r, B0W, G.BODY_BOTTOM),
+            (x_o,  RT1, G.BODY_BOTTOM), (x_o, -RT1, G.BODY_BOTTOM),
+            (x_r, -RT0, z_e), (x_r, RT0, z_e),
+            (x_o,  RT1, zt_tip), (x_o, -RT1, zt_tip))]
         for f in ((0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
-            try: ab.faces.new([v[k] for k in f])
+            try: ab.faces.new([vs[k] for k in f])
             except ValueError: pass
+        # (2) 燕翅墙 x2: 自端墙根(埋入本体0.5m防露缝)八字斜展, 顶面沿轴向
+        #     从桥面端高下斜至岸坡顶上方0.35m, 墙身直落水下基座。
+        for side in (-1, 1):
+            d = Vector((math.cos(WING_ANG), side * math.sin(WING_ANG)))
+            n = Vector((-side * math.sin(WING_ANG), math.cos(WING_ANG)))  # 离轴法向
+            z_root, z_tip = 3.60, BANK_Z + 0.35   # 翼墙顶=挡土墙高(工作值), 低于桥面
+            A = Vector((x_e - sgn * 0.5, side * (G.DECK_UP_W / 2.0 - 0.1)))
+            B = A + d * WING_L
+            pts = [(A.x, A.y), (B.x, B.y),
+                   (B.x + n.x * WING_T, B.y + n.y * WING_T),
+                   (A.x + n.x * WING_T, A.y + n.y * WING_T)]
+            def _ztop(px, py):
+                f = max(0.0, min(1.0, (Vector((px, py)) - A).dot(d) / WING_L))
+                return z_root * (1.0 - f) + z_tip * f
+            vs = [ab.verts.new((px, py, G.BODY_BOTTOM)) for px, py in pts] \
+               + [ab.verts.new((px, py, _ztop(px, py))) for px, py in pts]
+            for f in ((4,5,6,7), (0,3,2,1), (0,1,5,4), (1,2,6,5), (2,3,7,6), (3,0,4,7)):
+                try: ab.faces.new([vs[k] for k in f])
+                except ValueError: pass
     bmesh.ops.recalc_face_normals(ab, faces=ab.faces[:]); ab.normal_update()
     bm_to_obj(ab, "abutment_ground", m_body)
+    # (3) 岸坡地形: 两端各一片低矮岸坡(顶2.1-3.4m, 实拍岸线高于水面约2m),
+    #     内缘塞入桥端/引道之下防裂缝, 外缘与沿岸两端以陡坡没入水下(-2.4m)自然生成水线。
+    #     顶面起伏为确定性正弦叠加(非随机位移; 环境构件虽允许随机, 保持可复现)。
+    bk = bmesh.new()
+    for sgn in (-1, 1):
+        x_e = sgn * G.BRIDGE_LEN / 2.0
+        NU, NV = 24, 40
+        U0, U1, V0, V1 = -4.0, 96.0, -52.0, 62.0   # 相机侧收短, 防'绿色滑梯'楔形
+        def bank_h(u, v):
+            r = (u - U0) / (U1 - U0)
+            fall = max(0.0, 1.0 - max(0.0, (r - 0.22) / 0.45)) ** 1.35
+            ev = max(0.0, 1.0 - max(0.0, (abs(v) - 34.0) / 15.0)) ** 1.3
+            zt = (BANK_Z + 0.65
+                  + 0.45 * math.sin(u * 0.16) * math.cos(v * 0.11)
+                  + 0.30 * math.sin(u * 0.28 + 1.7) * math.sin(v * 0.21)
+                  + 0.12 * math.sin(u * 0.53 + 0.6) * math.sin(v * 0.37 + 2.1))
+            return -2.4 + (zt + 2.4) * min(fall, ev)
+        grid = []
+        for i in range(NU + 1):
+            row = []
+            for j in range(NV + 1):
+                u = U0 + (U1 - U0) * i / NU
+                v = V0 + (V1 - V0) * j / NV
+                row.append(bk.verts.new((x_e + sgn * u, v, bank_h(u, v))))
+            grid.append(row)
+        for i in range(NU):
+            for j in range(NV):
+                q = (grid[i][j], grid[i+1][j], grid[i+1][j+1], grid[i][j+1])
+                try: bk.faces.new(q if sgn > 0 else (q[0], q[3], q[2], q[1]))
+                except ValueError: pass
+    bk.normal_update()
+    bm_to_obj(bk, "shore_bank", m_earth)
+    # (4) 大气透视(实拍: 昆明湖水汽+空气散射, 远端发灰对比度低):
+    #     均匀体积散射盒罩住全场景。顶面 z=61 让仰角光线快速穿出(天空保持通透);
+    #     近地平线向水面掠射的长光程按距离积累雾感。密度为工作值(0.003实测过浓,
+    #     全画面发灰、倒影尽失; 降至0.0018): 近端84.6m散射占比~14%、远端132.4m~21%。
+    FOG_DENSITY = 0.0018
+    fg = bmesh.new()
+    bmesh.ops.create_cube(fg, size=1.0)
+    for v0 in fg.verts:
+        v0.co.x *= 5200.0; v0.co.y *= 5200.0
+        v0.co.z = v0.co.z * 126.0 + 60.0   # 盒顶加高: 仰角光线渐出, 消除1.3度硬边带
+    bm_to_obj(fg, "fog_volume", MAT.fog_material("fog", density=FOG_DENSITY,
+                                                color=(0.42, 0.46, 0.53)))
     # 全部桥体与引道构件统一绕 Z 转桥轴方位。
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
     for n in ("bridge_body","impost","voussoir","deck_rail","lions","beasts",
-              "pier_plinth","deck_cornice","abutment_ground"):
+              "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     # 照明
     w = bpy.data.worlds.new("World"); bpy.context.scene.world = w; w.use_nodes=True
@@ -399,10 +482,10 @@ def build():
     sky.sun_elevation = math.radians(35.0)
     sky.sun_rotation = math.radians(292.0)    # WNW: 侧掠相机面(NW), 石头受暖阳
     sky.altitude = 10; sky.air_density = 1.0
-    sky.aerosol_density = 0.25; sky.ozone_density = 1.0
+    sky.aerosol_density = 0.45; sky.ozone_density = 1.0   # M4: 气溶胶抬高(0.6实测地平线带过硬), 地平线雾感
     sky.ground_albedo = 0.12
     bgw = nt.nodes.new('ShaderNodeBackground')
-    bgw.inputs['Strength'].default_value = 0.38
+    bgw.inputs['Strength'].default_value = 0.42
     nt.links.new(sky.outputs['Color'], bgw.inputs['Color'])
     nt.links.new(bgw.outputs['Background'], outw.inputs['Surface'])
     d1 = bpy.data.lights.new("Key", type='SUN'); d1.energy=3.9; d1.angle=math.radians(1.2)
