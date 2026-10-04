@@ -64,7 +64,11 @@ def check_body(f):
     # 改用 (N_SPAN-1), 使判据随 facts 变化而非硬编码墩数。
     total = sum(d.SPANS) + (f.N_SPAN - 1) * f.PIER_W + 2 * f.BRIDGE_ABUT
     if abs(total - f.BRIDGE_LEN) > 0.5:
-        add("fail", "MET_CLOSURE", "几何闭合差 %.2fm: 跨和+墩+台=%.1f != 桥长%.1f (2026-10-04 实测 -2.50m: 桥台1.35偏小, 闭合推导应为2.60m, M0须归因)" % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
+        add("fail", "MET_CLOSURE",
+            "几何闭合差 %+.2fm: 跨和+墩+台=%.1f != 桥长%.1f "
+            "(n-1 拓扑: 17 孔之间是 16 个墩; 蓝本文献佐证 卢沟桥10墩11孔/宝带桥53孔52墩。"
+            " 基线 107.3+16×2.50+2×1.35=150.0 精确闭合, 若此判据触发说明 facts 偏离基线)"
+            % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
     # ── MET 券族: 圆拟合残差(G2: f/l 只是必要条件) ──
     # 防御: N_SPAN 与 SPAN_DISTINCT 展开长度不一致时(INV_N_SPAN/INV_SPANS_LEN 已报 fail),
     # 本循环必须仍能返回完整判据报告而非 IndexError 崩溃 —— 判据必须"报告", 不能"崩溃"。
