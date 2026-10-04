@@ -207,3 +207,86 @@ def test_official_grade_requires_citation_in_note():
         if not positive:
             bad.append((n, note))
     assert not bad, "[官方] 等级缺**正面**可追溯出处(需 URL 或 机构+年份, 且非否定语境): %s" % bad
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ── 终审 I8/I11/I12 回归节 ──
+# 判据行为测试本属 test_l1_body.py 主题; 因该文件不在本批次可改清单,
+# 回归锁寄放本文件, 语义独立成节: 等级注释交叉核对 / 判据消费 facts 阈值 / 防御性报告。
+# ══════════════════════════════════════════════════════════════════════════
+
+def _mutate_facts(**kw):
+    """复制 facts 为可变 namespace(与 test_l1_body._mutate 同构)。"""
+    import types
+    m = types.SimpleNamespace(**{k: getattr(facts, k) for k in dir(facts) if not k.startswith("_")})
+    for k, v in kw.items():
+        setattr(m, k, v)
+    return m
+
+
+def test_inline_grade_annotation_matches_sources():
+    """终审 I8: facts.py 每个 SOURCES 条目的 inline #[等级] 注释必须与登记等级一致(双向)。
+    负控实测(修复前): inline 抬级 [工作值]→[测绘] 与 inline 降级 [官方]→[工作值]
+    两个方向都是 15 条测试全绿 —— 没有任何测试核对注释与台账。"""
+    import re as _re
+    doc = Path(facts.__file__).read_text(encoding="utf-8")
+    bad = []
+    for name, (lvl, _note) in facts.SOURCES.items():
+        m = _re.search(r"^%s\s*=[^#\n]*#\s*\[([^\]]+)\]" % _re.escape(name), doc, _re.M)
+        if not m:
+            bad.append((name, "缺 inline [等级] 注释"))
+        elif m.group(1).strip() != lvl:
+            bad.append((name, "inline [%s] != SOURCES [%s]" % (m.group(1).strip(), lvl)))
+    # 反向: 凡带 inline [等级] 的顶层定义行, 名字必须在 SOURCES(防"有注释无登记")
+    for name, tag in _re.findall(r"^([A-Z][A-Z0-9_]*)\s*=[^#\n]*#\s*\[([^\]]+)\]", doc, _re.M):
+        if name not in facts.SOURCES:
+            bad.append((name, "有 inline [%s] 但未登记 SOURCES" % tag.strip()))
+    assert not bad, "inline 等级注释与 SOURCES 登记不一致: %s" % bad
+
+
+def test_criterion_params_declared_in_facts():
+    """终审 I12: 判据阈值三参数必须存在于 facts 并以 [工作值] 登记 SOURCES。
+    删除任一条 → 本测试红; 否则 MET_CLOSURE/MET_ARCH_RATIO 会静默退化为 skip 而无人守。"""
+    for n in ("CLOSURE_TOL", "ARCH_RATIO_TARGET", "ARCH_RATIO_TOL"):
+        v = getattr(facts, n, None)
+        assert isinstance(v, float) and not isinstance(v, bool) and v > 0, \
+            "facts 缺判据参数 %s(判据将静默 skip): %r" % (n, v)
+        assert n in facts.SOURCES and facts.SOURCES[n][0] == "工作值", \
+            "%s 须以 [工作值] 登记 SOURCES(阈值必须有依据)" % n
+
+
+def test_check_body_reports_instead_of_crashing():
+    """终审 I11: 损坏 facts 必须得到判据"报告", 不能抛异常(与框架 run_l1 同行为)。
+    修复前实测: 短 SPAN_DISTINCT → IndexError; DECK_Z_TOP 非数 → TypeError。
+    真实破坏必须报 fail(不得降级为 skip —— skip 不算通过)。"""
+    import qa_bridge
+    r = qa_bridge.check_body(_mutate_facts(SPAN_DISTINCT=[4.5, 4.9]))
+    codes = {x[1] for x in r if x[0] == "fail"}
+    assert "INV_SPANS_LEN" in codes, "短表破坏应报 INV_SPANS_LEN 而非崩溃/skip: %s" % codes
+    r2 = qa_bridge.check_body(_mutate_facts(DECK_Z_TOP="7.75"))
+    codes2 = {x[1] for x in r2 if x[0] == "fail"}
+    assert "IMP_TYPES" in codes2, "非数值 DECK_Z_TOP 应报 IMP_TYPES: %s" % codes2
+    r3 = qa_bridge.check_body(_mutate_facts(N_SPAN=17.0))
+    assert "IMP_TYPES" in {x[1] for x in r3 if x[0] == "fail"}, "非整型 N_SPAN 应报 IMP_TYPES"
+
+
+def test_criteria_consume_fact_thresholds():
+    """终审 I12: MET_CLOSURE/MET_ARCH_RATIO 必须消费 facts 阈值而非判据源码硬编码。
+    证明: 收紧 facts 容差, 同一扰动由"放行"变"红"; 删除阈值 → skip(未执行不算通过)。"""
+    import qa_bridge
+    def codes(m):
+        return {x[1] for x in qa_bridge.check_body(m) if x[0] == "fail"}
+    # 默认 CLOSURE_TOL=0.5: 桥台 +0.2m 在容差内放行(test_l1_body 同款标定)
+    assert "MET_CLOSURE" not in codes(_mutate_facts(BRIDGE_ABUT=facts.BRIDGE_ABUT + 0.2))
+    # 收紧 CLOSURE_TOL=0.1: 同一扰动必须转红 → 判据消费的确实是 facts 值
+    assert "MET_CLOSURE" in codes(_mutate_facts(BRIDGE_ABUT=facts.BRIDGE_ABUT + 0.2,
+                                                CLOSURE_TOL=0.1))
+    # ARCH_RATIO=0.53: 默认 ±0.05 放行; 收紧 TOL=0.01 转红
+    assert "MET_ARCH_RATIO" not in codes(_mutate_facts(ARCH_RATIO=0.53))
+    assert "MET_ARCH_RATIO" in codes(_mutate_facts(ARCH_RATIO=0.53, ARCH_RATIO_TOL=0.01))
+    # 阈值缺位 → skip(不得静默放行, 也不得崩)
+    m = _mutate_facts()
+    delattr(m, "CLOSURE_TOL")
+    delattr(m, "ARCH_RATIO_TARGET")
+    lv = {x[1]: x[0] for x in qa_bridge.check_body(m)}
+    assert lv.get("MET_CLOSURE") == "skip" and lv.get("MET_ARCH_RATIO") == "skip", lv
