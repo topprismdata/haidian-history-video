@@ -164,3 +164,83 @@ def test_default_corruptions_are_type_safe():
             except Exception as e:            # noqa: BLE001
                 raise AssertionError("破坏用例 %s 使判据 %r 崩溃: %r"
                                      % (label, chk.__name__, e))
+
+
+# ══════════ 双向恒真检测(2026-10-05 终审 I5) ══════════
+# 旧检测器只查"能不能红", 放得过"基线就红"的过度约束判据
+# (MET_TAPER 原病与对称奇数孔契约均由此过审), 且 codes=None 时死判据被掩盖。
+
+def test_baseline_red_criterion_is_flagged():
+    """见谁都咬的判据(合法基线上就红)必须被双向检测抓住 —— 修复前放行。"""
+    from bridge3d.schema import Finding
+
+    def bite_all(f):
+        return [Finding("fail", "BITE", "x")]
+    with pytest.raises(AssertionError, match="基线即红"):
+        assert_no_always_true(bite_all, make_5())
+    # 显式豁免才放行(豁免本身可见, 不是静默):
+    rep = assert_no_always_true(bite_all, make_5(), require_baseline_green=False)
+    assert "BITE" in rep["baseline_fail_codes"]
+
+
+def test_overconstrained_morphology_criterion_caught():
+    """MET_TAPER 原病复刻(强制收分 0<顶<底)在等宽桥基线上就红 ——
+    双向检测必须抓, 这正是 I1 能存活到终审的机制漏洞。"""
+    from bridge3d.schema import Finding
+    from facts_synth import make_equal4
+
+    def enforce_taper(f):
+        from bridge3d.schema import is_number
+        up = getattr(f, "DECK_UP_W", None)
+        down = getattr(f, "DECK_DOWN_W", None)
+        if not (is_number(up) and is_number(down)):
+            return []                      # 前置缺失/非法走 skip 语义, 不崩(判据铁律)
+        if not 0 < up < down:
+            return [Finding("fail", "MET_TAPER", "强制收分")]
+        return []
+    with pytest.raises(AssertionError, match="基线即红"):
+        assert_no_always_true(enforce_taper, make_equal4())
+
+
+def test_criterion_alive_requires_explicit_codes():
+    """逐判据入口: codes 必须显式; 声明的死代码必须报错(修复前 codes=None 静默掩盖)。"""
+    from bridge3d.schema import Finding
+    from bridge3d.negative_control import assert_criterion_alive
+
+    def dead(f):
+        if getattr(f, "N_SPAN", None) == 999999:
+            return [Finding("fail", "DEAD", "x")]
+        return []
+    with pytest.raises(AssertionError, match="必须显式给出 codes"):
+        assert_criterion_alive(dead, make_5(), codes=())
+    with pytest.raises(AssertionError, match="DEAD"):
+        assert_criterion_alive(dead, make_5(), codes=("DEAD",))
+    # 活判据 + 正确的声明代码表 → 通过:
+    def live(f):
+        if getattr(f, "N_SPAN", None) is None or f.N_SPAN < 1:
+            return [Finding("fail", "LIVE_A", "x")]
+        if isinstance(f.N_SPAN, bool):
+            return [Finding("fail", "LIVE_B", "x")]
+        return []
+    rep = assert_criterion_alive(live, make_5(), codes=("LIVE_A", "LIVE_B"))
+    assert set(rep["kills"]) >= {"LIVE_A", "LIVE_B"}
+
+
+@pytest.mark.parametrize("make", [make_5, make_23], ids=["n5", "n23"])
+def test_l1_default_corruptions_cover_shape_and_type_axes(make):
+    """新破坏轴(SOURCES 非dict / RESEARCH_DONE 非bool / RELATIONS 非dict /
+    N_SPAN 浮点 / scale8)必须存在且类型安全(不得把判据弄崩)。"""
+    labels = [l for l, _ in default_corruptions(make())]
+    for want in ("shape:SOURCES_not_dict", "shape:RESEARCH_DONE_nonbool",
+                 "shape:RELATIONS_not_dict", "type:N_SPAN_float"):
+        assert want in labels, (want, labels)
+    assert any(l.startswith("scale8:") for l in labels)
+    f = make()
+    from bridge3d.schema import Finding
+    for label, cf in default_corruptions(f):
+        try:
+            C.run_l1(cf)
+        except MissingFactError:
+            pass
+        except Exception as e:   # noqa: BLE001
+            raise AssertionError("破坏 %s 使 run_l1 崩溃: %r" % (label, e))

@@ -40,7 +40,7 @@ from .negative_control import (mutate, dropped, snapshot,
                                assert_criterion_rejects, assert_criterion_accepts,
                                assert_skip_not_fail, patched_derive,
                                default_corruptions, killability_report,
-                               assert_no_always_true)
+                               assert_no_always_true, assert_criterion_alive)
 
 __all__ = [
     # 契约
@@ -58,7 +58,7 @@ __all__ = [
     "negative_control", "mutate", "dropped", "snapshot",
     "assert_criterion_rejects", "assert_criterion_accepts", "assert_skip_not_fail",
     "patched_derive", "default_corruptions", "killability_report",
-    "assert_no_always_true",
+    "assert_no_always_true", "assert_criterion_alive",
 ]
 
 

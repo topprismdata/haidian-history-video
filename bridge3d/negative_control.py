@@ -12,11 +12,17 @@
                                           (E30 结论: 展开规则恒回文, SYM 判据
                                            经由 facts 输入不可达, 只能靠本工具证明)
 
-  2) 恒真检测(自动生成破坏用例, 给定判据验证它会红):
+  2) 恒真检测(双向: ①破坏用例能红 ②合法基线必须绿 —— 只查①放得过
+     "基线就红"的过度约束判据, MET_TAPER 原病与对称奇数孔契约均由此过审):
        default_corruptions(f)             按 schema 字段自动生成类型化破坏
        killability_report(...)            每个 fail 代码被哪些破坏触发过
-       assert_no_always_true(...)         任何代码无破坏可触发 / 判据从未变红 /
+       assert_no_always_true(...)         判据在合法基线上就 fail(过度约束) → fail;
+                                          任何代码无破坏可触发 / 判据从未变红 /
                                           判据在破坏下崩溃而非报告 → 一律 fail
+       assert_criterion_alive(...)        逐判据入口: codes 必须显式给出该判据
+                                          声明的全部 fail 代码 —— 死判据(声明的代码
+                                          无破坏可触发)必须报错; 聚合级 codes=None
+                                          时死判据会被活判据的杀伤记录掩盖
 
   3) 语义工具:
        assert_skip_not_fail(findings)     缺可选事实必须走 skip, 绝不走 fail
@@ -167,8 +173,13 @@ def default_corruptions(f):
         add("neg:" + n, **{n: -v})
         add("scale2:" + n, **{n: v * 2})
         add("scale4:" + n, **{n: v * 4})
+        add("scale8:" + n, **{n: v * 8})   # 高倍率: 高净空桥(如不对称大桥)的 SPRINGER 类破坏
         add("off1:" + n, **{n: v + 1})
         out.append(("missing:" + n, dropped(f, n)))
+
+    n_span = get(f, "N_SPAN")
+    if isinstance(n_span, int) and not isinstance(n_span, bool):
+        add("type:N_SPAN_float", N_SPAN=float(n_span))   # 孔数非 int → IMP_REQUIRED_TYPE
 
     if has(f, "SPAN_DISTINCT"):
         d = list(get(f, "SPAN_DISTINCT"))
@@ -215,6 +226,21 @@ def default_corruptions(f):
 
     if has(f, "RESEARCH_DONE"):
         add("flag:research_done_false", RESEARCH_DONE=False)
+        add("shape:RESEARCH_DONE_nonbool", RESEARCH_DONE="yes")   # 登记非 bool → IMP_REGS_SHAPE
+
+    if has(f, "N_SPAN"):
+        add("type:N_SPAN_bool", N_SPAN=True)           # bool 是 int 子类, 必须显式排除
+
+    for n in ("ARCH_RATIO", "RING_T", "DECK_UP_W", "DECK_DOWN_W",
+              "DECK_Z_TOP", "DECK_Z_END", "CLOSURE_TOL"):
+        if has(f, n) and is_number(get(f, n)):
+            add("shape:%s_nonnum" % n, **{n: "坏"})    # 可选条目类型非法 → IMP_OPTIONAL_TYPE
+
+    if has(f, "SOURCES"):
+        add("shape:SOURCES_not_dict", SOURCES=(0,))    # 非dict登记 → IMP_REGS_SHAPE(不得崩溃)
+
+    if has(f, "RELATIONS"):
+        add("shape:RELATIONS_not_dict", RELATIONS=(0,))  # 关系表形状坏 → IMP_RELATIONS_SHAPE
 
     for n in ("SOURCES", "RESEARCH_DONE"):
         out.append(("missing:" + n, dropped(f, n)))
@@ -225,8 +251,8 @@ def default_corruptions(f):
 
     if has(f, "RELATIONS") and hasattr(get(f, "RELATIONS"), "items"):
         rel = dict(get(f, "RELATIONS"))
-        if rel:
-            r0 = sorted(rel.keys())[0]
+        # 每条声明的关系各配一个恒假破坏 —— 逐判据审计时每条 REL_* 代码都必须可杀
+        for r0 in sorted(rel.keys()):
             broken = dict(rel)
             broken[r0] = (lambda ff: False)
             add("relations:false:%s" % r0, RELATIONS=broken)
@@ -281,19 +307,28 @@ def killability_report(check, f, corruptions=None, derive_corruptions=None):
 
 
 def assert_no_always_true(check, f, codes=None, corruptions=None,
-                          derive_corruptions=None):
-    """恒真检测: 给定判据, 自动生成破坏用例并验证它会红; 恒真则本断言 fail。
+                          derive_corruptions=None, require_baseline_green=True):
+    """恒真检测(双向): 给定判据, 自动生成破坏用例并验证它会红; 恒真则本断言 fail。
 
-    三种失败模式(输出上一模一样, 必须区分):
-      1) 判据在任何破坏下都不变红 —— 恒真(或破坏用例不足, 需追加自定义破坏);
-      2) codes 中指定代码没有任何破坏能触发 —— 该代码是死判据;
-      3) 判据在破坏下崩溃而非报告 —— 脆弱判据(E30 铁律: 必须报告, 不能崩溃)。
+    四种失败模式(输出上一模一样, 必须区分):
+      1) 判据在**合法基线**上就 fail —— 过度约束("见谁都咬", MET_TAPER 原病 /
+         对称奇数孔契约均由此过审) → 默认 fail(require_baseline_green=False 显式豁免);
+      2) 判据在任何破坏下都不变红 —— 恒真(或破坏用例不足, 需追加自定义破坏);
+      3) codes 中指定代码没有任何破坏能触发 —— 该代码是死判据
+         (codes=None 时无法枚举"应然代码", 死判据会被活代码的杀伤记录掩盖;
+          逐判据审计请用 assert_criterion_alive 显式点名);
+      4) 判据在破坏下崩溃而非报告 —— 脆弱判据(铁律: 必须报告, 不能崩溃)。
     """
     rep = killability_report(check, f, corruptions=corruptions,
                              derive_corruptions=derive_corruptions)
     if rep["crashes"]:
         raise AssertionError("判据崩溃而非报告(必须修复为报告): %r"
                              % (rep["crashes"][:CRASH_SAMPLE],))
+    if require_baseline_green and rep["baseline_fail_codes"]:
+        raise AssertionError(
+            "基线即红: 判据在合法事实上就 fail(过度约束/见谁都咬) —— "
+            "负控制必须双向: 破坏能红之外, 合法基线必须绿。基线 fail 代码: %r"
+            % (rep["baseline_fail_codes"],))
     if codes is None:
         codes = sorted(set(rep["kills"].keys()) | set(rep["baseline_fail_codes"]))
         if not codes:
@@ -307,3 +342,19 @@ def assert_no_always_true(check, f, codes=None, corruptions=None,
             "覆盖到的代码: %r)" % (unkillable, rep["n_corruptions"],
                                   sorted(rep["kills"].keys())))
     return rep
+
+
+def assert_criterion_alive(check, f, codes, corruptions=None,
+                           derive_corruptions=None):
+    """逐判据恒真审计入口(I5): codes 必须显式给出该判据文档声明的**全部** fail 代码。
+
+    与聚合级 codes=None 的差别: 声明的代码若没有任何破坏能触发(死判据),
+    此处必须报错, 不可能被其他活代码的杀伤记录掩盖。
+    双向断言同时生效: 合法基线必须绿 + 每个声明代码必须可杀。
+    """
+    if not codes:
+        raise AssertionError("assert_criterion_alive 必须显式给出 codes(空表=没有可证伪声明, "
+                             "判据无牙), 不能静默放过")
+    return assert_no_always_true(check, f, codes=tuple(codes),
+                                 corruptions=corruptions,
+                                 derive_corruptions=derive_corruptions)

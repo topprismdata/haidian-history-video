@@ -286,10 +286,14 @@ def imp_tolerance(f):
 
 
 def imp_sources_cover(f):
-    """SOURCES 必须覆盖每个必填常量与必填序列(漏一即 fail)。"""
+    """SOURCES 必须覆盖每个必填常量与必填序列(漏一即 fail)。
+    SOURCES 形状非法 → skip(形状问题由 IMP_REGS_SHAPE 报告, 本判据不得崩溃)。"""
     if not has(f, "SOURCES"):
         return _skip("IMP_SOURCES_COVER", "缺 SOURCES, 由 IMP_REGS_MISSING 报告")
-    keys = set(get(f, "SOURCES").keys())
+    src = get(f, "SOURCES")
+    if not hasattr(src, "items"):
+        return _skip("IMP_SOURCES_COVER", "SOURCES 形状非法, 未执行; 由 IMP_REGS_SHAPE 报告")
+    keys = set(src.keys())
     missing = sorted(n for n in tuple(REQUIRED) + tuple(REQUIRED_LISTS) if n not in keys)
     if missing:
         return [Finding("fail", "IMP_SOURCES_COVER", "必填项缺来源登记: %r" % (missing,))]
@@ -297,11 +301,15 @@ def imp_sources_cover(f):
 
 
 def imp_grades_legal(f):
-    """来源等级必须落在 GRADES 五级内(含"待核"在内的一切等级外写法都非法)。"""
+    """来源等级必须落在 GRADES 五级内(含"待核"在内的一切等级外写法都非法)。
+    SOURCES 形状非法 → skip(由 IMP_REGS_SHAPE 报告)。"""
     if not has(f, "SOURCES"):
         return _skip("IMP_GRADES_LEGAL", "缺 SOURCES, 由 IMP_REGS_MISSING 报告")
+    src = get(f, "SOURCES")
+    if not hasattr(src, "items"):
+        return _skip("IMP_GRADES_LEGAL", "SOURCES 形状非法, 未执行; 由 IMP_REGS_SHAPE 报告")
     bad = []
-    for k, v in get(f, "SOURCES").items():
+    for k, v in src.items():
         grade = v[0] if isinstance(v, (tuple, list)) and v else None
         if grade not in GRADES:
             bad.append((k, grade))
@@ -319,7 +327,11 @@ def imp_assumptions_isolated(f):
     names = list(get(f, "ASSUMPTION_NAMES"))
     if not has(f, "SOURCES"):
         return _skip("IMP_ASSUMPTION_ISOLATED", "缺 SOURCES, 由 IMP_REGS_MISSING 报告")
-    leak = sorted(set(names) & set(get(f, "SOURCES").keys()))
+    src = get(f, "SOURCES")
+    if not hasattr(src, "items"):
+        return _skip("IMP_ASSUMPTION_ISOLATED",
+                     "SOURCES 形状非法, 未执行; 由 IMP_REGS_SHAPE 报告")
+    leak = sorted(set(names) & set(src.keys()))
     if leak:
         return [Finding("fail", "IMP_ASSUMPTION_LEAK",
                         "假设层参数混进来源台账: %r" % (leak,))]

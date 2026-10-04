@@ -167,3 +167,32 @@ def test_missing_sources_degrades_to_skip_not_fail(make):
     r = FS.run_fact_checks(f)
     assert "FS_SOURCES_MISSING" in fail_codes(r)
     assert "FS_GRADE_ILLEGAL" in [x.code for x in r if x.level == "skip"]
+
+
+# ══════════ 逐校验器显式点名恒真审计（2026-10-05 终审 I5）══════════
+
+_FACT_CHECKER_CODES = [
+    (FS.check_sources_complete, ("FS_SOURCES_MISSING",)),
+    (FS.check_source_shape, ("FS_SOURCE_SHAPE",)),
+    (FS.check_grades_legal, ("FS_GRADE_ILLEGAL",)),
+    (FS.check_stale_keys, ("FS_STALE_KEY",)),
+    (FS.check_working_values_documented, ("FS_WORKING_UNDOCUMENTED",)),
+    (FS.check_no_grade_inflation, ("FS_GRADE_INFLATED",)),
+    (FS.check_official_citation, ("FS_OFFICIAL_UNCITED",)),
+    (FS.check_research_flag, ("FS_RESEARCH_FLAG",)),
+    (FS.check_assumptions_not_registered, ("FS_ASSUMPTION_LEAK",)),
+    (FS.check_docstring_bans, ("FS_BAN_PHOTO_METRIC", "FS_BAN_SUPERRES",
+                               "FS_BAN_GPT_SOURCE")),
+]
+
+_ALT = [make_23]      # make_5 由上一节全量覆盖; 基线 green 侧在 test_checks_l1 六构型
+
+
+@pytest.mark.parametrize("chk_codes", _FACT_CHECKER_CODES,
+                         ids=lambda cc: cc[0].__name__)
+@pytest.mark.parametrize("make", [make_5] + _ALT, ids=["n5", "n23"])
+def test_each_fact_checker_alive_with_explicit_codes(chk_codes, make):
+    """事实层每条校验器: 基线绿 + 声明的全部 fail 代码逐一可杀(死校验器必须报错)。"""
+    from bridge3d.negative_control import assert_criterion_alive
+    chk, codes = chk_codes
+    assert_criterion_alive(chk, make(), codes)

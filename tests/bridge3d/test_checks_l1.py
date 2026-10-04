@@ -380,3 +380,54 @@ def test_met_deck_dir_flat_is_legal():
 def test_met_deck_dir_still_catches_inverted():
     """倒拱(端 > 中)必须仍被抓 —— 放宽不能变成恒真。"""
     assert "MET_DECK_DIR" in _fail_codes(_with(DECK_Z_TOP=3.0, DECK_Z_END=4.0))
+
+
+# ══════════ 逐判据显式点名恒真审计（2026-10-05 终审 I5）══════════
+# 聚合级 codes=None 时, 死判据会被活判据的杀伤记录掩盖 —— 每条判据必须
+# 用显式 codes 逐一点名: 声明的 fail 代码无破坏可触发 = 死判据 = 直接红。
+# 同时双向: 六个构型(含四个替代构型)的合法基线必须全绿(require_baseline_green 默认开)。
+
+_ALL_MAKERS = MAKERS + ALT_MAKERS
+_ALL_IDS = IDS + ALT_IDS
+
+_CRITERION_CODES = [
+    (C.inv_n_span, ("INV_N_SPAN",)),
+    (C.inv_spans_len, ("INV_SPANS_LEN",)),
+    (C.inv_spans_positive, ("INV_SPANS_POS",)),
+    (C.inv_supports_len, ("INV_SUPPORTS_LEN",)),
+    (C.met_closure, ("MET_CLOSURE",)),
+    (C.met_deck_camber, ("MET_DECK_DIR",)),
+    (C.met_taper, ("MET_TAPER",)),
+    (C.met_arch_ratio, ("MET_ARCH_RATIO",)),
+    (C.met_ring_fit, ("MET_RING_FIT",)),
+    (C.met_springer, ("MET_SPRINGER",)),
+    (C.imp_dims, ("IMP_DIM",)),
+    (C.imp_tolerance, ("IMP_TOLERANCE",)),
+    (C.imp_contract, ("IMP_REQUIRED_MISSING", "IMP_REQUIRED_TYPE", "IMP_LIST_MISSING",
+                      "IMP_LIST_SHAPE", "IMP_REGS_MISSING", "IMP_REGS_SHAPE",
+                      "IMP_RELATIONS_SHAPE", "IMP_OPTIONAL_TYPE")),
+    (C.imp_sources_cover, ("IMP_SOURCES_COVER",)),
+    (C.imp_grades_legal, ("IMP_GRADES_ILLEGAL",)),
+    (C.imp_assumptions_isolated, ("IMP_ASSUMPTION_LEAK",)),
+]
+
+_DERIVE_BREAKS = [("short_supports", {"pier_x": lambda orig: (lambda ff: orig(ff)[:-1])})]
+
+
+@pytest.mark.parametrize("chk_codes", _CRITERION_CODES, ids=lambda cc: cc[0].__name__)
+@pytest.mark.parametrize("make", _ALL_MAKERS, ids=_ALL_IDS)
+def test_each_criterion_alive_on_every_morphology(chk_codes, make):
+    """L1 每条判据 × 六个合法构型: 基线绿 + 声明代码全部可杀(双向, 显式点名)。"""
+    from bridge3d.negative_control import assert_criterion_alive
+    chk, codes = chk_codes
+    assert_criterion_alive(chk, make(), codes,
+                           derive_corruptions=_DERIVE_BREAKS)
+
+
+@pytest.mark.parametrize("make", _ALL_MAKERS, ids=_ALL_IDS)
+def test_imp_relations_alive_on_every_morphology(make):
+    """imp_relations 的代码表随项目 RELATIONS 动态生成, 逐条关系独立点名。"""
+    from bridge3d.negative_control import assert_criterion_alive
+    f = make()
+    codes = tuple("REL_%s" % n for n in sorted(f.RELATIONS))
+    assert_criterion_alive(C.imp_relations, f, codes)
