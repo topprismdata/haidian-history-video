@@ -69,23 +69,24 @@ def test_assert_accepts_fails_on_false_positive():
 
 @pytest.mark.parametrize("make", [make_5, make_23], ids=["n5", "n23"])
 def test_patched_derive_restores_state(make):
-    before = C.inv_spans_sym
     import bridge3d.derive as D
     orig_spans = D.spans
     with patched_derive(spans=lambda orig: (lambda ff: orig(ff))):
         assert D.spans is not orig_spans
     assert D.spans is orig_spans             # 退出必须恢复
-    assert C.inv_spans_sym is before
 
 
 @pytest.mark.parametrize("make", [make_5, make_23], ids=["n5", "n23"])
-def test_patched_derive_kills_sym_guard(make):
-    """SYM 判据经由 facts 输入不可达(展开恒回文), 检测器级破坏必须能杀它。"""
+def test_patched_derive_kills_spans_len_guard(make):
+    """展开长度护栏经由 facts 输入不可达(展开恒与半侧表一致),
+    检测器级破坏必须能杀 INV_SPANS_LEN。
+    (原 SYM 护栏已随 2026-10-05 终审 I1 降级: 对称是项目 RELATIONS 自声明,
+    不再是框架 INV 普适律; 展开规则本身的回文属性由 test_derive 单测锁。)"""
     f = make()
-    assert not fail_codes(C.inv_spans_sym(f))          # 基线绿
-    with patched_derive(spans=lambda orig: (lambda ff: [9.9] + orig(ff)[1:])):
-        assert "INV_SPANS_SYM" in fail_codes(C.inv_spans_sym(f))
-    assert not fail_codes(C.inv_spans_sym(f))          # 恢复后仍绿
+    assert not fail_codes(C.inv_spans_len(f))          # 基线绿
+    with patched_derive(spans=lambda orig: (lambda ff: orig(ff)[:-1])):
+        assert "INV_SPANS_LEN" in fail_codes(C.inv_spans_len(f))
+    assert not fail_codes(C.inv_spans_len(f))          # 恢复后仍绿
 
 
 # ══════════ 恒真检测工具的三种失败模式 ══════════

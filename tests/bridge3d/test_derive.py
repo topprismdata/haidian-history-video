@@ -10,7 +10,8 @@ sys.path.insert(0, dirname(__file__))
 from bridge3d import derive                # noqa: E402
 from bridge3d.schema import MissingFactError  # noqa: E402
 from bridge3d.negative_control import mutate  # noqa: E402
-from facts_synth import make_5, make_23    # noqa: E402
+from facts_synth import (make_5, make_23,    # noqa: E402
+                         make_asym11, make_even6)  # noqa: E402
 
 MAKERS = [make_5, make_23]
 IDS = ["n5", "n23"]
@@ -105,3 +106,40 @@ def test_derive_never_crashes_on_missing_required(make):
         derive.spans(f)
     with pytest.raises(MissingFactError):
         derive.geometry_closure(f)
+
+
+# ══════════ SPAN_DISTINCT 两种声明形态（2026-10-05 终审 I1）══════════
+
+def test_spans_full_length_list_used_verbatim():
+    """全长表(len==N_SPAN)必须原样使用, 不做任何镜像变换 ——
+    不对称桥(东端跨≠西端跨)与偶数孔桥借此表达。"""
+    f = make_asym11()
+    sp = derive.spans(f)
+    assert sp == list(f.SPAN_DISTINCT), "全长表被改写: %r" % (sp,)
+    assert sp[0] != sp[-1], "破坏用例本身失去不对称性"
+
+    fe = make_even6()
+    spe = derive.spans(fe)
+    assert len(spe) == fe.N_SPAN == 6, "偶数孔桥展开 %d != %d" % (len(spe), fe.N_SPAN)
+
+
+def test_spans_half_side_mirror_path_kept():
+    """半侧表便利路径保持原行为: D + reversed(D[:-1]), 恒回文恒奇数长。"""
+    f = make_5()
+    assert derive.spans(f) == [3.0, 4.0, 5.0, 4.0, 3.0]
+
+
+def test_spans_odd_length_mismatch_still_reported_not_crash():
+    """两种形态之外的长度: 原样交给 INV_SPANS_LEN 报 fail, spans() 不崩。"""
+    f = mutate(make_5(), SPAN_DISTINCT=[3.0, 4.0])       # 2 值: 非全长非半侧
+    assert len(derive.spans(f)) == 3                      # 镜像路径, 长度不一致
+    import bridge3d
+    from bridge3d.negative_control import fail_codes
+    assert "INV_SPANS_LEN" in fail_codes(bridge3d.run_l1(f))
+
+
+def test_spans_missing_n_span_is_missing_fact_error():
+    """N_SPAN 现在是展开的前置事实: 缺失 → MissingFactError(降级 skip, 不静默)。"""
+    from bridge3d.negative_control import dropped as _dropped
+    with pytest.raises(MissingFactError):
+        derive.spans(_dropped(make_5(), "N_SPAN"))

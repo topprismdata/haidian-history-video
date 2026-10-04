@@ -26,7 +26,10 @@ N_SPAN = 9                            # [必填] int(孔数是拓扑量, 不是�
 SPRINGER = 2.1                        # [必填] 起拱线标高
 PIER_W = 2.0                          # [必填] 内墩宽
 BRIDGE_ABUT = 1.4                     # [必填] 桥台宽
-SPAN_DISTINCT = [4.0, 5.0, 6.0]       # [必填] 半侧含中央孔的完整净跨 → 对称展开 2n-1 孔
+SPAN_DISTINCT = [4.0, 5.0, 6.0]       # [必填] 完整净跨表, 两种形态(2026-10-05 终审 I1):
+                                      #   len == N_SPAN → 全长表直接用(任意桥: 不对称/偶数孔/等跨);
+                                      #   len == (N_SPAN+1)/2 → 半侧含中央孔, 镜像展开 2n-1
+                                      #   (对称奇数孔便利路径; 对称本身由 RELATIONS 自声明)
 CLOSURE_TOL = 0.02                    # [可选] 闭合容差; 不给则闭合判据 skip(阈值必须有依据)
 ARCH_RATIO = 0.5                      # [可选] 矢高/跨; 未给则券形类判据 skip
 ARCH_RATIO_TARGET = 0.5; ARCH_RATIO_TOL = 0.05     # [可选] 券形设计意图(项目自声明)
@@ -70,7 +73,8 @@ nc.assert_no_always_true(bridge3d.run_l1, facts,
                          derive_corruptions=[...])  # 恒真审计(自动生成破坏)
 ```
 
-推导规则护栏类判据(如展开回文, 经由 facts 输入不可达)用 `patched_derive`
+推导规则护栏类判据(如支承数= N_SPAN+1: 递推规则恒产等长输出, 经由 facts 输入不可达)
+用 `patched_derive`
 做检测器级负控: 临时改坏推导, 判据必须红。
 
 ## 4. 边界(本框架管什么 / 不管什么)

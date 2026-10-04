@@ -2,9 +2,10 @@
 """bridge3d.checks_l1 —— L1 判据(纯数据, 无 Blender/渲染依赖)。
 
 三层:
-  INV  拓扑不变量(任何 n 孔桥普适): 孔数正整数 / 展开长度一致 / 回文对称 /
+  INV  拓扑不变量(任何 n 孔桥普适): 孔数正整数 / 展开长度一致 /
        跨宽为正 / 支承数 = N_SPAN+1
-  MET  度量自洽(阈值必须有依据, 来自 facts 或显式参数): 几何闭合 / 桥面中央最高 /
+       (形态约束如对称/单峰不是普适律, 由项目 facts.RELATIONS 自声明)
+  MET  度量自洽(阈值必须有依据, 来自 facts 或显式参数): 几何闭合 / 纵坡方向 /
        收分方向 / 券形比 / 拱背净空 / 起拱线低于桥面
   IMP  实现完整性: 契约常量与登记齐备 / SOURCES 覆盖必填项 / 等级合法 /
        假设层不泄漏进来源台账 / 项目自声明关系(RELATIONS)成立
@@ -85,26 +86,6 @@ def inv_spans_len(f):
     return []
 
 
-def inv_spans_sym(f):
-    """展开跨序必须回文对称。
-
-    诚实注记: derive 的展开规则(D + reversed(D[:-1]))在结构上恒构造回文,
-    经由 facts 输入本判据不可达(与 E30 同款结论)。保留它是作为"展开规则护栏":
-    推导规则被改坏时必须红。其可证伪性由检测器级负控(改坏 derive 后必须抓到)证明,
-    见 tests/bridge3d/test_negative_control.py, 恒真审计亦凭 derive 级破坏放行。
-    """
-    try:
-        sp = _derive.spans(f)
-    except MissingFactError:
-        return _skip("INV_SPANS_SYM", "缺 SPAN_DISTINCT, 未执行")
-    for i in range(len(sp) // 2):
-        if abs(sp[i] - sp[len(sp) - 1 - i]) > EPS:
-            return [Finding("fail", "INV_SPANS_SYM",
-                            "跨序非回文: 第%d跨 %.3f != 倒数第%d跨 %.3f"
-                            % (i + 1, sp[i], i + 1, sp[len(sp) - 1 - i]))]
-    return []
-
-
 def inv_spans_positive(f):
     """每个净跨必须为正(零宽/负宽 = 拓扑无意义)。"""
     try:
@@ -161,17 +142,23 @@ def met_closure(f, tol=None):
 
 
 def met_deck_camber(f):
-    """桥面必须中央最高(拱桥形态; E30 同款"历史事故回归"判据)。
-    非起拱形态的项目不应纳入本判据(用 run_l1(checks=...) 自选判据集)。"""
+    """桥面不得两端高中央低(反向纵坡=砌体桥不成立的真错误)。
+
+    2026-10-05 终审 I1 放宽(与 MET_TAPER 同款教训): 原判据写 `顶 > 端`(强制起拱),
+    把拱桥构型当普适律。**平桥(顶=端, 无拱起)是合法构型**, 强制严格 `>` 会让它
+    在基线就报 fail。真正的物理约束只有"端部不得高于中央"(倒拱), 等高(平桥)
+    与起拱(顶>端)都放行。
+    """
     code = "MET_DECK_DIR"
     guard = _prereq_skip_for(code, f, num_names=("DECK_Z_TOP", "DECK_Z_END"),
                              pos_names=("BRIDGE_LEN",))
     if guard:
         return guard
     top, end = get(f, "DECK_Z_TOP"), get(f, "DECK_Z_END")
-    if not top > end:
+    if not top >= end:
         return [Finding("fail", code,
-                        "桥面必须中央最高: DECK_Z_TOP %.3f <= DECK_Z_END %.3f" % (top, end))]
+                        "桥面不得两端高中央低: DECK_Z_TOP %.3f < DECK_Z_END %.3f"
+                        % (top, end))]
     return []
 
 
@@ -370,7 +357,7 @@ def imp_relations(f):
 
 # ══════════ 汇总 ══════════
 
-INV_CHECKS = (inv_n_span, inv_spans_len, inv_spans_sym, inv_spans_positive, inv_supports_len)
+INV_CHECKS = (inv_n_span, inv_spans_len, inv_spans_positive, inv_supports_len)
 MET_CHECKS = (met_closure, met_deck_camber, met_taper, met_arch_ratio,
               met_ring_fit, met_springer)
 IMP_CHECKS = (imp_contract, imp_dims, imp_tolerance, imp_sources_cover,

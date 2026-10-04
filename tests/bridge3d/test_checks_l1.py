@@ -18,10 +18,14 @@ from bridge3d.negative_control import (       # noqa: E402
     mutate, dropped, fail_codes, skip_codes,
     assert_criterion_rejects, assert_criterion_accepts, assert_skip_not_fail)
 from bridge3d.schema import summarize        # noqa: E402
-from facts_synth import make_5, make_23      # noqa: E402
+from facts_synth import (make_5, make_23,           # noqa: E402
+                         make_asym11, make_even6, make_flat3, make_equal4)
 
 MAKERS = [make_5, make_23]
 IDS = ["n5", "n23"]
+# 合法替代构型(2026-10-05 终审 I1): 不对称奇数孔/对称偶数孔/平桥/等宽桥
+ALT_MAKERS = [make_asym11, make_even6, make_flat3, make_equal4]
+ALT_IDS = ["asym11", "even6", "flat3", "equal4"]
 
 
 # ══════════ 基线: 换孔数必须照常全绿(框架立身之本) ══════════
@@ -284,16 +288,15 @@ def test_n23_within_tolerance_passes():
 @pytest.mark.parametrize("make", MAKERS, ids=IDS)
 def test_no_always_true_in_l1(make):
     """恒真检测: L1 全部 fail 代码都必须有破坏用例能触发。
-    INV_SPANS_SYM / INV_SUPPORTS_LEN 经由 facts 输入不可达(E30 同款结论:
-    展开规则恒回文、递推恒等长), 用 derive 级破坏(检测器级负控)证明。"""
+    INV_SUPPORTS_LEN 经由 facts 输入不可达(递推规则恒产 N_SPAN+1 个支承),
+    用 derive 级破坏(检测器级负控)证明。
+    (原 INV_SPANS_SYM 已随 I1 降级删除: 对称不是框架普适律, 是项目 RELATIONS 自声明。)"""
     from bridge3d.negative_control import assert_no_always_true
     rep = assert_no_always_true(
         bridge3d.run_l1, make(),
         derive_corruptions=[
-            ("skew_spans", {"spans": lambda orig: (lambda ff: [9.9] + orig(ff)[1:])}),
             ("short_supports", {"pier_x": lambda orig: (lambda ff: orig(ff)[:-1])}),
         ])
-    assert "INV_SPANS_SYM" in rep["kills"], "SYM 必须由 derive 级破坏杀死"
     assert "INV_SUPPORTS_LEN" in rep["kills"], "支承数护栏必须由 derive 级破坏杀死"
 
 
@@ -330,3 +333,50 @@ def test_met_taper_still_catches_zero_and_negative():
     for bad in (0.0, -1.0):
         assert "MET_TAPER" in _fail_codes(_with(DECK_UP_W=bad, DECK_DOWN_W=4.1)), \
             "顶宽 %s 未被抓" % bad
+
+
+# ══════════ 合法替代构型基线（2026-10-05 终审 I1：对称不再是普适律）══════════
+
+@pytest.mark.parametrize("make", ALT_MAKERS, ids=ALT_IDS)
+def test_alternate_morphology_baseline_green(make):
+    """四个合法但不同构的基线(不对称奇数孔/对称偶数孔/平桥/等宽桥)
+    必须全绿零 skip —— 框架通用性的直接证明, 也是恒真检测的"该绿必须绿"侧。"""
+    r = bridge3d.audit(make())
+    assert not fail_codes(r), summarize(r)
+    assert not skip_codes(r), "完整事实基线不应有 skip: %r" % skip_codes(r)
+
+
+def test_asymmetric_bridge_no_symmetry_required():
+    """不对称桥(卢沟桥式)经 facts 输入必须零对称性报错 —— 框架不再把
+    回文当 INV 普适律; 全长表直接生效。"""
+    f = make_asym11()
+    codes = {fd.code for fd in bridge3d.run_l1(f) if fd.level == "fail"}
+    assert not any("SYM" in c for c in codes), codes
+
+
+def test_even_span_bridge_expressible():
+    """偶数孔桥结构性可表达(修复前: 半侧镜像展开恒 2n-1, 4 孔桥报 7 != 4)。"""
+    f = make_even6()
+    assert f.N_SPAN % 2 == 0
+    r = bridge3d.audit(f)
+    assert not fail_codes(r), summarize(r)
+
+
+def test_symmetry_is_project_declared_and_verified():
+    """对称降级为项目自声明: 全长表上打破坏文(非回文)必须被项目自己的
+    RELATIONS 抓红(REL_* 代码), 而框架 INV 层保持沉默(不预设形态)。"""
+    f = make_even6()
+    broken = mutate(f, SPAN_DISTINCT=[3.00, 9.90, 5.50, 5.50, 4.50, 3.00])
+    codes = {fd.code for fd in bridge3d.run_l1(broken) if fd.level == "fail"}
+    assert "REL_spans_palindrome" in codes, codes
+    assert not any(c.startswith("INV_SPANS_SYM") for c in codes)
+
+
+def test_met_deck_dir_flat_is_legal():
+    """平桥(顶=端)必须放行 —— 放宽不能只停在文档。"""
+    assert "MET_DECK_DIR" not in _fail_codes(_with(DECK_Z_TOP=4.0, DECK_Z_END=4.0))
+
+
+def test_met_deck_dir_still_catches_inverted():
+    """倒拱(端 > 中)必须仍被抓 —— 放宽不能变成恒真。"""
+    assert "MET_DECK_DIR" in _fail_codes(_with(DECK_Z_TOP=3.0, DECK_Z_END=4.0))

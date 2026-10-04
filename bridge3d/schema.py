@@ -6,7 +6,7 @@
 
 契约分层:
   REQUIRED       必填标量常量(缺/类型错 → fail)
-  REQUIRED_LISTS 必填序列(对称展开规则见 derive.spans)
+  REQUIRED_LISTS 必填序列(展开规则见 derive.spans: 全长表直接用, 半侧表镜像展开)
   REQUIRED_REGS  必填登记(SOURCES 来源台账 / RESEARCH_DONE 研究旗标)
   OPTIONAL       已知可选条目(缺省 → 相关判据 skip; skip=未执行, 不算通过也不阻塞)
   GRADES         来源五级: 测绘 > 档案 > 官方 > 图像推导 > 工作值
@@ -27,7 +27,7 @@ from collections import namedtuple
 # ── 契约: 必填常量(名字是契约的一部分) ──
 REQUIRED = ("BRIDGE_LEN", "N_SPAN", "SPRINGER", "PIER_W", "BRIDGE_ABUT")
 
-# ── 契约: 必填序列(完整净跨, 对称展开为 N_SPAN 个, 规则见 derive.spans) ──
+# ── 契约: 必填序列(完整净跨表; 全长表或半侧镜像表两种形态, 规则见 derive.spans) ──
 REQUIRED_LISTS = ("SPAN_DISTINCT",)
 
 # ── 契约: 必填登记 ──

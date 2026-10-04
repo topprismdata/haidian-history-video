@@ -12,7 +12,7 @@
 
 | 文件 | SHA256 | 说明 |
 |---|---|---|
-| `3d/facts.py` | `10a32dc629766e9c481dad34279918aa2b03284cab7caac4ce16055035999171` | 19 条本体条目；等级分布见 §9 |
+| `3d/facts.py` | `860e0cc5345ba04d5ace1eddc47725c636cbdb3804017e48a936af0db9242cc8` | 19 条本体条目；等级分布见 §9 |
 | `3d/assumptions.py` | `3a2eb2ed1f47446d0b9e278f792d8e12aa7fb435dbcf9a0d712fa96cf7201fec` | 假设层，不进冻结，改动须记录 |
 
 等级分布（facts.SOURCES 19 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 1**（ARCH_RATIO）、**工作值 12**（清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。

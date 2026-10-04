@@ -245,7 +245,8 @@ def killability_report(check, f, corruptions=None, derive_corruptions=None):
     判据在破坏下抛异常 = 崩溃而非报告, 记入 crashes(assert_no_always_true 视为失败)。
 
     derive_corruptions: [(label, {derive函数名: wrapper(orig)->corrupt})],
-    用于"经由 facts 输入不可达"的护栏判据(如 INV_SPANS_SYM)的检测器级负控。
+    用于"经由 facts 输入不可达"的护栏判据(如 INV_SUPPORTS_LEN: 递推规则恒产
+    N_SPAN+1 个支承, 只能改坏推导本身才能杀)的检测器级负控。
     """
     if corruptions is None:
         corruptions = default_corruptions(f)

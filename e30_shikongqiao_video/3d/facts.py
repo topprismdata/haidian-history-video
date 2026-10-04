@@ -46,6 +46,18 @@ BRIDGE_ABUT = 1.35         # [工作值] 现脚本生效值; 无文献; T2b 闭�
 # --- 桥面纵坡控制点 ---
 DECK_Z_AT_PIER = [5.30, 5.53, 5.82, 6.11, 6.40, 6.69, 6.97, 7.29, 7.55]  # [工作值] 无文献(官方仅定性"中间最高两侧渐低"), 沿用现脚本值(C5 归一)
 
+# --- 项目自声明的关系型不变量(bridge3d RELATIONS 机制; 框架不预设形态) ---
+# 2026-10-05 终审 I1: 对称性从框架 INV 普适律降级为项目自声明 —— 半侧表+镜像
+# 展开只对"对称奇数孔"构型成立(卢沟桥等不对称桥、偶数孔桥必须用全长表)。
+# 本项目声明对称形态, 由下面两条关系守护(删除任一条, bridge3d.audit 即红):
+#   ①半侧严格递增 = 官方定性"正中一孔最大两侧依次渐小"(防同长乱序, INV 层测不到);
+#   ②半侧表形态声明: 2n-1 == N_SPAN(选半侧表即声明对称奇数孔拓扑)。
+RELATIONS = {
+    "half_side_rises_to_center": lambda f: all(
+        a < b for a, b in zip(f.SPAN_DISTINCT, f.SPAN_DISTINCT[1:])),
+    "half_side_symmetric_form": lambda f: 2 * len(f.SPAN_DISTINCT) - 1 == f.N_SPAN,
+}
+
 SOURCES = {
     "BRIDGE_LEN": ("官方", "北京青年报/中新网2025-12-09 '长150米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing 同值 https://s.visitbeijing.com.cn/attraction/120842"),
     "N_SPAN": ("官方", "中新网2025-12-09 '17个拱形桥洞' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; visitbeijing '桥由17个桥洞组成' https://s.visitbeijing.com.cn/attraction/120842"),
