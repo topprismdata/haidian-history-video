@@ -183,7 +183,8 @@ def test_freeze_state_matches_facts_reality():
 
 
 def test_work_values_listed_one_by_one():
-    """12 条工作值必须在 manifest §9 逐条出现(名字级), 漏一条即红。"""
+    """全部 [工作值] 常量必须在 manifest §9 逐条出现(名字级), 漏一条即红。
+    (终审 I12 后含 3 条判据阈值参数; 旧 docstring 写死"12 条"会随台账增长失真。)"""
     sec9 = _section(_manifest_text(), "9. 冻结状态声明")
     listed = set(re.findall(r"^\|\s*(?:\d+|附)\s*\|\s*([A-Z_]+)\s*\|", sec9, re.M))
     want = {k for k, (lv, _) in facts.SOURCES.items() if lv == "工作值"}
@@ -213,26 +214,68 @@ def test_hash_tool_exists():
         "缺核心几何哈希唯一定义点 3d/freeze_hash.py"
 
 
+# ── spec §9 结构化匹配(终审 I15) ──
+# 旧版对每条推导值做裸子串断言("2.5" in sec9): "起拱线 SPRINGER" 靠 §9 标题
+# "(M2.5 冻结包…)"里的子串**假通过** —— §9 根本没有起拱线条目, 且改成 9.17 才红,
+# 说明该断言只会因"别的文本含此子串"而假绿。改为结构化匹配: 每条 (标签, 行内锚, 推导值),
+# 锚(公式名/标签)所在行必须同时含推导值 —— 标题子串不再算数。
+# 注: spec §9 不含起拱线条目 —— 起拱线由 L1 券族判据(MET_ARCH_FAMILY/MET_SPRINGER)
+# 与 facts.SPRINGER 锚定, 本就不属附属构件接口契约; 旧清单里的 SPRINGER 行是恒真假
+# 通过项, 删除(而非补造契约条文)。
+# 表格锚(need_row=True)只认 §9.2 契约表的 `|`-行: §9.3 的栏板预置 bullet 同含
+# "DECK_UP_W/2"与"3.28"(半宽带边界), 不限表格行会靠数值巧合假配对(与 I15 同病)。
+_SPEC9_DERIVED = (
+    ("顶面半宽 DECK_UP_W/2", "DECK_UP_W/2", lambda: facts.DECK_UP_W / 2.0, True),
+    ("底半宽 DECK_DOWN_W/2", "DECK_DOWN_W", lambda: facts.DECK_DOWN_W / 2.0, True),
+    ("端顶标高 DECK_Z_END", "DECK_Z_END", lambda: facts.DECK_Z_END, True),
+    ("中央顶标高 DECK_Z_TOP", "DECK_Z_TOP", lambda: facts.DECK_Z_TOP, True),
+    ("桥台 BRIDGE_ABUT", "BRIDGE_ABUT", lambda: facts.BRIDGE_ABUT, True),
+    ("望柱间距 BRIDGE_LEN/63", "BRIDGE_LEN/63", lambda: facts.BRIDGE_LEN / 63.0, False),
+    ("望柱数口径", "柱数", lambda: 128, False),
+)
+
+
+def _spec9_missing_entries(sec9):
+    """结构化核对 §9: 返回漂移/缺失描述列表(空 = 全过)。"""
+    missing = []
+    for label, anchor, get_val, need_row in _SPEC9_DERIVED:
+        val = get_val()
+        s = str(val) if isinstance(val, int) else ("%.4f" % val).rstrip("0")
+        lines = [ln for ln in sec9.splitlines() if anchor in ln]
+        if need_row:
+            lines = [ln for ln in lines if ln.lstrip().startswith("|")]
+        if not lines:
+            missing.append("%s(§9 无锚 %r 的契约行)" % (label, anchor))
+        elif not any(s in ln for ln in lines):
+            missing.append("%s(锚 %r 所在行无推导值 %s)" % (label, anchor, s))
+    return missing
+
+
 def test_interface_contract_values_derived_from_facts():
-    """spec §9 的数值必须是冻结 facts 的推导值:
+    """spec §9 的数值必须是冻结 facts 的推导值(结构化匹配, 终审 I15):
     改 facts 本体节而不同步 spec §9 => 红(防止契约与事实漂移)。"""
-    spec = _SPEC.read_text(encoding="utf-8")
-    m9 = re.search(r"^## 9\. 附属构件接口契约", spec, re.M)
-    assert m9, "spec 缺 §9 附属构件接口契约"
-    sec9 = spec[m9.start():]
-    for label, val in (
-        ("顶面半宽 DECK_UP_W/2", facts.DECK_UP_W / 2.0),
-        ("底半宽 DECK_DOWN_W/2", facts.DECK_DOWN_W / 2.0),
-        ("端顶标高 DECK_Z_END", facts.DECK_Z_END),
-        ("中央顶标高 DECK_Z_TOP", facts.DECK_Z_TOP),
-        ("起拱线 SPRINGER", facts.SPRINGER),
-        ("桥台 BRIDGE_ABUT", facts.BRIDGE_ABUT),
-        ("望柱间距 BRIDGE_LEN/63", facts.BRIDGE_LEN / 63.0),
-    ):
-        s = ("%.4f" % val).rstrip("0")
-        assert s in sec9, "spec §9 缺事实推导值 %s=%s(改 facts 必须同步契约)" % (label, s)
-    # 望柱数口径: L2 判据 128±0 必须出现在契约里
-    assert "128" in sec9, "spec §9 缺望柱数 128 口径"
+    missing = _spec9_missing_entries(_section_spec9())
+    assert not missing, "spec §9 契约与冻结 facts 漂移: %s" % missing
+
+
+def test_spec9_matcher_detects_entry_deletion():
+    """负控制(终审 I15): 匹配器必须能抓"真存在的契约条目被删/被改值"——
+    否则它对旧版 SPRINGER 那种子串假通过毫无免疫(判据自证非恒真)。
+    逐条删锚行: 每条都必须单独红; 再抽一条改值: 也必须红。"""
+    for label, anchor, _get_val, _need_row in _SPEC9_DERIVED:
+        sec9 = _section_spec9()
+        doctored = "\n".join(ln for ln in sec9.splitlines() if anchor not in ln)
+        assert doctored != sec9, "负控构造失败(%s): §9 无锚行可删" % label
+        missing = _spec9_missing_entries(doctored)
+        assert any(label in m for m in missing), \
+            "匹配器未抓到 %s 条目删除: %s" % (label, missing)
+    sec9 = _section_spec9()
+    doctored = "\n".join(ln.replace("y=±3.28", "y=±3.88") if "y=±3.28" in ln else ln
+                         for ln in sec9.splitlines())
+    assert doctored != sec9, "负控构造失败: §9 未找到顶面半宽推导值"
+    missing = _spec9_missing_entries(doctored)
+    assert any("顶面半宽" in m for m in missing), \
+        "匹配器未抓到契约值篡改: %s" % missing
 
 
 def test_contract_forbids_body_modification():
