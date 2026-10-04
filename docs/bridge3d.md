@@ -70,8 +70,23 @@ from bridge3d import negative_control as nc
 nc.assert_criterion_rejects(bridge3d.run_l1, nc.mutate(facts, BRIDGE_ABUT=9.9),
                             "MET_CLOSURE")          # 破坏必须红
 nc.assert_no_always_true(bridge3d.run_l1, facts,
-                         derive_corruptions=[...])  # 恒真审计(自动生成破坏)
+                         corruptions=[("窄墩", nc.mutate(facts, PIER_W=0.1))],
+                         derive_corruptions=[...])  # 恒真审计(双向)
 ```
+
+**`corruptions` 的格式约定（踩过一次，务必照做）**：元素是 `(标签, 坏facts模块)`，
+**不是** `(标签, lambda)`。检测器内部直接 `check(cf)`，传函数会让 `getattr(函数, "PIER_W", 默认)`
+取到默认值、破坏永不触发，症状是"正常判据也被报恒真嫌疑"——看着像框架误杀，其实是用例无效。
+**构造坏 facts 一律用 `nc.mutate(facts, 字段=新值)`**，别手写 lambda。
+
+`assert_no_always_true` 区分**四种失败模式**（输出可能一样，成因不同）：
+
+| # | 模式 | 成因 | 后果 |
+|---|---|---|---|
+| 1 | **过度约束**（合法基线就红） | 把单项目构型当普适律，如原 `MET_TAPER` 强制收分、原对称契约 | 拦。这是"见谁都咬"，比恒真更隐蔽 |
+| 2 | **恒真**（任何破坏都不红） | 判据没在看东西，或用例不足 | 拦 |
+| 3 | **死判据**（`codes` 点名的代码从没被触发） | 判据写了但永不生效；`codes=None` 时会被活代码的杀伤掩盖 | 拦（故**逐判据要点名**，或用 `assert_criterion_alive`） |
+| 4 | **脆弱判据**（破坏下抛异常而非报告） | 缺前置防御 | 拦（铁律：必须报告，不能崩） |
 
 推导规则护栏类判据(如支承数= N_SPAN+1: 递推规则恒产等长输出, 经由 facts 输入不可达)
 用 `patched_derive`
