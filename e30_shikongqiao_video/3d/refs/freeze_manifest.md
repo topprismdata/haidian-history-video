@@ -26,14 +26,14 @@
 | `3d/bridge_geom2.py` | `8990d5e80d856c5788365e136a4820a125b1b6574ee2f2d55d179820dc727296` | 纯几何（消费 facts，零字面尺寸） |
 | `3d/build_scene2.py` | `b93c93f063b0357ebabf24a0d5cb75b623dfd75fe472c65188641a0fba015068` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变，见 body_changelog.md） |
 | `3d/qa_bridge.py` | `e8e6684bb5a7016e700bb8485a78959aa0f95e3224ddc0df4967311bacb4f64e` | L1 判据（纯数据） |
-| `3d/qa_l2.py` | `315898346b895a07bb887a3c036fe90edac4d43c6c4d61e0cccc66228aebd34e` | L2 判据（开 blend 查 evaluated mesh） |
+| `3d/qa_l2.py` | `4457508cee6e53d5b5c6f0e03b932ab3ff7e6088115db614b6923bab8fa5beb2` | L2 判据（开 blend 查 evaluated mesh；2026-10-05 终审 I4/I6：零采样记 skip 且 ok=false，负控脱靶/未抓到一律 exit 1） |
 | `3d/materials.py` | `590c528508637a25e330d9fb67c1bb0bf2cc3554f1383cf28589f2357b99b35b` | 程序化材质（无 random，节点内置噪声同版本确定） |
 | `3d/lions.py` | `aa4c3b3e3f0314da3594a4c070aee4722660ee581a88b5122f5db5406610d627` | 狮母题（自带 LCG，seed 显式入参，确定） |
 | `3d/ortho.py` | `1a44bcd3e5880fc8b7cb6e6f2a3f7b66562cd1d82d470aacbbc66f618cefdf4a` | 正交出图（T6 当日演进：新增 top/arch 机位，首采哈希 2fe76ce0… 已被取代；2026-10-05 终审 I2 回填——`4ce8475` M3-1 加水线 sidecar 后未同步 manifest，旧 8 项闸门覆盖不到） |
 | `3d/render_shot.py` | `bef2368ccecb732aff765930aed3c7165e813d691eb849c0741b73630c647275` | 机位渲染（seed 显式；2026-10-05 终审 I2 回填实际盘上哈希——原记录 `95732262…` 是 `cf11ac3` 改文件前的旧值） |
 | `3d/shot_auto2.py` | `1b74f5bafeaf95f9710daf62b0c1a66729db7e4e90a1ba89bc926e3ff7845a8a` | 自动取景渲染（主控 2026-10-04 补 seed 显式化，已提交） |
 | `3d/freeze_hash.py` | `120e8e40be6d0992410809dbf5cd8b8347176f8308a61716884d45e154c4f370` | 核心几何哈希唯一定义点（随冻结包 commit `6d8a838`） |
-| `3d/register_overlay.py` | `2532aaa974057d2ffd0d9fafa6e22ff36697bfa7f03f556906aaab6604694eb4`（T7 `d30502f` 定版） | T7 L3 配准判据（OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02；T8 只引用不运行） |
+| `3d/register_overlay.py` | `7092146c922d9a3637d1714623bc3ebe6d1ebef5c494271c94c122a48249b134`（T7 `d30502f` 定版阈值；2026-10-05 终审 I3 增补券洞表硬判 void_verdict） | T7 L3 配准判据（OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02；T8 只引用不运行） |
 
 ## 3. Blender 版本
 
@@ -180,7 +180,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 
 ## 11. T7 配准标定（已回填，T7 commit `d30502f`）
 
-- 判据工具: `3d/register_overlay.py`（SHA256 `2532aaa974057d2ffd0d9fafa6e22ff36697bfa7f03f556906aaab6604694eb4`；T8 只引用不运行）
+- 判据工具: `3d/register_overlay.py`（SHA256 `7092146c922d9a3637d1714623bc3ebe6d1ebef5c494271c94c122a48249b134`；T8 只引用不运行；2026-10-05 终审 I3 在判定路径增补券洞表硬判 `void_verdict`——渲染侧孔数须 == facts.N_SPAN 且逐孔 \|Δxc\|≤VOID_XC_TOL，此前该判只存在于文档）
 - 阈值（扰动标定，依据见常量注释块）: **OVERLAY_IOU_MIN = 0.76**（E2 可分: 可接受[0.8046,0.8373] vs 不可接受[0.0030,0.7216] 取中点；基线实测 **0.8070 PASS，余量 0.047**）；**VOID_XC_TOL = 0.02**（券洞表 xc 轴: 可接受 max 0.0000 vs 缺孔信号 min 0.0442 中点）
 - 复现: `3d/refs/calibrate_iou.py`（SEED 20261004，复现命令见文件 docstring）
 - 对叠图: `3d/refs/overlay_M2.png`；T7 报告: `.superpowers/sdd/e30-briefs/task-task-7-report.md`

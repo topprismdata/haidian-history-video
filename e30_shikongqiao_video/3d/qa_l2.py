@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 """E30 本体判据 L2: 开 blend 查顶点。用法:
   blender -b e30_bridge.blend --python qa_l2.py -- out.json          # 正检
-  blender -b e30_bridge.blend --python qa_l2.py -- out.json --negative  # 负控自检(必须fail)
+  blender -b e30_bridge.blend --python qa_l2.py -- out.json --negative  # 负控自检
+
+退出码语义(2026-10-05 终审 I4/I6; 项目铁律: skip=未执行不算通过):
+  正检     0 = ok(判据确实执行且零 fail 零 skip); 1 = 有 fail 或有 skip。
+           采样带零命中 → 记入 "skip" 且 ok=false —— 判据没跑绝不能算通过
+           (修复前: tot==0 只记 warn, ok=true, 真 blend 实测 QA_L2_OK 假绿)。
+  --negative 0 = 负控按预期抓到破坏(护栏健在);
+             1 = 负控脱靶(翻转零命中, 扰动没打到被测总体)或翻转后判据仍全绿
+             (恒真嫌疑) —— 两者都必须报错退出, 不能静默通过(D4/I6 事故护栏)。
 """
 import bpy, sys, json, math, os
 from mathutils import Vector
@@ -15,7 +23,8 @@ out_path = argv[0] if argv else "qa_l2_report.json"
 NEGATIVE = "--negative" in argv
 
 def main():
-    fails, warns = [], []
+    fails, warns, skips = [], [], []
+    flipped = 0
     def fail(n, m): fails.append({"name": n, "msg": m})
     # 1) 对象存在
     for n in ("bridge_body", "voussoir", "impost"):
@@ -23,7 +32,7 @@ def main():
         if o is None:
             fail("OBJ_EXIST", "缺对象 %s" % n)
     if fails:
-        return _emit(fails, warns)
+        return _emit(fails, warns, skips)
     # G3: 必须查 evaluated mesh(依赖图), 否则活修改器下查的是布尔前网格 -> 假绿
     dg = bpy.context.evaluated_depsgraph_get()
     def evaluated(name):
@@ -113,7 +122,10 @@ def main():
         if dot < math.cos(THETA):
             neg += 1
     if tot == 0:
-        warns.append({"name": "L2_SAMPLE", "msg": "未采到拱腹面, 判据未执行(skip 语义)"})
+        # I4(2026-10-05 终审): 判据未执行必须算不通过。skip≠pass —— 记入 skips,
+        # _emit 使 ok=false 并以非零码退出(修复前只记 warn 且 ok=true, 假绿)。
+        skips.append({"name": "L2_SAMPLE",
+                      "msg": "未采到拱腹面, 判据未执行(skip≠通过); 检查采样带参数/网格"})
     elif neg > 0:
         fail("WALL_NORMAL", "拱腹法线偏离朝心超容差 %d/%d 面" % (neg, tot))
     body_ev.to_mesh_clear()
@@ -133,14 +145,35 @@ def main():
                 missing += 1
     if missing:
         fail("IMPOST_ANCHOR", "起拱线石缺位锚点 %d/34" % missing)
-    _emit(fails, warns)
+    _emit(fails, warns, skips, tot=tot, neg=neg, flipped=flipped)
 
-def _emit(fails, warns):
-    rep = {"fail": fails, "warn": warns, "ok": not fails}
+def _emit(fails, warns, skips, tot=None, neg=None, flipped=0):
+    """ok = 零 fail 且零 skip(2026-10-05 终审 I4: 判据未执行不算通过)。
+    JSON 显式区分 fail / warn / skip 三级, 与 bridge3d LEVELS 同语义。"""
+    rep = {"fail": fails, "warn": warns, "skip": skips,
+           "ok": (not fails and not skips)}
+    if tot is not None:
+        rep["sampled"] = tot           # 判据确实执行的面数(0 = 未执行, 见 skip)
+    if NEGATIVE:
+        # I6: 负控必须证明"能红"。翻转零命中(脱靶)或翻转后仍全绿(恒真)都报错退出。
+        caught = bool(neg) and flipped > 0
+        rep["negative"] = {"flipped": flipped, "bad_faces": neg or 0, "caught": caught}
+        with open(out_path, "w", encoding="utf-8") as fp:
+            json.dump(rep, fp, ensure_ascii=False, indent=1)
+        if flipped == 0:
+            print("QA_L2_NEG_MISS: 负控零命中(采样带内无可翻转面)——扰动未打到被测总体, 拒绝静默通过")
+            sys.exit(1)
+        if caught:
+            print("QA_L2_NEG_CAUGHT: 翻转 %d 面全部被 WALL_NORMAL 抓到(%d/%d 坏面)——护栏健在"
+                  % (flipped, neg, tot))
+            sys.exit(0)
+        print("QA_L2_NEG_NOT_CAUGHT: 翻转 %d 面后判据仍全绿——恒真嫌疑, 必须介入" % flipped)
+        sys.exit(1)
     with open(out_path, "w", encoding="utf-8") as fp:
         json.dump(rep, fp, ensure_ascii=False, indent=1)
-    print("QA_L2_OK" if not fails else "QA_L2_FAIL %d" % len(fails))
-    if fails:
+    print("QA_L2_OK" if rep["ok"] else
+          "QA_L2_FAIL %d fail, %d skip" % (len(fails), len(skips)))
+    if not rep["ok"]:
         sys.exit(1)
 
 main()

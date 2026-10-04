@@ -119,3 +119,89 @@ def test_void_table_missing_and_shrunk(tmp_path):
     vt2 = R.void_table(m_half > 127)
     assert len(vt2) == 3
     assert vt2[2][1] < 0.6 * vt0[2][1]     # 宽度显著变小(0.094 vs 0.1875)
+
+
+# ══════════ I3(2026-10-05 终审): 券洞表硬判真实现进 VERDICT ══════════
+# 修复前: 文档声称 count+Δxc 硬判, 代码只取 IoU; solidify 填实使缺洞免疫,
+# 实测缺 1 孔 IoU=1.0000 仍 PASS, VOID_XC_TOL 全仓 0 处消费。
+
+import facts as F  # noqa: E402  (3d 已在 sys.path; 期望券洞表由 facts 推导)
+
+
+def _full_render_band(w=2400, h=320):
+    """17 孔合成渲染带: 孔位/孔宽取自 facts 推导期望表(与真渲染同构:
+    上部环圈 + 下部基础带封口 → enclosed 孔)。"""
+    m = np.zeros((h, w), np.uint8)
+    m[60:260, :] = 255
+    for xc, wn in R.expected_void_table(F):
+        x0, x1 = int((xc - wn / 2) * w), int((xc + wn / 2) * w)
+        m[110:200, x0 + 2:x1 - 2] = 0
+    return m
+
+
+def test_void_verdict_baseline_pass():
+    """合法基线必须绿: 17 孔位与 facts 期望一致 → ok 且零故障。"""
+    ok, problems = R.void_verdict(_full_render_band() > 127)
+    assert ok, problems
+    assert problems == []
+
+
+def test_void_verdict_missing_hole_fails():
+    """挖掉(填实)一个孔 → 孔数 16 != 17 → 必须红(修复前 IoU=1.0000 PASS)。"""
+    m = _full_render_band()
+    xc, wn = R.expected_void_table(F)[8]           # 中央孔
+    x0, x1 = int((xc - wn / 2) * 2400), int((xc + wn / 2) * 2400)
+    m[110:200, x0:x1] = 255                        # 填实 = 挖掉一个券洞
+    ok, problems = R.void_verdict(m > 127)
+    assert not ok, "缺孔未被抓住(判据恒真)"
+    assert any("孔数 16" in p for p in problems), problems
+
+
+def test_void_verdict_xc_axis_on_spaced_bridge():
+    """xc 轴必须独立于 count 轴被守: 孔数对但位置错 → xc 分支红。
+    E30 真桥孔间距 ~0.017(< 2×VOID_XC_TOL), 大位移会与邻孔粘连塌缩成 count 破坏
+    (由 count 分支抓, 见 test_void_verdict_missing_hole_fails); 本用例注入
+    大间距三孔 facts(与大孔距桥同构)证明 xc 轴本身有牙。"""
+    from types import SimpleNamespace
+    f3 = SimpleNamespace(
+        BRIDGE_LEN=40.0, N_SPAN=3, PIER_W=2.0, BRIDGE_ABUT=2.0,
+        SPAN_DISTINCT=[4.0, 5.0, 4.0])          # 孔间距 0.05 归一(> 2×TOL), 平移不粘连
+    W = 2400
+    m = np.zeros((320, W), np.uint8)
+    m[60:260, :] = 255
+    for xc, wn in R.expected_void_table(f3):
+        x0, x1 = int((xc - wn / 2) * W), int((xc + wn / 2) * W)
+        m[110:200, x0 + 2:x1 - 2] = 0
+    ok, problems = R.void_verdict(m > 127, f3)
+    assert ok, problems                          # 合法基线先绿
+
+    dx = 0.035                                   # 平移 0.035 > VOID_XC_TOL=0.02, 不触邻孔
+    xc, wn = R.expected_void_table(f3)[1]
+    x0, x1 = int((xc - wn / 2) * W), int((xc + wn / 2) * W)
+    m2 = m.copy()
+    m2[110:200, x0:x1] = 255
+    n0, n1 = int((xc + dx - wn / 2) * W) + 2, int((xc + dx + wn / 2) * W) - 2
+    m2[110:200, n0:n1] = 0
+    ok2, problems2 = R.void_verdict(m2 > 127, f3)
+    assert not ok2, "xc 轴漂移未被抓住(判据恒真)"
+    assert all("孔数" not in p for p in problems2), problems2   # count 3 == 3
+    assert any("xc" in p and "孔2" in p for p in problems2), problems2
+
+
+def test_expected_void_table_matches_facts_topology():
+    """期望表口径: 条数 == N_SPAN, xc 升序; 内孔中心 = 左支承内缘 + 净跨/2
+    (与 bridge_geom2/qa_l2 挖孔口径同源: 拱心 = 支承中心点中点, 仅端孔受桥台
+    宽≠墩宽影响, 两口径在端孔差 (PIER_W-ABUT)/4/BRIDGE_LEN)。"""
+    exp = R.expected_void_table(F)
+    assert len(exp) == F.N_SPAN
+    assert all(exp[i][0] < exp[i + 1][0] for i in range(len(exp) - 1))
+    # 内孔(两侧都是墩, 墩宽同): 拱心 = 孔左缘 + span/2, 精确闭式
+    # (展开规则与 test_facts.test_span_distinct_shape_and_symmetric_closure 同一口径)
+    spans17 = list(F.SPAN_DISTINCT) + list(reversed(F.SPAN_DISTINCT[:-1]))
+    assert len(spans17) == F.N_SPAN
+    offset = 0.0
+    for i in range(1, F.N_SPAN - 1):
+        offset += spans17[i - 1] + F.PIER_W
+        center = -(F.BRIDGE_LEN / 2) + F.BRIDGE_ABUT + offset + spans17[i] / 2.0
+        assert abs(exp[i][0] - (center / F.BRIDGE_LEN + 0.5)) < 1e-9, \
+            "孔%d 期望中心与 facts 递推不一致" % (i + 1)

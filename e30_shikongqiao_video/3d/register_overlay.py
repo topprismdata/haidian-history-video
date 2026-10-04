@@ -13,8 +13,12 @@
   1) 实体轮廓 IoU(overlay): 两侧 enclosed 孔洞填实后比对。不填实则是在用参考掩膜
      不编码的信息(券洞)给渲染扣分——参考侧拱洞按口径计入白区, 填实才与参考口径对齐。
      该判据守驼峰曲线/总体长高比例(FACTS §6.4 构图级口径)。
-  2) 券洞位置表(void_table): 尺度无关(xc/桥长, w/桥长), 对渲染侧机械检孔,
-     守跨度布置/缺孔轴。参考掩膜无可靠券洞(§6.2-2 "宁缺毋滥"), 不做逐孔 ref 比对。
+  2) 券洞位置表硬判(void_verdict, 2026-10-05 终审 I3 真实现——此前只存在于文档,
+     solidify 填实使缺洞对 IoU 免疫, 实测缺 1 孔 IoU=1.0000 仍 PASS):
+     渲染侧 void_table 必须与 facts 推导的期望表一致 —— 孔数 == N_SPAN
+     且逐孔 |Δxc| <= VOID_XC_TOL; 违反任一即 FAIL, 进入 VERDICT。
+     参考掩膜无可靠券洞(§6.2-2 "宁缺毋滥"), 期望表来自 facts 而非参考照 ——
+     本判据守"模型与 facts 一致"(渲染侧一票), facts 错了会一致地错(§6.2-2 已声明)。
 
 效力边界(FACTS.md §7 完整声明):
   - 正交投影消掉透视尺度-深度可解性: 照片只能约束平面内轮廓, 测不到面外形变;
@@ -25,6 +29,17 @@ from PIL import Image
 import numpy as np
 from scipy import ndimage
 import os
+import sys
+
+# facts(纯数据)与 bridge3d.derive(纯拓扑, 无 bpy): 期望券洞表由 facts 推导,
+# 递推口径与生成器/qa_l2 同源(bridge_geom2 消费同一 facts)。
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(os.path.dirname(_HERE))
+for _p in (_HERE, _REPO_ROOT):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+import facts as _F                      # noqa: E402
+from bridge3d import derive as _D       # noqa: E402
 
 # ── 阈值(Step 1.6 扰动标定, 复现: python3 3d/refs/calibrate_iou.py, 种子 20261004) ──
 OVERLAY_IOU_MIN = 0.76   # E2 可分: 可接受[0.8046,0.8373] vs 不可接受[0.0030,0.7216] 中点
@@ -149,14 +164,57 @@ def void_table(mask):
     return out
 
 
+# ── 券洞硬判(2026-10-05 终审 I3: 文档声称的 count+xc 判定真实现进判定路径) ──
+
+def expected_void_table(facts=None):
+    """由 facts 推导期望券洞表 [(xc, w), ...], 与 void_table 同口径(尺度无关):
+    xc_i = 跨 i 中心 / 桥长(桥轴局部系 -L/2..L/2 → 0..1), w_i = 跨 i 净跨 / 桥长。
+    递推用 bridge3d.derive(与 bridge_geom2/qa_l2 消费同一 facts, 无第二套几何)。"""
+    f = _F if facts is None else facts
+    xs = _D.pier_x(f)
+    sp = _D.spans(f)
+    L = float(f.BRIDGE_LEN)
+    return [((xs[i] + xs[i + 1]) / 2.0 / L + 0.5, w / L) for i, w in enumerate(sp)]
+
+
+def void_verdict(render_mask, facts=None, tol=None):
+    """券洞表硬判: 渲染侧孔数必须 == facts.N_SPAN 且逐孔 |Δxc| <= VOID_XC_TOL。
+    w 只报告不硬判(标定 §7: Δw 轴两区间重叠, 无可分性 —— 诚实边界)。
+    返回 (ok, problems): problems 为人读故障串列表, ok=False 时至少一条。"""
+    f = _F if facts is None else facts
+    t = VOID_XC_TOL if tol is None else tol
+    got = void_table(render_mask)
+    exp = expected_void_table(f)
+    problems = []
+    if len(got) != len(exp):
+        problems.append("孔数 %d != facts.N_SPAN %d (render=%s exp=%s)"
+                        % (len(got), len(exp),
+                           [(x, w) for x, w in got], [(round(x, 4), round(w, 4)) for x, w in exp]))
+        return False, problems
+    for i, ((gx, gw), (ex, ew)) in enumerate(zip(got, exp)):
+        if abs(gx - ex) > t:
+            problems.append("孔%d xc %.4f != 期望 %.4f (|Δxc|=%.4f > %.4f)"
+                            % (i + 1, gx, ex, abs(gx - ex), t))
+    return (not problems), problems
+
+
 if __name__ == "__main__":
     import sys
     # 用法: register_overlay.py <渲染正交图> <人工掩膜> <输出png>
     #      (默认 a=渲染侧/非ref, b=人工掩膜/ref)
     iou, out = overlay(sys.argv[1], sys.argv[2], sys.argv[3])
     print("SILHOUETTE_IOU %.4f (min %.2f) -> %s" % (iou, OVERLAY_IOU_MIN, out))
-    vt_r = void_table(_load_render(sys.argv[1]))
+    ren_mask = _load_render(sys.argv[1])
+    vt_r = void_table(ren_mask)
     vt_f = void_table(_load_ref(sys.argv[2]))
     print("VOID_TABLE render n=%d: %s" % (len(vt_r), vt_r))
     print("VOID_TABLE ref    n=%d: %s  (§6.2-2: 参考掩膜拱洞未抠空, 表仅记录不判分)" % (len(vt_f), vt_f))
-    print("VERDICT %s" % ("PASS" if iou >= OVERLAY_IOU_MIN else "FAIL"))
+    void_ok, problems = void_verdict(ren_mask)
+    exp_t = expected_void_table()
+    if void_ok:
+        max_dx = max(abs(gx - ex) for (gx, _), (ex, _) in zip(vt_r, exp_t))
+        print("VOID_VERDICT PASS (n=%d, max|Δxc|=%.4f <= %.2f)" % (len(vt_r), max_dx, VOID_XC_TOL))
+    else:
+        print("VOID_VERDICT FAIL: " + "; ".join(problems))
+    iou_ok = iou >= OVERLAY_IOU_MIN
+    print("VERDICT %s" % ("PASS" if (iou_ok and void_ok) else "FAIL"))
