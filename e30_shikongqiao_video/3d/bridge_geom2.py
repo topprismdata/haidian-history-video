@@ -26,9 +26,7 @@ BRIDGE_ABUT = _F.BRIDGE_ABUT   # 尺寸决策只在 facts 一处做(T2b 归因�
 SPAN_DISTINCT = list(_F.SPAN_DISTINCT)   # G1 更名: '半跨'语义数学上不可能(9值×2-1=17孔)
 DECK_Z_AT_PIER = list(_F.DECK_Z_AT_PIER)
 DECK_Z_END, DECK_Z_TOP = _F.DECK_Z_END, _F.DECK_Z_TOP
-from assumptions import BODY_BOTTOM, MESH_TOL   # G1 分家: 建模假定/判据参数不属 facts
-import assumptions as _A
-BRIDGE_ABUT_TARGET = _A.BRIDGE_ABUT_TARGET   # GPT v4 桥台提案(非文物事实, T2b 未裁决); 属性名保留: build_scene2 桥台加长依赖
+from assumptions import BODY_BOTTOM, MESH_TOL, VOID_CUT_MARGIN   # G1 分家: 建模假定/判据参数不属 facts
 SEG = 40
 NSEG_X = 240            # 桥体纵向分段(高密度 -> 光滑)
 NSEG_ARC = 40           # 券洞圆弧分段
@@ -144,13 +142,13 @@ def build_void_bm():
         def hw_at(z):
             """该高度处桥体半宽 + 余量, 与 build_body_bm 的收分一致。
 
-            ⚠ 余量只给 0.05m: 若给到 0.80, 布尔会把【两侧墙整块切穿】,
-            于是"券洞"其实是看穿的洞, 只剩 z=起拱线处两片残留断面,
+            ⚠ 余量 = assumptions.VOID_CUT_MARGIN(0.05m): 若给到 0.80, 布尔会把
+            【两侧墙整块切穿】, 于是"券洞"其实是看穿的洞, 只剩 z=起拱线处两片残留断面,
             它们投下的影子表现为"每个洞被一道黑横杠腰斩"(已实测复现)。
             """
             f = (z - BODY_BOTTOM) / (deck_c - BODY_BOTTOM)
             f = max(0.0, min(1.0, f))
-            return (DECK_DOWN_W + (DECK_UP_W - DECK_DOWN_W) * f) / 2.0 + 0.05
+            return (DECK_DOWN_W + (DECK_UP_W - DECK_DOWN_W) * f) / 2.0 + VOID_CUT_MARGIN
 
         A = [bm.verts.new((px, -hw_at(pz), pz)) for px, pz in prof]
         B = [bm.verts.new((px,  hw_at(pz), pz)) for px, pz in prof]
@@ -175,7 +173,9 @@ if __name__ == "__main__":
     xs = [v.co.x for v in bd.verts]
     zs = [v.co.z for v in bd.verts]
     print("桥体 x %.3f..%.3f  z %.2f..%.2f" % (min(xs), max(xs), min(zs), max(zs)))
-    tot = sum(SPANS) + 16*PIER_W + 2*BRIDGE_ABUT
+    tot = sum(SPANS) + (N_SPAN - 1) * PIER_W + 2 * BRIDGE_ABUT
+    # (N_SPAN-1) 口径 = T2b 终审: 17 孔之间是 16 墩。旧版写死 16 正是当年
+    # "-2.50m 假闭合差"的数字形状(facts 改孔数时这里会静默失配), 终审 I14 改为拓扑式。
     print("闭合校验 %.2f (须 %.2f)" % (tot, BRIDGE_LEN))
     assert abs(tot - BRIDGE_LEN) < 0.01
     half = BRIDGE_LEN / 2.0
