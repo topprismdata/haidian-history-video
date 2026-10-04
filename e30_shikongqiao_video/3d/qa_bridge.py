@@ -8,8 +8,8 @@ import math
 
 def derive(f):
     """由 facts 推导 SPANS/PIER_X。递推规则必须与 bridge_geom2 完全一致:
-    墩台宽 = f.BRIDGE_ABUT(Task 4 已把 geom 的 BRIDGE_ABUT 回填机制废除断点;
-    当前值 1.35 为 T2b 闭合归因前的现值, 定稿后由 facts 单点更新)。"""
+    墩台宽 = f.BRIDGE_ABUT(T2b 终审定稿维持 1.35, 16内墩口径;
+    Task 4 已把 geom 的 BRIDGE_ABUT 回填机制废除断点)。"""
     spans = list(f.SPAN_DISTINCT) + list(reversed(f.SPAN_DISTINCT[:-1]))
     pier_x, acc = [], -f.BRIDGE_LEN / 2.0
     for i in range(f.N_SPAN + 1):
@@ -57,11 +57,10 @@ def check_body(f):
         if any(d.SPANS[i] < d.SPANS[i + 1] - 1e-9 for i in range(8, 16)):
             add("fail", "INV_SPANS_MONO", "右半跨序非单调增")
     # ── MET 几何闭合(G2 增补: 抓'对称但整体尺度错') ──
-    # 口径注意: 本判据按 15 内墩计数(派发口径, -2.50m 即按此计);
-    # derive 的 PIER_X 布局为 16 内墩(2 台+16 墩=18 支承)。两种口径的取舍归 T2b,
-    # 本层禁止改计数或调阈值让 fail 变绿。
-    # 2026-10-04 修正: 17 孔之间是 16 个墩, 原式误按 15 墩导致 -2.50m 假闭合差。
-    # 改用 (N_SPAN-1), 使判据随 facts 变化而非硬编码墩数。
+    # 口径 = T2b 终审(2026-10-04): 内墩数 = N_SPAN - 1(17 孔之间是 16 个墩;
+    # n-1 拓扑 + 卢沟桥10墩11孔/宝带桥53孔52墩文献佐证 + bridge_geom2 闭合断言同口径)。
+    # 初版误按 15 墩硬编码产生 -2.50m 假闭合差(及"桥台 2.60"凑数解, 已作废);
+    # 改用 (N_SPAN-1) 使判据随 facts 变化。阈值 0.5m 维持不变。
     total = sum(d.SPANS) + (f.N_SPAN - 1) * f.PIER_W + 2 * f.BRIDGE_ABUT
     if abs(total - f.BRIDGE_LEN) > 0.5:
         add("fail", "MET_CLOSURE",

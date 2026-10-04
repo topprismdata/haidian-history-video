@@ -4,14 +4,12 @@
 项目铁律: 每条判据必须先有"故意破坏"用例且破坏被抓, 否则判据无效。
 判据×破坏矩阵的完整实测记录见 .superpowers/sdd/e30-briefs/task-task-3-report.md。
 
-已知基线状态: MET_CLOSURE 按派发口径(15 内墩)恒红 -2.50m —— 这是判据在正确工作,
-暴露真矛盾, T2b 归因中; 禁止调阈值/改计数迁就。相关断言已显式适配而非回避。
+MET_CLOSURE 口径已按 T2b 终审(2026-10-04)归一为 16 内墩(N_SPAN-1): 基线 150.000
+精确闭合, test_baseline_green 直接断言全绿(其 strict xfail 已按设计摘除)。
 """
 import os, sys, importlib, math, types
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
 import facts, assumptions, qa_bridge
-
-import pytest
 
 
 def _mutate(**kw):
@@ -32,8 +30,8 @@ def _fail_codes(**kw):
 
 
 def test_baseline_green():
-    """T2b 归因定稿(预期 BRIDGE_ABUT=2.60)后本测试转绿; strict=True 保证届时
-    必须显式摘掉本标记, 不得静默 XPASS —— 那是"判据恒真却全绿"的形态。"""
+    """基线必须零 fail。T2b 终审(16内墩口径, BRIDGE_ABUT=1.35 定稿)后闭合精确成立;
+    此前的 strict xfail 已显式摘除(XPASS 强制摘标记机制按预期生效)。"""
     r = qa_bridge.check_body(facts)
     fails = [x for x in r if x[0] == "fail"]
     assert not fails, "基线不应 fail: %s" % fails
@@ -184,11 +182,14 @@ def test_imp_dim_break():
     _fails_on("IMP_DIM", BRIDGE_ABUT=0)
 
 
-# ── MET_CLOSURE 真负控: 闭合推导值必须让它变绿(证明不是恒真判据) ──
+# ── MET_CLOSURE 非恒真双向负控(16 墩口径): 精确绿 + 破坏红 ──
 def test_met_closure_baseline_is_exactly_closed():
     """基线在 16 墩口径下精确闭合到 0.0000m —— MET_CLOSURE 必须恒静默。
     这条锁住"基线绿"这个事实本身: 若将来有人改 facts 使基线红, 这里立刻报。"""
     assert not _fail_codes(), "基线应零 fail, 实测: %s" % _fail_codes()
+    # 阈值方向真负控: 桥台 +0.1m(差 +0.2m < 阈值 0.5m)必须放行 —— 0.5m 容差真实存在,
+    # 判据既非恒真(见 test_met_closure_catches_real_gap)也非过敏。
+    assert not _fail_codes(BRIDGE_ABUT=1.45), "阈值内微扰不应触发 MET_CLOSURE"
 
 
 def test_met_closure_catches_real_gap():
