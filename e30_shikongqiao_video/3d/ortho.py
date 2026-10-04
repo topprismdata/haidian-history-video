@@ -38,9 +38,9 @@ else:
     # 顶视: 绕Z转轴角使桥轴(世界-103.15°)横置于画面, 否则150m桥在0.42高宽比下两端被裁
     cam.location = Vector((0,0,500)); cam.rotation_euler = (0, 0, -AXIS)
 out = os.path.join(HERE, "ortho_%s.png" % which)
-# 配准视图保洁净: abutment_ground(引道楔形块)未跟随桥轴旋转(rot=0 vs 本体-1.9548rad),
-# 横在河道里会以假轮廓遮挡立面/透入券洞; water 大平面在正交投影只贡献背景。
-# 仅本进程 hide_render, 不保存blend不动几何(T7掩膜IoU主输入必须只有桥体轮廓)。
+# 配准视图保洁净: water 大平面在正交投影只贡献背景, 隐藏以免污染掩膜。
+# (abutment_ground 曾未跟随桥轴旋转而横在河道里遮挡立面, 已于 bc485a5 修复为随本体
+#  一起转 -112°; 仍留在隐藏名单里, 因为它是引道楔形块、不属于桥体本体轮廓。)
 for _n in ("abutment_ground", "water"):
     _o = bpy.data.objects.get(_n)
     if _o:
@@ -48,3 +48,26 @@ for _n in ("abutment_ground", "water"):
 sc.render.filepath = out
 bpy.ops.render.render(write_still=True)
 print("WROTE", out, os.path.getsize(out) if os.path.exists(out) else "MISSING")
+
+# ── 输出水线像素行（M3-1 比对口径修正, 2026-10-04）──
+# bridge_body 的 mesh 从 BODY_BOTTOM=-2.20 起(水下基座, 建模与布尔运算需要它),
+# 但实拍照片里**水线以下根本看不见**。L3 拿整张渲染剪影的 bbox 去比参考掩膜
+# (参考只到水线), 模型就"高了" —— 实测长高比 13.61 vs 参考 18.76, 差 27%。
+# 这不是几何错也不是 facts 错, 是**比对口径错**: 几何与 facts 都不动,
+# 只让比对层知道水线在图像哪一行, 由消费方决定裁不裁。
+# 正交相机水平看向桥轴, 世界 z 线性映射到像素 y。
+from bpy_extras.object_utils import world_to_camera_view as _w2cv
+_camz = 3.5 if which in ("side", "arch") else 4.0
+_wl = _w2cv(sc, cam, Vector((0.0, 0.0, 0.0)))
+_px_y = (1.0 - _wl.y) * sc.render.resolution_y
+import json as _json
+_side = out.rsplit(".", 1)[0] + ".waterline.json"
+with open(_side, "w", encoding="utf-8") as _fp:
+    _json.dump({"image": os.path.basename(out),
+                "waterline_px_y": round(_px_y, 2),
+                "resolution": [sc.render.resolution_x, sc.render.resolution_y],
+                "camera_center_z": _camz,
+                "ortho_scale": cd.ortho_scale,
+                "note": "水线以下(z<0)为水下基座, 实拍不可见; L3 比对应裁掉此线以下"},
+               _fp, ensure_ascii=False, indent=1)
+print("WATERLINE_PX_Y %.2f -> %s" % (_px_y, os.path.basename(_side)))
