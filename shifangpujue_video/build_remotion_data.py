@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""E25 Task 4 三件套生成: 实测音频时长 → durations.json / narration.ts / subtitles.ts.
+"""E26 Task 4 三件套生成: 实测音频时长 → durations.json / narration.ts / subtitles.ts.
 
 产物:
   shifangpujue_video/narration/durations.json
