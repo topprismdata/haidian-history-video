@@ -65,10 +65,9 @@ def _section(text, heading_prefix):
     pat = re.compile(r"^## " + re.escape(heading_prefix), re.M)
     m = pat.search(text)
     assert m, "manifest 缺章节: %s" % heading_prefix
-    nxt = pat.search(text, m.end())
     rest = re.search(r"^## ", text[m.end():], re.M)
     end = m.end() + rest.start() if rest else len(text)
-    return text[m.start():end if not nxt else min(end, nxt.start())]
+    return text[m.start():end]
 
 
 REQUIRED_SECTIONS = [
