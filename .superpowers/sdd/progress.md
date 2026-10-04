@@ -120,3 +120,29 @@
 ### 待办
 - ChatGPT 被 Cloudflare 拦（`Unable to load site`，IP 152.175.1.165），多次重试未通 → **改用独立 agent 对抗审查代替**（全新上下文＝同样具备外部视角，且比问单一模型更可控）
 - `bridge3d/` 当前有 6 条测试红，系 FixStarred 在改 `inv_spans_sym` 的中间状态，非回归
+
+### A 质熞清零：13/16 Important 已修（余 I7/I16 归框架后续）
+
+**FixStarred（4 commits `4798aae`/`c4dd3bd`/`4ae4b51`/`fd1c407`）— 5 条 ★**
+- **I1** 对称契约放宽：`derive.spans` 支持 `len==N_SPAN` 全长表；`inv_spans_sym` 删除、对称降级为 `facts.RELATIONS` 自声明；`met_deck_camber` 放行平桥。**主控独立验证**：不对称 11 孔（类卢沟桥）/ 偶数 6 孔 / 镜像展开 17 孔（E30 式）三构型 `audit` **全部零 fail**
+- **I2** 冻结闸门从 manifest 表格反推**全量 15 条**（原只锁 8 条）+「记哈希必须被 git 跟踪」C1 回归闸门；**新闸门自己抓出两处真实漂移**（`render_shot.py`、`ortho.py`）
+- **I3** 券洞表硬判**真实现进 VERDICT**：修复前缺 1 孔 `IoU=1.0000 PASS` → 修复后同一破坏 `VOID_VERDICT FAIL`；真渲染 PASS（n=17, max|Δxc|=0.0181）
+- **I4** `qa_l2` 零采样改记 skip 且 `ok=false`/exit 1（修复前 `QA_L2_OK/ok:true` → 修复后 FAIL）；I6 负控脱靶一律 exit 1
+- **I5** 恒真检测**双向化**：`assert_no_always_true` 默认断言合法基线必须绿。**主控独立验证五种情形全部正确**：过度约束/恒真/死判据/崩溃 四种全拦、正常判据放行
+
+**FixBatch2（6 commits `f908065`…`21b269c`）— 8 条**
+- I13 删 `BRIDGE_ABUT_TARGET=2.00` 与死透传（grep 证零消费者）；`VOID_CUT_MARGIN` 外置命名消除与 `ARCH_RATIO_TOL=0.05` 的**数值巧合**（改值会动布尔体→破坏冻结，故外置而非改值）
+- I14 闭合自检 `16*PIER_W` → `(N_SPAN-1)*PIER_W`（消除当年 -2.50m 假闭合差的数字形状）
+- I12 `CLOSURE_TOL`/`ARCH_RATIO_TARGET`/`ARCH_RATIO_TOL` 进 facts（框架侧双 skip 判据转为真执行）
+- I11 前置校验：短表/非数值报 fail 而非 IndexError/TypeError 崩溃
+- I9 字面量锁收 int + 扫 `build_scene2`；I10 删白名单逃逸（0.50 注入必红）
+- I8 inline `[等级]` ↔ `SOURCES` 双向交叉核对（两方向沙箱错配均红）
+- I15 spec §9 改结构化匹配，删掉恒假 SPRINGER 行，逐条删除负控 7/7 必红
+
+### 主控自查纠正的两处自我误导
+1. **几何哈希"漂移"是误判**：项目里有**两把尺**——`freeze_hash.py` 取 `matrix_world @ v.co`（世界坐标，含 −112° 旋转）= `861d8836…`；我临时手算取 `v.co`（局部坐标）= `6194d02d…`。**两者都对，跨尺比对必然"不符"**。已在 manifest §7 加坐标系警告表，规定冻结判定一律以 `freeze_hash.py` 为准
+2. **我的 I1 验证第一次也失败**：`corruptions` 要传**坏 facts 模块**不是 lambda，传函数会让 `getattr` 取默认值、破坏永不触发，症状酷似"框架误杀正常判据"。已写进 `docs/bridge3d.md` 四种失败模式表 + 调用约定（commit `c3f6e41`）
+
+### 第三检索轮文献（web_search，ChatGPT 被 Cloudflare 拦 IP 未通）
+- **§3c 栏杆官式术语**：故宫「寻杖栏杆」= 寻杖/望柱/华板/地栿 四件；模型四件**都有**，只是用口语名（扶手/栏板/下槛/望柱）。⚠️ **清式栏板高度比例无权威来源**（搜索逐字确认），现 0.93m 比宋式 0.583 高，参考图仅 5px **不可测** → 维持 [工作值] 并记录与宋式不符这一事实
+- **C4 金光穿洞构成物理约束**（本项目第一次能用一致性约束未决冲突）：扫描冬至前后太阳方位，光线与轴最小夹角 **90°→26.5°｜112°→48.5°｜135°→71.5°**；桥洞矩形通道严格穿洞允许全角中央孔 32.5° → **仅"东西向"落在范围内，官方 135° 强烈不自洽**。⚠️ 属间接推理非测绘，`BRIDGE_AXIS_AZ` 维持 112° 不改值，证据入 C4
