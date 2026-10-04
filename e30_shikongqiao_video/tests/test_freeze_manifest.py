@@ -28,36 +28,56 @@ _SPEC = _REPO / "docs" / "superpowers" / "specs" / "2026-10-04-e30-bridge-facts-
 sys.path.insert(0, str(_3D_DIR))
 facts = importlib.import_module("facts")
 
-# 硬锁范围: 冻结本体真相源 + 判据 + T3.5 冻结参考资产
-_LOCKED_FILES = [
-    _3D_DIR / "facts.py",
-    _3D_DIR / "assumptions.py",
-    _3D_DIR / "bridge_geom2.py",
-    _3D_DIR / "build_scene2.py",
-    _3D_DIR / "qa_bridge.py",
-    _3D_DIR / "qa_l2.py",
-    _3D_DIR / "refs" / "ref_elevation.jpg",
-    _3D_DIR / "refs" / "ref_mask.png",
-]
+# ── 硬锁清单不再手写(I2): 从 manifest 表格反推 —— 凡 manifest 记 SHA256 的文件
+# 全部进闸门, 缺一条即 fail。手写清单曾只有 8/15, render_shot.py 漂移无人守。
+# 只解析三个"文件 SHA256"节; §6 渲染表是 IDAT **像素**哈希(manifest 自己声明
+# "仅存档快照, 非对照判据"), 与磁盘文件哈希不同口径, 明确排除在外。
+_HASH_SECTIONS = (
+    "1. 事实/假设层快照",
+    "2. 生成器与判据",
+    "4. 参考资产哈希",
+)
+
+# C1 回归的下限: 这些核心文件无论 manifest 怎么改写都必须在记录里
+# (防 manifest 悄悄删行让闸门缩水)。
+_CORE_RECORDED = (
+    "3d/facts.py", "3d/assumptions.py", "3d/bridge_geom2.py",
+    "3d/build_scene2.py", "3d/qa_bridge.py", "3d/qa_l2.py",
+    "3d/refs/ref_elevation.jpg", "3d/refs/ref_mask.png",
+)
 
 
 def _manifest_text():
     return _MANIFEST.read_text(encoding="utf-8")
 
 
-def _parse_file_hashes(text):
-    """从 manifest 表格里抽 (文件名, sha256)。只认 64 位十六进制哈希单元格。
-    键取 basename(manifest 表内写 `3d/xxx.py` 相对路径)。"""
+def _recorded_hashes(text):
+    """解析 manifest 各文件哈希节的全部 (相对路径, sha256) 记录。
+    路径以 manifest 写法为键(`3d/xxx.py`, 相对 e30_shikongqiao_video/)。"""
     out = {}
-    for line in text.splitlines():
-        m = re.match(r"^\|\s*`?([^`|]+?\.(?:py|jpg|png))`?\s*\|\s*`([0-9a-f]{64})`\s*\|", line)
-        if m:
-            out[Path(m.group(1).strip()).name] = m.group(2)
+    for sec in _HASH_SECTIONS:
+        body = _section(text, sec)
+        for line in body.splitlines():
+            m = re.match(r"^\|\s*`?([^`|]+?\.(?:py|jpg|png))`?\s*\|\s*`([0-9a-f]{64})`", line)
+            if m:
+                out[m.group(1).strip()] = m.group(2)
     return out
+
+
+def _repo_path(rel):
+    return _REPO / "e30_shikongqiao_video" / rel
 
 
 def _sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def _git_tracked():
+    """仓库当前跟踪的文件集合(git ls-files, 只读)。"""
+    import subprocess
+    r = subprocess.run(["git", "ls-files", "-z", "e30_shikongqiao_video"],
+                       cwd=str(_REPO), capture_output=True, check=True)
+    return set(r.stdout.decode("utf-8").split("\0"))
 
 
 def _section(text, heading_prefix):
@@ -89,33 +109,62 @@ def test_manifest_exists_with_required_sections():
         assert ("## " + h) in text, "manifest 缺必备章节: %s" % h
 
 
+def test_manifest_records_full_file_hash_table():
+    """闸门覆盖面自证: 解析器必须吃进 manifest 全部文件哈希记录(15 条),
+    且不吞 §6 的 IDAT 像素哈希(口径不同, manifest 自己声明非判据)。"""
+    recorded = _recorded_hashes(_manifest_text())
+    missing = [p for p in _CORE_RECORDED if p not in recorded]
+    assert not missing, "manifest 核心文件记录缺失(闸门缩水): %s" % missing
+    assert len(recorded) >= len(_CORE_RECORDED), \
+        "记录数 %d 少于核心清单 %d" % (len(recorded), len(_CORE_RECORDED))
+    # §6 渲染表(IDAT 像素哈希)绝不能混进文件哈希口径:
+    leaked = [k for k in recorded if k.startswith("ortho_") or k.startswith("shot_")]
+    assert not leaked, "IDAT 像素哈希被误当文件哈希比对: %s" % leaked
+
+
 def test_frozen_file_hashes_match_disk():
-    """冻结闸门: manifest 记录的哈希必须与盘上文件一致。
-    改动被锁文件必须走 body_changelog 并更新 manifest, 否则此处红。"""
-    recorded = _parse_file_hashes(_manifest_text())
-    locked = {p.name: p for p in _LOCKED_FILES}
-    missing = [name for name in locked if name not in recorded]
-    assert not missing, "manifest 未记录被锁文件哈希: %s" % missing
-    bad = [n for n, p in sorted(locked.items()) if recorded[n] != _sha256(p)]
-    assert not bad, (
+    """冻结闸门(I2 全量版): manifest 记录的**每一条**哈希都必须与盘上文件一致,
+    文件缺盘也是 fail。改动被锁文件必须走 body_changelog 并更新 manifest。"""
+    recorded = _recorded_hashes(_manifest_text())
+    problems = []
+    for rel, want in sorted(recorded.items()):
+        p = _repo_path(rel)
+        if not p.is_file():
+            problems.append("%s (manifest 记录了哈希但盘上无此文件)" % rel)
+        elif _sha256(p) != want:
+            problems.append("%s (盘上 %s != 记录 %s)"
+                            % (rel, _sha256(p)[:12], want[:12]))
+    assert not problems, (
         "冻结文件与 manifest 哈希不一致(改锁死条目必须走 3d/refs/body_changelog.md"
-        " 并重跑本体判据, 然后更新 manifest): %s" % bad)
+        " 并重跑本体判据, 然后更新 manifest): %s" % problems)
+
+
+def test_manifest_recorded_files_are_git_tracked():
+    """C1 回归闸门(I2): manifest 记哈希的每个文件必须被 git 跟踪 ——
+    "记录了哈希但没入库"正是 C1 的形状(干净克隆里文件不存在, 冻结不可复现)。"""
+    recorded = _recorded_hashes(_manifest_text())
+    tracked = _git_tracked()
+    untracked = [rel for rel in sorted(recorded)
+                 if ("e30_shikongqiao_video/" + rel) not in tracked]
+    assert not untracked, (
+        "manifest 记录了哈希但文件未入库(C1 同款缺陷, 干净克隆无法重建): %s" % untracked)
 
 
 def test_manifest_hashes_detect_tampering():
-    """负控制: 把 manifest 里任一被锁文件哈希改一个字符, 比对器必须报不一致。
+    """负控制: 把 manifest 里任一被记录文件哈希改一个字符, 全量比对器必须报不一致。
     若此测试红, 说明 test_frozen_file_hashes_match_disk 已退化为恒真。"""
     text = _manifest_text()
-    recorded = _parse_file_hashes(text)
-    target = "facts.py"
+    recorded = _recorded_hashes(text)
+    target = "3d/facts.py"
     old_hash = recorded[target]
     tampered = ("0" if old_hash[0] != "0" else "1") + old_hash[1:]
     doctored = text.replace("`%s`" % old_hash, "`%s`" % tampered, 1)
     assert doctored != text, "负控构造失败: 未找到可替换的哈希"
-    after = _parse_file_hashes(doctored)
+    after = _recorded_hashes(doctored)
     assert after[target] != old_hash
-    disk = {p.name: _sha256(p) for p in _LOCKED_FILES}
-    bad = [n for n in disk if after.get(n) != disk[n]]
+    bad = [rel for rel in sorted(after)
+           if not _repo_path(rel).is_file()
+           or _sha256(_repo_path(rel)) != after[rel]]
     assert target in bad, "篡改哈希未被比对器抓到"
 
 
