@@ -12,10 +12,10 @@
 
 | 文件 | SHA256 | 说明 |
 |---|---|---|
-| `3d/facts.py` | `860e0cc5345ba04d5ace1eddc47725c636cbdb3804017e48a936af0db9242cc8` | 19 条本体条目；等级分布见 §9 |
-| `3d/assumptions.py` | `3a2eb2ed1f47446d0b9e278f792d8e12aa7fb435dbcf9a0d712fa96cf7201fec` | 假设层，不进冻结，改动须记录 |
+| `3d/facts.py` | `df4252160e13688e0dace5d34b091afd30a2238a91b510340e1a3464f1c6d509` | 22 条本体条目（终审 I12 新增 3 条判据阈值参数）；等级分布见 §9 |
+| `3d/assumptions.py` | `c6e8002911c6a2401a7b44b2030b3db9f42bb1444c412c0e013c2de213a26e7e` | 假设层，不进冻结，改动须记录（终审 I13 删 `BRIDGE_ABUT_TARGET`、I9/I12 外置 `VOID_CUT_MARGIN`） |
 
-等级分布（facts.SOURCES 19 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 1**（ARCH_RATIO）、**工作值 12**（清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。
+等级分布（facts.SOURCES 22 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 1**（ARCH_RATIO）、**工作值 15**（12 条本体尺寸 + 3 条判据阈值参数 CLOSURE_TOL / ARCH_RATIO_TARGET / ARCH_RATIO_TOL，清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。
 
 ## 2. 生成器与判据（管线 commit 与文件哈希）
 
@@ -23,9 +23,9 @@
 
 | 文件 | SHA256 | 角色 |
 |---|---|---|
-| `3d/bridge_geom2.py` | `8990d5e80d856c5788365e136a4820a125b1b6574ee2f2d55d179820dc727296` | 纯几何（消费 facts，零字面尺寸） |
+| `3d/bridge_geom2.py` | `d672173a4f88f774d506dd6af2869014fccc13609dbaa0a109ab7a63a85a991c` | 纯几何（消费 facts，零字面尺寸；终审 I13 删 BRIDGE_ABUT_TARGET 死透传、I14 闭合自检改 (N_SPAN−1) 口径、I9/I12 券洞余量改引用 assumptions.VOID_CUT_MARGIN —— 几何 SHA 不变，冷重建 A/B 实测 bridge_body sha_sorted 与冻结候选逐位一致） |
 | `3d/build_scene2.py` | `b93c93f063b0357ebabf24a0d5cb75b623dfd75fe472c65188641a0fba015068` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变，见 body_changelog.md） |
-| `3d/qa_bridge.py` | `e8e6684bb5a7016e700bb8485a78959aa0f95e3224ddc0df4967311bacb4f64e` | L1 判据（纯数据） |
+| `3d/qa_bridge.py` | `22edb160edaacdff8316fb51ac41accf7b20e03f92456a050c14ff1a2603a530` | L1 判据（纯数据；终审 I11 损坏 facts 报告不崩溃、I12 阈值消费 facts.CLOSURE_TOL/ARCH_RATIO_TARGET/ARCH_RATIO_TOL） |
 | `3d/qa_l2.py` | `4457508cee6e53d5b5c6f0e03b932ab3ff7e6088115db614b6923bab8fa5beb2` | L2 判据（开 blend 查 evaluated mesh；2026-10-05 终审 I4/I6：零采样记 skip 且 ok=false，负控脱靶/未抓到一律 exit 1） |
 | `3d/materials.py` | `590c528508637a25e330d9fb67c1bb0bf2cc3554f1383cf28589f2357b99b35b` | 程序化材质（无 random，节点内置噪声同版本确定） |
 | `3d/lions.py` | `aa4c3b3e3f0314da3594a4c070aee4722660ee581a88b5122f5db5406610d627` | 狮母题（自带 LCG，seed 显式入参，确定） |
@@ -63,14 +63,15 @@ build platform: Darwin (arm64)  build type: Release
 |---|---|---|---|
 | MESH_TOL | 0.005 m | assumptions.py | 券石入净空 epsilon（网格数值容差，G1 分家设定） |
 | CIRCLE_FIT_RTOL | 0.01 | assumptions.py | G2: f/l 只是必要条件，圆拟合残差/半径 ≤1% 证明"是圆" |
-| MET_CLOSURE | 0.5 m | qa_bridge.py | T2b 闭合口径（N_SPAN−1 个内墩）；阈值承计划稿 |
+| MET_CLOSURE | 0.5 m | facts.py `CLOSURE_TOL`（终审 I12 落地，qa_bridge 消费） | T2b 闭合口径（N_SPAN−1 个内墩）；阈值承计划稿 |
+| MET_ARCH_RATIO | 0.50±0.05 | facts.py `ARCH_RATIO_TARGET`/`ARCH_RATIO_TOL`（终审 I12 落地，qa_bridge 消费） | 券形设计意图半圆，与 ARCH_RATIO 同源（图像推导比例假设）；容差承现脚本判据 |
 | WALL_NORMAL θ | 6° | qa_l2.py | 离散弦面理论半扇形角 π/NSEG_ARC/2≈2.25°，G2 取 6° |
 | WALL_NORMAL 采样带 | \|y\|<7.0；z>SPRINGER+0.02；\|n_y\|<0.5；\|r−a\|≤0.15 | qa_l2.py | T5 实测修订：剔除 26 个洞缘倾斜 n-gon（§8-1）；负控翻"采样带内前 10 面"（R3） |
 | IMPOST_ANCHOR | 0.5 m（xz 平面距离） | qa_l2.py | T5 修订：起拱线石是 x×z 纵剖面陈述，3D 距离版假红 34/34 |
 | VOUSSOIR_IN_VOID | r < a − MESH_TOL | qa_l2.py | 2026-10-04 修订：券石内缘=拱腹，须加径向条件否则全孔误杀 |
 | L3/T7 阈值 | OVERLAY_IOU_MIN=0.76；VOID_XC_TOL=0.02 | register_overlay.py | 扰动标定（E2 可接受/不可接受分布中点，Brumana 精度-目标挂钩）；复现 `refs/calibrate_iou.py` |
 
-实现参数（非文物事实，不冻结）: NSEG_ARC=40, NSEG_X=240, SEG=40；建模假定: BODY_BOTTOM=−2.20, BRIDGE_ABUT_TARGET=2.00（GPT v4 未裁决提案，仅属性透传）。
+实现参数（非文物事实，不冻结）: NSEG_ARC=40, NSEG_X=240, SEG=40, VOID_CUT_MARGIN=0.05（券洞挖除体布尔施工余量，"黑横杠"bug 标定值；2026-10-05 终审 I13/I9/I12 外置命名）；建模假定: BODY_BOTTOM=−2.20。~~BRIDGE_ABUT_TARGET=2.00~~ 已随 C6 裁决删除（桥台唯一生效值 = facts.BRIDGE_ABUT=1.35，150.0 精确闭合唯一解）。
 
 ## 6. 渲染图哈希 + seed
 
@@ -168,6 +169,9 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | 10 | PIER_FOUND_W_C | 3.20 m | 中央孔墩基础宽 |
 | 11 | BRIDGE_ABUT | 1.35 m | 桥台长（T2b 闭合唯一解，非测绘值） |
 | 12 | DECK_Z_AT_PIER | [5.30,5.53,5.82,6.11,6.40,6.69,6.97,7.29,7.55] | 纵坡控制点 |
+| 13 | CLOSURE_TOL | 0.5 m | MET_CLOSURE 闭合容差（判据阈值参数，终审 I12 落地；现脚本判据值承 T2b 计划稿，无文献） |
+| 14 | ARCH_RATIO_TARGET | 0.50 | MET_ARCH_RATIO 券形设计意图 f/l=半圆（判据阈值参数，终审 I12 落地；与 ARCH_RATIO 同源） |
+| 15 | ARCH_RATIO_TOL | 0.05 | MET_ARCH_RATIO 容差带宽（判据阈值参数，终审 I12 落地；现脚本判据值，无文献） |
 | 附 | ARCH_RATIO | 0.50 | [图像推导]，非米制来源，同列依赖非测绘证据 |
 
 升级路径: 梁雪《颐和园测绘笔记》、孔庆普《中国古桥结构考察》、严雨 2022 论文（均需线下获取，FACTS.md §5-3）。获批前 `facts.py` 锁定规则按其 docstring: 非工作值条目锁死；改动走 `3d/refs/body_changelog.md` 并重跑本体判据。
