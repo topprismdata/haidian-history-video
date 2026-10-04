@@ -29,6 +29,10 @@ NAMES = pathlib.Path(__file__).with_name("names.txt")
 # （防止 to_int 有 bug 却静默通过）
 UNKNOWN_RATE_WARN = 0.20
 
+# 国保编号等「标识符」形态：1-2 位批号 + 连字符链（5-205 / 6-886 / 7-1973-3-009）
+# 见 check_l4a 内注释。数量类数字（年份/长度/计数）不带连字符链，不受影响。
+_IDENTIFIER_RE = re.compile(r"(?<![\w-])\d{1,2}-\d{2,4}(?:-\d{1,3})*(?![\w-])")
+
 _BOOK_TITLE_RE = re.compile(r"《[^》]+》")
 _VOLUME_RE = re.compile(r"卷\s*([0-9]+|[零〇一二两三四五六七八九十百]+)")
 _EPISODE_RE = re.compile(r"\bE\d+\b")
@@ -132,7 +136,16 @@ def check_l4a(page: Page, ocr: OcrResult) -> List[Finding]:
             # 2026-10-03：真图槽的文字由 PhotoFrame 组件在画布别处渲染，
             # 槽内只有图像像素——L4 逐字/数字比对对它不成立。
             continue
-        want = set(extract_numbers(item.text))
+        # 🔴 E28（2026-10-04）：国保编号是**标识符**不是数量。
+        #    「6-886」「7-1973-3-009」被 extract_numbers 拆成 [6,886]/[7,1973,3,9]，
+        #    而口播几乎不会逐位念编号（E25/E26 口播了「五杠二零五」所以没暴露），
+        #    于是 L4-a 报「编号未念出」—— 逼着实现者删编号卡（FinalizeE28 实际发生：
+        #    删卡后 L4-c 自然通过 = 用删除证据的方式通过验收）。
+        #    处置：编号形态（\d{1,2}-\d{2,4} 起头的连字符链）在抽取前剥离，
+        #    与单元测试层的编号白名单（先剔后比）口径一致。
+        #    量词类数字不受影响：它们不带连字符链形态。
+        screen_text = _IDENTIFIER_RE.sub(" ", item.text)
+        want = set(extract_numbers(screen_text))
         if not want:
             continue
         got_raw = _ocr_text_for(page, ocr, item.slot_id)

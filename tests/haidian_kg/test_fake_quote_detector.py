@@ -310,3 +310,50 @@ class TestVerbatimQuotesAreNotSelfAuthored:
                         "🔴 %s 的 %s 引文含现代断语「%s」：%r"
                         % (f, fact.id, t, q[:40])
                     )
+
+
+# ==================================================================
+# 🔴 E28 回归：L4-a 标识符豁免（编号 ≠ 数量）
+# ==================================================================
+
+class TestIdentifierExemptionGate:
+    """国保编号（6-886 / 7-1973-3-009）是标识符不是数量。
+
+    事故：编号上屏被 extract_numbers 拆成数量并要求口播念出，
+    实现者被迫删编号卡（FinalizeE28），用删除证据的方式通过 L4-c ——
+    违反 V-NC05（编号必须同卡附批次与公布年）。修复=_IDENTIFIER_RE 豁免。
+    本类验证豁免的精确边界。
+    """
+
+    def test_identifiers_stripped(self):
+        from qa_v2.checks_content import _IDENTIFIER_RE as R
+        assert R.sub(" ", "编号 6-886（近现代）").strip() == "编号  （近现代）"
+        assert R.sub(" ", "7-1973-3-009").strip() == ""
+        assert R.sub(" ", "5-205").strip() == ""
+
+    def test_quantities_not_stripped(self):
+        from qa_v2.checks_content import _IDENTIFIER_RE as R
+        for txt in ("雍正十二年（一七三四）", "长约五米", "一九四三年过录本", "户二万七百四十"):
+            assert R.sub(" ", txt) == txt, "数量类数字不得被当标识符剥离：%r" % txt
+
+    def test_l4a_exempt_behavior_via_extraction(self):
+        """行为级验证：编号剥离后无数字可查（放行），数量照常抽出（仍被抓）。
+
+        与 qa_v2.checks_content.check_l4a 的实际用法一致：
+        want = extract_numbers(_IDENTIFIER_RE.sub(" ", screen_text))。
+        """
+        from qa_v2.checks_content import _IDENTIFIER_RE
+        from qa_v2.normalize import extract_numbers
+
+        # 编号上屏（P8 卡）：886 被剥离 → 不再要求口播念「八八六」。
+        # 残留的 [6] 来自「第六批」——口播必念「第六批」，子集自然成立（E26 同款）。
+        card = "第六批，编号 6-886（近现代重要史迹）"
+        got = extract_numbers(_IDENTIFIER_RE.sub(" ", card))
+        assert 886 not in got, "🔴 编号 886 未被剥离"
+        assert got == [6], "残留应仅有「第六批」的 6，实际 %s" % got
+
+        # 🔴 负控制：同一位置的「数量」写法必须照常抽出（豁免不过宽）
+        # 数量照常抽出（接受比对）——12.2 被抽成 [12, 2] 是 extract 的既有粒度
+        assert extract_numbers(_IDENTIFIER_RE.sub(" ", "通高 12.2 米")) == [12, 2]
+        assert extract_numbers(_IDENTIFIER_RE.sub(" ", "编号 6886")) == [6886]
+        assert extract_numbers(_IDENTIFIER_RE.sub(" ", "营房四千间")) == [4000]

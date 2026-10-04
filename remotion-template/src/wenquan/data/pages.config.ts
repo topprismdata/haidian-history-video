@@ -45,7 +45,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       { slotId: "p1_tag_mec", kind: "tag", text: "一手实测档案 · 民国四年", backing: true, delay: 480 },
       { slotId: "p1_close", text: "右下：《清 佚名 三山五园图》香山北坡带切片——\n清代官绘本图的北界到碧云寺一线为止，\n温泉村在图幅之外。", size: 22, color: INK, weight: 700, lh: 1.5, backing: true, delay: 560 },
       { slotId: "p1_tag_hook", kind: "tag", text: "名字比水活得久 · 本集追问", backing: true, delay: 660 },
-      { slotId: "p1_photo_1915", kind: "photo", text: "1915 实测图切片（Page01 提供 PhotoSpec）" },
+      { slotId: "p1_photo_1915", kind: "photo", text: "民国四年实测图切片（Page01 提供 PhotoSpec）" },
       { slotId: "p1_photo_sanshan", kind: "photo", text: "三山五园图切片（Page01 提供 PhotoSpec）" },
       { slotId: "p1_cap_sanshan", text: "《清 佚名 三山五园图》香山北坡带切片（公有领域）· 温泉村在图幅之外", size: 17, color: "#5a4f3c", weight: 700, lh: 1.3, backing: true, delay: 700 },
     ],
@@ -116,7 +116,7 @@ export const PAGE_CONFIG: Record<number, { design: number; bounds: number[]; ite
       { slotId: "p5_doubt2", text: "存疑 · 「乾隆八十八岁亲叩龙王庙」为传说，不入史实层（黄琉璃瓦是实物，另说）。\n存疑 · 龙王庙「始建年代不详」与成化二十二年建庙碑并存——本片表述为「始建不详，成化二十二年建庙碑为现存最早纪年」。", size: 20, color: INK, weight: 700, lh: 1.5, backing: "rgba(213,208,198,0.94)", delay: 780 },
       { slotId: "p5_photo_hlt", kind: "photo", text: "黑龙潭龙王庙示意（Page05 提供 PhotoSpec）" },
       { slotId: "p5_card_qi", text: "祈 · 求雨\n黑龙潭龙王庙\n冷泉", size: 26, color: INK, weight: 800, lh: 1.6, backing: true, delay: 880 },
-      { slotId: "p5_card_yu", text: "浴 · 沐浴\n温泉堂\n热泉", size: 26, color: INK, weight: 800, lh: 1.6, backing: true, delay: 960 },
+      { slotId: "p5_card_yu", text: "浴 · 沐浴\n温泉堂\n热泉", size: 26, color: INK, weight: 800, lh: 1.6, backing: true, delay: 900 },
     ],
   },
   // ── p06 伪引文 · 原文（证伪页；对照卡待补期间 TextOnly，右槽留空）──
