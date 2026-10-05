@@ -1,5 +1,6 @@
 """v2 场景: 整体桥体 + 布尔挖券洞 + 券脸楔石 + 栏杆 + 异兽。"""
 import bpy, bmesh, os, sys, math
+_c=math.cos; _s=math.sin; _pi=math.pi
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bridge_geom2 as G
 import materials as MAT
@@ -106,24 +107,55 @@ def build_deck_bm():
                 try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
 
-    # 望柱 (64/侧 = 全桥两边合计 128 根望柱)
+    # ── M13 望柱+栏板 真制式(rail_params_m12.json 实测: 0.27细方柱/实心华板合角框/瓶式瘿项/圆寻杖) ──
+    import json as _rj
+    RP = _rj.load(open(os.path.join(HERE, "refs/rail_params_m12.json")))
+    PW = RP["post_width"] / 2.0            # 望柱半宽 ~0.135
+    POST_SHAFT = RP["post_height"] - 0.31  # 柱身(不含头块) ~1.03
+    CAP_H = 0.31                            # 头块+垂饰
+    RAIL_TOP = 0.92                         # 寻杖顶距桥面
+    PANEL_H = RP["panel_height"]            # 华板 0.36
+    SILL_H = RP["lower_rail_thickness"]     # 地栿 0.11
+    RAIL_T = RP["rail_top_thickness"]       # 寻杖 0.10
     NPOST = 63
+
+    def _boxc(bmm, cx, cy, cz, dx, dy, dz):
+        x0,x1,y0,y1,z0,z1 = cx-dx/2,cx+dx/2,cy-dy/2,cy+dy/2,cz-dz/2,cz+dz/2
+        vs=[bmm.verts.new(q) for q in ((x0,y0,z0),(x1,y0,z0),(x1,y1,z0),(x0,y1,z0),
+            (x0,y0,z1),(x1,y0,z1),(x1,y1,z1),(x0,y1,z1))]
+        for f in ((0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
+            try: bmm.faces.new([vs[k] for k in f])
+            except ValueError: pass
+
+    def _vase(bmm, cx, cy, z0, z1):
+        """瓶式瘿项: 喇叭足+鼓腹+束颈+仰莲口, 车削剖面。"""
+        h = z1 - z0
+        prof = [(0.0,0.055),(0.10,0.05),(0.11,0.16),(0.055,0.24),
+                (0.09,0.40),(0.11,0.55),(0.06,0.72),(0.05,0.86),(0.085,1.0)]
+        SEG=12
+        rings=[]
+        for (rf,tf) in prof:
+            z=z0+tf*h; r=rf*min(0.24,h*0.42)
+            ring=[bmm.verts.new((cx+r*_c(_a), cy+r*_s(_a), z)) for _a in [2*_k*_pi/SEG for _k in range(SEG)]]
+            rings.append(ring)
+        for a in range(len(rings)-1):
+            for k in range(SEG):
+                k2=(k+1)%SEG
+                try: bmm.faces.new((rings[a][k],rings[a][k2],rings[a+1][k2],rings[a+1][k]))
+                except ValueError: pass
+        for ring in (rings[0],rings[-1]):
+            try: bmm.faces.new(ring)
+            except ValueError: pass
+
     for side in (-1, 1):
         y = side * (rail_y + 0.14)
         for i in range(NPOST + 1):
             x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NPOST
             z = G.deck_z(x)
-            b, t = 0.22, z + 1.18
-            # 方形望柱身 + 柱头承台
-            v = [bm.verts.new(p) for p in (
-                (x-b, y-0.16, z), (x+b, y-0.16, z), (x+b, y+0.16, z), (x-b, y+0.16, z),
-                (x-b, y-0.16, t), (x+b, y-0.16, t), (x+b, y+0.16, t), (x-b, y+0.16, t))]
-            for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
-                try: bm.faces.new([v[k] for k in f])
-                except ValueError: pass
-            # 柱头石狮位: 狮底坐于 t (z+1.18), 主狮比例 0.32m
-            LION_SPOTS.append((x, y, t, i, side))
-
+            # 柱身(素平, 转角线脚用材质) + 头块(略宽)
+            _boxc(bm, x, y, z + POST_SHAFT/2, PW*2, PW*2, POST_SHAFT)
+            _boxc(bm, x, y, z + POST_SHAFT + CAP_H/2, PW*2*1.08, PW*2*1.08, CAP_H)
+            LION_SPOTS.append((x, y, z + POST_SHAFT + CAP_H, i, side))
         def slab(x1, z1, x2, z2, h, t, ycen):
             v = [bm.verts.new(p) for p in (
                 (x1, ycen-t/2, z1), (x2, ycen-t/2, z2),
@@ -133,33 +165,28 @@ def build_deck_bm():
             for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
                 try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
-
-        # ── 官式双孔透空石栏板 (依据老照片 11 / 14_ref 真实形制重构) ──
-        # 每开间含: 地栿(下槛) + 实心下华板 + 双孔透空区(含中梃荷叶墩) + 顶部寻杖扶手
+        # 每开间: 地栿 + 实心华板(合角双勾框) + 透空层(2瓶式瘿项) + 圆寻杖
         for i in range(NPOST):
             x1 = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NPOST
             x2 = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * (i + 1) / NPOST
             z1, z2 = G.deck_z(x1), G.deck_z(x2)
-            xc = (x1 + x2) / 2.0
-            zc = (z1 + z2) / 2.0
-
-            # 1. 地栿 (下槛石基): 高 0.18m, 宽 0.30m
-            slab(x1 + 0.05, z1, x2 - 0.05, z2, 0.18, 0.30, y)
-
-            # 2. 下华板 (实心下区): 高 0.22m, 宽 0.20m
-            slab(x1 + 0.05, z1 + 0.18, x2 - 0.05, z2 + 0.18, 0.22, 0.20, y)
-
-            # 3. 透空开窗区 (高 0.22m, 宽 0.20m):
-            #    左边边框 (宽 0.14m)
-            slab(x1 + 0.05, z1 + 0.40, x1 + 0.19, z1 + 0.40, 0.22, 0.20, y)
-            #    中央中梃荷叶墩 (宽 0.20m)
-            slab(xc - 0.10, zc + 0.40, xc + 0.10, zc + 0.40, 0.22, 0.20, y)
-            #    右边边框 (宽 0.14m)
-            slab(x2 - 0.19, z2 + 0.40, x2 - 0.05, z2 + 0.40, 0.22, 0.20, y)
-            #    注: [x1+0.19, xc-0.10] 与 [xc+0.10, x2-0.19] 为真实透空镂孔!
-
-            # 4. 寻杖 (压顶扶手石): 高 0.14m, 宽 0.24m, 贯通压顶
-            slab(x1 + 0.05, z1 + 0.62, x2 - 0.05, z2 + 0.62, 0.14, 0.24, y)
+            xc = (x1 + x2) / 2.0; zc = (z1 + z2) / 2.0
+            slab(x1 + 0.12, z1, x2 - 0.12, z2, SILL_H, 0.22, y)                 # 地栿
+            slab(x1 + 0.12, z1 + SILL_H, x2 - 0.12, z2 + SILL_H, PANEL_H, 0.16, y)  # 华板(实)
+            # 合角双勾凹框: 面板外凸细边框(四边) 内退
+            zf = z1 + SILL_H; zb = z2 + SILL_H
+            bw = (x2 - x1) - 0.24
+            for (ex, ez, ew, eh) in ((xc, zf+0.06, bw, 0.05),(xc, zb+PANEL_H-0.06, bw, 0.05),
+                                     (x1+0.18, zf+PANEL_H/2, 0.05, PANEL_H-0.12),
+                                     (x2-0.18, zb+PANEL_H/2, 0.05, PANEL_H-0.12)):
+                _boxc(bm, ex, y+0.09 if side>0 else y-0.09, ez+ (0 if abs(ez-zf)<0.1 else 0), ew, 0.04, eh)
+            # 透空层: 栏板顶(z+SILL+PANEL) -> 寻杖底, 2 瓶式瘿项 于 ±35%
+            zopen = zc + SILL_H + PANEL_H
+            zrail = zc + RAIL_TOP
+            for fx in (0.35, 0.65):
+                vx = x1 + (x2 - x1) * fx
+                _vase(bm, vx, y, zopen, zrail - RAIL_T)
+            slab(x1 + 0.12, z1 + RAIL_TOP - RAIL_T, x2 - 0.12, z2 + RAIL_TOP - RAIL_T, RAIL_T, 0.11, y)  # 寻杖
 
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.normal_update()
