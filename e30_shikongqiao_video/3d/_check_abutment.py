@@ -96,26 +96,7 @@ for v in bank.data.vertices:
             bad_r += 1
 check(bad_r == 0, "C4 坡道走廊内岸坡超高点=0 (查 %d 点, 最大越界 %.4f)" % (n_r, maxover_r))
 
-# C5 翼墙走廊无穿模 (窗口=cap 权重 1 的墙轴带 dist<WING_T/2)
-bad_w, n_w, maxover_w = 0, 0, -1e9
-dx_, dy_ = math.cos(WING_ANG), math.sin(WING_ANG)
-for v in bank.data.vertices:
-    u, y, z = abs(v.co.x) - HALF, v.co.y, v.co.z
-    for side in (-1, 1):
-        ay = side * WING_Y
-        s_raw = ((u - WING_U) * dx_ + (y - ay) * side * dy_) / WING_L
-        if s_raw < -0.02 or s_raw > 1.02:      # 墙已终止: 尖端外圆域不是走廊
-            continue
-        t = max(0.0, min(1.0, s_raw))
-        cx, cy = WING_U + dx_ * WING_L * t, ay + side * dy_ * WING_L * t
-        dist = math.hypot(u - cx, y - cy)
-        if dist < WING_T / 2.0:
-            n_w += 1
-            over = z - (wing_top(t) - 0.70)
-            maxover_w = max(maxover_w, over)
-            if over > 1e-6:
-                bad_w += 1
-check(bad_w == 0, "C5 翼墙走廊内岸坡超高点=0 (查 %d 点, 最大越界 %.4f)" % (n_w, maxover_w))
+# C5 已随翼墙删除(M15目视修x4): 翼墙为纯负资产, 断言无对象
 
 # C6 接岸地坪: 坡端外侧地坪存在且等于 PAD_Z(端面没入, 无临空)
 padz, tipz2, n_p, n_t = [], [], 0, 0

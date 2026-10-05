@@ -656,27 +656,10 @@ def build():
         # (1) 实腹坡道: u ∈ [5.14, 47.14], 顶面沿坡, 根嵌台帽前脸 0.06
         _loft(x_e, sgn, [RAMP_U0 + RAMP_L * i / 14.0 for i in range(15)],
               _hw_ramp, _ztop_ramp)
-        # (2) 燕翅墙 x2: 根部自台体腰部埋入 0.35(防露缝)八字斜展, 顶面沿轴从台帽
-        #     标高下斜至岸顶上方 0.35m, 墙身直落水底基床。
-        for side in (-1, 1):
-            # 方向随 sgn 镜像(修复 M14 隐性 bug: 旧 d 恒 +x, -x 端翼墙反指桥内
-            # 17.5m, 真实树实测 abutment_ground min|x|=57.5 暴露)
-            d = Vector((sgn * math.cos(WING_ANG), side * math.sin(WING_ANG)))
-            n = Vector((-sgn * side * math.sin(WING_ANG), math.cos(WING_ANG)))  # 离轴法向
-            z_root, z_tip = ABUT_TOP_Z, 0.55  # [M15 目视修x2] 尖端落在岸坡低处, -0.25 仍悬空(坡面比预想低), 沉到 0.55 深埋, 露出段自然终止于地面
-            A = Vector((x_e + sgn * WING_ROOT_U, side * WING_ROOT_Y))
-            B = A + d * WING_L
-            pts = [(A.x, A.y), (B.x, B.y),
-                   (B.x + n.x * WING_T, B.y + n.y * WING_T),
-                   (A.x + n.x * WING_T, A.y + n.y * WING_T)]
-            def _ztop(px, py):
-                f = max(0.0, min(1.0, (Vector((px, py)) - A).dot(d) / WING_L))
-                return z_root * (1.0 - f) + z_tip * f
-            vs = [ab.verts.new((px, py, BED_BOTTOM)) for px, py in pts] \
-               + [ab.verts.new((px, py, _ztop(px, py))) for px, py in pts]
-            for f in ((4,5,6,7), (0,3,2,1), (0,1,5,4), (1,2,6,5), (2,3,7,6), (3,0,4,7)):
-                try: ab.faces.new([vs[k] for k in f])
-                except ValueError: pass
+        # (2) [M15 目视修x4] 燕翅墙删除: 三轮尝试(尖端+0.35悬空/埋0.55仍悬空/
+        #     缩6m)均败——直线下斜墙身与走廊限高自我下压的岸坡无法自洽, 是纯负
+        #     资产。七审"连续斜向挡墙"由坡道侧墙(随 road_half 连续展宽)承担,
+        #     八字收头感由台体梯形平面(根半宽6.50->前脸5.00)提供。
     bmesh.ops.recalc_face_normals(ab, faces=ab.faces[:]); ab.normal_update()
     # 桥台/坡道专署砌石材质(七审"石面露出带层次"): 横缝分层 course_h=0.62(照片下碱
     # 横缝节奏, 缝宽/凹深加强让远景读得出层) + 水线以下加深, 与桥身 qingshi 区分。
@@ -748,21 +731,8 @@ def build():
                 wu = 1.0 if u <= 40.0 else _sm((44.0 - u) / 4.0)
                 wv = _sm((half + 2.5 - abs(v)) / 2.5)
                 caps.append((road_top(u) - RAMP_REVEAL, wu * wv))
-            # 燕翅墙走廊 x2: 墙顶下 0.75
-            for side in (-1, 1):
-                ax_ = WING_ROOT_U
-                ay_ = side * WING_ROOT_Y
-                dx_ = math.cos(WING_ANG)
-                dy_ = side * math.sin(WING_ANG)
-                t = ((u - ax_) * dx_ + (v - ay_) * dy_) / WING_L
-                t = max(0.0, min(1.0, t))
-                cx_ = ax_ + dx_ * WING_L * t
-                cy_ = ay_ + dy_ * WING_L * t
-                dist = math.hypot(u - cx_, v - cy_)
-                lim = WING_T / 2.0 + 0.9
-                if dist < lim:
-                    z_w = ABUT_TOP_Z * (1.0 - t) + (BANK_Z + 0.35) * t
-                    caps.append((z_w - RAMP_REVEAL, _sm((lim - dist) / 0.9)))
+            # [M15x4] 燕翅墙走廊随翼墙删除
+
             return caps
         # 2026-10-05 修"岸坡生硬立方体"(主控量化: 岸缘水平梯度 max 81.7):
         #   ① 网格 24x40 -> 72x120: 4m 级刻面让岸线读成折线硬边;
