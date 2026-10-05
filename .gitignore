@@ -36,6 +36,12 @@
 # ⚠ 跨项目可复用判据/契约/负控制设施（E30 是第一个验证对象，第二个项目直接接入）。
 !/bridge3d/
 !/bridge3d/**
+# ── 放行：historical-blender agent-neutral 建模纪律 skill（2026-10-05）──
+# ⚠ 跨项目/跨 agent 复用：SKILL.md + verifier 分层/真相链细则 + 固定机位回归器 + facts 模板。
+#   任何 agent（omp/Claude Code/Cursor/Codex）进仓库做三维复原的先读入口。
+!/historical-blender/
+!/historical-blender/**
+
 # ── 放行：海淀历史地名知识图谱系统 (HHTO) ──────────────────────────────────
 !/haidian_kg/
 !/haidian_kg/**
