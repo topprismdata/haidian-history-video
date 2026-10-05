@@ -61,6 +61,10 @@ w.node_tree.nodes["Background"].inputs[1].default_value = 1.0
 cam_d = bpy.data.cameras.new("C"); cam = bpy.data.objects.new("C", cam_d)
 sc.collection.objects.link(cam); sc.camera = cam
 cam.matrix_world = Matrix(M.tolist())
+# M11-A 八审修: 分辨率必须先于任何 world_to_camera_view(K_bl 测量), 否则 aspect 伪各向异性
+sc.render.resolution_x = rw; sc.render.resolution_y = rh
+sc.render.resolution_percentage = 100
+sc.render.pixel_aspect_x = 1.0; sc.render.pixel_aspect_y = 1.0
 cam_d.sensor_fit = 'HORIZONTAL'; cam_d.sensor_width = 36.0
 cam_d.lens = K[0, 0] * (rw / Wp) * 36.0 / rw
 cam_d.shift_x = 0.0; cam_d.shift_y = 0.0
@@ -89,7 +93,6 @@ tgt, _ = CR.project(np.array(ctrl3, float), M, K)
 rows = np.hstack([Xc[:, 2:4], tgt / 2.0])
 np.save(out + ".ctrl.npy", np.array(rows))
 np.save(out + ".Kbl.npy", K_bl)
-sc.render.resolution_x = rw; sc.render.resolution_y = rh
 sc.cycles.samples = 16; sc.cycles.use_denoising = False
 sc.render.film_transparent = True
 sc.render.image_settings.file_format = 'PNG'

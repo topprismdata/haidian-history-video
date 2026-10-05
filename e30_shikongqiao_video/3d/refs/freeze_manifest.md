@@ -201,3 +201,5 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 - 复现: `3d/refs/calibrate_iou.py`（SEED 20261004，复现命令见文件 docstring）
 - 对叠图: `3d/refs/overlay_M2.png`；T7 报告: `.superpowers/sdd/e30-briefs/task-task-7-report.md`
 - 渲染对照（加分项）结论: **无判别力**（§6/§8-11），已从判据中移除；T7 实测重渲前后 E2 基线 4 位小数不变（0.8070）——渲染噪声与桥轴 112° 修正对判据无影响（已由 T7 写入 FACTS.md §7）
+
+| `3d/tools/cert_gates.json` | `dd8f7bbfaa650bea89456e250163208ced843d45533ae3fc550ae4fa80ddc667` | M11-D 事前冻结门(八审后补 hash 证据; 冻结于反演跑前, commit f62ea63) |

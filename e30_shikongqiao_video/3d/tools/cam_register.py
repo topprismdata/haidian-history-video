@@ -129,8 +129,8 @@ def solve_pose(pts3, pts2, K, wmask=None, is_water=None):
         for ph in (0.01, 0.10, 0.25):
             for D in (160.0, 260.0):
                 r = least_squares(resid, [th, ph, D, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-                                  bounds=([th - 0.3, -0.35, 60.0, -6.0, -0.2, 0.0, -58.0, -39.0, 0.97, -0.05],
-                                          [th + 0.3, 0.35, 900.0, 6.0, 0.2, 4.0, 58.0, 39.0, 1.03, 0.05]))
+                                  bounds=([th - 0.3, -0.35, 60.0, -6.0, -0.2, 0.0, -58.0, -39.0, 0.97, -0.02],
+                                          [th + 0.3, 0.35, 900.0, 6.0, 0.2, 4.0, 58.0, 39.0, 1.03, 0.02]))
                 if best is None or r.cost < best.cost:
                     best = r
     th, ph, D, tz, roll, wl_off, cx, cy, fs, k1 = best.x
@@ -264,7 +264,8 @@ def main(photo="refs/balustrade_count/src/img_0439.jpg", y0=1500, y1=2350):
                K_opt=Kopt.ravel().tolist(),
                arch_indices=idx,
                caveat="残差结构化(拱形窄高/跨距工作值 vs 实拍): 见 delivery/26 报告; >=95% photo-geometric 不认证")
-    rep["verdict"] = "PASS" if sim >= 0.95 else "BELOW_TARGET"
+    rep["landmark_gate"] = "PASS" if sim >= 0.95 else "FAIL"
+    rep["verdict"] = "LANDMARK_GATE_ONLY(最终认证见 tools/certify.py ALL-AND)"
     np.save(os.path.join(HERE, "cam_pose_img0439.npy"),
             np.concatenate([M.ravel(), Kopt.ravel(), [k1]]))
     with open(os.path.join(HERE, "cam_register_last.json"), "w") as fj:

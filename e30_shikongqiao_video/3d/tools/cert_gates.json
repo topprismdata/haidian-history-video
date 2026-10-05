@@ -2,16 +2,42 @@
   "_note": "M11-D 事前冻结认证门(七审要求: 多门槛 AND, 禁止事后补标准/平均分)。反演与认证跑之前冻结于此; 改动需走冻结变更流程。",
   "frozen_at": "2026-10-05",
   "gates": {
-    "similarity_landmarks": {">=": 0.95},
-    "reproj_rmse_px": {"<=": 20.0, "_basis": "landmark 检测偏置~5px + 拟合残差; 3771px 宽下 0.53%W"},
-    "void_IoU": {">=": 0.85},
-    "bridge_body_IoU": {">=": 0.80},
-    "contour_Chamfer_px_halfres": {"<=": 7.5, "_basis": "0.4%W 全分辨率 = 15px, 半分辨率 7.5"},
-    "deck_camber_pearson": {">=": 0.90},
-    "deck_camber_rmse_px_halfres": {"<=": 5.0}
+    "similarity_landmarks": {
+      ">=": 0.95
+    },
+    "reproj_rmse_px": {
+      "<=": 20.0,
+      "_basis": "landmark 检测偏置~5px + 拟合残差; 3771px 宽下 0.53%W"
+    },
+    "void_IoU": {
+      ">=": 0.85
+    },
+    "bridge_body_IoU": {
+      ">=": 0.8
+    },
+    "contour_Chamfer_px_halfres": {
+      "<=": 7.5,
+      "_basis": "0.4%W 全分辨率 = 15px, 半分辨率 7.5"
+    },
+    "deck_camber_pearson": {
+      ">=": 0.9
+    },
+    "deck_camber_rmse_px_halfres": {
+      "<=": 5.0
+    }
   },
   "rule": "ALL gates AND, 每张参与认证照片独立过门; 认证集 >=3 张黄金基准 + >=1 张 hold-out(从未参与拟合); hold-out 同门独立过。",
-  "hard_constraints": ["BRIDGE_LEN=150.0", "N_SPAN=17"],
-  "testable_working_values": ["ARCH_RATIO/rise-span profile", "SPRINGER", "span profile(107.3 净跨和)", "pier_width(2.5)", "abutment(2.7)"],
-  "evidence_grade_after_inversion": "image-inferred(附 CI 与照片 provenance), 不升级官方/测绘值"
+  "hard_constraints": [
+    "BRIDGE_LEN=150.0",
+    "N_SPAN=17"
+  ],
+  "testable_working_values": [
+    "ARCH_RATIO/rise-span profile",
+    "SPRINGER",
+    "span profile(107.3 净跨和)",
+    "pier_width(2.5)",
+    "abutment(2.7)"
+  ],
+  "evidence_grade_after_inversion": "image-inferred(附 CI 与照片 provenance), 不升级官方/测绘值",
+  "_sha256": "dd8f7bbfaa650bea89456e250163208ced843d45533ae3fc550ae4fa80ddc667"
 }
