@@ -86,7 +86,7 @@ def photo_obs(photo_rel):
 
 
 def fit_photo(photo_rel, g_fix=None, g0=None):
-    """g_fix=None -> 联合反演; 否则相机-only 拟合(对照)。返回 dict。"""
+    """单照片: 相机 9 参(th,ph,D,tz,roll,cx,cy,fs,k1) + 几何 7 参(可选冻结)。"""
     W, H, K, arches = photo_obs(photo_rel)
     k_peak = int(np.argmax([a["w"] for a in arches]))
     shift = 8 - k_peak
@@ -97,18 +97,16 @@ def fit_photo(photo_rel, g_fix=None, g0=None):
     pts2 = np.array(pts2, float)
     g0 = dict(G0 if g0 is None else g0)
     tgt0 = np.array([0.0, 0.0, 4.0])
+    ng = 0 if g_fix is not None else 7
 
     def unpack(p):
-        cam = p[0:9] + [0.0]  # wl_off 移除: 湖面为 datum, springer=湖面上高(可辨识)
-        if g_fix is None:
-            g = dict(zip(GKEYS, p[10:17]))
-        else:
-            g = dict(g_fix)
+        cam = list(p[0:9])
+        g = dict(g_fix) if g_fix is not None else dict(zip(GKEYS, p[9:16]))
         return cam, g
 
     def resid(p):
         cam, g = unpack(p)
-        th, ph, D, tz, roll, wl, cx, cy, fs, k1 = cam
+        th, ph, D, tz, roll, cx, cy, fs, k1 = cam
         xc, span, rise, abut = geom(g)
         if abut <= 0.1:
             return np.full(pts2.size, 1e4)
@@ -129,11 +127,10 @@ def fit_photo(photo_rel, g_fix=None, g0=None):
         return (pr - pts2).ravel()
 
     best = None
-    starts = [(th, 0.10, 210.0) for th in np.arange(0, 2 * np.pi, np.pi / 6)]
-    for th, ph, D in starts:
-        x0 = [th, ph, D, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        lo = [th - 0.3, -0.35, 60, -6, -0.2, -2.0, -58, -39, 0.97, -0.02]
-        hi = [th + 0.3, 0.35, 900, 6, 0.2, 2.0, 58, 39, 1.03, 0.02]
+    for th in np.arange(0, 2 * np.pi, np.pi / 6):
+        x0 = [th, 0.10, 210.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+        lo = [th - 0.3, -0.35, 60, -6, -0.2, -58, -39, 0.97, -0.02]
+        hi = [th + 0.3, 0.35, 900, 6, 0.2, 58, 39, 1.03, 0.02]
         if g_fix is None:
             x0 += [g0[k] for k in GKEYS]
             lo += [G_BOUNDS[k][0] for k in GKEYS]
@@ -146,28 +143,21 @@ def fit_photo(photo_rel, g_fix=None, g0=None):
     rmse = float(np.sqrt((r ** 2).sum(1).mean()))
     sim = 1.0 - float(np.sqrt((r ** 2).sum(1)).mean() / np.hypot(W, H))
     out = dict(photo=photo_rel, arch_indices=idx, rmse_px=round(rmse, 2),
-               similarity_landmarks=round(sim, 4), cam=cam.tolist(),
+               similarity_landmarks=round(sim, 4), cam=[round(float(v), 4) for v in cam],
                mode="joint" if g_fix is None else "camera_only")
     if g_fix is None:
-        # CI: J^T J 逆 × 残差方差 (几何块)
-        J = best.jac
-        dof = max(1, best.x.size - 0)
         s2 = 2 * best.cost / max(1, pts2.size * 2 - best.x.size)
         try:
-            cov = np.linalg.inv(J.T @ J) * s2
+            cov = np.linalg.inv(best.jac.T @ best.jac) * s2
             sd = np.sqrt(np.diag(cov))
-            ci = {k: round(float(sd[10 + j]), 4) for j, k in enumerate(GKEYS)}
+            out["geom_ci_1sigma"] = {k: round(float(sd[9 + j]), 4) for j, k in enumerate(GKEYS)}
         except np.linalg.LinAlgError:
-            ci = None
+            out["geom_ci_1sigma"] = None
         out["geom"] = {k: round(float(g[k]), 4) for k in GKEYS}
-        out["geom_ci_1sigma"] = ci
         xc, span, rise, abut = geom(g)
         out["span_sum"] = round(float(span.sum()), 3)
         out["abut"] = round(float(abut), 3)
-        out["rise_span_center"] = round(float(g["rise_c"]), 4)
     return out
-
-
 
 
 def detect_clean(photo_rel, thr_list=(95, 110, 125)):
