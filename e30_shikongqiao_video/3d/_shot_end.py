@@ -33,7 +33,7 @@ for v in agr.data.vertices:
 ctr_all = (mn + mx) / 2.0
 end_ctr = None
 for sgn in (1, -1):
-    c = Vector((sgn * 89.0, 0, 1.5))
+    c = Vector((sgn * 90.0, 0, 2.0))   # 八轮 P0-1: 端部体系加长(桥台5.2+坡道42), 取景中心取头坡之间
     w = agr.matrix_world @ c
     if end_ctr is None or w.length > end_ctr[1].length:
         end_ctr = (sgn, w)
@@ -49,9 +49,11 @@ cam = bpy.data.objects.new("C", cd); bpy.context.collection.objects.link(cam)
 sc.camera = cam
 
 VIEWS = {
-    "flank": (Nv * 0.72 - Bv * 0.52 + Vector((0, 0, 0.30)), 46.0),   # 侧前 3/4 看端部全貌
-    "low":   (Nv * 0.96 + Bv * 0.18 + Vector((0, 0, 0.10)), 34.0),   # 近水面看墩座/颊墙
-    "axial": (-Bv * 0.92 + Nv * 0.30 + Vector((0, 0, 0.18)), 40.0),  # 从引道外段回望桥端
+    "flank": (Nv * 0.72 - Bv * 0.52 + Vector((0, 0, 0.30)), 60.0),   # 侧前 3/4 看端部全貌
+    "low":   (Nv * 0.96 + Bv * 0.18 + Vector((0, 0, 0.10)), 42.0),   # 近水面看墩座/颊墙
+    "axial": (-Bv * 0.92 + Nv * 0.22 + Vector((0, 0, 0.18)), 46.0),  # 从引道外段回望桥端
+    #   (v3 实测: dist52/横0.30 把岸坡横向浅裙(u30~55,|v|40+ 的 z≈0.3 薄边)收进
+    #    画框右缘成两条悬浮亮线 —— M14 同款几何, 收紧取景避开, 不改岸形)
 }
 for name, (dirv, dist) in VIEWS.items():
     dirv = dirv.normalized()
