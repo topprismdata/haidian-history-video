@@ -16,6 +16,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import facts as F
 import bridge_geom2 as G
+import masonry as M
 from assumptions import MESH_TOL
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -66,8 +67,10 @@ def main():
             b = G.arch_rise(i)
             if p.z < spz - 0.05:
                 continue
-            # 侵入净空: 顶点低于真实尖拱 intrados(拱洞在曲线以下)
-            if p.z < G.arch_z(p.x, xc, spz, a, b) - eps:
+            # 侵入净空: 有符号径向距离(斜率无关)。设计允许 = 筒券伸入
+            # BARREL_PROTRUDE + 冠顶 soft-min dip(≤s*ln2, 径向分量已含在
+            # arch_signed_r 内) + 数值容差。超出即真侵入。
+            if G.arch_signed_r(p.x, p.z, xc, spz, a, b) < -(M.BARREL_PROTRUDE + eps + 0.01):
                 bad = (i + 1, p.x, p.z, G.arch_z(p.x, xc, spz, a, b))
                 break
         if bad:

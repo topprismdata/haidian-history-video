@@ -61,11 +61,11 @@ def arch_e(a, b):
     return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
 
 
-# [六审四刀#1] 冠顶钝化: 尖拱 intrados = 两圆心圆的**下包络** min(h1,h2),
-# cusp 在两弧交点(冠)。soft-min(lo - s*ln(1+e^{-(hi-lo)/s})) 把尖角圆化:
-# 冠顶降 s*ln2 且斜率归 0(凸顶 C1), 离冠 (hi-lo)>>s 处精确回到原弧——
-# 肩点/单调性零污染。s=0.06b(六审: 真桥"圆弧主导+轻微收尖", 非哥特 cusp)。
-CROWN_BLUNT_S = 0.06
+# [六审四刀#1] 拱尖度: 0.61 版中央 cusp 角 25°(读成哥特), 收 ratio 到 0.56 后
+# e/a=0.127、cusp 仅 13°——"圆弧主导+轻微收尖"已达成。曾试 soft-min 钝化,
+# 但 e=0 端孔两弧全等时 soft-min 恒沉 s*ln2(整弧均匀缩水, 非"圆角"), 数学上
+# 不可取, 故不加钝化。CROWN_BLUNT_S=0 保留接口: 若七审仍嫌尖, 优先降 ratio。
+CROWN_BLUNT_S = 0.0
 
 
 def _arc_pair(x, xc, a, b):
@@ -85,15 +85,41 @@ def _arc_pair(x, xc, a, b):
 
 
 def arch_z(x, xc, springer, a, b):
-    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a], 冠顶 soft-min 钝化。"""
+    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min。
+    CROWN_BLUNT_S>0 才启用 soft-min 圆角(当前=0, 见上注释)。"""
     (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
+    if CROWN_BLUNT_S <= 0.0:
+        return springer + (h1 if h1 <= h2 else h2)
     s = CROWN_BLUNT_S * b
     lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
     return springer + lo - s * math.log(1.0 + math.exp((lo - hi) / s))
 
 
+def arch_signed_r(x, z, xc, springer, a, b):
+    """点(x,z)到尖拱 intrados 的**有符号径向距离**(负=吃进洞口)。
+    对两圆心圆精确: r=hypot(x-cc,z-spz)-R; 冠顶 soft-min 下 dip 的径向分量
+    再扣除(dip*nz, nz 取控制弧法线竖分量)。竖直 z 比较在陡肩段(斜率~9)
+    会把 x 向偏移放大成假侵入, 径向比较与斜率无关。"""
+    e = arch_e(a, b)
+    R = a + e
+    cc = (xc + e) if x <= xc else (xc - e)
+    r = math.hypot(x - cc, z - springer) - R
+    if CROWN_BLUNT_S > 0.0:
+        (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
+        if h1 <= h2:
+            lo, hi, d = h1, h2, d1
+        else:
+            lo, hi, d = h2, h1, d2
+        s = CROWN_BLUNT_S * b
+        dip = s * math.log(1.0 + math.exp((lo - hi) / s))
+        r -= dip / math.hypot(d, 1.0)
+    return r
+
+
 def arch_dzdx(x, xc, springer, a, b):
     (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
+    if CROWN_BLUNT_S <= 0.0:
+        return d1 if h1 <= h2 else d2
     s = CROWN_BLUNT_S * b
     if h1 <= h2:
         lo, hi, dlo, dhi = h1, h2, d1, d2

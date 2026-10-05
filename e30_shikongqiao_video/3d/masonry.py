@@ -31,6 +31,12 @@ VOUSSOIR_TARGET = [17, 15, 13, 13, 11, 11, 9, 9, 7]
 RING_T = 0.62              # 券石径向厚(=券脸环带宽) m
 JOINT = 0.02               # 灰缝 m
 FACE_DEPTH = 0.12          # 贴面石出墙面深度 m
+# [六审E] 券石改全深筒券: 真桥透洞可见阶梯状环石内壁, 原"前后薄浮雕"读成
+# "正立面开孔+光滑内筒"。内弧伸入洞口 BARREL_PROTRUDE, 邻块留放射缝 JOINT_GAP,
+# 端面出墙面 FACE_PROUD(保留正面环带阴影)。
+BARREL_PROTRUDE = 0.03
+JOINT_GAP = 0.0125
+FACE_PROUD = 0.02
 COURSE_H = 0.40            # 砧石层高 m
 COURSE_W = 0.90            # 砧石宽 m
 
@@ -62,20 +68,20 @@ def _arc_stations(xc, a, b, springer, N):
     return st
 
 
-def _voussoir(bm, x0, x1, xc, springer, a, b, ring_t, side, half_depth, lift=0.0):
-    """一块放射券石: 内弧 arch_z, 外弧沿法向偏移 ring_t+lift, 端面沿法向(放射缝)。"""
+def _voussoir(bm, x0, x1, xc, springer, a, b, ring_t, lift=0.0):
+    """一块全深放射券石: 内弧伸入洞口 BARREL_PROTRUDE(阶梯筒子券),
+    外弧沿法向 ring_t+lift, 端面沿法向(放射缝), y 向贯通全墙并出墙面 FACE_PROUD。"""
     ts = (x0, (x0+x1)/2.0, x1)
     inner, outer = [], []
     for x in ts:
         z = G.arch_z(x, xc, springer, a, b)
         nx, nz = _arch_normal(x, xc, springer, a, b)
-        inner.append((x, z))
+        inner.append((x - nx*BARREL_PROTRUDE, z - nz*BARREL_PROTRUDE))
         outer.append((x + nx*(ring_t+lift), z + nz*(ring_t+lift)))
     ring = inner + list(reversed(outer))
     zs = [z for _, z in ring]; zmid = sum(zs)/len(zs)
     hw = _hw(xc, zmid)
-    y0 = side*hw - (half_depth if side > 0 else 0.0)
-    y1 = side*hw + (half_depth if side > 0 else 0.0)
+    y0, y1 = -(hw + FACE_PROUD), hw + FACE_PROUD
     va = [bm.verts.new((x, y0, z)) for x, z in ring]
     vb = [bm.verts.new((x, y1, z)) for x, z in ring]
     m = len(ring)
@@ -99,7 +105,8 @@ def voussoir_count(a, b, i=None):
 
 
 def build_voussoir(bm, hw_front, half_depth):
-    """17 孔尖拱券石环(前后两面)。返回每孔块数。"""
+    """17 孔尖拱券石环(全深筒券, 每块贯通墙厚)。返回每孔块数。
+    hw_front/half_depth 保留签名兼容, 全深模式下不再使用。"""
     counts = []
     for i in range(G.N_SPAN):
         a = G.SPANS[i] / 2.0
@@ -109,10 +116,9 @@ def build_voussoir(bm, hw_front, half_depth):
         N = voussoir_count(a, b, i)
         counts.append(N)
         st = _arc_stations(xc, a, b, spz, N)
-        for side in (1, -1):
-            for k in range(N):
-                _voussoir(bm, st[k], st[k+1], xc, spz, a, b, RING_T, side, half_depth,
-                          lift=0.07 if k == N//2 else 0.0)
+        for k in range(N):
+            _voussoir(bm, st[k] + JOINT_GAP, st[k+1] - JOINT_GAP, xc, spz, a, b, RING_T,
+                      lift=0.07 if k == N//2 else 0.0)
     return counts
 
 
@@ -181,7 +187,7 @@ def build_masonry(hw_front, half_depth=FACE_DEPTH):
     vcounts = build_voussoir(vb, hw_front, half_depth)
     cb = bmesh.new()
     ncourse = build_coursing(cb, hw_front, half_depth)
-    stats = dict(voussoir_per_arch=vcounts, voussoir_total=sum(vcounts) * 2,
+    stats = dict(voussoir_per_arch=vcounts, voussoir_total=sum(vcounts),
                  coursing_total=ncourse,
-                 grand_total=sum(vcounts) * 2 + ncourse)
+                 grand_total=sum(vcounts) + ncourse)
     return vb, cb, stats
