@@ -1,32 +1,26 @@
 # -*- coding: utf-8 -*-
-"""桥头靠山兽 v3(beasts2): 近景可辨识的蹲坐式雄壮镇桥兽, 程序化重雕。
+"""桥头靠山兽 v4(beasts2): 蹲坐式官式镇桥兽, 三审修复批(2026-10-05)。
 
-背景与历史依据 (2026-10-05 经老照片 11 / side_elev_6794.jpg 确证):
-  - 十七孔桥桥头 4 只靠山兽(两端各 2 只)实际为【蹲坐式官式镇桥雄兽】(非铜麒麟/獬豸细颈卧态):
-    前肢直立粗壮、前胸雄挺阔展、前爪沉稳下按于桥头抱鼓基座上;
-    后躯低沉蹲坐、肌肉紧凑健硕;
-    头部巨大开阔、宽吻、双层眉弓、凸眼、张口吐舌/含珠、鬃毛大卷团垂于脑后与颈侧;
-    后背顺势连接桥台栏板抱鼓卷云, 与桥台浑然一体, 绝非孤立展示须弥座。
-  - 命名采 C3 裁决: 正名「靠山兽」(京报网官方转载口径), 严禁称「石象」。
+历史依据(老照片 11 / 17 号裁切实证): 直立粗壮前肢宽爪按地、雄挺前胸、巨大阔吻头颅、
+明显张口、层片状卷云鬃环颈、背顺接桥台抱鼓; 废细颈麒麟卧态与展陈须弥座。
+三审修复指令1落实: 吻部前出+上颌唇缘/下颌分层+口裂负刀半凸; 鬃改片状层叠; 布尔后焊缝清理。
 
-尺寸与形制:
-  - 单位高度归一化, 场景尺寸取 size=1.12m(含座), 长≈1.10*size, 宽≈0.60*size。
-  - 变体 0: 雄健张口, 鬃毛 9 卷, 昂首前视;
-  - 变体 1: 颌微收含珠, 颈侧微转, 鬃毛 11 卷, 尾卷镜像。
-  - 验收口径: 单 mesh 连通域数==1(100% 水密单体), 面数 ≥ 3500。
+交付形态: beast_bm(size, variant, seed) -> 单只水密 bmesh; place_beasts(spots) ->
+4 个 linked duplicate 共享 NVARIANTS 套 mesh。variant 0 张口 / 1 含珠微合。
+Python 3.9 兼容(禁 match / X|None 注解)。
 """
 import bmesh
 import math
 
 import bpy
-from mathutils import Matrix
+from mathutils import Matrix, Vector
 
 _CACHE = {}
 NVARIANTS = 2
 
 _SEG, _RING = 18, 10
 _SEG_S, _RING_S = 14, 8
-_SEG_M, _RING_M = 16, 9
+_SEG_M, _RING_M = 12, 7
 
 
 def _ell(c, r, seg=_SEG, ring=_RING):
@@ -56,12 +50,11 @@ def _ell(c, r, seg=_SEG, ring=_RING):
     return bm
 
 
-def _box(c, s, rot_y=0.0):
-    """闭合盒(独立 bmesh)。"""
-    from mathutils import Vector
+def _box(c, s, rot_y=0.0, rot_x=0.0):
+    """闭合盒(独立 bmesh), 支持绕 Y/X 旋转(片状鬃定向)。"""
     cx, cy, cz = c
     sx, sy, sz = (v / 2.0 for v in s)
-    R = Matrix.Rotation(rot_y, 3, 'Y')
+    R = Matrix.Rotation(rot_x, 3, 'X') @ Matrix.Rotation(rot_y, 3, 'Y')
     bm = bmesh.new()
     vs = []
     for x in (-sx, sx):
@@ -78,7 +71,7 @@ def _box(c, s, rot_y=0.0):
 
 
 def _sculpt_parts(variant):
-    """蹲坐式官式靠山兽部件(单位坐标: 朝 +X, 高 1.0, 闭合水密深互渗)。"""
+    """蹲坐式靠山兽部件(单位高 1.0, 朝 +X)。返回 (P, N, F)。"""
     P, N, F = [], [], []
 
     def add(bm, lst=None):
@@ -86,140 +79,103 @@ def _sculpt_parts(variant):
         bm.normal_update()
         (lst if lst is not None else P).append(bm)
 
+    def ell(c, r, seg=_SEG, ring=_RING):
+        add(_ell(c, r, seg, ring))
+
+    def box(c, s, rot_y=0.0, rot_x=0.0):
+        add(_box(c, s, rot_y, rot_x))
+
     def neg(bm):
         add(bm, N)
 
     def fin(bm):
         add(bm, F)
 
-    def ell(c, r, seg=_SEG, ring=_RING):
-        add(_ell(c, r, seg, ring))
+    head_yaw = 0.0 if variant == 0 else 0.08
+    hy = head_yaw * 0.1
 
-    def box(c, s, rot=0.0):
-        add(_box(c, s, rot))
-
-    # 1. 抱鼓基石 (端头平整压顶条石, 沉入桥台 15mm 保证互渗, 废弃多层展陈台)
+    # 1. 抱鼓基石(端头压顶条石, 沉入桥台互渗; 废展陈须弥座)
     box((0.0, 0, 0.06), (0.92, 0.62, 0.13))
 
-    # 2. 蹲坐后臀与后大腿 (敦实低坐于基座后方)
+    # 2. 蹲坐后臀与后大腿 + 爪前探抱地
     ell((-0.20, 0, 0.28), (0.25, 0.23, 0.19))
     for sy in (1, -1):
         ell((-0.16, sy * 0.19, 0.23), (0.17, 0.09, 0.13))
-        # 爪前探抱地
         box((-0.02, sy * 0.20, 0.13), (0.12, 0.08, 0.05))
 
-    # 3. 直立雄壮前胸与躯干 (从低臀向前胸大角度拔起, 气势雄重)
+    # 3. 直立雄壮前胸与躯干 + 胸肌隆起
     ell((0.01, 0, 0.42), (0.22, 0.21, 0.23))
     ell((0.15, 0, 0.60), (0.20, 0.22, 0.23))
-    # 胸肌隆起
     for sy in (1, -1):
         ell((0.24, sy * 0.08, 0.58), (0.09, 0.11, 0.16))
 
-    # 4. 直立粗壮前肢 (如石柱支撑, 前端宽厚石雕爪)
+    # 4. 直立粗壮前肢(石柱感) + 宽厚石雕爪 + 三趾
     for sy in (1, -1):
         ell((0.21, sy * 0.145, 0.32), (0.10, 0.09, 0.22))
         box((0.25, sy * 0.145, 0.15), (0.15, 0.13, 0.09))
-        # 三主趾与利爪
         for ty in (-0.035, 0.0, 0.035):
             ell((0.32, sy * 0.145 + ty, 0.135), (0.038, 0.018, 0.025), _SEG_S, _RING_S)
 
     # 5. 粗壮短颈
     ell((0.16, 0, 0.73), (0.16, 0.18, 0.15))
 
-    # 6. 巨大头颅 (硕大、宽阔、面带威严镇水之相)
-    head_yaw = 0.0 if variant == 0 else 0.08
-    ell((0.21, head_yaw * 0.1, 0.88), (0.19, 0.20, 0.17))
-
-    # 宽阔方吻与肥厚鼻梁
-    box((0.32, head_yaw * 0.1, 0.84), (0.16, 0.20, 0.11))
-    ell((0.39, head_yaw * 0.1, 0.88), (0.045, 0.08, 0.045), _SEG_S, _RING_S)
+    # 6. 巨大头颅 + 前伸阔吻 + 鼻卷鼻翼
+    ell((0.21, hy, 0.88), (0.19, 0.20, 0.17))
+    box((0.34, hy, 0.845), (0.20, 0.20, 0.105))
+    ell((0.43, hy, 0.885), (0.045, 0.08, 0.045), _SEG_S, _RING_S)
     for sy in (1, -1):
-        ell((0.39, head_yaw * 0.1 + sy * 0.055, 0.87), (0.04, 0.04, 0.04), _SEG_S, _RING_S)
+        ell((0.43, hy + sy * 0.055, 0.875), (0.04, 0.04, 0.04), _SEG_S, _RING_S)
 
-    # 张口阔吻 / 舌与獠牙 / 下颌
-    jaw_open = -0.035 if variant == 0 else -0.050   # 二审条款二十一: 张口为实物核心特征
-    box((0.29, head_yaw * 0.1, 0.77 + jaw_open), (0.14, 0.15, 0.055))
-    ell((0.34, head_yaw * 0.1, 0.75 + jaw_open), (0.045, 0.06, 0.035), _SEG_S, _RING_S)
+    # 6b. 上颌唇缘层 / 分层下颌 / 下巴 (三审: 上下颌分层明确)
+    box((0.375, hy, 0.800), (0.17, 0.185, 0.030))
+    jaw_open = -0.055 if variant == 0 else -0.070
+    box((0.315, hy, 0.755 + jaw_open), (0.17, 0.155, 0.050))
+    ell((0.375, hy, 0.735 + jaw_open), (0.045, 0.06, 0.035), _SEG_S, _RING_S)
     if variant == 1:
-        # 变体1: 含绣球/龙珠
-        ell((0.35, 0, 0.79), (0.045, 0.045, 0.045), _SEG_S, _RING_S)
+        ell((0.385, 0, 0.775 + jaw_open * 0.5), (0.045, 0.045, 0.045), _SEG_S, _RING_S)
 
-    # 威严双层眉弓与怒目凸眼
+    # 6c. 双层眉弓 + 侧耳后展
     for sy in (1, -1):
-        box((0.30, head_yaw * 0.1 + sy * 0.085, 0.93), (0.07, 0.10, 0.045))
-        ell((0.31, head_yaw * 0.1 + sy * 0.085, 0.90), (0.04, 0.04, 0.04), _SEG_S, _RING_S)
-        # 侧耳后展
+        box((0.32, hy + sy * 0.085, 0.945), (0.075, 0.10, 0.040))
+        box((0.335, hy + sy * 0.082, 0.918), (0.050, 0.088, 0.026))
         ell((0.15, sy * 0.20, 0.94), (0.07, 0.045, 0.09), _SEG_S, _RING_S)
 
-    # 7. 官式卷云鬃毛 (大团涡卷环绕头颈后部)
+    # 7. 片状层叠卷云鬃(三审: 废球串改方向性层片), 环颈 300°
     n_mane = 10 if variant == 0 else 12
     for k in range(n_mane):
         th = math.radians(-60.0 + 300.0 * k / float(max(1, n_mane - 1)))
-        xm = 0.10 - 0.06 * max(0.0, math.sin(th))
-        ym = 0.17 * math.cos(th)
-        zm = 0.78 + 0.16 * math.sin(th)
-        ell((xm, ym, zm), (0.055, 0.065, 0.055), _SEG_M, _RING_M)
+        cym = 0.160 * math.cos(th)
+        czm = 0.76 + 0.160 * math.sin(th)
+        cxm = 0.10 - 0.05 * max(0.0, math.sin(th))
+        # 半嵌环颈(半径 0.16 < 颈面): 片厚 0.05 只露 2-3cm 雕层, 杜绝"鳍片"感
+        box((cxm, cym, czm), (0.075, 0.065, 0.050), rot_x=th)
+        box((cxm - 0.012, cym * 0.82, czm * 0.92 + 0.055), (0.060, 0.052, 0.040), rot_x=th)
 
-    # 颈背鬃毛顺流下覆
+    # 7b. 颈背鬃流下覆
     for k, (mx, mz) in enumerate(((0.10, 0.73), (0.02, 0.65), (-0.06, 0.57))):
         ell((mx, 0, mz), (0.06, 0.08, 0.06), _SEG_M, _RING_M)
 
-    # 8. 脊背连带与卷尾 (贴背回盘, 顺接桥台抱鼓卷云)
+    # 8. 脊背连带桥台抱鼓 + 卷尾贴臀侧
     box((-0.32, 0, 0.36), (0.24, 0.16, 0.32))
     ell((-0.34, 0, 0.52), (0.12, 0.10, 0.14), _SEG_S, _RING_S)
     tail_sy = 1.0 if variant == 0 else -1.0
     ell((-0.26, tail_sy * 0.16, 0.44), (0.08, 0.06, 0.12), _SEG_S, _RING_S)
     ell((-0.22, tail_sy * 0.14, 0.56), (0.06, 0.05, 0.09), _SEG_S, _RING_S)
 
-    # ── 减法(半凸出表面, 杜绝内腔壳): 张口槽/眼窝/鼻孔; 最后凸眼 ──
-    hy = head_yaw * 0.1
-    neg(_box((0.40, hy, 0.785), (0.10, 0.12, 0.045)))
+    # 9. 减法(半凸出表面防内腔): 口裂槽 / 眼窝 / 鼻孔; 最后凸眼
+    neg(_box((0.46, hy, 0.775), (0.14, 0.13, 0.055)))
     for sy in (1, -1):
         neg(_ell((0.385, hy + sy * 0.075, 0.90), (0.026, 0.026, 0.026), _SEG_S, _RING_S))
-        neg(_ell((0.425, hy + sy * 0.045, 0.865), (0.014, 0.014, 0.014), _SEG_S, _RING_S))
+        neg(_ell((0.478, hy + sy * 0.045, 0.865), (0.014, 0.014, 0.014), _SEG_S, _RING_S))
         fin(_ell((0.392, hy + sy * 0.075, 0.90), (0.028, 0.028, 0.028), _SEG_S, _RING_S))
     return P, N, F
 
 
-def _union_parts(parts):
-    """顺序 EXACT 布尔并 -> 单一水密 bpy mesh(临时对象用后即焚)。"""
-    col = bpy.context.scene.collection
-    base = None
-    for i, pbm in enumerate(parts):
-        me = bpy.data.meshes.new("_beast2_part_%d" % i)
-        pbm.to_mesh(me)
-        pbm.free()
-        ob = bpy.data.objects.new("_beast2_part_%d" % i, me)
-        col.objects.link(ob)
-        if base is None:
-            base = ob
-            continue
-        md = base.modifiers.new("u", 'BOOLEAN')
-        md.operation = 'UNION'
-        md.solver = 'EXACT'
-        md.object = ob
-        bpy.context.view_layer.update()
-        dg = bpy.context.evaluated_depsgraph_get()
-        new_me = bpy.data.meshes.new_from_object(base.evaluated_get(dg))
-        base.modifiers.remove(md)
-        old = base.data
-        base.data = new_me
-        bpy.data.meshes.remove(old)
-        col.objects.unlink(ob)
-        bpy.data.objects.remove(ob)
-        bpy.data.meshes.remove(me)
-    res = base.data
-    col.objects.unlink(base)
-    bpy.data.objects.remove(base)
-    return res
-
-
 def _bool_step(me, tool_bm, op):
-    """单步 EXACT 布尔(并/差), 返回新 mesh。"""
+    """单步 EXACT 布尔(并/差), 返回新 mesh(临时对象用后即焚)。"""
     col = bpy.context.scene.collection
     tme = bpy.data.meshes.new("_beast2_tool")
     tool_bm.to_mesh(tme)
-    tool_bm.free()
     ob = bpy.data.objects.new("_beast2_tool", tme)
     col.objects.link(ob)
     base = bpy.data.objects.new("_beast2_acc", me)
@@ -231,13 +187,38 @@ def _bool_step(me, tool_bm, op):
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
     new_me = bpy.data.meshes.new_from_object(base.evaluated_get(dg))
-    col.objects.unlink(ob); bpy.data.objects.remove(ob); bpy.data.meshes.remove(tme)
-    col.objects.unlink(base); bpy.data.objects.remove(base)
+    col.objects.unlink(ob)
+    bpy.data.objects.remove(ob)
+    bpy.data.meshes.remove(tme)
+    col.objects.unlink(base)
+    bpy.data.objects.remove(base)
     return new_me
 
 
+def _union_parts(parts):
+    me = None
+    for pbm in parts:
+        if me is None:
+            me = bpy.data.meshes.new("_beast2_base")
+            pbm.to_mesh(me)
+            pbm.free()
+            continue
+        me = _bool_step(me, pbm, 'UNION')
+    return me
+
+
+def _weld(me):
+    """焊缝清理(三审: 黑缝/破面): 重合点焊接 + 法线一致化。"""
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-4)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+
+
 def _normalize(bm):
-    """归一化: 高 -> 1.0(含底座), 底面 z=0, x/y 居中。"""
     zs = [v.co.z for v in bm.verts]
     zmin, zmax = min(zs), max(zs)
     s = 1.0 / (zmax - zmin)
@@ -251,7 +232,6 @@ def _normalize(bm):
 
 
 def _densify(me):
-    """简单细分一次(SUBSURF SIMPLE), 提升高精雕凿面数。"""
     col = bpy.context.scene.collection
     ob = bpy.data.objects.new("_beast2_densify", me)
     col.objects.link(ob)
@@ -269,7 +249,6 @@ def _densify(me):
 
 
 def _mark_smooth(bm, angle_deg=45.0):
-    """平滑着色 + 保留结构棱角。"""
     thr = math.radians(angle_deg)
     for f in bm.faces:
         f.smooth = True
@@ -287,6 +266,7 @@ def _build_master(variant):
         me = _bool_step(me, nbm, 'DIFFERENCE')
     for fbm in finl:
         me = _bool_step(me, fbm, 'UNION')
+    _weld(me)
     bm = bmesh.new()
     bm.from_mesh(me)
     bpy.data.meshes.remove(me)
@@ -335,7 +315,7 @@ def beast_bm(size=1.12, variant=0, seed=0):
 
 
 def place_beasts(spots, name="beasts", size=1.12, material=None):
-    """4 只靠山兽 linked duplicate 放置。"""
+    """4 只靠山兽 linked duplicate 放置。spots: (x, y, z, idx, facing)。"""
     meshes = {}
     obs = []
     for i, sp in enumerate(spots):
@@ -358,7 +338,6 @@ def place_beasts(spots, name="beasts", size=1.12, material=None):
 
 
 def count_components(bm):
-    """连通域数。验收口径: 单只 mesh 连通域==1(水密)。"""
     bm.verts.ensure_lookup_table()
     for v in bm.verts:
         v.tag = False

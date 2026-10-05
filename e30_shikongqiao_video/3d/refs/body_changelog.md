@@ -215,3 +215,16 @@
 - **判据复跑**: L1 qa_bridge exit=0；L2 `QA_L2_OK`；L3 IoU **0.8176**（≥0.76）+ VOID n=17 max|Δxc|=**0.0096**（≤0.02, 优于修复前 0.0181）VERDICT PASS。
 - **新增交付证据**: `delivery/render_arch_see_through.png`（中央孔低水位对穿, 射线全高 water/sky 命中）、`delivery/arch_registration.csv`（17 孔逐孔 xc/span/rise/rise_ratio/墩位）、`delivery/08_render_registration_overlay_with_voids.png`、`delivery/05/06_render_plaque_*.png`（南北题额 3D 刻字特写, 《日下旧闻考》卷84）。
 - **manifest**: §1 assumptions、§2 bridge_geom2/build_scene2/materials/register_overlay 哈希回填本批。
+
+
+## M9 (2026-10-05) 三审修复批（8.2 → 目标终验）
+
+三审裁决原文见会话；本批落实三审四条最小修复指令 + 审计瑕疵纠正。
+
+- **M9-1 狮/兽位置桥轴旋转根因修复（build_scene2.py）**: 旧代码对 lion_objs/beast_objs 只加朝向旋转不加位置旋转 -> 全桥 544 狮群与 4 兽悬空错位（二审"浮狮"、三审 21 号图集群漂在开间的真因）。现位置与朝向一并绕 BRIDGE_AXIS_AZ 旋转（Rz @ location）。
+- **M9-2 靠山兽 v4（beasts2.py）**: 焊缝清理(remove_doubles 1e-4+法线一致化)消黑缝; 吻前伸+上颌唇缘/下颌分层+口裂负刀加宽半凸; 球串鬃改 300° 环颈双层片状定向鬃(rot_x 定向扁盒); 双变体水密 10.9k/11.4k 面。
+- **M9-3 题额可读性双根因（render_plaques.py）**: ①字对象位置赋值行在编辑手术中丢失致字埋桥身中线; ②GPU+Cycles 全场景 FONT 偶发不渲染(二分: CPU 全场景 17k 红px / GPU 全场景 0 / GPU 仅字 34 万)。修复: 补位置行 + 题额机位强制 CPU + 字色加深(0.16,0.015,0.012)/光比压低(120W) + 正视/掠光双机位 × 南北 = 4 图, 红字像素自验 7.8万-13.7万。
+- **M9-4 细部举证新机位（tools/render_details.py）**: 19 券脸环带近景 / 20 桥面三带错缝低机位 / 21 狮+栏板对照(18 号构图) / 22 靠山兽对照(17 号构图)。
+- **M9-5 审计纠正**: arch_registration.csv 列名 pier_*_x → opening_*_x(孔口边界语义); _beast_preview 分辨率 1280×960 → 1600×900(三审 07 尺寸误标根因); INDEX v4 全表重标 03/04 描述。
+- **判据复跑**: L1 exit 0; L2 QA_L2_OK; L3 IoU 0.8142(≥0.76) + 17 湾 max|Δxc| 0.0096 VERDICT PASS; pytest 376(哈希回填后)。
+- **manifest**: §2 build_scene2.py 哈希回填本批。

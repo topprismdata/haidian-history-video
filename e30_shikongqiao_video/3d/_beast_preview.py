@@ -60,8 +60,8 @@ for ang_deg, name, dist in ((0.0, "front", 3.20), (40.0, "threeq", 3.40),
     sc.cycles.samples = 64
     sc.cycles.use_denoising = True
     sc.render.engine = 'CYCLES'
-    sc.render.resolution_x = 1280
-    sc.render.resolution_y = 960
+    sc.render.resolution_x = 1600
+    sc.render.resolution_y = 900
     sc.render.filepath = os.path.join(HERE, "_beast_preview_%s.png" % name)
     bpy.ops.render.render(write_still=True)
     print("WROTE", sc.render.filepath)

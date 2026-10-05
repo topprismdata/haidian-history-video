@@ -5,7 +5,7 @@ import bridge_geom2 as G
 import materials as MAT
 import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
 import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRIDGE_AXIS_AZ = 112.0     # 北京建筑大学口径(东端略南/西端略北), 供后续光影用
@@ -282,24 +282,6 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(void, do_unlink=True)
-    # ── 布尔残片清理(2026-10-05 二审修复): EXACT 布尔在桥体表面留下切刀侧壁残片
-    #    (实测 13 顶点, 横向 -3.28~-3.7 / z 6.7~7.75), 悬在券脸前方 0.5~0.9m 遮挡题额区。
-    #    判据: 桥身顶点不得超出自身收分轮廓 hw(z)+2cm(两端桥台加长区除外)。
-    me = body.data
-    bm = bmesh.new(); bm.from_mesh(me)
-    rm = []
-    for v in bm.verts:
-        x, y, z = v.co
-        if abs(x) > G.BRIDGE_LEN / 2.0 - 2.0:
-            continue
-        zt = G.deck_z(x)
-        f = max(0.0, min(1.0, (z - G.BODY_BOTTOM) / (zt - G.BODY_BOTTOM)))
-        hw = (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
-        if abs(y) > hw + 0.02:
-            rm.append(v)
-    if rm:
-        bmesh.ops.delete(bm, geom=rm, context='VERTS')
-    bm.to_mesh(me); bm.free(); me.update()
     # 桥台加长(GPT v4 第4刀): 每端 BRIDGE_ABUT=1.35m 且向岸收分。
     # 值取 facts.BRIDGE_ABUT(T2b 闭合归因唯一解: 107.3+16*2.50+2*1.35=150.0 精确闭合);
     # GPT 设计提案 2.00(assumptions.BRIDGE_ABUT_TARGET)未获事实地位, 不进生成器。
@@ -359,6 +341,25 @@ def build():
                 poly.flip(); flipped += 1
             break
     me.update()
+    # ── 布尔残片清理(2026-10-05 二审修复, M9 移至桥台 UNION 与法线翻转之后: 幻影外壳由 UNION 重构产生): EXACT 布尔在桥体表面留下切刀侧壁残片
+    #    (实测 13 顶点, 横向 -3.28~-3.7 / z 6.7~7.75), 悬在券脸前方 0.5~0.9m 遮挡题额区。
+    #    判据: 桥身顶点不得超出自身收分轮廓 hw(z)+2cm(两端桥台加长区除外)。
+    me = body.data
+    bm = bmesh.new(); bm.from_mesh(me)
+    rm = []
+    for v in bm.verts:
+        x, y, z = v.co
+        if abs(x) > G.BRIDGE_LEN / 2.0 - 2.0:
+            continue
+        zt = G.deck_z(x)
+        f = max(0.0, min(1.0, (z - G.BODY_BOTTOM) / (zt - G.BODY_BOTTOM)))
+        hw = (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
+        if abs(y) > hw + 0.02:
+            rm.append(v)
+    print('STRAY_CLEANUP removed verts:', len(rm))
+    if rm:
+        bmesh.ops.delete(bm, geom=rm, context='VERTS')
+    bm.to_mesh(me); bm.free(); me.update()
     print("  翻转券洞内壁破面: %d" % flipped)
     # ── 起拱线石 impost (GPT v4 建议第3项) ──
     # 直边墙 -> 半圆券的转折处本该有一块横向凸出的承托石。
@@ -391,10 +392,12 @@ def build():
     # 替代旧 build_beast_bm() 盒块堆叠(384 顶点)。单只 5000+ 面, 水密, 剪影清晰。
     beast_spots = []
     _bi = 0
-    for xe in (-G.BRIDGE_LEN / 2 + 1.5, G.BRIDGE_LEN / 2 - 1.5):
-        z = G.deck_z(xe)
+    # 2026-10-05 M9b(三审指令1/22号图): 靠山兽坐栏杆端头抱鼓石位 —— 基面=寻杖顶
+    # (deck+0.76), 位于端开间中心, 横向与望柱列齐; 兽背卷云顺接栏板端头(17 号裁切实证构图)。
+    for xe in (-G.BRIDGE_LEN / 2 + 1.19, G.BRIDGE_LEN / 2 - 1.19):
+        z = G.deck_z(xe) + 0.76
         for k, side in enumerate((-1, 1)):
-            y = side * (G.DECK_UP_W / 2 - 0.10) + side * k * 0.10
+            y = side * (G.DECK_UP_W / 2 - 0.18 + 0.14)
             facing = 1.0 if xe > 0 else -1.0
             beast_spots.append((xe, y, z, _bi, facing))
             _bi += 1
@@ -523,9 +526,14 @@ def build():
     for n in ("bridge_body","impost","voussoir","deck_rail",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
-    for ob in lion_objs:   # 蹲狮随桥轴同转(叠加在各自柱头微yaw上)
+    # 2026-10-05 M9 根因修复: 狮/兽对象此前只转朝向不转位置 -> 全桥狮群悬空错位
+    # (二审"浮狮"与三审 21 号对照图集群漂在开间中的真因)。位置与朝向一并绕桥轴旋转。
+    Rz = Matrix.Rotation(-math.radians(BRIDGE_AXIS_AZ), 4, 'Z')
+    for ob in lion_objs:
+        ob.location = Rz @ ob.location
         ob.rotation_euler.z += -math.radians(BRIDGE_AXIS_AZ)
-    for ob in beast_objs:  # 靠山兽随桥轴同转
+    for ob in beast_objs:
+        ob.location = Rz @ ob.location
         ob.rotation_euler.z += -math.radians(BRIDGE_AXIS_AZ)
     # 照明
     w = bpy.data.worlds.new("World"); bpy.context.scene.world = w; w.use_nodes=True
