@@ -137,11 +137,30 @@ def check_body(f):
     for i in range(n_arch):
         xc = (d.PIER_X[i] + d.PIER_X[i + 1]) / 2.0
         a = d.SPANS[i] / 2.0
-        pts = [(xc - a * math.cos(math.pi * k / 20.0),
-                f.SPRINGER + a * math.sin(math.pi * k / 20.0)) for k in range(21)]
-        rtol, _ = circle_fit_residual(pts)
-        if rtol > A.CIRCLE_FIT_RTOL:
-            add("fail", "MET_ARCH_FAMILY", "孔%d 圆拟合残差/R=%.4f 超限(非圆弧?)" % (i + 1, rtol))
+        # [M14] 旧 MET_ARCH_FAMILY 是恒真闸门: 它采样"合成半圆点集"再拟合圆,
+        # 残差恒 0, 与真实拱线无关。M12 后拱为逐孔两圆心 ogee, 单圆前提作废。
+        # 改测真实剖面 f.arch_z 的结构性不变量: 肩点归零/对称/单峰/冠高一致。
+        b_i = f.rise_ratio(i) * d.SPANS[i]
+        sp_i = d.deck_z(xc) - f.SPANDREL - b_i
+        zl = f.arch_z(xc - a, xc, sp_i, a, b_i)
+        zr = f.arch_z(xc + a, xc, sp_i, a, b_i)
+        if abs(zl - sp_i) > 1e-3 or abs(zr - sp_i) > 1e-3:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 肩点不归位 z(±a)=(%.3f,%.3f) spz=%.3f"
+                % (i + 1, zl, zr, sp_i))
+        ts = [a * k / 40.0 for k in range(1, 40)]
+        sym = max(abs(f.arch_z(xc + t, xc, sp_i, a, b_i)
+                      - f.arch_z(xc - t, xc, sp_i, a, b_i)) for t in ts)
+        if sym > 1e-6:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 拱线不对称 maxΔz=%.2e" % (i + 1, sym))
+        zs = [f.arch_z(xc - a + t, xc, sp_i, a, b_i) for t in
+              [2 * a * k / 40.0 for k in range(41)]]
+        half = 20
+        if any(zs[k + 1] - zs[k] < -1e-9 for k in range(half)) or \
+           any(zs[k + 1] - zs[k] > 1e-9 for k in range(half, 40)):
+            add("fail", "MET_ARCH_FAMILY", "孔%d 拱线非左升右降(多峰?)" % (i + 1,))
+        crown_z = f.arch_z(xc, xc, sp_i, a, b_i)
+        if abs(crown_z - (sp_i + b_i)) > 1e-3:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 冠高%.3f≠spz+矢%.3f" % (i + 1, crown_z, sp_i + b_i))
         # f/l 设计意图(终审 I12): 消费 facts.ARCH_RATIO_TARGET±ARCH_RATIO_TOL(原 0.50±0.05 硬写)。
         # 缺任一 → skip(未执行不算通过); 与框架 met_arch_ratio 同语义。
         ratio_target = getattr(f, "ARCH_RATIO_TARGET", None)
@@ -151,14 +170,15 @@ def check_body(f):
         elif not (_is_num(ratio_target) and _is_num(ratio_tol)) or ratio_tol <= 0:
             add("fail", "IMP_TOLERANCE",
                 "ARCH_RATIO_TARGET/TOL 非法: %r/%r(容差须为正数)" % (ratio_target, ratio_tol))
-        elif abs(f.ARCH_RATIO - ratio_target) > ratio_tol:
-            add("fail", "MET_ARCH_RATIO", "f/l=%.3f 偏离设计意图 %.2f±%.2f"
-                % (f.ARCH_RATIO, ratio_target, ratio_tol))
-        # MET 结构自洽(G2 修订): 拱背=拱腹+RING_T 须低于桥面, 替代无据的0.30
-        crown_i = f.SPRINGER + a
+        elif abs(f.rise_ratio((f.N_SPAN - 1) // 2) - ratio_target) > ratio_tol:
+            # [M14] 旧版比对常量 f.ARCH_RATIO(0.50, M12 前口径); 现比对剖面中心值
+            add("fail", "MET_ARCH_RATIO", "中央矢跨=%.3f 偏离设计意图 %.2f±%.2f"
+                % (f.rise_ratio((f.N_SPAN - 1) // 2), ratio_target, ratio_tol))
+        # MET 结构自洽(G2 修订; M14 随 M12 语义: 冠=桥面-拱肩, 起拱=冠-矢, 逐孔)
+        crown_i = d.deck_z(xc) - f.SPANDREL
         if crown_i + f.RING_T > d.deck_z(xc) + 1e-9:
             add("fail", "MET_RING_FIT", "孔%d 拱背%.2f 高于桥面%.2f(券圈穿出桥面)" % (i + 1, crown_i + f.RING_T, d.deck_z(xc)))
-        if f.SPRINGER >= d.deck_z(xc):
+        if sp_i >= d.deck_z(xc):
             add("fail", "MET_SPRINGER", "孔%d 起拱线高于桥面" % (i + 1))
     if not (0 < f.DECK_UP_W < f.DECK_DOWN_W):
         add("fail", "MET_TAPER", "顶宽须小于底宽(收分)")

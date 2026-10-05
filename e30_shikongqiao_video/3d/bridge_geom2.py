@@ -43,10 +43,8 @@ def arch_crown_z(i):
 
 
 def arch_rise_ratio(i):
-    """M12 P0-2: 矢跨比剖面。真桥中央拱高瘦(≈0.70)、端孔矮(≈0.50), 非恒定半圆。
-    照片实测: 中央孔洞口高/宽≈1.0-1.1(含起拱线以上矢高+以下到水面), 冠部收尖。"""
-    u = abs(2 * i - (N_SPAN - 1)) / (N_SPAN - 1)   # 0=中央, 1=端
-    return 0.56 - 0.10 * u
+    """矢跨比剖面: 消费 facts.rise_ratio(单一数据源, 六审四刀#1)。"""
+    return _F.rise_ratio(i)
 
 
 def arch_rise(i):
@@ -58,79 +56,17 @@ def arch_springer_z(i):
     return arch_crown_z(i) - arch_rise(i)
 
 
-def arch_e(a, b):
-    """两圆心尖拱: 圆心偏移 e=(b^2-a^2)/(2a)。b>a→e>0→冠部收成尖(ogee)。"""
-    return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
-
-
-# [六审四刀#1] 拱尖度: 0.61 版中央 cusp 角 25°(读成哥特), 收 ratio 到 0.56 后
-# e/a=0.127、cusp 仅 13°——"圆弧主导+轻微收尖"已达成。曾试 soft-min 钝化,
-# 但 e=0 端孔两弧全等时 soft-min 恒沉 s*ln2(整弧均匀缩水, 非"圆角"), 数学上
-# 不可取, 故不加钝化。CROWN_BLUNT_S=0 保留接口: 若七审仍嫌尖, 优先降 ratio。
-CROWN_BLUNT_S = 0.0
-
-
-def _arc_pair(x, xc, a, b):
-    """左右两圆心圆在 x 处的高度与斜率。左圆心(xc+e)弧管左半, 右(xc-e)管右半;
-    对侧远端根号参数截 0(该处由 min 取到本侧弧, 截值不影响包络)。"""
-    e = arch_e(a, b)
-    R = a + e
-    out = []
-    for cc in (xc + e, xc - e):
-        dd = R * R - (x - cc) ** 2
-        if dd > 1e-9:
-            sq = math.sqrt(dd)
-            out.append((sq, -(x - cc) / sq))
-        else:
-            out.append((0.0, 0.0))
-    return out
-
-
-def arch_z(x, xc, springer, a, b):
-    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min。
-    CROWN_BLUNT_S>0 才启用 soft-min 圆角(当前=0, 见上注释)。"""
-    (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
-    if CROWN_BLUNT_S <= 0.0:
-        return springer + (h1 if h1 <= h2 else h2)
-    s = CROWN_BLUNT_S * b
-    lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
-    return springer + lo - s * math.log(1.0 + math.exp((lo - hi) / s))
-
-
-def arch_signed_r(x, z, xc, springer, a, b):
-    """点(x,z)到尖拱 intrados 的**有符号径向距离**(负=吃进洞口)。
-    对两圆心圆精确: r=hypot(x-cc,z-spz)-R; 冠顶 soft-min 下 dip 的径向分量
-    再扣除(dip*nz, nz 取控制弧法线竖分量)。竖直 z 比较在陡肩段(斜率~9)
-    会把 x 向偏移放大成假侵入, 径向比较与斜率无关。"""
-    e = arch_e(a, b)
-    R = a + e
-    cc = (xc + e) if x <= xc else (xc - e)
-    r = math.hypot(x - cc, z - springer) - R
-    if CROWN_BLUNT_S > 0.0:
-        (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
-        if h1 <= h2:
-            lo, hi, d = h1, h2, d1
-        else:
-            lo, hi, d = h2, h1, d2
-        s = CROWN_BLUNT_S * b
-        dip = s * math.log(1.0 + math.exp((lo - hi) / s))
-        r -= dip / math.hypot(d, 1.0)
-    return r
-
-
-def arch_dzdx(x, xc, springer, a, b):
-    (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
-    if CROWN_BLUNT_S <= 0.0:
-        return d1 if h1 <= h2 else d2
-    s = CROWN_BLUNT_S * b
-    if h1 <= h2:
-        lo, hi, dlo, dhi = h1, h2, d1, d2
-    else:
-        lo, hi, dlo, dhi = h2, h1, d2, d1
-    w = math.exp((lo - hi) / s)
-    return (dlo + w * dhi) / (1.0 + w)
-
 SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
+
+
+# [M14 归一] 两圆心尖拱纯数学移至 facts(与 PIER_W_INT 同模式: 规则即数据,
+# qa_bridge 纯数据侧可无 bmesh 消费同一实现, 杜绝第二套公式失同步)。
+arch_e = _F.arch_e
+_arc_pair = _F._arc_pair
+arch_z = _F.arch_z
+arch_dzdx = _F.arch_dzdx
+arch_signed_r = _F.arch_signed_r
+CROWN_BLUNT_S = _F.CROWN_BLUNT_S
 
 
 def pier_w(i):

@@ -57,6 +57,84 @@ PIER_W_INT = [2.730, 2.664, 2.599, 2.533, 2.467, 2.401, 2.336, 2.270,
               2.270, 2.336, 2.401, 2.467, 2.533, 2.599, 2.664, 2.730]  # i=1..16
 
 
+# --- 六审四刀#1: 矢跨比剖面 + 两圆心尖拱纯数学(单一数据源) ---
+# 0.61 版中央 cusp 角 25°(GPT: 读成哥特), 收到 0.56 后 e/a=0.127、cusp 13°
+# —— "圆弧主导+轻微收尖"。soft-min 冠钝化试验已废(e=0 端孔两弧全等时整弧
+# 均匀沉 s*ln2, 是缩水不是圆角)。bridge_geom2/qa_bridge/masonry 消费同一函数。
+import math as _math
+RISE_C = 0.56             # [图像推导·六审标定] 中央孔矢跨比(与 winter/ovf 侧视对照定)
+RISE_E = 0.46             # [图像推导·六审标定] 端孔矢跨比
+CROWN_BLUNT_S = 0.0       # >0 才启用 soft-min 冠钝化; 当前 0(见上注释)
+
+
+def rise_ratio(i):
+    """第 i 孔矢跨比(0-based): 中央 RISE_C 线性过渡到端 RISE_E, 严格对称。"""
+    u = abs(2 * i - (N_SPAN - 1)) / (N_SPAN - 1)
+    return RISE_C + (RISE_E - RISE_C) * u
+
+
+def arch_e(a, b):
+    """两圆心尖拱圆心偏移 e=(b^2-a^2)/(2a)。b>a→e>0→冠部收尖(ogee)。"""
+    return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
+
+
+def _arc_pair(x, xc, a, b):
+    """左右两圆心圆在 x 处的高度与斜率(对侧远端根号参数截 0)。"""
+    e = arch_e(a, b)
+    R = a + e
+    out = []
+    for cc in (xc + e, xc - e):
+        dd = R * R - (x - cc) ** 2
+        if dd > 1e-9:
+            sq = _math.sqrt(dd)
+            out.append((sq, -(x - cc) / sq))
+        else:
+            out.append((0.0, 0.0))
+    return out
+
+
+def arch_z(x, xc, springer, a, b):
+    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min。"""
+    (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
+    if CROWN_BLUNT_S <= 0.0:
+        return springer + (h1 if h1 <= h2 else h2)
+    s = CROWN_BLUNT_S * b
+    lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
+    return springer + lo - s * _math.log(1.0 + _math.exp((lo - hi) / s))
+
+
+def arch_dzdx(x, xc, springer, a, b):
+    (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
+    if CROWN_BLUNT_S <= 0.0:
+        return d1 if h1 <= h2 else d2
+    s = CROWN_BLUNT_S * b
+    if h1 <= h2:
+        lo, hi, dlo, dhi = h1, h2, d1, d2
+    else:
+        lo, hi, dlo, dhi = h2, h1, d2, d1
+    w = _math.exp((lo - hi) / s)
+    return (dlo + w * dhi) / (1.0 + w)
+
+
+def arch_signed_r(x, z, xc, springer, a, b):
+    """点(x,z)到 intrados 的有符号径向距离(负=吃进洞口)。
+    竖直 z 比较在陡肩段(斜率~9)会把 x 向偏移放大成假侵入; 径向与斜率无关。"""
+    e = arch_e(a, b)
+    R = a + e
+    cc = (xc + e) if x <= xc else (xc - e)
+    r = _math.hypot(x - cc, z - springer) - R
+    if CROWN_BLUNT_S > 0.0:
+        (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
+        if h1 <= h2:
+            lo, hi, d = h1, h2, d1
+        else:
+            lo, hi, d = h2, h1, d2
+        s = CROWN_BLUNT_S * b
+        dip = s * _math.log(1.0 + _math.exp((lo - hi) / s))
+        r -= dip / _math.hypot(d, 1.0)
+    return r
+
+
 def pier_w(i):
     """第 i 内墩宽(1-based, i=1..16)。中央收窄/两端渐厚的唯一数据源,
     bridge_geom2 与 qa_bridge.derive 消费同一张表 —— 规则即数据, 无第二套公式可失同步。"""
@@ -80,8 +158,8 @@ DECK_Z_AT_PIER = [5.30, 5.53, 5.82, 6.11, 6.40, 6.69, 6.97, 7.29, 7.55]  # [工�
 #     不进 SOURCES → 框架侧 MET_CLOSURE/MET_ARCH_RATIO 双 skip。落进 facts 后判据消费它们,
 #     阈值本身也纳入来源台账治理) ---
 CLOSURE_TOL = 0.5         # [工作值] MET_CLOSURE 几何闭合容差(m); 现脚本判据值(原硬写 qa_bridge, 阈值承 T2b 计划稿), 无文献
-ARCH_RATIO_TARGET = 0.50  # [工作值] MET_ARCH_RATIO 券形设计意图 f/l(半圆); 现脚本判据值(原硬写 qa_bridge), 与 ARCH_RATIO 同源
-ARCH_RATIO_TOL = 0.05     # [工作值] MET_ARCH_RATIO 容差带宽; 现脚本判据值(原硬写 qa_bridge), 无文献
+ARCH_RATIO_TARGET = 0.56  # [图像推导·六审标定] 中央孔矢跨比设计意图(0.61 哥特味收 0.56, cusp 13°); 判据比对 facts.rise_ratio 剖面中心
+ARCH_RATIO_TOL = 0.02     # [工作值] 六审标定带宽; GPT 建议 0.55-0.57 区间
 
 # --- 项目自声明的关系型不变量(bridge3d RELATIONS 机制; 框架不预设形态) ---
 # 2026-10-05 终审 I1: 对称性从框架 INV 普适律降级为项目自声明 —— 半侧表+镜像
