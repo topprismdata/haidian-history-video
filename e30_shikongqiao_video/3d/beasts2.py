@@ -166,22 +166,24 @@ def _sculpt_parts(variant):
     # 5. 短颈: 楔形棱台上收(顶面收缩), 微前倾
     fru((0.095, 0, 0.66), (0.14, 0.28, 0.15), tz=0.66, rot_y=-0.13)
 
-    # 6. 头颅两层: 颊段(宽下层) + 额段(收顶上层, 前缘成眉台阶)
-    fru((0.185, hy, 0.84), (0.30, 0.40, 0.14), tx=0.85)
-    fru((0.16, hy, 0.938), (0.265, 0.385, 0.09), tx=0.78, tz=0.55)
-
-    # 6b. 吻部: 前窄后宽棱台 + 鼻镜扁椭球 + 獠颊垫(圆化侧壁)
-    fru((0.34, hy, 0.855), (0.21, 0.30, 0.125), tx=0.70)
-    ell((0.455, hy, 0.875), (0.038, 0.08, 0.03))
+    # 6. 头颅(M10.2 椭球语言重做: 废棱台面盔/矩形耳片/悬浮唇条)
+    ell((0.185, hy, 0.86), (0.165, 0.185, 0.150))          # 颅主球
+    ell((0.16, hy, 0.945), (0.140, 0.160, 0.100))          # 额段收顶
+    ell((0.20, hy, 0.80), (0.150, 0.185, 0.110))           # 颊段宽下层
+    # 6b. 吻: 鼻梁-吻前段-鼻镜-鼻翼-颊垫 椭球叠
+    ell((0.315, hy, 0.845), (0.115, 0.105, 0.085))
+    ell((0.40, hy, 0.86), (0.075, 0.080, 0.062))
+    ell((0.462, hy, 0.878), (0.036, 0.062, 0.030))
     for sy in (1, -1):
-        ell((0.335, hy + sy * 0.125, 0.845), (0.085, 0.04, 0.06))
-
-    # 6c. 独立下颌层(小颊台) + 下巴须球; 后贴扁平耳
-    fru((0.30, hy, 0.745), (0.15, 0.13, 0.07), tx=0.55)
-    ell((0.352, hy, 0.71), (0.03, 0.05, 0.036))
+        ell((0.455, hy + sy * 0.048, 0.868), (0.030, 0.030, 0.028), _SEG_S, _RING_S)
+        ell((0.30, hy + sy * 0.115, 0.845), (0.075, 0.040, 0.060))
+    # 6c. 眉脊弧/下颌层/下巴须/圆耳贴颅
     for sy in (1, -1):
-        box((0.10, hy + sy * 0.155, 0.945), (0.075, 0.035, 0.065),
-            rot_x=sy * -0.6)
+        ell((0.30, hy + sy * 0.075, 0.925), (0.070, 0.045, 0.030), _SEG_S, _RING_S, rot_x=sy * 0.25)
+    ell((0.30, hy, 0.745), (0.105, 0.095, 0.055))
+    ell((0.365, hy, 0.715), (0.032, 0.050, 0.036), _SEG_S, _RING_S)
+    for sy in (1, -1):
+        ell((0.09, hy + sy * 0.145, 0.93), (0.055, 0.030, 0.070), _SEG_S, _RING_S, rot_x=sy * -0.5)
 
     # 7. 鬃: 三层鬃披(阶梯环领, 层缘即雕层棱线) + 每层贴弧鬃瓦
     #    (扁椭球瓦片径向半嵌, 圈间错缝 + 垂檐 0.012, 侧弧 -10~190 度)
@@ -224,9 +226,9 @@ def _sculpt_parts(variant):
     # 10. 减法(负刀全部半凸穿出表面, 防内腔):
     #     口裂楔刀(浅腔厚唇) / 眉弓折痕 / 眼窝 / 鼻孔
     if variant == 0:
-        neg(_frustum((0.42, hy, 0.806), (0.25, 0.124, 0.048), tx=1.55))
+        neg(_frustum((0.43, hy, 0.800), (0.27, 0.126, 0.062), tx=1.55))
     else:
-        neg(_frustum((0.42, hy, 0.806), (0.25, 0.124, 0.028), tx=1.55))
+        neg(_frustum((0.43, hy, 0.802), (0.27, 0.126, 0.040), tx=1.55))
     for sy in (1, -1):
         ell((0.343, hy + sy * 0.098, 0.922), (0.05, 0.022, 0.026), _SEG_S, _RING_S)
         neg(_ell((0.352, hy + sy * 0.096, 0.958), (0.045, 0.016, 0.022),
@@ -404,6 +406,35 @@ def _build_master(variant):
     bm.from_mesh(me)
     bpy.data.meshes.remove(me)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    # M10.1 补洞硬工序: 并集窄缝/切线交留下的穿透洞(四审 22 号图体侧黑缝根因)
+    bedges = [e for e in bm.edges if len(e.link_faces) == 1]
+    if bedges:
+        bmesh.ops.holes_fill(bm, edges=bedges, sides=0)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-5)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bedges2 = [e for e in bm.edges if len(e.link_faces) == 1]
+    if bedges2:
+        # holes_fill 失败的残余开边: voxel remesh 兜底(保证闭合流形, 面数代价可接受)
+        tmp_me = bpy.data.meshes.new("_beast2_vox")
+        bm.to_mesh(tmp_me)
+        bm.free()
+        ob = bpy.data.objects.new("_beast2_vox", tmp_me)
+        bpy.context.scene.collection.objects.link(ob)
+        md = ob.modifiers.new("vox", 'REMESH')
+        md.mode = 'VOXEL'
+        md.voxel_size = 0.016
+        bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get()
+        tmp_me2 = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
+        bpy.context.scene.collection.objects.unlink(ob)
+        bpy.data.objects.remove(ob)
+        bpy.data.meshes.remove(tmp_me)
+        bm = bmesh.new()
+        bm.from_mesh(tmp_me2)
+        bpy.data.meshes.remove(tmp_me2)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        bedges2 = [e for e in bm.edges if len(e.link_faces) == 1]
+    print("beasts2 boundary edges: %d -> %d" % (len(bedges), len(bedges2)))
     if not _purge_slivers(bm):
         bm.free()
         raise RuntimeError("beasts2: variant %d 母模存在大块离连域(布尔断裂)" % variant)
@@ -415,7 +446,7 @@ def _build_master(variant):
     me2 = bpy.data.meshes.new("_beast2_pre_densify")
     bm.to_mesh(me2)
     bm.free()
-    out_me = _densify(me2)
+    out_me = _densify(me2) if len(me2.polygons) < 20000 else me2
     bm2 = bmesh.new()
     bm2.from_mesh(out_me)
     bpy.data.meshes.remove(out_me)

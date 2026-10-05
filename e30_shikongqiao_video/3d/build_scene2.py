@@ -77,24 +77,34 @@ def build_deck_bm():
     bm = bmesh.new()
     LION_SPOTS = []
     rail_y = G.DECK_UP_W / 2.0 - 0.18
-    n = 200
-    prev = None
-    # 桥面大石板铺装: 错缝石板排布, 杜绝纯平白片感
-    for s in range(n + 1):
-        x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * s / n
-        z = G.deck_z(x)
-        # 沿桥面分为左/中/右三块石板带, 带有极细的微下凹纵向石缝
-        cur = [
-            bm.verts.new((x, -rail_y, z)),
-            bm.verts.new((x, -rail_y * 0.33, z)),
-            bm.verts.new((x,  rail_y * 0.33, z)),
-            bm.verts.new((x,  rail_y, z))
-        ]
-        if prev:
-            for j in range(3):
-                try: bm.faces.new((prev[j], cur[j], cur[j+1], prev[j+1]))
+    # 桥面大石板铺装(M10.1 四审指令3): 3 带 × 63 块实体石板, 板间 2.5cm 真缝 +
+    # 确定性 ±3.6mm 磨耗高差 —— 缝在几何里, 近景一眼可辨(旧共面条带渲染为纯白片)。
+    bands = [(-rail_y, -rail_y / 3.0), (-rail_y / 3.0, rail_y / 3.0), (rail_y / 3.0, rail_y)]
+    NSLAB = 63
+    for b, (y0, y1) in enumerate(bands):
+        off = 0.5 if b == 1 else 0.0          # 中带错缝半块
+        for i in range(NSLAB + 1):
+            xa = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * (i + off * 0.5) / NSLAB
+            xb = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * (i + 1 + off * 0.5) / NSLAB
+            xa = max(xa, -G.BRIDGE_LEN / 2.0 + 0.02)
+            xb = min(xb, G.BRIDGE_LEN / 2.0 - 0.02)
+            if xb - xa < 0.10:
+                continue
+            xa += 0.030; xb -= 0.030
+            xm = (xa + xb) / 2.0
+            j = (((i * 13 + b * 7) % 5) - 2) * 0.0018
+            # 顶面四角各自取桥面曲线高度+磨耗 jitter: 平板顶在纵坡上会翘边 ±2.3cm
+            # 遮住砂浆缝带(四审 20 号无缝根因), 随坡顶面偏差<1mm
+            zta = G.deck_z(xa) + j
+            ztb = G.deck_z(xb) + j
+            zb = G.deck_z(xm) - 0.25
+            y0g, y1g = y0 + 0.030, y1 - 0.030
+            v = [bm.verts.new(p) for p in (
+                (xa, y0g, zb), (xb, y0g, zb), (xb, y1g, zb), (xa, y1g, zb),
+                (xa, y0g, zta), (xb, y0g, ztb), (xb, y1g, ztb), (xa, y1g, zta))]
+            for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
+                try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
-        prev = cur
 
     # 望柱 (64/侧 = 全桥两边合计 128 根望柱)
     NPOST = 63
@@ -153,7 +163,30 @@ def build_deck_bm():
 
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.normal_update()
-    return bm, LION_SPOTS
+    # ── 砂浆缝带(M10.1d): 深色窄带贴桥面, 掠射角下以色读缝(凸起台阶会自遮挡) ──
+    mb = bmesh.new()
+    def mortar_strip(x0, x1, y0, y1):
+        zm = G.deck_z((x0 + x1) / 2.0) + 0.008
+        vv = [mb.verts.new(q) for q in (
+            (x0, y0, zm - 0.02), (x1, y0, zm - 0.02), (x1, y1, zm - 0.02), (x0, y1, zm - 0.02),
+            (x0, y0, zm), (x1, y0, zm), (x1, y1, zm), (x0, y1, zm))]
+        for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
+            try: mb.faces.new([vv[k] for k in f])
+            except ValueError: pass
+    XL = G.BRIDGE_LEN / 2.0 - 0.05
+    for i in range(NSLAB + 1):                      # 横缝(每板界)
+        xb = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NSLAB
+        if -XL < xb < XL:
+            mortar_strip(xb - 0.035, xb + 0.035, -rail_y, rail_y)
+    for i in range(NSLAB + 1):                      # 中带错缝横缝(半块位)
+        xb = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * (i + 0.5) / NSLAB
+        if -XL < xb < XL:
+            mortar_strip(xb - 0.035, xb + 0.035, -rail_y / 3.0, rail_y / 3.0)
+    for yb in (-rail_y / 3.0, rail_y / 3.0):        # 纵缝(三带界)
+        mortar_strip(-XL, XL, yb - 0.035, yb + 0.035)
+    bmesh.ops.recalc_face_normals(mb, faces=mb.faces[:])
+    mb.normal_update()
+    return bm, mb, LION_SPOTS
 
 
 def build_beast_bm():
@@ -253,18 +286,21 @@ def build():
     # ── 桥沿仰天石(实拍: 桥面边缘一道白色凸出带, 比墙身白) ──
     co = bmesh.new()
     n = 200
-    prev = None
-    ye0, ye1 = -G.DECK_UP_W / 2.0 - 0.10, G.DECK_UP_W / 2.0 + 0.10
-    for k in range(n + 1):
-        x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * k / n
-        z = G.deck_z(x)
-        cur = [co.verts.new((x, ye0, z - 0.10)), co.verts.new((x, ye1, z - 0.10)),
-               co.verts.new((x, ye1, z + 0.05)), co.verts.new((x, ye0, z + 0.05))]
-        if prev:
-            for a, b2 in ((0,1),(1,2),(2,3),(3,0)):
-                try: co.faces.new((prev[a], prev[b2], cur[b2], cur[a]))
-                except ValueError: pass
-        prev = cur
+    # M10.1e 根因: 旧版仰天石为全宽盖层(deck+5cm), 压住全部石板缝与砂浆带
+    # (四审 20 号"桥面纯白片"真因)。改仅两侧 0.43m 边缘带。
+    for ye0, ye1 in ((-G.DECK_UP_W / 2.0 - 0.10, -G.DECK_UP_W / 2.0 + 0.33),
+                     (G.DECK_UP_W / 2.0 - 0.33, G.DECK_UP_W / 2.0 + 0.10)):
+        prev = None
+        for k in range(n + 1):
+            x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * k / n
+            z = G.deck_z(x)
+            cur = [co.verts.new((x, ye0, z - 0.10)), co.verts.new((x, ye1, z - 0.10)),
+                   co.verts.new((x, ye1, z + 0.05)), co.verts.new((x, ye0, z + 0.05))]
+            if prev:
+                for a, b2 in ((0,1),(1,2),(2,3),(3,0)):
+                    try: co.faces.new((prev[a], prev[b2], cur[b2], cur[a]))
+                    except ValueError: pass
+            prev = cur
     bmesh.ops.recalc_face_normals(co, faces=co.faces[:]); co.normal_update()
     bm_to_obj(co, "deck_cornice", m_rail)
     # 水面
@@ -386,8 +422,16 @@ def build():
     bmesh.ops.recalc_face_normals(imp, faces=imp.faces[:]); imp.normal_update()
     bm_to_obj(imp, "impost", m_ring)
     bm_to_obj(build_voussoir_bm(), "voussoir", m_ring)
-    deck_bm, spots = build_deck_bm()
-    bm_to_obj(deck_bm, "deck_rail", m_rail)
+    deck_bm, mortar_bm, spots = build_deck_bm()
+    # 桥面专署汉白玉: 7cm 凹缝 bump 强刻画(横缝周期=柱距 2.381m), 掠射角读缝
+    m_deck = MAT.stone_material("deck_marble", (0.865, 0.840, 0.795), joint=0.07,
+                                course_h=2.381, weather=0.40, waterline_h=0.35,
+                                block_var=0.15, bump_strength=0.85, base_rough=0.80)
+    bm_to_obj(deck_bm, "deck_rail", m_deck)
+    m_mortar = MAT.stone_material("deck_mortar", (0.16, 0.15, 0.14), joint=0.0,
+                                  course_h=1.0, weather=0.3, waterline_h=0.1,
+                                  block_var=0.05, bump_strength=0.2, base_rough=0.95)
+    bm_to_obj(mortar_bm, "deck_mortar", m_mortar)
     # 靠山兽: linked duplicates(2026-10-05 最佳实践) —— 4 对象共享 2 个 mesh datablock,
     # 替代旧 build_beast_bm() 盒块堆叠(384 顶点)。单只 5000+ 面, 水密, 剪影清晰。
     beast_spots = []
@@ -523,7 +567,7 @@ def build():
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
-    for n in ("bridge_body","impost","voussoir","deck_rail",
+    for n in ("bridge_body","impost","voussoir","deck_rail","deck_mortar",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     # 2026-10-05 M9 根因修复: 狮/兽对象此前只转朝向不转位置 -> 全桥狮群悬空错位
