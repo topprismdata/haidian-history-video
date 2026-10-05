@@ -162,7 +162,46 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     nt.links.new(wcl.outputs[0], mix_water.inputs["Fac"])
     nt.links.new(mix_dark.outputs["Color"], mix_water.inputs["Color1"])
     mix_water.inputs["Color2"].default_value = (base_rgb[0]*0.36, base_rgb[1]*0.42, base_rgb[2]*0.32, 1.0)
-    nt.links.new(mix_water.outputs["Color"], bsdf.inputs["Base Color"])
+    # ── M10.2 风化层(五审残留1/3): 腔隙积垢 + 棱缘磨亮 + 竖向雨痕 ──
+    geo2 = nt.nodes.new("ShaderNodeNewGeometry")
+    pr = nt.nodes.new("ShaderNodeValToRGB")
+    nt.links.new(geo2.outputs["Pointiness"], pr.inputs["Fac"])
+    pr.color_ramp.elements[0].position = 0.42
+    pr.color_ramp.elements[1].position = 0.62
+    # 腔隙暗: pointiness 低 -> 积垢乘暗
+    cav = nt.nodes.new("ShaderNodeMath"); cav.operation = 'LESS_THAN'
+    nt.links.new(geo2.outputs["Pointiness"], cav.inputs[0]); cav.inputs[1].default_value = 0.45
+    mix_cav = nt.nodes.new("ShaderNodeMixRGB"); mix_cav.blend_type = 'MULTIPLY'
+    nt.links.new(cav.outputs[0], mix_cav.inputs["Fac"])
+    mix_cav.inputs["Color1"].default_value = (1.0, 1.0, 1.0, 1.0)
+    mix_cav.inputs["Color2"].default_value = (0.66, 0.64, 0.60, 1.0)
+    nt.links.new(mix_water.outputs["Color"], mix_cav.inputs["Color1"])
+    # 棱缘亮: pointiness 高 -> 磨亮
+    edg = nt.nodes.new("ShaderNodeMath"); edg.operation = 'GREATER_THAN'
+    nt.links.new(geo2.outputs["Pointiness"], edg.inputs[0]); edg.inputs[1].default_value = 0.58
+    mix_edg = nt.nodes.new("ShaderNodeMixRGB"); mix_edg.blend_type = 'MULTIPLY'
+    nt.links.new(edg.outputs[0], mix_edg.inputs["Fac"])
+    mix_edg.inputs["Color1"].default_value = (1.0, 1.0, 1.0, 1.0)
+    mix_edg.inputs["Color2"].default_value = (1.22, 1.20, 1.16, 1.0)
+    nt.links.new(mix_cav.outputs["Color"], mix_edg.inputs["Color1"])
+    # 竖向雨痕: Z 拉伸噪声 -> 条带乘暗
+    mapn = nt.nodes.new("ShaderNodeMapping")
+    mapn.inputs["Scale"].default_value = (7.0, 7.0, 0.55)
+    nt.links.new(geo2.outputs["Position"], mapn.inputs["Vector"])
+    streak = nt.nodes.new("ShaderNodeTexNoise")
+    nt.links.new(mapn.outputs["Vector"], streak.inputs["Vector"])
+    streak.inputs["Scale"].default_value = 1.6
+    streak.inputs["Detail"].default_value = 4.0
+    sramp = nt.nodes.new("ShaderNodeValToRGB")
+    nt.links.new(streak.outputs["Fac"], sramp.inputs["Fac"])
+    sramp.color_ramp.elements[0].position = 0.52
+    sramp.color_ramp.elements[1].position = 0.72
+    mix_stk = nt.nodes.new("ShaderNodeMixRGB"); mix_stk.blend_type = 'MULTIPLY'
+    nt.links.new(sramp.outputs["Color"], mix_stk.inputs["Fac"])
+    mix_stk.inputs["Color1"].default_value = (1.0, 1.0, 1.0, 1.0)
+    mix_stk.inputs["Color2"].default_value = (0.88, 0.87, 0.85, 1.0)
+    nt.links.new(mix_edg.outputs["Color"], mix_stk.inputs["Color1"])
+    nt.links.new(mix_stk.outputs["Color"], bsdf.inputs["Base Color"])
     # ── bump: 缝为凹槽(jmin: 缝0/面1) + 细颗粒 + 块间微错台 ──
     grain = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], grain.inputs["Vector"])
@@ -196,7 +235,14 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     nt.links.new(wr_off.outputs[0], wr_mul.inputs[0]); wr_mul.inputs[1].default_value = 0.10
     rg2 = nt.nodes.new("ShaderNodeMath"); rg2.operation = 'ADD'
     nt.links.new(rg.outputs[0], rg2.inputs[0]); nt.links.new(wr_mul.outputs[0], rg2.inputs[1])
-    nt.links.new(rg2.outputs[0], bsdf.inputs["Roughness"])
+    # M10.2: 逐块粗糙度 ±0.08 (块噪声驱动)
+    blk_r = nt.nodes.new("ShaderNodeMath"); blk_r.operation = 'MULTIPLY_ADD'
+    nt.links.new(blk_noise.outputs["Fac"], blk_r.inputs[0])
+    blk_r.inputs[1].default_value = 0.16
+    blk_r.inputs[2].default_value = -0.08
+    rg3 = nt.nodes.new("ShaderNodeMath"); rg3.operation = 'ADD'
+    nt.links.new(rg2.outputs[0], rg3.inputs[0]); nt.links.new(blk_r.outputs[0], rg3.inputs[1])
+    nt.links.new(rg3.outputs[0], bsdf.inputs["Roughness"])
     return m
 
 
@@ -242,10 +288,17 @@ def water_material(name="water", base=(0.05, 0.11, 0.14)):
     h2 = _noise(3.20, 3.0, 0.32)   # 中浪
     h3 = _noise(12.0, 2.0, 0.28)   # 风纹(细; 权 .18→.28 补近景可见度)
     h4 = _noise(30.0, 2.0, 0.14)   # 细碎浪(scale≈30, 低机位前景 sparkle)
+    h5 = _noise(75.0, 2.0, 0.10)   # M10.2 第五频: 摄影级高频破碎(五审残留2/3)
+    h6 = _noise(0.9, 3.0, 0.38)    # M10.2b 米级破碎频: 远距反射 breakup(hero 自检修)
     h12 = nt.nodes.new("ShaderNodeMath"); h12.operation = 'ADD'
     nt.links.new(h1.outputs[0], h12.inputs[0]); nt.links.new(h2.outputs[0], h12.inputs[1])
     h34 = nt.nodes.new("ShaderNodeMath"); h34.operation = 'ADD'
     nt.links.new(h3.outputs[0], h34.inputs[0]); nt.links.new(h4.outputs[0], h34.inputs[1])
+    h45 = nt.nodes.new("ShaderNodeMath"); h45.operation = 'ADD'
+    nt.links.new(h34.outputs[0], h45.inputs[0]); nt.links.new(h5.outputs[0], h45.inputs[1])
+    h56 = nt.nodes.new("ShaderNodeMath"); h56.operation = 'ADD'
+    nt.links.new(h45.outputs[0], h56.inputs[0]); nt.links.new(h6.outputs[0], h56.inputs[1])
+    h34 = h56
     hsum = nt.nodes.new("ShaderNodeMath"); hsum.operation = 'ADD'
     nt.links.new(h12.outputs[0], hsum.inputs[0]); nt.links.new(h34.outputs[0], hsum.inputs[1])
     bump = nt.nodes.new("ShaderNodeBump")
@@ -261,7 +314,7 @@ def water_material(name="water", base=(0.05, 0.11, 0.14)):
     pmul = nt.nodes.new("ShaderNodeMath"); pmul.operation = 'MULTIPLY'
     nt.links.new(pn.outputs["Fac"], pmul.inputs[0]); pmul.inputs[1].default_value = 0.09
     padd = nt.nodes.new("ShaderNodeMath"); padd.operation = 'ADD'
-    padd.inputs[0].default_value = 0.02
+    padd.inputs[0].default_value = 0.015
     nt.links.new(pmul.outputs[0], padd.inputs[1])
     nt.links.new(padd.outputs[0], bsdf.inputs["Roughness"])
     return m

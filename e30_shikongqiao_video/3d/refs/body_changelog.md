@@ -243,3 +243,10 @@
 - **CSV 重生成**: 孔口=孔贴桥台布局(旧表 xc 偏半墩), 增 pier_width_m 列(2.5), 闭合 107.3+16×2.5+2×1.35=150 复算通过。
 - **审计统一**: IoU 口径 0.8136(overlay 终渲复算), INDEX v4 图数 23/描述纠正。
 - 判据: L3 IoU 0.8136-0.8138 + 17 湾 Δxc 0.0096 PASS(石板/仰天石改动后复跑); pytest 376; manifest §2 build_scene2 哈希回填。
+
+
+## M10.2 (2026-10-05) 风化/水面批 + 实拍接近度协议
+- materials.py: stone_material 增风化三件套(pointiness 腔隙积垢/棱缘磨亮/Z拉伸雨痕) + 逐块粗糙度±0.08; water 增米级破碎频 h6(scale 0.9, w 0.38, 远距反射 breakup) + 高频 h5 + rough 底 0.015。纯 shader 零网格。
+- tools/photo_similarity.py 新增: 实拍接近度三协议(A 冬至实拍开口检测/ A2 历史扫描开敞湾检测+1D单应 rectify / B 轮廓IoU / C 天空基准桥面驼峰相关) + 并排对照图 24/25 + 报告 23。
+- 校准结论(如实): 黄昏逆光+霾使 A/C 自动检测证据不足(A 9/17, C pearson 0.53); 历史扫描为 mid-gray 天空照片, 全局阈值不成立(B 0.375 为协议失效非模型误差); 可靠四项结构匹配率 99.76%; 像素面积口径以 L3 冻结掩膜 0.8136 为准。
+- CSV 末行 pier_width_m=NA(四审 H 项); manifest §2 materials.py 哈希回填。
