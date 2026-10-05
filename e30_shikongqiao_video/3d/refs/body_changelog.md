@@ -256,3 +256,9 @@
 - 修: ①15:19 全量重渲(hero/side/arch/top/狮×2/兽/透视/细部19-22/匾额×4); ②`_beast_preview.py` 改挂 `MAT.marble_material`。重渲后 07 vs v5 mean|d|=5.54, 31.5% 像素 >3 级。
 - overlay 正参复跑(ortho_side.png): VOID PASS n=17 max|Δxc|=0.0096, IoU 0.8136 不变(几何冻结)。
 - 承认 v6「全构件风化已复验」措辞不成立; v6.1 起成立。
+
+## M11-protocol (2026-10-05) 实拍相机注册审计协议(六审§8 工程实现)
+- tools/cam_register.py: EXIF-K(Canon 400D 85mm) + 暗拱腔连通域半自动 landmark(近面 silhouette 边) + look-at 参数化多初值 LM(控制点共面, 弃常规 PnP) + shift RMSE 扫描 + 裁切主点/水位 nuisance 先验。
+- tools/cam_clay_compare.py: 同机位 clay 渲染(白名单物件, fog_volume/water 隐藏) + Blender 自投影控制点侧车 affine + 近面开口投影 void 掩膜; 分项: body IoU / void IoU / Chamfer / 驼峰 pearson+RMSE。
+- 结果(delivery/26, 图 27/28): similarity_landmarks 0.9718 但残差结构化; void 0.378 / body 0.254 / 驼峰 0.46 → **>=95% 照片几何相似不认证**; 误差源 = 拱形/跨距工作值(模型拱窄高 vs 实拍), 列 M11 反演候选。
+- 协议自身修复链(留证): PnP 平面歧义→look-at 先验; 相机 up 列反号; 拱筒非通透→开口投影掩膜; 0/1 掩膜 resize/warp 阈值病×3; Blender 内参约定→控制点侧车 affine; dtf 天空列污染×2; samp 全/半分辨率单位。
