@@ -1,0 +1,195 @@
+{
+  "status": "M12_CAMBER_INVERSION",
+  "inferred": {
+    "span_c": 7.0,
+    "span_e": 3.0,
+    "p_shape": 2.5,
+    "pier_w": 1.8,
+    "camber_top": 6.0,
+    "camber_A": 7.5143,
+    "camber_e": 1.0,
+    "rise_c": 0.7975
+  },
+  "derived": {
+    "abut_m": 25.853,
+    "span_sum_m": 69.494,
+    "deck_sagitta_m": 7.514,
+    "crown_line_sagitta_span": -0.04200707998354321,
+    "crown_z_profile_m": [
+      0.226,
+      0.708,
+      1.197,
+      1.701,
+      2.235,
+      2.813,
+      3.453,
+      4.175,
+      5.0,
+      4.175,
+      3.453,
+      2.813,
+      2.235,
+      1.701,
+      1.197,
+      0.708,
+      0.226
+    ],
+    "span_profile_m": [
+      3.0,
+      3.022,
+      3.125,
+      3.344,
+      3.707,
+      4.235,
+      4.949,
+      5.865,
+      7.0,
+      5.865,
+      4.949,
+      4.235,
+      3.707,
+      3.344,
+      3.125,
+      3.022,
+      3.0
+    ],
+    "rise_profile_m": [
+      2.393,
+      2.41,
+      2.492,
+      2.667,
+      2.956,
+      3.378,
+      3.946,
+      4.677,
+      5.583,
+      4.677,
+      3.946,
+      3.378,
+      2.956,
+      2.667,
+      2.492,
+      2.41,
+      2.393
+    ]
+  },
+  "per_photo": [
+    {
+      "name": "ovf474a34b",
+      "n_arch": 9,
+      "rmse_px": 438.8,
+      "rmse_pctW": 9.556,
+      "sim": 0.9329
+    },
+    {
+      "name": "img_0439",
+      "n_arch": 7,
+      "rmse_px": 83.7,
+      "rmse_pctW": 2.219,
+      "sim": 0.9837
+    }
+  ],
+  "identifiability": {
+    "formula": "Fg=JgᵀJg−JgᵀJc(JcᵀJc)⁺JcᵀJg, 列按物理范围归一, 相机边缘化",
+    "eigenvalues": [
+      0.0,
+      137.90149,
+      2683.25096,
+      6347.89301,
+      51995.15845,
+      98047.69281,
+      933844.50545,
+      53291590.54473
+    ],
+    "condition_number": null,
+    "modes": [
+      {
+        "rank": 1,
+        "eig": 0.0,
+        "ident": "DEGENERATE",
+        "direction": {
+          "rise_c": 1.0
+        }
+      },
+      {
+        "rank": 2,
+        "eig": 137.90149,
+        "ident": "identifiable",
+        "direction": {
+          "span_c": -0.809,
+          "span_e": -0.338,
+          "pier_w": -0.364,
+          "camber_A": 0.307
+        }
+      },
+      {
+        "rank": 3,
+        "eig": 2683.25096,
+        "ident": "identifiable",
+        "direction": {
+          "span_c": -0.266,
+          "span_e": 0.158,
+          "p_shape": 0.526,
+          "camber_top": -0.475,
+          "camber_A": -0.633
+        }
+      },
+      {
+        "rank": 4,
+        "eig": 6347.89301,
+        "ident": "identifiable",
+        "direction": {
+          "span_e": -0.307,
+          "p_shape": -0.749,
+          "camber_top": -0.371,
+          "camber_A": -0.438
+        }
+      },
+      {
+        "rank": 5,
+        "eig": 51995.15845,
+        "ident": "identifiable",
+        "direction": {
+          "span_c": 0.499,
+          "span_e": -0.264,
+          "p_shape": 0.287,
+          "pier_w": -0.745,
+          "camber_top": -0.188
+        }
+      },
+      {
+        "rank": 6,
+        "eig": 98047.69281,
+        "ident": "identifiable",
+        "direction": {
+          "span_e": -0.795,
+          "p_shape": 0.271,
+          "pier_w": 0.511
+        }
+      },
+      {
+        "rank": 7,
+        "eig": 933844.50545,
+        "ident": "identifiable",
+        "direction": {
+          "span_e": 0.187,
+          "camber_top": -0.519,
+          "camber_A": 0.373,
+          "camber_e": 0.729
+        }
+      },
+      {
+        "rank": 8,
+        "eig": 53291590.54473,
+        "ident": "identifiable",
+        "direction": {
+          "span_e": 0.174,
+          "camber_top": -0.562,
+          "camber_A": 0.402,
+          "camber_e": -0.684
+        }
+      }
+    ]
+  },
+  "note": "crown_z 跟随 deck camber(恒定拱肩 spandrel=1.0); camber_A=桥面矢高; camber_e=曲率形状指数"
+}

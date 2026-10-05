@@ -266,3 +266,10 @@
 ## v6.4.1 (2026-10-05) 九审第1-5项审计工具链收口
 - 九审发现 v6.4.zip 装陈旧副本(K_bl 15.6%各向异性/k1±0.05/manifest无hash/certify单图/SVD非边缘化)。本批从实时文件重建并逐文件 md5 校验入包。
 - cam_clay_compare resolution 前置→26 K_bl fx=fy ratio=1.000000; cam_register k1±0.02; manifest 加 cert_gates sha256; certify.py 升级多照片+holdout ALL-AND(缺clay门判fail不默认通过); svd_analysis 改 Schur 补边缘化相机+列归一+active-bound, 措辞修正为"可辨识秩不足"; 30 status 降级 OPTIMIZATION_CONVERGED_DIAGNOSTIC_ONLY。
+
+## M12 (2026-10-05) 视觉几何重建启动(九审撤回"视觉封卷"后)
+- 触发: 用户肉眼+我复测确认桥面弧度 Critical。同估计器+同注册相机(斜视偏差抵消): 照片17拱冠矢跨比 0.034, 模型仅 0.017 → 太平约2倍。
+- 根因: ①deck_z 抛物线矢高仅2.7m; ②拱冠不跟桥面(springer恒定2.5m, 冠高只随span微变)。真桥冠线随桥面隆起(恒定拱肩)。
+- cmp10 悬空横条 = impost 起拱石(恒定z, 洞口边缘外凸), 且 impost/pier_plinth/voussoir 均未过 void 布尔。
+- 反演工具 tools/m12_geom_invert.py: 8参自由联合反演**证实退化**(eig最小=0, 全参顶界, ovf对齐崩) → 印证八九审"侧视不能同时定span/pier/camber/rise"。改受约束定标: span保持工作值, 冠随桥面, 只解 camber 幅度 → 桥面矢高≈5.4m(0.034×142/0.897)。
+- 并行子agent: BeastRebuild(整模)/LionRebuild(换母模)/RailMeasure(一开间测绘)。
