@@ -43,7 +43,7 @@ def build_voussoir_bm():
         span = G.SPANS[i]
         xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
         a = span / 2.0
-        b = a * 2.0 * G.ARCH_RATIO
+        b = G.arch_rise(i)   # M12: 与券洞同起拱线/矢高, 消除环腿悬空横条
         ci = abs(i - (G.N_SPAN - 1) / 2.0)
         N = 15 if ci <= 1.5 else (13 if ci <= 3.5 else 11)
         deck_c = G.deck_z(xc)
@@ -53,7 +53,7 @@ def build_voussoir_bm():
             rt = RELIEF * (0.94 + 0.12 * (((k * 7 + i * 3) % 5) / 4.0))
             quad = []
             for tt in (t0, t1):
-                zz = G.SPRINGER + b * math.sin(tt)
+                zz = G.arch_springer_z(i) + b * math.sin(tt)
                 # 该高度桥体侧墙外表面(线性收分)
                 f = max(0.0, min(1.0, (zz - G.BODY_BOTTOM) / (deck_c - G.BODY_BOTTOM)))
                 hw = (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
@@ -365,7 +365,7 @@ def build():
             if abs(n.y) > 0.05: continue          # 侧墙面(|y|法线)不判, 只判径向面
             spz = G.arch_springer_z(idx)          # M12: 逐孔起拱线
             if c.z > spz + 0.05:
-                b = a * 2.0 * G.ARCH_RATIO
+                b = G.arch_rise(idx)
                 dx, dz = c.x - xc, c.z - spz
                 if dz > b or (dx*dx + dz*dz) > (a + 0.2) ** 2: continue
                 ax_, az_ = -dx, -dz
@@ -398,9 +398,23 @@ def build():
         bmesh.ops.delete(bm, geom=rm, context='VERTS')
     bm.to_mesh(me); bm.free(); me.update()
     print("  翻转券洞内壁破面: %d" % flipped)
-    bm_to_obj(build_voussoir_bm(), "voussoir", m_ring)
-    # M12: 起拱线石 impost 立体构件移除 —— 程序化挑出墩面必成"悬空横条"(九审 cmp10
-    # Critical)。真桥起拱线是极浅线脚, 改由后续材质暗线表达, 不做几何凸块。
+    # ── M13 逐块砌筑: 真放射券石环 + 桥墩/拱肩贴面砧石 ──
+    import masonry as MAS
+    import json as _json
+    _hwf = (G.DECK_DOWN_W + G.DECK_UP_W) / 4.0   # 墙面平均半宽
+    _vb, _cb, _mstats = MAS.build_masonry(_hwf)
+    bm_to_obj(_vb, "voussoir", m_ring)
+    bm_to_obj(_cb, "coursing", m_ring)
+    # pier_plinth 水线石带: 拱改高后起拱线近水面, 石带会伸进洞口成横条 -> void 布尔裁净
+    _cut2 = bm_to_obj(G.build_void_bm(), "void_cutter2", m_ring)
+    _pp = bpy.data.objects["pier_plinth"]
+    _m2 = _pp.modifiers.new("vc", 'BOOLEAN'); _m2.operation='DIFFERENCE'; _m2.solver='EXACT'; _m2.object=_cut2
+    bpy.context.view_layer.objects.active = _pp
+    bpy.ops.object.modifier_apply(modifier=_m2.name)
+    bpy.data.objects.remove(_cut2, do_unlink=True)
+    with open(os.path.join(HERE, "masonry_stats.json"), "w") as _f:
+        _json.dump(_mstats, _f, ensure_ascii=False, indent=1)
+    print("MASONRY voussoir/arch", _mstats["voussoir_per_arch"], "total", _mstats["grand_total"])
     deck_bm, mortar_bm, spots = build_deck_bm()
     # 桥面专署汉白玉: 7cm 凹缝 bump 强刻画(横缝周期=柱距 2.381m), 掠射角读缝
     m_deck = MAT.stone_material("deck_marble", (0.865, 0.840, 0.795), joint=0.07,
@@ -546,7 +560,7 @@ def build():
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
-    for n in ("bridge_body","voussoir","deck_rail","deck_mortar",
+    for n in ("bridge_body","voussoir","coursing","deck_rail","deck_mortar",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     # 2026-10-05 M9 根因修复: 狮/兽对象此前只转朝向不转位置 -> 全桥狮群悬空错位
