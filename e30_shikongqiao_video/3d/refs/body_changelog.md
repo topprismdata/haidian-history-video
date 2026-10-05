@@ -228,3 +228,9 @@
 - **M9-5 审计纠正**: arch_registration.csv 列名 pier_*_x → opening_*_x(孔口边界语义); _beast_preview 分辨率 1280×960 → 1600×900(三审 07 尺寸误标根因); INDEX v4 全表重标 03/04 描述。
 - **判据复跑**: L1 exit 0; L2 QA_L2_OK; L3 IoU 0.8142(≥0.76) + 17 湾 max|Δxc| 0.0096 VERDICT PASS; pytest 376(哈希回填后)。
 - **manifest**: §2 build_scene2.py 哈希回填本批。
+
+
+## M9b 补充 (2026-10-05) 雕塑终批集成
+- lions2 v4 (LionSculptFinal agent): 成年狮瘦身去萌化+层片鬃领+三趾分缝, 幼狮四态分化; 8 母模水密 ≤13802 面。
+- beasts2 v5 (BeastSculptFinal agent): 两层头颅/楔刀口裂/分层下颌/獠牙含珠/三层瓦鬃/S尾带; 双变体水密 ≤15390 面; 平衡树并集+sliver 清除。已知残留: 体侧一处黑色细缝(threeq)、颅偏方盔感——登记待五审前修。
+- build_scene2: 靠山兽坐栏端抱鼓位(M9b)哈希回填本节。
