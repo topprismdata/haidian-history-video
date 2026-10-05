@@ -274,8 +274,13 @@ def build():
     # M4 的暖白采样点误采(眩光/异区)。暖色属光照不属 albedo, 不得烘进基色。
     # 石种=青石(京报网/中新网2025-12-09逐字「以青石筑成桥体,以汉白玉为栏杆」),
     # albedo 走 qingshi_material 冷灰蓝; 栏杆/望柱/狮=汉白玉不变。
-    m_body = MAT.qingshi_material("stone_body")
-    m_ring = MAT.qingshi_material("stone_ring", (0.350, 0.382, 0.418))
+    # [六审B] 砌缝视觉三级层级(要求 券石100%/横缝40-50%/竖缝20-30%, 此前普通
+    # 缝~60-70% 抢券石的戏): 几何 2068+ 块全保留, 只调材质权重。
+    m_body = MAT.qingshi_material("stone_body", block_var=0.20)   # 本体最弱: 去斑驳
+    m_ring = MAT.qingshi_material("stone_ring", (0.362, 0.392, 0.426),
+                                  joint=0.026, block_var=0.30, bump_strength=0.75)
+    m_course = MAT.qingshi_material("stone_course", (0.335, 0.368, 0.404),
+                                    joint=0.011, block_var=0.10, bump_strength=0.26)
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
     m_earth = MAT.earth_material("shore_earth")
@@ -310,7 +315,7 @@ def build():
                 try: pl.faces.new([v[k] for k in fc])
                 except ValueError: pass
     bmesh.ops.recalc_face_normals(pl, faces=pl.faces[:]); pl.normal_update()
-    bm_to_obj(pl, "pier_plinth", m_ring)
+    bm_to_obj(pl, "pier_plinth", m_course)
 
     # ── 桥沿仰天石(实拍: 桥面边缘一道白色凸出带, 比墙身白) ──
     co = bmesh.new()
@@ -433,7 +438,7 @@ def build():
     _hwf = (G.DECK_DOWN_W + G.DECK_UP_W) / 4.0   # 墙面平均半宽
     _vb, _cb, _mstats = MAS.build_masonry(_hwf)
     bm_to_obj(_vb, "voussoir", m_ring)
-    bm_to_obj(_cb, "coursing", m_ring)
+    bm_to_obj(_cb, "coursing", m_course)
     # pier_plinth 水线石带: 拱改高后起拱线近水面, 石带会伸进洞口成横条 -> void 布尔裁净
     _cut2 = bm_to_obj(G.build_void_bm(), "void_cutter2", m_ring)
     _pp = bpy.data.objects["pier_plinth"]

@@ -402,9 +402,11 @@ def fog_material(name="fog", density=0.003, color=(0.70, 0.78, 0.88)):
 # (RGB 252,245,227), 青石基色本身是冷灰蓝 —— 两件事不矛盾, A/B 对照见
 # 3d/ab_qingshi_split.py 输出。
 
-def qingshi_material(name, base_rgb=(0.315, 0.352, 0.390)):
+def qingshi_material(name, base_rgb=(0.315, 0.352, 0.390), joint=0.024,
+                     block_var=0.36, bump_strength=0.68):
     """青石(石灰岩)桥体: 冷灰蓝基色 + 鲜明大块条石横分层与纵错缝 + 块级灰度差。
-    依据二审意见: 杜绝'程序噪声混凝土抹灰'观感, 强化规整石砌实体与竖缝凹槽。"""
-    return stone_material(name, base_rgb, joint=0.024, course_h=0.46,
-                          weather=0.42, waterline_h=0.60, block_var=0.36,
-                          bump_strength=0.68, base_rough=0.86)
+    依据二审意见: 杜绝'程序噪声混凝土抹灰'观感, 强化规整石砌实体与竖缝凹槽。
+    [六审B] joint/block_var/bump 开放为参数, 支撑砌缝视觉三级层级。"""
+    return stone_material(name, base_rgb, joint=joint, course_h=0.46,
+                          weather=0.42, waterline_h=0.60, block_var=block_var,
+                          bump_strength=bump_strength, base_rough=0.86)
