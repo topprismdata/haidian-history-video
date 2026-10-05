@@ -28,7 +28,7 @@ VOUSSOIR_FACE_W = 1.00      # 兜底面宽(仅当目标表缺项时用)
 # [masonry_method 照片券缝计数] 每孔券石目标块数, 按|孔位-中央|索引: 中央17, 端7。
 # 统一面宽数学上给不出 7/17 两端(弧长比2.19≠块数比2.43)——真桥端孔块更宽, 故按孔给定。
 VOUSSOIR_TARGET = [17, 15, 13, 13, 11, 11, 9, 9, 7]
-RING_T = 0.62              # 券石径向厚(=券脸环带宽) m
+RING_T = 0.54              # [七审P0-2] 券脸径向宽 0.62->0.54(-13%): '轻一点的券环+更大孔占比', 厚重感一半来自环太宽
 JOINT = 0.02               # 灰缝 m
 FACE_DEPTH = 0.12          # 贴面石出墙面深度 m
 # [六审E] 券石改全深筒券: 真桥透洞可见阶梯状环石内壁, 原"前后薄浮雕"读成
@@ -36,6 +36,8 @@ FACE_DEPTH = 0.12          # 贴面石出墙面深度 m
 # 端面出墙面 FACE_PROUD(保留正面环带阴影)。
 BARREL_PROTRUDE = 0.03
 JOINT_GAP = 0.0125
+JOINT_GAP_BACK = 0.004     # [七审P1-2] 放射缝前后端不等宽: 前脸 0.0125, 内壁
+                           #   0.004 → 深度权重 100→~35, 去"洋葱圈隧道"感
 FACE_PROUD = 0.02
 COURSE_H = 0.40            # 砧石层高 m
 COURSE_W = 0.90            # 砧石宽 m
@@ -71,20 +73,23 @@ def _arc_stations(xc, a, b, springer, N):
 def _voussoir(bm, x0, x1, xc, springer, a, b, ring_t, lift=0.0):
     """一块全深放射券石: 内弧伸入洞口 BARREL_PROTRUDE(阶梯筒子券),
     外弧沿法向 ring_t+lift, 端面沿法向(放射缝), y 向贯通全墙并出墙面 FACE_PROUD。"""
-    ts = (x0, (x0+x1)/2.0, x1)
-    inner, outer = [], []
-    for x in ts:
-        z = G.arch_z(x, xc, springer, a, b)
-        nx, nz = _arch_normal(x, xc, springer, a, b)
-        inner.append((x - nx*BARREL_PROTRUDE, z - nz*BARREL_PROTRUDE))
-        outer.append((x + nx*(ring_t+lift), z + nz*(ring_t+lift)))
-    ring = inner + list(reversed(outer))
-    zs = [z for _, z in ring]; zmid = sum(zs)/len(zs)
+    def _ring(x0f, x1f):
+        ts = (x0f, (x0f+x1f)/2.0, x1f)
+        inner, outer = [], []
+        for x in ts:
+            z = G.arch_z(x, xc, springer, a, b)
+            nx, nz = _arch_normal(x, xc, springer, a, b)
+            inner.append((x - nx*BARREL_PROTRUDE, z - nz*BARREL_PROTRUDE))
+            outer.append((x + nx*(ring_t+lift), z + nz*(ring_t+lift)))
+        return inner + list(reversed(outer))
+    rf = _ring(x0 + JOINT_GAP, x1 - JOINT_GAP)          # 前脸环(缝宽)
+    rb = _ring(x0 + JOINT_GAP_BACK, x1 - JOINT_GAP_BACK)  # 内壁环(缝窄→衰减)
+    zs = [z for _, z in rf]; zmid = sum(zs)/len(zs)
     hw = _hw(xc, zmid)
     y0, y1 = -(hw + FACE_PROUD), hw + FACE_PROUD
-    va = [bm.verts.new((x, y0, z)) for x, z in ring]
-    vb = [bm.verts.new((x, y1, z)) for x, z in ring]
-    m = len(ring)
+    va = [bm.verts.new((x, y0, z)) for x, z in rb]
+    vb = [bm.verts.new((x, y1, z)) for x, z in rf]
+    m = len(rf)
     for k in range(m):
         k2 = (k+1) % m
         try: bm.faces.new((va[k], va[k2], vb[k2], vb[k]))
@@ -117,7 +122,7 @@ def build_voussoir(bm, hw_front, half_depth):
         counts.append(N)
         st = _arc_stations(xc, a, b, spz, N)
         for k in range(N):
-            _voussoir(bm, st[k] + JOINT_GAP, st[k+1] - JOINT_GAP, xc, spz, a, b, RING_T,
+            _voussoir(bm, st[k], st[k+1], xc, spz, a, b, RING_T,
                       lift=0.07 if k == N//2 else 0.0)
     return counts
 

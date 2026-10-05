@@ -51,10 +51,10 @@ BRIDGE_ABUT = 1.35         # [工作值] 现脚本生效值; 无文献; T2b 闭�
 # == 2*PIER_W, 故 16 内墩之和恒等于 (N_SPAN-1)*PIER_W = 40.0m, 端台维持 BRIDGE_ABUT=1.35,
 # 总桥长严格守恒 BRIDGE_LEN = 150.0(107.3 + 40.0 + 2*1.35), MET_CLOSURE 闭合不动。
 # PIER_W 保留为剖面均值/旧引用锚; 生成器消费 PIER_W_INT 表, 不再各自携带公式。
-PIER_W_C = 2.27           # [工作值] 中央内墩宽(i=8,9); 六审整改值, 无文献
-PIER_W_E = 2.73           # [工作值] 端内墩宽(i=1,16); 六审整改值, 无文献
-PIER_W_INT = [2.730, 2.664, 2.599, 2.533, 2.467, 2.401, 2.336, 2.270,
-              2.270, 2.336, 2.401, 2.467, 2.533, 2.599, 2.664, 2.730]  # i=1..16
+PIER_W_C = 2.17           # [工作值·七审P0-2] 中央内墩宽(i=8,9): 六审-9.2%后再-4.4%
+PIER_W_E = 2.83           # [工作值·七审P0-2] 端内墩宽: 守恒对 C+E=2*PIER_W=5.0(向两头重新变重)
+PIER_W_INT = [2.830, 2.736, 2.641, 2.547, 2.453, 2.359, 2.264, 2.170,
+              2.170, 2.264, 2.359, 2.453, 2.547, 2.641, 2.736, 2.830]  # i=1..16; 半表和=20.0(4对×5.0)精确
 
 
 # --- 六审四刀#1: 矢跨比剖面 + 两圆心尖拱纯数学(单一数据源) ---
@@ -64,7 +64,14 @@ PIER_W_INT = [2.730, 2.664, 2.599, 2.533, 2.467, 2.401, 2.336, 2.270,
 import math as _math
 RISE_C = 0.56             # [图像推导·六审标定] 中央孔矢跨比(与 winter/ovf 侧视对照定)
 RISE_E = 0.46             # [图像推导·六审标定] 端孔矢跨比
-CROWN_BLUNT_S = 0.0       # >0 才启用 soft-min 冠钝化; 当前 0(见上注释)
+# [七审P1-1] 冠钝化复活, 语义修正: 混合尺度 s 与 cusp 强度 e 成正比(角点局部!)。
+# 上轮 soft-min 废除的原因是 s∝b 时 e=0 端孔(两弧全等)整弧均匀沉 s*ln2 ——
+# 那是"缩高"不是"圆角"。s=K*e 则 e=0→s=0→精确回到 min, 钝化只发生在两弧
+# 真实相交的角域(冠顶最后 ~s 弧长), 矢高/肩点零污染。目标 cusp 13°->~9°。
+CROWN_BLUNT_K = 0.40      # [工作值·七审标定] s=K*e; 0=纯尖角
+# 带宽封顶: log-sum-exp 过渡带 ~±3s, K*e 在中央孔给到 ±0.15a(15% 弧长, 过宽,
+# 会啃肩线)。七审要求"只处理冠顶最后 3-5% 弧长"→ s<=0.02a。
+CROWN_BLUNT_CAP = 0.020
 
 
 def rise_ratio(i):
@@ -74,44 +81,62 @@ def rise_ratio(i):
 
 
 def arch_e(a, b):
-    """两圆心尖拱圆心偏移 e=(b^2-a^2)/(2a)。b>a→e>0→冠部收尖(ogee)。"""
+    """尖拱(cusp)圆心偏移 e=(b^2-a^2)/(2a), b>=a 才 >0。b<a 是平拱分支(见下)。
+    [M15 修] 旧实现把 b<a 截成 e=0 → 渲染成 rise=a 的半圆, '端孔矮'设计意图
+    静默丢失(void/券石/L2 全链一致地错)。正确: b<a 为单心平拱(segmental),
+    圆心在起拱线下方 e'=(a^2-b^2)/(2b), R=b+e'。"""
     return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
 
 
 def _arc_pair(x, xc, a, b):
-    """左右两圆心圆在 x 处的高度与斜率(对侧远端根号参数截 0)。"""
-    e = arch_e(a, b)
-    R = a + e
-    out = []
-    for cc in (xc + e, xc - e):
-        dd = R * R - (x - cc) ** 2
-        if dd > 1e-9:
-            sq = _math.sqrt(dd)
-            out.append((sq, -(x - cc) / sq))
-        else:
-            out.append((0.0, 0.0))
-    return out
+    """拱线两弧在 x 处(高度, 斜率)。b>=a: 两圆心尖拱(左圆心 xc+e 右 xc-e,
+    起拱线上)。b<a: 单心平拱, 两"弧"退化为同一圆(圆心 xc, springer-e'),
+    高度已含 -e' 平移, 肩点/冠点精确归位。"""
+    if b >= a - 1e-12:
+        e = arch_e(a, b)
+        R = a + e
+        out = []
+        for cc in (xc + e, xc - e):
+            dd = R * R - (x - cc) ** 2
+            if dd > 1e-9:
+                sq = _math.sqrt(dd)
+                out.append((sq, -(x - cc) / sq))
+            else:
+                out.append((0.0, 0.0))
+        return out
+    ep = (a * a - b * b) / (2.0 * b) if b > 1e-6 else 0.0
+    R = b + ep
+    dd = R * R - (x - xc) ** 2
+    if dd > 1e-9:
+        sq = _math.sqrt(dd)
+        return [(sq - ep, -(x - xc) / sq), (sq - ep, -(x - xc) / sq)]
+    return [(0.0, 0.0), (0.0, 0.0)]
+
+
+def _blunt_s(a, b):
+    return min(CROWN_BLUNT_K * arch_e(a, b), CROWN_BLUNT_CAP * a)
 
 
 def arch_z(x, xc, springer, a, b):
-    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min。"""
+    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min,
+    冠角用 e 比例 soft-min 局部圆化(s=0 时精确 min)。"""
     (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
-    if CROWN_BLUNT_S <= 0.0:
-        return springer + (h1 if h1 <= h2 else h2)
-    s = CROWN_BLUNT_S * b
     lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
+    s = _blunt_s(a, b)
+    if s <= 1e-9:
+        return springer + lo
     return springer + lo - s * _math.log(1.0 + _math.exp((lo - hi) / s))
 
 
 def arch_dzdx(x, xc, springer, a, b):
     (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
-    if CROWN_BLUNT_S <= 0.0:
-        return d1 if h1 <= h2 else d2
-    s = CROWN_BLUNT_S * b
     if h1 <= h2:
         lo, hi, dlo, dhi = h1, h2, d1, d2
     else:
         lo, hi, dlo, dhi = h2, h1, d2, d1
+    s = _blunt_s(a, b)
+    if s <= 1e-9:
+        return dlo
     w = _math.exp((lo - hi) / s)
     return (dlo + w * dhi) / (1.0 + w)
 
@@ -119,19 +144,25 @@ def arch_dzdx(x, xc, springer, a, b):
 def arch_signed_r(x, z, xc, springer, a, b):
     """点(x,z)到 intrados 的有符号径向距离(负=吃进洞口)。
     竖直 z 比较在陡肩段(斜率~9)会把 x 向偏移放大成假侵入; 径向与斜率无关。"""
+    if b < a - 1e-12:
+        ep = (a * a - b * b) / (2.0 * b) if b > 1e-6 else 0.0
+        r = _math.hypot(x - xc, z - (springer - ep)) - (b + ep)
+        return r
     e = arch_e(a, b)
     R = a + e
     cc = (xc + e) if x <= xc else (xc - e)
     r = _math.hypot(x - cc, z - springer) - R
-    if CROWN_BLUNT_S > 0.0:
+    s = _blunt_s(a, b)
+    if s > 1e-9:
         (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
         if h1 <= h2:
             lo, hi, d = h1, h2, d1
         else:
             lo, hi, d = h2, h1, d2
-        s = CROWN_BLUNT_S * b
         dip = s * _math.log(1.0 + _math.exp((lo - hi) / s))
-        r -= dip / _math.hypot(d, 1.0)
+        # 曲线在圆下方 dip(径向分量 dip*nz): 圆距离换算到曲线距离须**加回**,
+        # 减会双重扣 dip(自查: 设计内缩点被误判侵入 2*dip)。
+        r += dip / _math.hypot(d, 1.0)
     return r
 
 

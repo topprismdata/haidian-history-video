@@ -66,7 +66,7 @@ _arc_pair = _F._arc_pair
 arch_z = _F.arch_z
 arch_dzdx = _F.arch_dzdx
 arch_signed_r = _F.arch_signed_r
-CROWN_BLUNT_S = _F.CROWN_BLUNT_S
+CROWN_BLUNT_K, CROWN_BLUNT_CAP = _F.CROWN_BLUNT_K, _F.CROWN_BLUNT_CAP
 
 
 def pier_w(i):

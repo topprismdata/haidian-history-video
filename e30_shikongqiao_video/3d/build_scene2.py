@@ -279,11 +279,13 @@ def build():
     # albedo 走 qingshi_material 冷灰蓝; 栏杆/望柱/狮=汉白玉不变。
     # [六审B] 砌缝视觉三级层级(要求 券石100%/横缝40-50%/竖缝20-30%, 此前普通
     # 缝~60-70% 抢券石的戏): 几何 2068+ 块全保留, 只调材质权重。
-    m_body = MAT.qingshi_material("stone_body", block_var=0.20)   # 本体最弱: 去斑驳
+    # [七审P1-3] 层级再降一级 100/40/25 -> 100/28/15; 券石"100"不再靠更黑的缝,
+    # 靠楔形节奏+几何出入(筒券/放射缝), joint 0.026->0.020 bump 0.75->0.65。
+    m_body = MAT.qingshi_material("stone_body", block_var=0.14)
     m_ring = MAT.qingshi_material("stone_ring", (0.362, 0.392, 0.426),
-                                  joint=0.026, block_var=0.30, bump_strength=0.75)
-    m_course = MAT.qingshi_material("stone_course", (0.335, 0.368, 0.404),
-                                    joint=0.011, block_var=0.10, bump_strength=0.26)
+                                  joint=0.020, block_var=0.26, bump_strength=0.65)
+    m_course = MAT.qingshi_material("stone_course", (0.345, 0.376, 0.410),
+                                    joint=0.008, block_var=0.06, bump_strength=0.16)
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
     m_earth = MAT.earth_material("shore_earth")
