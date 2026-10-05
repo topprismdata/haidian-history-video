@@ -24,7 +24,10 @@ def _hw(x, z):
     return (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
 
 # ── 砌石参数(masonry_method.md 回填前用照片比例工作值) ──
-VOUSSOIR_FACE_W = 1.00      # 券石沿内弧面宽 m(masonry_method 照片券缝检测锚定: 端7/主13)
+VOUSSOIR_FACE_W = 1.00      # 兜底面宽(仅当目标表缺项时用)
+# [masonry_method 照片券缝计数] 每孔券石目标块数, 按|孔位-中央|索引: 中央17, 端7。
+# 统一面宽数学上给不出 7/17 两端(弧长比2.19≠块数比2.43)——真桥端孔块更宽, 故按孔给定。
+VOUSSOIR_TARGET = [17, 15, 13, 13, 11, 11, 9, 9, 7]
 RING_T = 0.62              # 券石径向厚(=券脸环带宽) m
 JOINT = 0.02               # 灰缝 m
 FACE_DEPTH = 0.12          # 贴面石出墙面深度 m
@@ -85,8 +88,10 @@ def _voussoir(bm, x0, x1, xc, springer, a, b, ring_t, side, half_depth, lift=0.0
     except ValueError: pass
 
 
-def voussoir_count(a, b):
-    """内弧周长按 Ramanujan 近似 ÷ 面宽, 取奇数(留中央龙门石)。"""
+def voussoir_count(a, b, i=None):
+    """第 i 孔券石块数: 优先照片计数目标表(奇数, 中央留龙门石), 无 i 时退 Ramanujan÷面宽。"""
+    if i is not None and 0 <= i < G.N_SPAN:
+        return VOUSSOIR_TARGET[abs(i - (G.N_SPAN - 1) // 2)]
     h = ((a - b) ** 2) / ((a + b) ** 2) if (a+b) > 0 else 0
     per_half = 0.5 * math.pi * (a + b) * (1 + 3*h/(10 + math.sqrt(4 - 3*h)))
     n = max(7, int(round(per_half / VOUSSOIR_FACE_W)))
@@ -101,7 +106,7 @@ def build_voussoir(bm, hw_front, half_depth):
         xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
         spz = G.arch_springer_z(i)
         b = G.arch_rise(i)
-        N = voussoir_count(a, b)
+        N = voussoir_count(a, b, i)
         counts.append(N)
         st = _arc_stations(xc, a, b, spz, N)
         for side in (1, -1):
