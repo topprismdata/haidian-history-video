@@ -90,6 +90,8 @@
 # A/B 证据目录的测量脚本入库(png 仍不入库): 证据可复算比存图重要
 !e30_shikongqiao_video/3d/ab_qingshi/
 !e30_shikongqiao_video/3d/ab_qingshi/*.py
+!e30_shikongqiao_video/3d/ab_water/
+!e30_shikongqiao_video/3d/ab_water/*.py
 
 !e30_shikongqiao_video/3d/*.txt
 !e30_shikongqiao_video/3d/refs/
@@ -112,6 +114,8 @@
 !e30_shikongqiao_video/3d/refs/lugou_lion/
 !e30_shikongqiao_video/3d/refs/lugou_lion/*.jpg
 !e30_shikongqiao_video/3d/refs/lugou_lion/SOURCES.md
+!e30_shikongqiao_video/3d/refs/kanshan_ref/
+!e30_shikongqiao_video/3d/refs/kanshan_ref/SOURCES.md
 
 !e30_shikongqiao_video/tests/
 !e30_shikongqiao_video/tests/*.py

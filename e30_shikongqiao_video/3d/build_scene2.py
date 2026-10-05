@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bridge_geom2 as G
 import materials as MAT
 import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
+import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
 from mathutils import Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -183,14 +184,13 @@ def build_beast_bm():
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     # GPT v4 第3刀: 大块石作。层高 0.45-0.60m, 灰缝压到 8-15mm。
-    # 2026-10-05 M4 基色订正(主控采样 ref_elevation.jpg 实测): 桥身亮部 RGB(252,245,227),
-    # R-B=+25 暖白 —— 「青石筑桥体」是石材种类, 渲染基色走实拍: 提亮+偏暖。
-    # 栏杆/望柱/狮/靠山兽=汉白玉(京报网2025-12-24 口径), 比桥身更白一档。
-    m_body = MAT.stone_material("stone_body", (0.790, 0.765, 0.700),
-                                joint=0.007, course_h=0.68, weather=0.24, block_var=0.07,
-                                bump_strength=0.24)
-    m_ring = MAT.stone_material("stone_ring", (0.845, 0.830, 0.785),
-                                joint=0.010, course_h=0.24, weather=0.14, block_var=0.07)
+    # 2026-10-05 M7 勘误+接线(C2): M4「渲染基色走实拍暖白(252,245,227)」作废——
+    # 主控分档复采 ref_elevation.jpg: 亮部 R-B=-6.2 / 中间调 -18.3 / 暗部 -31.1, **全档偏冷**,
+    # M4 的暖白采样点误采(眩光/异区)。暖色属光照不属 albedo, 不得烘进基色。
+    # 石种=青石(京报网/中新网2025-12-09逐字「以青石筑成桥体,以汉白玉为栏杆」),
+    # albedo 走 qingshi_material 冷灰蓝; 栏杆/望柱/狮=汉白玉不变。
+    m_body = MAT.qingshi_material("stone_body")
+    m_ring = MAT.qingshi_material("stone_ring", (0.350, 0.382, 0.418))
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
     m_earth = MAT.earth_material("shore_earth")
@@ -333,7 +333,18 @@ def build():
     bm_to_obj(build_voussoir_bm(), "voussoir", m_ring)
     deck_bm, spots = build_deck_bm()
     bm_to_obj(deck_bm, "deck_rail", m_rail)
-    bm_to_obj(build_beast_bm(), "beasts", m_rail)
+    # 靠山兽: linked duplicates(2026-10-05 最佳实践) —— 4 对象共享 2 个 mesh datablock,
+    # 替代旧 build_beast_bm() 盒块堆叠(384 顶点)。单只 5000+ 面, 水密, 剪影清晰。
+    beast_spots = []
+    _bi = 0
+    for xe in (-G.BRIDGE_LEN / 2 + 1.5, G.BRIDGE_LEN / 2 - 1.5):
+        z = G.deck_z(xe)
+        for k, side in enumerate((-1, 1)):
+            y = side * (G.DECK_UP_W / 2 - 0.10) + side * k * 0.10
+            facing = 1.0 if xe > 0 else -1.0
+            beast_spots.append((xe, y, z, _bi, facing))
+            _bi += 1
+    beast_objs = BEASTS.place_beasts(beast_spots, name="beasts", size=1.12, material=m_rail)
     # 蹲狮: linked duplicates(2026-10-05 口径) —— 256 对象共享 2 个 mesh datablock,
     # 不再并成单个 "lions" 大 mesh(反模式: 文件膨胀/无法实例化/回归 diff 不归因)。
     lion_objs = LIONS.place_lions(spots, m_rail)
@@ -342,7 +353,10 @@ def build():
     # 挡墙称燕翅墙(顺水金刚墙) —— 茅以升基金会《中国古代石拱桥——古桥各部名称》
     # (https://www.mysf.org.cn/Detail/index.html?id=691&aid=291)。
     # 视觉根因: 原楔形块垂直插水, 桥像漂着; 燕翅墙向岸斜展 + 岸坡承接才形成"接岸"读感。
-    # 数值地位: 展开角35°/翼长24m/墙厚1.4m/岸坡顶2.1m 均为[工作值](无文献数值, 常见做法30-45°);
+    # 数值地位: 展开角35°/翼长24m/墙厚1.4m/岸坡顶2.1m 均为[工作值](无文献数值)。
+    # ⚠ 2026-10-05 燕翅研究(refs/abutment_design.md): 原注「常见做法30-45°」无源已删;
+    # 『带燕翅型』系形制推断非文献直陈; 卫星图版负读数: 岛端无出岸自由燕翅墙,
+    # WING_L=24 与图版矛盾(观测展宽带仅8-10m), 修订≤12m或锚岸式待表现层批处理;
     # 本体端部1.35m桥台(facts.BRIDGE_ABUT, 已UNION进bridge_body)属本体, 不在此列, 未动。
     WING_L = 24.0            # 翼墙水平投影长
     WING_ANG = math.radians(35.0)
@@ -452,10 +466,12 @@ def build():
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
-    for n in ("bridge_body","impost","voussoir","deck_rail","beasts",
+    for n in ("bridge_body","impost","voussoir","deck_rail",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     for ob in lion_objs:   # 蹲狮随桥轴同转(叠加在各自柱头微yaw上)
+        ob.rotation_euler.z += -math.radians(BRIDGE_AXIS_AZ)
+    for ob in beast_objs:  # 靠山兽随桥轴同转
         ob.rotation_euler.z += -math.radians(BRIDGE_AXIS_AZ)
     # 照明
     w = bpy.data.worlds.new("World"); bpy.context.scene.world = w; w.use_nodes=True

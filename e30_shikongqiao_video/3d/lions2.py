@@ -75,21 +75,47 @@ def _box(c, s, rot_y=0.0):
     return bm
 
 
-def _sculpt_parts(variant):
-    """官式蹲狮子部件(单位坐标: 朝 +X, 高 1.0, 全部闭合体块, 深互渗供布尔并)。
-    解剖要点见模块 docstring; 坐标即设计值, 注释给近景识别作用。"""
-    P = []
+def _frustum(c_back, s_back, c_front, s_front, tilt_x=0.0):
+    """闭合棱台(独立 bmesh): 后矩形截面 s_back=(sy,sz) 在 c_back, 前截面 s_front 在
+    c_front, 前截面外缘随 y 附加 tilt_x 绝对 z 偏移(绶带贴胸微倾)。用于楔形鼻梁/绶带垂饰。"""
+    bm = bmesh.new()
+    v = []
+    for k, (cc, ss) in enumerate(((c_back, s_back), (c_front, s_front))):
+        sy, sz = (vv / 2.0 for vv in ss)
+        for y in (-sy, sy):
+            for z in (-sz, sz):
+                tilt = tilt_x * y / sy if (k == 1 and sy) else 0.0
+                v.append(bm.verts.new((cc[0], y + cc[1], z + cc[2] + tilt)))
+    # v 排列: [back(y-,z-), back(y-,z+), back(y+,z-), back(y+,z+),
+    #          front(y-,z-), front(y-,z+), front(y+,z-), front(y+,z+)]
+    for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1),
+              (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+        bm.faces.new([v[k] for k in f])
+    return bm
 
-    def add(bm):
+
+def _sculpt_parts(variant):
+    """官式蹲狮子部件(单位坐标: 朝 +X, 高 1.0)。返回 (pos, neg, final):
+    pos 先布尔并, neg 再布尔减(鼻孔/口裂内凹弧/眼窝——均浅凹不穿透),
+    final 最后并入(眼球凸进眼窝)。全部闭合体块, 深互渗保证连通域=1。"""
+    P, N, F = [], [], []
+
+    def add(bm, lst):
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
         bm.normal_update()
-        P.append(bm)
+        lst.append(bm)
 
-    def ell(c, r, seg=_SEG, ring=_RING):
-        add(_ell(c, r, seg, ring))
+    def ell(c, r, seg=_SEG, ring=_RING, lst=None):
+        add(_ell(c, r, seg, ring), P if lst is None else lst)
 
     def box(c, s, rot=0.0):
-        add(_box(c, s, rot))
+        add(_box(c, s, rot), P)
+
+    def neg_ell(c, r):
+        add(_ell(c, r, _SEG_S, _RING_S), N)
+
+    def fin_ell(c, r):
+        add(_ell(c, r, _SEG_S, _RING_S), F)
 
     # ── 柱头接触底垫 + 后座(坐姿读感的根) ──
     box((0.01, 0, 0.012), (0.52, 0.38, 0.030))                 # 底垫(沉 3mm 防 Z 面 coplanar)
@@ -100,35 +126,38 @@ def _sculpt_parts(variant):
     ell((-0.15, -0.135, 0.200), (0.210, 0.085, 0.160))
     ell((-0.255, 0.112, 0.160), (0.105, 0.065, 0.105), _SEG_S, _RING_S)
     ell((-0.255, -0.112, 0.160), (0.105, 0.065, 0.105), _SEG_S, _RING_S)
-    # ── 胸 / 颈(胸前挺 + 颈圈垂饰) ──
+    # ── 胸 / 颈(胸前挺 + 颈圈带) ──
     ell((0.145, 0, 0.335), (0.155, 0.185, 0.215))
     ell((0.090, 0, 0.510), (0.135, 0.165, 0.150))
     ell((0.115, 0, 0.470), (0.095, 0.190, 0.048))              # 颈圈带
-    box((0.293, 0, 0.400), (0.034, 0.080, 0.100))              # 胸前垂饰(铃/牌)
+    add(_frustum((0.278, 0, 0.452), (0.104, 0.030),
+                 (0.300, 0, 0.348), (0.058, 0.024), tilt_x=-0.008), P)   # 绶带式垂饰(上宽下窄, 下缘微前倾贴胸)
     # ── 前肢并拢直立 + 爪 + 趾(3591 图正面主特征) ──
     box((0.155, 0.075, 0.185), (0.125, 0.085, 0.370))
     box((0.155, -0.075, 0.185), (0.125, 0.085, 0.370))
-    box((0.225, 0.075, 0.040), (0.155, 0.100, 0.086))          # 左前爪
-    box((0.225, -0.075, 0.040), (0.155, 0.100, 0.086))         # 右前爪
+    box((0.228, 0.075, 0.042), (0.165, 0.110, 0.095))          # 左前爪
+    box((0.228, -0.075, 0.042), (0.165, 0.110, 0.095))         # 右前爪
     for sy in (1, -1):
         for ty in (0.032, -0.032):
             box((0.293, sy * (0.075 + ty), 0.044), (0.036, 0.028, 0.050))   # 趾
-    # ── 头: 颅 / 颧颊 / 双层眉弓 / 凸眼 / 宽吻 / 上翘鼻 / 下颌(留缝=口裂) ──
+    # ── 头: 颅 / 颧颊 / 额顶双卷 / 双层眉弓 / 宽吻 / 楔形鼻梁+鼻头 / 下颌(与吻融合) ──
     ell((0.165, 0, 0.705), (0.135, 0.185, 0.145))              # 颅(大头, 头区≈0.40H)
     ell((0.175, 0, 0.630), (0.080, 0.185, 0.095))              # 颧颊
     ell((0.235, 0.060, 0.800), (0.040, 0.045, 0.040), _SEG_S, _RING_S)   # 额顶双卷(左)
     ell((0.235, -0.060, 0.800), (0.040, 0.045, 0.040), _SEG_S, _RING_S)  # 额顶双卷(右)
     for sy in (1, -1):
-        box((0.245, sy * 0.082, 0.748), (0.062, 0.085, 0.042))    # 眉弓上层
-        box((0.268, sy * 0.080, 0.725), (0.036, 0.080, 0.028))    # 眉弓下层
-        ell((0.264, sy * 0.078, 0.704), (0.036, 0.037, 0.036), _SEG_S, _RING_S)  # 凸眼球
-    box((0.285, 0, 0.652), (0.100, 0.140, 0.090))              # 宽扁吻
-    box((0.325, 0, 0.694), (0.048, 0.088, 0.055))              # 上翘鼻头
-    box((0.243, 0, 0.570), (0.135, 0.135, 0.042))              # 下颌(与吻底留 16mm 缝=口裂)
+        ell((0.238, sy * 0.098, 0.756), (0.030, 0.050, 0.022))    # 眉弓上层(椭圆棱)
+        ell((0.264, sy * 0.096, 0.730), (0.018, 0.044, 0.015))    # 眉弓下层
+    ell((0.285, 0, 0.650), (0.055, 0.075, 0.047))              # 宽扁吻(圆垫, 消矩形板)
+    add(_frustum((0.268, 0, 0.684), (0.092, 0.056),                # 楔形鼻梁(后宽前窄上扬)
+                 (0.338, 0, 0.712), (0.052, 0.034)), P)
+    ell((0.350, 0, 0.714), (0.024, 0.038, 0.030), _SEG_S, _RING_S)       # 上翘鼻头(球拍式)
+    box((0.243, 0, 0.585), (0.135, 0.135, 0.052))              # 下颌(上沿与吻底融合, 口裂改由减法内凹)
     ell((0.288, 0, 0.546), (0.034, 0.058, 0.044), _SEG_S, _RING_S)       # 下巴须团
-    for sy in (1, -1):                                          # 髭须卷(嘴角下垂双卷)
-        ell((0.276, sy * 0.100, 0.628), (0.026, 0.034, 0.032), _SEG_S, _RING_S)
-        ell((0.262, sy * 0.112, 0.596), (0.024, 0.030, 0.030), _SEG_S, _RING_S)
+    for sy in (1, -1):                                          # 髭须卷: 贴面浅浮雕三连卷(自口角下垂)
+        ell((0.287, sy * 0.062, 0.632), (0.014, 0.030, 0.028), _SEG_S, _RING_S)
+        ell((0.279, sy * 0.064, 0.603), (0.013, 0.027, 0.026), _SEG_S, _RING_S)
+        ell((0.271, sy * 0.064, 0.576), (0.012, 0.024, 0.024), _SEG_S, _RING_S)
     # ── 耳(颅顶侧角) ──
     for sy in (1, -1):
         box((0.110, sy * 0.135, 0.840), (0.078, 0.055, 0.060))
@@ -136,11 +165,11 @@ def _sculpt_parts(variant):
     for k in range(9):
         th = math.radians(15.0 + k * 32.5)
         rr = 0.175
-        rk = 0.058 + 0.014 * math.sin(th)
+        rk = 0.064 + 0.014 * math.sin(th)
         cx = 0.095 + 0.050 * math.sin(th) + (0.012 if k % 2 else -0.012)
         ell((cx, rr * math.cos(th), 0.710 + rr * math.sin(th)),
             (rk * 1.25, rk, rk), _SEG_M, _RING_M)
-    ell((0.020, 0, 0.620), (0.090, 0.190, 0.115))              # 颈背鬃(连通兜底)
+    ell((0.020, 0, 0.618), (0.095, 0.200, 0.125))              # 颈背鬃(连通兜底, 填喉凹)
     for sy in (1, -1):                                          # 胸侧披鬃
         ell((0.060, sy * 0.155, 0.500), (0.100, 0.075, 0.140))
     # ── 尾: 沿臀侧 S 卷上扬 + 尾梢团 ──
@@ -155,24 +184,37 @@ def _sculpt_parts(variant):
     else:
         ell((0.252, 0.135, 0.058), (0.072, 0.050, 0.052), _SEG_S, _RING_S)   # 幼狮身
         ell((0.320, 0.135, 0.088), (0.040, 0.038, 0.038), _SEG_S, _RING_S)   # 幼狮头
-    return P
+    # ── 减法(浅凹, 均不穿透): 口裂内凹弧(窄线槽, 两端上挑) / 鼻孔×2 / 眼窝×2 ──
+    for k in range(7):                                          # 口裂: 窄弧线刻在颌前面(吻底悬垂下), 两端上挑
+        yy = -0.055 + 0.0183 * k
+        t = (yy / 0.055) ** 2
+        neg_ell((0.298, yy, 0.588 + 0.022 * t),
+                (0.026, 0.022, 0.013))
+    for sy in (1, -1):
+        neg_ell((0.316, sy * 0.018, 0.719), (0.010, 0.012, 0.010))   # 鼻孔浅凹(鼻梁顶面, 椭圆小坑)
+        neg_ell((0.276, sy * 0.098, 0.714), (0.030, 0.030, 0.030))   # 眼窝浅碗(眉弓下)
+    # ── 最后并入: 眼球凸块(须越过碗缘, 否则悬空成岛) ──
+    for sy in (1, -1):
+        fin_ell((0.290, sy * 0.098, 0.712), (0.032, 0.033, 0.032))
+    return P, N, F
 
 
-def _union_parts(parts):
-    """顺序 EXACT 布尔并 -> 单一水密 bpy mesh(临时对象用后即焚)。"""
+def _boolean_chain(pos, neg, final):
+    """顺序 EXACT 布尔: pos 依序并 -> neg 依序减 -> final 依序并。
+    返回单一水密 bpy mesh(临时对象用后即焚)。neg 刀具须与实体浅交(不穿透)。"""
     col = bpy.context.scene.collection
-    base = None
-    for i, pbm in enumerate(parts):
+
+    def _to_mesh(pbm, i):
         me = bpy.data.meshes.new("_lion2_part_%d" % i)
         pbm.to_mesh(me)
         pbm.free()
-        ob = bpy.data.objects.new("_lion2_part_%d" % i, me)
+        return me
+
+    def _step(base, me, op):
+        ob = bpy.data.objects.new("_lion2_tool", me)
         col.objects.link(ob)
-        if base is None:
-            base = ob
-            continue
-        md = base.modifiers.new("u", 'BOOLEAN')
-        md.operation = 'UNION'
+        md = base.modifiers.new("b", 'BOOLEAN')
+        md.operation = op
         md.solver = 'EXACT'
         md.object = ob
         bpy.context.view_layer.update()
@@ -185,6 +227,18 @@ def _union_parts(parts):
         col.objects.unlink(ob)
         bpy.data.objects.remove(ob)
         bpy.data.meshes.remove(me)
+
+    base = None
+    i = 0
+    for lst, op in ((pos, 'UNION'), (neg, 'DIFFERENCE'), (final, 'UNION')):
+        for pbm in lst:
+            me = _to_mesh(pbm, i)
+            i += 1
+            if base is None:
+                base = bpy.data.objects.new("_lion2_acc", me)
+                col.objects.link(base)
+                continue
+            _step(base, me, op)
     res = base.data
     col.objects.unlink(base)
     bpy.data.objects.remove(base)
@@ -205,9 +259,23 @@ def _normalize(bm):
                              -min(v.co.z for v in bm.verts)))
 
 
+def _mark_smooth(bm, angle_deg=40.0):
+    """平滑着色 + 按二面角标硬边(等价 auto-smooth): 面全 smooth,
+    夹角 > angle_deg 的边标 sharp。消"纸工艺"平 facet 观感, 同时保住
+    部件交界的凿刻棱线。"""
+    thr = math.radians(angle_deg)
+    for f in bm.faces:
+        f.smooth = True
+    for e in bm.edges:
+        if len(e.link_faces) == 2 and e.calc_face_angle(math.pi) > thr:
+            e.smooth = False
+        else:
+            e.smooth = True
+
+
 def _build_master(variant):
-    parts = _sculpt_parts(variant)
-    me = _union_parts(parts)
+    pos, neg, final = _sculpt_parts(variant)
+    me = _boolean_chain(pos, neg, final)
     bm = bmesh.new()
     bm.from_mesh(me)
     bpy.data.meshes.remove(me)
@@ -221,7 +289,14 @@ def _build_master(variant):
     bm.to_mesh(me2)
     bm.free()
     out = _densify(me2)
-    out.name = "_lion2_master_%d" % variant
+    # 平滑着色在细分后做(拓扑已定): 消近景"纸工艺"折面感。
+    bm = bmesh.new()
+    bm.from_mesh(out)
+    bpy.data.meshes.remove(out)
+    _mark_smooth(bm)
+    out = bpy.data.meshes.new("_lion2_master_%d" % variant)
+    bm.to_mesh(out)
+    bm.free()
     return out
 
 

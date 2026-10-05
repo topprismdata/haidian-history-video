@@ -197,8 +197,11 @@ def marble_material(name, base_rgb=(0.90, 0.893, 0.868)):
 
 
 def water_material(name="water", base=(0.05, 0.11, 0.14)):
-    """湖面: 底色 + 三频波纹法线扰动(长涌/中浪/风纹) + 粗糙度斑块,
-    让倒影柔碎有风纹感, 不再是完美镜面。只动 shader, 水面 mesh 保持单面。"""
+    """湖面: 底色 + 四频波纹法线扰动(长涌/中浪/风纹/细碎浪) + 粗糙度斑块,
+    让倒影柔碎有风纹感, 不再是完美镜面。只动 shader, 水面 mesh 保持单面。
+    2026-10-05 WaterFix 调参(shot_hero 量化: 倒影竖抹/前景死水):
+    bump .20→.32、风纹权 .18→.28+第四频 scale30、风纹方向转 90°、
+    粗糙度底 .04→.02 斑块 .05→.09。函数签名不变。"""
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -210,9 +213,10 @@ def water_material(name="water", base=(0.05, 0.11, 0.14)):
     if "IOR" in bsdf.inputs:
         bsdf.inputs["IOR"].default_value = 1.333
     geo = nt.nodes.new("ShaderNodeNewGeometry")
-    # 风纹沿 X 拉长(吹向南偏东的湖风在水面拉出条纹)
+    # 风纹沿 Y 拉长(2026-10-05 转 90°: 旧 (0.6,2,1) 把条纹沿桥纵深拉长,
+    # hero 视图里拱倒影被抹成竖条; (2,0.6,1) 条纹横走, 倒影出现横向波痕)
     mp = nt.nodes.new("ShaderNodeMapping")
-    mp.inputs["Scale"].default_value = (0.6, 2.0, 1.0)
+    mp.inputs["Scale"].default_value = (2.0, 0.6, 1.0)
     nt.links.new(geo.outputs["Position"], mp.inputs["Vector"])
 
     def _noise(scale, detail, w):
@@ -225,32 +229,38 @@ def water_material(name="water", base=(0.05, 0.11, 0.14)):
         return mul
     h1 = _noise(0.55, 2.0, 0.50)   # 长涌
     h2 = _noise(3.20, 3.0, 0.32)   # 中浪
-    h3 = _noise(12.0, 2.0, 0.18)   # 风纹(细, 近景可见)
+    h3 = _noise(12.0, 2.0, 0.28)   # 风纹(细; 权 .18→.28 补近景可见度)
+    h4 = _noise(30.0, 2.0, 0.14)   # 细碎浪(scale≈30, 低机位前景 sparkle)
     h12 = nt.nodes.new("ShaderNodeMath"); h12.operation = 'ADD'
     nt.links.new(h1.outputs[0], h12.inputs[0]); nt.links.new(h2.outputs[0], h12.inputs[1])
+    h34 = nt.nodes.new("ShaderNodeMath"); h34.operation = 'ADD'
+    nt.links.new(h3.outputs[0], h34.inputs[0]); nt.links.new(h4.outputs[0], h34.inputs[1])
     hsum = nt.nodes.new("ShaderNodeMath"); hsum.operation = 'ADD'
-    nt.links.new(h12.outputs[0], hsum.inputs[0]); nt.links.new(h3.outputs[0], hsum.inputs[1])
+    nt.links.new(h12.outputs[0], hsum.inputs[0]); nt.links.new(h34.outputs[0], hsum.inputs[1])
     bump = nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value = 0.20
+    bump.inputs["Strength"].default_value = 0.32
     bump.inputs["Distance"].default_value = 0.045
     nt.links.new(hsum.outputs[0], bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
-    # 粗糙度: 基础 0.05 + 大尺度斑块 0..0.08 —— 倒影局部柔碎
+    # 粗糙度: 基础 0.02 + 大尺度斑块 0..0.09 —— 底更镜、斑块更碎(倒影对比更强)
     pn = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], pn.inputs["Vector"])
     pn.inputs["Scale"].default_value = 0.22
     pn.inputs["Detail"].default_value = 2.0
     pmul = nt.nodes.new("ShaderNodeMath"); pmul.operation = 'MULTIPLY'
-    nt.links.new(pn.outputs["Fac"], pmul.inputs[0]); pmul.inputs[1].default_value = 0.05
+    nt.links.new(pn.outputs["Fac"], pmul.inputs[0]); pmul.inputs[1].default_value = 0.09
     padd = nt.nodes.new("ShaderNodeMath"); padd.operation = 'ADD'
-    padd.inputs[0].default_value = 0.04
+    padd.inputs[0].default_value = 0.02
     nt.links.new(pmul.outputs[0], padd.inputs[1])
     nt.links.new(padd.outputs[0], bsdf.inputs["Roughness"])
     return m
 
 
 def earth_material(name="shore_earth", base=(0.105, 0.130, 0.088)):
-    """岸坡地表: 深橄榄绿(远读为树冠/植被带), 斑块色差 + 细颗粒 bump。"""
+    """岸坡地表: 深橄榄绿(远读为树冠/植被带), 斑块色差 + 细颗粒 bump。
+    2026-10-05 WaterFix: 干基 ×0.8 压暗 + 亮斑倍率 (1.55,1.42,1.30)→(1.80,1.55,1.30)
+    (治左岸被雾洗灰, 靠压暗提反差而非提亮找回植被读感); 增水线湿带 z∈[0,0.5] 渐变
+    压暗(复用 stone_material waterline 节点式, 治岸水交界硬边)。函数签名不变。"""
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -260,15 +270,35 @@ def earth_material(name="shore_earth", base=(0.105, 0.130, 0.088)):
     nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
     bsdf.inputs["Roughness"].default_value = 0.95
     geo = nt.nodes.new("ShaderNodeNewGeometry")
+    orig = base
+    base = (orig[0] * 0.8, orig[1] * 0.8, orig[2] * 0.8)   # 干基压暗(留雾洗反差余量)
     n = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], n.inputs["Vector"])
     n.inputs["Scale"].default_value = 1.2
     n.inputs["Detail"].default_value = 4.0
     mixc = nt.nodes.new("ShaderNodeMixRGB"); mixc.blend_type = 'MIX'
     mixc.inputs["Color1"].default_value = (base[0], base[1], base[2], 1.0)
-    mixc.inputs["Color2"].default_value = (base[0]*1.55, base[1]*1.42, base[2]*1.30, 1.0)
+    # 亮斑作用于"原 palette"(=干基的 2.25/1.9375/1.625 倍)。若乘在缩放后的 base 上,
+    # 净对比 0.8*1.8=1.44 < 旧 1.55, 雾占比反升 —— hero A/B 实测左岸 sat 反降
+    # (18.94 vs 旧 20.73); 本参数(1.80,1.55,1.30) 保 G>R>B 橄榄序, 实测 sat 23.38,
+    # 治#4 达标(变体扫描 S2-S5, 2026-10-05 WaterFix)
+    mixc.inputs["Color2"].default_value = (orig[0]*1.80, orig[1]*1.55, orig[2]*1.30, 1.0)
     nt.links.new(n.outputs["Fac"], mixc.inputs["Fac"])
-    nt.links.new(mixc.outputs["Color"], bsdf.inputs["Base Color"])
+    # 水线湿带: 石构 waterline 同款节点式 —— fac = clamp((z-0.5)/-0.5):
+    # z>=0.5 干(fac=0), z=0 全湿(fac=1), 水下部分保持湿色
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(geo.outputs["Position"], sep.inputs["Vector"])
+    wsub = nt.nodes.new("ShaderNodeMath"); wsub.operation = 'SUBTRACT'
+    nt.links.new(sep.outputs["Z"], wsub.inputs[0]); wsub.inputs[1].default_value = 0.5
+    wdiv = nt.nodes.new("ShaderNodeMath"); wdiv.operation = 'DIVIDE'
+    nt.links.new(wsub.outputs[0], wdiv.inputs[0]); wdiv.inputs[1].default_value = -0.5
+    wcl = nt.nodes.new("ShaderNodeClamp")
+    nt.links.new(wdiv.outputs[0], wcl.inputs["Value"])
+    mix_water = nt.nodes.new("ShaderNodeMixRGB"); mix_water.blend_type = 'MIX'
+    nt.links.new(wcl.outputs[0], mix_water.inputs["Fac"])
+    nt.links.new(mixc.outputs["Color"], mix_water.inputs["Color1"])
+    mix_water.inputs["Color2"].default_value = (base[0]*0.38, base[1]*0.42, base[2]*0.34, 1.0)
+    nt.links.new(mix_water.outputs["Color"], bsdf.inputs["Base Color"])
     g = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], g.inputs["Vector"])
     g.inputs["Scale"].default_value = 3.0
