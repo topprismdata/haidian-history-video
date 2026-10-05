@@ -88,6 +88,17 @@
 # T3.5 参考资产冻结（G3 防污染闸）：仅这两个文件精确放行，其余图片仍不入库
 !e30_shikongqiao_video/3d/refs/ref_elevation.jpg
 !e30_shikongqiao_video/3d/refs/ref_mask.png
+# ── 放行：E30 贴图取件脚本（2026-10-05 接入 ambientCG Marble001 汉白玉）──
+# ⚠ 二进制贴图本身不入库(4.6MB, CC0 可随时重取), 但取件脚本必须入库——
+#   否则克隆下来只剩 tex_mat.py 却取不到贴图, 渲染直接 FileNotFoundError。
+!e30_shikongqiao_video/3d/scripts/
+!e30_shikongqiao_video/3d/scripts/*.sh
+# ⚠ 卢沟桥石狮参考照片(2026-10-05 用户指定): 造型参照, 非成片素材。
+#   Wikimedia Commons 多授权(CC-BY-SA/GFDL), 入库需保留作者与许可, 故存 SOURCES 表。
+!e30_shikongqiao_video/3d/refs/lugou_lion/
+!e30_shikongqiao_video/3d/refs/lugou_lion/*.jpg
+!e30_shikongqiao_video/3d/refs/lugou_lion/SOURCES.md
+
 !e30_shikongqiao_video/tests/
 !e30_shikongqiao_video/tests/*.py
 !e30_shikongqiao_video/research/
