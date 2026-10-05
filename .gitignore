@@ -87,6 +87,10 @@
 !e30_shikongqiao_video/
 !e30_shikongqiao_video/3d/
 !e30_shikongqiao_video/3d/*.py
+# A/B 证据目录的测量脚本入库(png 仍不入库): 证据可复算比存图重要
+!e30_shikongqiao_video/3d/ab_qingshi/
+!e30_shikongqiao_video/3d/ab_qingshi/*.py
+
 !e30_shikongqiao_video/3d/*.txt
 !e30_shikongqiao_video/3d/refs/
 !e30_shikongqiao_video/3d/refs/*.md

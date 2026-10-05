@@ -295,3 +295,25 @@ def fog_material(name="fog", density=0.003, color=(0.70, 0.78, 0.88)):
     sc.inputs["Anisotropy"].default_value = 0.35
     nt.links.new(sc.outputs["Volume"], out.inputs["Volume"])
     return m
+
+
+# ── C2 材质分工 (2026-10-05): 桥体=青石, 栏杆/望柱/狮=汉白玉 ──
+# 来源核实(逐字, 两处原文直接抓取): 京报网 2025-12-09 07:14
+# https://news.bjd.com.cn/2025/12/09/11451647.shtml (来源:北京青年报) 及
+# 中新网 https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml:
+#   「……仿照北京卢沟桥, 兼收苏州宝带桥特点,
+#     以青石筑成桥体, 以汉白玉为栏杆, 因有17个拱券, 故名十七孔桥……」
+# 另见本模块头部注记的京报网 2025-12-24 同句 (快照级互证)。
+# 注意: 这只定石材种类; 「桥体亮部呈暖白」是主控实测 ref_elevation.jpg 的光照结果
+# (RGB 252,245,227), 青石基色本身是冷灰蓝 —— 两件事不矛盾, A/B 对照见
+# 3d/ab_qingshi_split.py 输出。
+
+def qingshi_material(name, base_rgb=(0.305, 0.342, 0.381)):
+    """青石(石灰岩)桥体: 冷灰蓝基色 + 可见砌缝 + 微斑驳。
+    基色推导: 青石新出面 sRGB 约 (149,157,165), 转线性 = (0.305,0.342,0.381)
+    (R<G<B 的冷灰蓝向)。参数比 stone_body 默认接法略强调砌缝与块差(青石块
+    石砌法可见), 复用 stone_material 节点栈, 不新增节点逻辑。
+    栏杆/望柱/狮仍用 marble_material —— 分工依据见上引文。"""
+    return stone_material(name, base_rgb, joint=0.010, course_h=0.60,
+                          weather=0.32, waterline_h=0.55, block_var=0.12,
+                          bump_strength=0.30, base_rough=0.84)

@@ -2,6 +2,20 @@
 
 > 规则（facts.py docstring / spec §7）: M2.5 用户批准后 facts 本体节锁死；此后改锁死条目必须先在本文件登记，再改，再重跑本体判据（L1+L2 正检+负控，判据全绿才算完成）。
 
+## 2026-10-05 C2 材质分工来源核实 + 青石材质预备（MaterialSplit agent）—— 本体零改动，接线待主控
+
+**改动文件**: `materials.py`（**纯追加** `qingshi_material`，既有函数签名/行为零改动）、新增独立脚本 `3d/ab_qingshi_split.py` + `3d/ab_qingshi/`（A/B 证据）。`build_scene2.py` 未动（材质赋值接线由主控执行）。
+
+**1. 来源核实（C2 由疑转实）**。两处原文直接抓取全文核对：京报网 2025-12-09 07:14《十七孔桥的金光穿洞，你知道它的来龙去脉吗？》(来源：北京青年报) https://news.bjd.com.cn/2025/12/09/11451647.shtml 与中新网同文转发 https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml，逐字：**「……特在南湖岛与东堤之间仿照北京卢沟桥，兼收苏州宝带桥特点，以青石筑成桥体，以汉白玉为栏杆，因有17个拱券，故名十七孔桥……」**。京报网 2025-12-24《数字密码》(https://news.bjd.com.cn/2025/12/24/11482771.shtml ，快照级)同句互证。注意：原文只定**石材种类**分工；M4 节"基色暖白"是实拍光照结果，两者不矛盾——基色数值裁决见 A/B，接线决定权在主控。
+
+**2. qingshi_material（追加）**。`base_rgb=(0.305,0.342,0.381)` 线性（≈sRGB 149,157,165 冷灰蓝，青石新出面工作值），复用 `stone_material` 节点栈：joint=0.010 / course_h=0.60 / weather=0.32 / block_var=0.12 / bump 0.30 / rough 0.84（比现 stone_body 接法略强调砌缝块差）。券圈建议略亮变体 `(0.350,0.382,0.418)` 保持券圈可读层次（同现 m_ring>m_body 的相对步进）。
+
+**3. A/B 证据（同 blend 同相机同 seed=20261004，res 800 samples 32）**：`3d/ab_qingshi/ab_hero_A_warm.png` vs `ab_hero_B_qingshi.png`（并排 `ab_hero_AB_side.png`）。材质生效区（两图逐像素差>8 掩膜，占画面 17.7%）实测：A 暖白桥体 mask-mean RGB **(146.0,147.8,148.4)** R−B=−2.3 lum=147.5 → B 青石 **(126.9,132.1,136.8)** **R−B=−10.0** lum=131.3 —— 亮度 −16.2、冷移 −7.7，方向正确量级温和；掩膜外最大差仅 8/255（天空区 ≤1、近水区 ≤2，属去噪/采样抖动级，非结构变化；=0 占 75.9%）。目视：B 桥体青灰、栏杆白线保留、无伪影。
+
+**4. 判据重跑（全绿）**：freeze_hash 三对象 sha_sorted 与冻结值逐位一致（861d8836… / b4421770… / 5154f49e…，顶点数 4409/1656/136 不变）——纯 shader 追加零触几何；L1 `test_l1_body.py + test_checks_l1.py` **207 passed**；L2 正检 **exit 0 / ok=True 零 fail 零 skip**；L2 负控 **exit 0**（护栏按预期抓到扰动）。materials.py 新盘上哈希 `52c68ce3bcaf…` 已同步 manifest §2。
+
+---
+
 ## 2026-10-05 M4b 雾岸修补（FogAndBank agent）：天空雾硬边 + 岸坡生硬感 —— 本体零改动
 
 **改动文件**: `shot_auto2.py` / `shot.py` / `shot_auto.py` / `ortho.py`（相机 clip_end）、`build_scene2.py`（仅 shore_bank 环境段）。本体 `bridge_body`/`voussoir`/`impost` 顶点一字未动（freeze_hash 三对象 sha_sorted 与冻结值逐位一致：861d8836… / b4421770… / 5154f49e…）。
