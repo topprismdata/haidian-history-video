@@ -250,3 +250,9 @@
 - tools/photo_similarity.py 新增: 实拍接近度三协议(A 冬至实拍开口检测/ A2 历史扫描开敞湾检测+1D单应 rectify / B 轮廓IoU / C 天空基准桥面驼峰相关) + 并排对照图 24/25 + 报告 23。
 - 校准结论(如实): 黄昏逆光+霾使 A/C 自动检测证据不足(A 9/17, C pearson 0.53); 历史扫描为 mid-gray 天空照片, 全局阈值不成立(B 0.375 为协议失效非模型误差); 可靠四项结构匹配率 99.76%; 像素面积口径以 L3 冻结掩膜 0.8136 为准。
 - CSV 末行 pier_width_m=NA(四审 H 项); manifest §2 materials.py 哈希回填。
+
+## M10.3 (2026-10-05) 证据图重渲批（六审补证）
+- 六审点名 v6 07 号与 v5 像素零差异。根因: ①v6 渲染批(14:55)早于 materials.py M10.2 保存(14:57), 全批证据图用旧材质; ②`_beast_preview.py` 自建平 Principled 绕过 materials.py, 07 永远不反映风化。
+- 修: ①15:19 全量重渲(hero/side/arch/top/狮×2/兽/透视/细部19-22/匾额×4); ②`_beast_preview.py` 改挂 `MAT.marble_material`。重渲后 07 vs v5 mean|d|=5.54, 31.5% 像素 >3 级。
+- overlay 正参复跑(ortho_side.png): VOID PASS n=17 max|Δxc|=0.0096, IoU 0.8136 不变(几何冻结)。
+- 承认 v6「全构件风化已复验」措辞不成立; v6.1 起成立。

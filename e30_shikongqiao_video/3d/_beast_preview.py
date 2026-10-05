@@ -22,11 +22,10 @@ print("FACES %d COMPS %d" % (len(me.polygons), comps))
 ob = bpy.data.objects.new("beast", me)
 bpy.context.collection.objects.link(ob)
 
-# 地面 + 材质(汉白玉近似)
-m = bpy.data.materials.new("marble"); m.use_nodes = True
-b = m.node_tree.nodes.get("Principled BSDF")
-b.inputs["Base Color"].default_value = (0.88, 0.87, 0.84, 1.0)
-b.inputs["Roughness"].default_value = 0.6
+# 地面 + 材质(M10.3: 挂主场景同款汉白玉; 原自建平 Principled 绕过 materials.py,
+# 导致 07 证据图永远不反映风化层——六审点名零差异)
+import materials as MAT
+m = MAT.marble_material("marble")
 me.materials.append(m)
 bpy.ops.mesh.primitive_plane_add(size=8, location=(0, 0, 0))
 
