@@ -79,12 +79,18 @@ def _box(c, s, rot_y=0.0):
 
 def _sculpt_parts(variant):
     """蹲坐式官式靠山兽部件(单位坐标: 朝 +X, 高 1.0, 闭合水密深互渗)。"""
-    P = []
+    P, N, F = [], [], []
 
-    def add(bm):
+    def add(bm, lst=None):
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
         bm.normal_update()
-        P.append(bm)
+        (lst if lst is not None else P).append(bm)
+
+    def neg(bm):
+        add(bm, N)
+
+    def fin(bm):
+        add(bm, F)
 
     def ell(c, r, seg=_SEG, ring=_RING):
         add(_ell(c, r, seg, ring))
@@ -131,7 +137,7 @@ def _sculpt_parts(variant):
         ell((0.39, head_yaw * 0.1 + sy * 0.055, 0.87), (0.04, 0.04, 0.04), _SEG_S, _RING_S)
 
     # 张口阔吻 / 舌与獠牙 / 下颌
-    jaw_open = 0.0 if variant == 0 else -0.015
+    jaw_open = -0.035 if variant == 0 else -0.050   # 二审条款二十一: 张口为实物核心特征
     box((0.29, head_yaw * 0.1, 0.77 + jaw_open), (0.14, 0.15, 0.055))
     ell((0.34, head_yaw * 0.1, 0.75 + jaw_open), (0.045, 0.06, 0.035), _SEG_S, _RING_S)
     if variant == 1:
@@ -146,12 +152,12 @@ def _sculpt_parts(variant):
         ell((0.15, sy * 0.20, 0.94), (0.07, 0.045, 0.09), _SEG_S, _RING_S)
 
     # 7. 官式卷云鬃毛 (大团涡卷环绕头颈后部)
-    n_mane = 9 if variant == 0 else 11
+    n_mane = 10 if variant == 0 else 12
     for k in range(n_mane):
-        th = math.pi * k / float(max(1, n_mane - 1))
-        ym = 0.18 * math.cos(th)
-        zm = 0.84 + 0.15 * math.sin(th)
-        xm = 0.08 - 0.06 * math.sin(th)
+        th = math.radians(-60.0 + 300.0 * k / float(max(1, n_mane - 1)))
+        xm = 0.10 - 0.06 * max(0.0, math.sin(th))
+        ym = 0.17 * math.cos(th)
+        zm = 0.78 + 0.16 * math.sin(th)
         ell((xm, ym, zm), (0.055, 0.065, 0.055), _SEG_M, _RING_M)
 
     # 颈背鬃毛顺流下覆
@@ -165,7 +171,14 @@ def _sculpt_parts(variant):
     ell((-0.26, tail_sy * 0.16, 0.44), (0.08, 0.06, 0.12), _SEG_S, _RING_S)
     ell((-0.22, tail_sy * 0.14, 0.56), (0.06, 0.05, 0.09), _SEG_S, _RING_S)
 
-    return P
+    # ── 减法(半凸出表面, 杜绝内腔壳): 张口槽/眼窝/鼻孔; 最后凸眼 ──
+    hy = head_yaw * 0.1
+    neg(_box((0.40, hy, 0.785), (0.10, 0.12, 0.045)))
+    for sy in (1, -1):
+        neg(_ell((0.385, hy + sy * 0.075, 0.90), (0.026, 0.026, 0.026), _SEG_S, _RING_S))
+        neg(_ell((0.425, hy + sy * 0.045, 0.865), (0.014, 0.014, 0.014), _SEG_S, _RING_S))
+        fin(_ell((0.392, hy + sy * 0.075, 0.90), (0.028, 0.028, 0.028), _SEG_S, _RING_S))
+    return P, N, F
 
 
 def _union_parts(parts):
@@ -199,6 +212,28 @@ def _union_parts(parts):
     col.objects.unlink(base)
     bpy.data.objects.remove(base)
     return res
+
+
+def _bool_step(me, tool_bm, op):
+    """单步 EXACT 布尔(并/差), 返回新 mesh。"""
+    col = bpy.context.scene.collection
+    tme = bpy.data.meshes.new("_beast2_tool")
+    tool_bm.to_mesh(tme)
+    tool_bm.free()
+    ob = bpy.data.objects.new("_beast2_tool", tme)
+    col.objects.link(ob)
+    base = bpy.data.objects.new("_beast2_acc", me)
+    col.objects.link(base)
+    md = base.modifiers.new("op", 'BOOLEAN')
+    md.operation = op
+    md.solver = 'EXACT'
+    md.object = ob
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    new_me = bpy.data.meshes.new_from_object(base.evaluated_get(dg))
+    col.objects.unlink(ob); bpy.data.objects.remove(ob); bpy.data.meshes.remove(tme)
+    col.objects.unlink(base); bpy.data.objects.remove(base)
+    return new_me
 
 
 def _normalize(bm):
@@ -246,8 +281,12 @@ def _mark_smooth(bm, angle_deg=45.0):
 
 
 def _build_master(variant):
-    parts = _sculpt_parts(variant)
-    me = _union_parts(parts)
+    pos, negl, finl = _sculpt_parts(variant)
+    me = _union_parts(pos)
+    for nbm in negl:
+        me = _bool_step(me, nbm, 'DIFFERENCE')
+    for fbm in finl:
+        me = _bool_step(me, fbm, 'UNION')
     bm = bmesh.new()
     bm.from_mesh(me)
     bpy.data.meshes.remove(me)
