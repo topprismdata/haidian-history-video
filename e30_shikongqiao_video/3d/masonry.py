@@ -32,50 +32,69 @@ COURSE_H = 0.40            # 砧石层高 m
 COURSE_W = 0.90            # 砧石宽 m
 
 
-def _ellipse_pt(xc, spz, a, b, t):
-    return (xc + a * math.cos(t), spz + b * math.sin(t))
+def _arch_normal(x, xc, springer, a, b):
+    d = G.arch_dzdx(x, xc, springer, a, b)
+    L = math.hypot(d, 1.0)
+    return (-d / L, 1.0 / L)   # 指向拱外(上)
 
 
-def voussoir_count(a, b):
-    """内弧半周长按 Ramanujan 近似 ÷ 面宽, 取奇数(留中央龙门石)。"""
-    h = ((a - b) ** 2) / ((a + b) ** 2)
-    per_half = 0.5 * math.pi * (a + b) * (1 + 3 * h / (10 + math.sqrt(4 - 3 * h)))
-    n = max(9, int(round(per_half / VOUSSOIR_FACE_W)))
-    return n | 1  # 奇数
+def _arc_stations(xc, a, b, springer, N):
+    """按内弧等弧长取 N+1 个 x 站点(含两端)。"""
+    M = 200
+    xs = [xc - a + 2 * a * k / M for k in range(M + 1)]
+    zs = [G.arch_z(x, xc, springer, 0.0 + a, b) for x in xs]
+    # 用 arch_z 需 springer; 上面 springer=0 占位, 仅取相对弧长
+    cum = [0.0]
+    for k in range(1, len(xs)):
+        cum.append(cum[-1] + math.hypot(xs[k]-xs[k-1], zs[k]-zs[k-1]))
+    total = cum[-1]
+    st = [xs[0]]
+    for j in range(1, N):
+        target = total * j / N
+        for k in range(1, len(cum)):
+            if cum[k] >= target:
+                f = (target - cum[k-1]) / max(1e-9, cum[k]-cum[k-1])
+                st.append(xs[k-1] + f*(xs[k]-xs[k-1])); break
+    st.append(xs[-1])
+    return st
 
 
-def _wedge(bm, xc, spz, a, b, t0, t1, side, half_depth, ring_t, lift=0.0):
-    """一块放射楔石: 角域[t0,t1], 内椭圆(a,b)->外(a+ring_t,b+ring_t), y[y0,y1]。
-    lift: 龙门石径向外凸量。返回 True。"""
-    ts = (t0, (t0 + t1) / 2.0, t1)
-    inner = [_ellipse_pt(xc, spz, a, b, t) for t in ts]
-    outer = [_ellipse_pt(xc, spz, a + ring_t + lift, b + ring_t + lift, t) for t in ts]
+def _voussoir(bm, x0, x1, xc, springer, a, b, ring_t, side, half_depth, lift=0.0):
+    """一块放射券石: 内弧 arch_z, 外弧沿法向偏移 ring_t+lift, 端面沿法向(放射缝)。"""
+    ts = (x0, (x0+x1)/2.0, x1)
+    inner, outer = [], []
+    for x in ts:
+        z = G.arch_z(x, xc, springer, a, b)
+        nx, nz = _arch_normal(x, xc, springer, a, b)
+        inner.append((x, z))
+        outer.append((x + nx*(ring_t+lift), z + nz*(ring_t+lift)))
     ring = inner + list(reversed(outer))
-    # 贴合收分: 每块按其 z 取墙半宽, 贴面石落在墙面外侧 half_depth 带内
-    zs = [z for _, z in ring]
-    zmid = sum(zs) / len(zs)
+    zs = [z for _, z in ring]; zmid = sum(zs)/len(zs)
     hw = _hw(xc, zmid)
-    y0 = side * hw - (half_depth if side > 0 else 0.0)
-    y1 = side * hw + (half_depth if side > 0 else 0.0)
+    y0 = side*hw - (half_depth if side > 0 else 0.0)
+    y1 = side*hw + (half_depth if side > 0 else 0.0)
     va = [bm.verts.new((x, y0, z)) for x, z in ring]
     vb = [bm.verts.new((x, y1, z)) for x, z in ring]
     m = len(ring)
     for k in range(m):
-        k2 = (k + 1) % m
-        try:
-            bm.faces.new((va[k], va[k2], vb[k2], vb[k]))
-        except ValueError:
-            pass
+        k2 = (k+1) % m
+        try: bm.faces.new((va[k], va[k2], vb[k2], vb[k]))
+        except ValueError: pass
     try:
-        bm.faces.new(list(reversed(va)))
-        bm.faces.new(vb)
-    except ValueError:
-        pass
-    return True
+        bm.faces.new(list(reversed(va))); bm.faces.new(vb)
+    except ValueError: pass
+
+
+def voussoir_count(a, b):
+    """内弧周长按 Ramanujan 近似 ÷ 面宽, 取奇数(留中央龙门石)。"""
+    h = ((a - b) ** 2) / ((a + b) ** 2) if (a+b) > 0 else 0
+    per_half = 0.5 * math.pi * (a + b) * (1 + 3*h/(10 + math.sqrt(4 - 3*h)))
+    n = max(7, int(round(per_half / VOUSSOIR_FACE_W)))
+    return n | 1
 
 
 def build_voussoir(bm, hw_front, half_depth):
-    """17 孔券石环(前后两面)。返回每孔块数列表。"""
+    """17 孔尖拱券石环(前后两面)。返回每孔块数。"""
     counts = []
     for i in range(G.N_SPAN):
         a = G.SPANS[i] / 2.0
@@ -84,15 +103,11 @@ def build_voussoir(bm, hw_front, half_depth):
         b = G.arch_rise(i)
         N = voussoir_count(a, b)
         counts.append(N)
-        dth = math.pi / N
-        jt = JOINT / max(a, 0.5)  # 角向缝宽近似
+        st = _arc_stations(xc, a, b, spz, N)
         for side in (1, -1):
             for k in range(N):
-                t0 = k * dth + jt
-                t1 = (k + 1) * dth - jt
-                is_key = (k == N // 2)
-                _wedge(bm, xc, spz, a, b, t0, t1, side, half_depth, RING_T,
-                       lift=0.06 if is_key else 0.0)
+                _voussoir(bm, st[k], st[k+1], xc, spz, a, b, RING_T, side, half_depth,
+                          lift=0.07 if k == N//2 else 0.0)
     return counts
 
 

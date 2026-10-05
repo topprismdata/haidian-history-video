@@ -54,25 +54,27 @@ def main():
     vos = bpy.data.objects["voussoir"]
     vos_ev = vos.evaluated_get(dg)
     vos_me = vos_ev.to_mesh()
+    bad = None
     for v in vos_me.vertices:
-        p = v.co                               # 局部系(框架修订, 见上)
+        p = v.co
         for i in range(G.N_SPAN):
-            xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
             a = G.SPANS[i] / 2.0
-            if abs(p.x - xc) >= a:
-                continue                      # 横向已在孔外, 不是本孔的事
-            dz = p.z - G.SPRINGER
-            if dz < 0.0 or dz > a:
-                continue                      # 纵向不在起拱线以上
-            r = math.hypot(p.x - xc, dz)
-            if r < a - eps:
-                fail("VOUSSOIR_IN_VOID",
-                     "券石侵入净空 孔%d 顶点(%.2f,%.2f) 到心距%.4f < 拱腹半径%.4f-eps"
-                     % (i + 1, p.x, p.z, r, a))
+            xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
+            if abs(p.x - xc) >= a - eps:
+                continue
+            spz = G.arch_springer_z(i)
+            b = G.arch_rise(i)
+            if p.z < spz - 0.05:
+                continue
+            # 侵入净空: 顶点低于真实尖拱 intrados(拱洞在曲线以下)
+            if p.z < G.arch_z(p.x, xc, spz, a, b) - eps:
+                bad = (i + 1, p.x, p.z, G.arch_z(p.x, xc, spz, a, b))
                 break
-        else:
-            continue
-        break
+        if bad:
+            break
+    if bad:
+        fail("VOUSSOIR_IN_VOID",
+             "券石侵入净空 孔%d 顶点(%.2f,%.2f) 低于 intrados %.2f" % bad)
     vos_ev.to_mesh_clear()
     # 3) 券洞内壁法线朝心 —— G2 修订: 全部17孔, 非只第9孔。
     #    判据语义: 拱腹采样面的法线与"指向圆心"夹角 < θ_tol(G2: 面法线不能要求精确0°),
@@ -96,13 +98,13 @@ def main():
             spz = G.arch_springer_z(i)          # M12: 逐孔起拱线随桥面
             if c.z <= spz + 0.02:
                 return None
-            dz = c.z - spz
-            if abs(c.x - xc) >= a - 0.1 or dz >= a - 0.05:
+            b = G.arch_rise(i)
+            if abs(c.x - xc) >= a - 0.1:
                 continue
-            r = math.hypot(c.x - xc, dz)
-            if abs(r - a) > 0.15:
+            az = G.arch_z(c.x, xc, spz, a, b)   # 真实尖拱 intrados
+            if abs(c.z - az) > 0.15 or c.z <= spz + 0.02:
                 continue
-            return (xc, r, dz)
+            return (xc, az, a, b, spz)
         return None
     if NEGATIVE:
         flipped = 0
@@ -119,9 +121,11 @@ def main():
         hit = band_hit(poly)
         if hit is None:
             continue
-        xc, r, dz = hit
+        xc, az, a, b, spz = hit
         tot += 1
-        dot = (poly.normal.x * (xc - poly.center.x) + poly.normal.z * (-dz)) / (r or 1.0)
+        d = G.arch_dzdx(poly.center.x, xc, spz, a, b)               # 尖拱切线斜率
+        ix, iz = d / math.hypot(d, 1.0), -1.0 / math.hypot(d, 1.0)  # 指向拱内(下)法线
+        dot = poly.normal.x * ix + poly.normal.z * iz
         if dot < math.cos(THETA):
             neg += 1
     if tot == 0:

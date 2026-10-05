@@ -40,9 +40,42 @@ def arch_crown_z(i):
     return deck_z(xc) - SPANDREL
 
 
+def arch_rise_ratio(i):
+    """M12 P0-2: 矢跨比剖面。真桥中央拱高瘦(≈0.70)、端孔矮(≈0.50), 非恒定半圆。
+    照片实测: 中央孔洞口高/宽≈1.0-1.1(含起拱线以上矢高+以下到水面), 冠部收尖。"""
+    u = abs(2 * i - (N_SPAN - 1)) / (N_SPAN - 1)   # 0=中央, 1=端
+    return 0.70 - 0.20 * u
+
+
+def arch_rise(i):
+    return arch_rise_ratio(i) * SPANS[i]
+
+
 def arch_springer_z(i):
-    """第 i 孔起拱线 = 冠 - 矢高(ARCH_RATIO*span)。端孔自动贴近水面(真实小端孔)。"""
-    return arch_crown_z(i) - (SPANS[i] / 2.0) * 2.0 * ARCH_RATIO
+    """第 i 孔起拱线 = 冠 - 矢高。端孔自动贴近水面(真实小端孔)。"""
+    return arch_crown_z(i) - arch_rise(i)
+
+
+def arch_e(a, b):
+    """两圆心尖拱: 圆心偏移 e=(b^2-a^2)/(2a)。b>a→e>0→冠部收成尖(ogee)。"""
+    return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
+
+
+def arch_z(x, xc, springer, a, b):
+    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a]。左半圆心(xc+e)、右半(xc-e)。"""
+    e = arch_e(a, b)
+    R = a + e
+    cc = (xc + e) if x <= xc else (xc - e)
+    dd = R * R - (x - cc) ** 2
+    return springer + (math.sqrt(dd) if dd > 0 else 0.0)
+
+
+def arch_dzdx(x, xc, springer, a, b):
+    e = arch_e(a, b)
+    R = a + e
+    cc = (xc + e) if x <= xc else (xc - e)
+    dd = R * R - (x - cc) ** 2
+    return (-(x - cc) / math.sqrt(dd)) if dd > 1e-6 else 0.0
 
 SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
 PIER_X = []
@@ -138,8 +171,8 @@ def build_void_bm():
         span = SPANS[i]
         xc = (PIER_X[i] + PIER_X[i + 1]) / 2.0
         a = span / 2.0
-        b = a * 2.0 * ARCH_RATIO
-        springer = arch_springer_z(i)   # M12: 逐孔起拱线随桥面
+        b = arch_rise(i)   # M12 P0-2: 矢高剖面(中央高/端矮)
+        springer = arch_springer_z(i)
         w = DECK_DOWN_W * 1.40
         # 截面 = 下部竖直边墙(矩形基座) + 上部半圆券。半圆严格从 SPRINGER 起,
         # 不允许在券圈内部多出一段直边(GPT v4 扣分点)。
@@ -151,8 +184,8 @@ def build_void_bm():
             (xc + a, springer),
         ]
         for k in range(1, NSEG_ARC):
-            t = math.pi * k / NSEG_ARC
-            prof.append((xc + a * math.cos(t), springer + b * math.sin(t)))
+            xx = xc + a - 2.0 * a * k / NSEG_ARC
+            prof.append((xx, arch_z(xx, xc, springer, a, b)))
         prof.append((xc - a, springer))
         n = len(prof)
         deck_c = deck_z(xc)
