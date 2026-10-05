@@ -92,11 +92,16 @@ def _derive_cameras():
     }
     out = {}
     for name, (dv, k) in dirs.items():
-        pos = ctr - dv * (size.length / 2.0 * k)
-        if name in ("hero", "low", "arch"):
-            pos.z = 3.0 + size.z * 0.06
+        if name == "top":
+            # 真俯视: 正上方垂直往下看。照搬 shot_auto2 的 max(pos.z,...) 会把
+            # 头顶退距的负 z 压成略高于桥面的平视(2026-10-05 实测 z=10.62), 名不副实。
+            pos = Vector((ctr.x, ctr.y, mx.z + size.length * 0.55))
         else:
-            pos.z = max(pos.z, mx.z + size.z * 0.15)
+            pos = ctr - dv * (size.length / 2.0 * k)
+            if name in ("hero", "low", "arch"):
+                pos.z = 3.0 + size.z * 0.06
+            else:
+                pos.z = max(pos.z, mx.z + size.z * 0.15)
         rot = (ctr - pos).to_track_quat('-Z', 'Y').to_euler()
         out[name] = {"loc": [round(v, 4) for v in pos],
                      "rot": [round(v, 6) for v in rot],

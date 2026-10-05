@@ -91,6 +91,10 @@
 !e30_shikongqiao_video/3d/refs/
 !e30_shikongqiao_video/3d/refs/*.md
 !e30_shikongqiao_video/3d/refs/*.json
+# 回归基线与固化机位(2026-10-05): 狮重做前后的对照基准, 丢了回归就无从归因
+!e30_shikongqiao_video/3d/refs/regression/
+!e30_shikongqiao_video/3d/refs/regression/*.json
+
 # T3.5 参考资产冻结（G3 防污染闸）：仅这两个文件精确放行，其余图片仍不入库
 !e30_shikongqiao_video/3d/refs/ref_elevation.jpg
 !e30_shikongqiao_video/3d/refs/ref_mask.png

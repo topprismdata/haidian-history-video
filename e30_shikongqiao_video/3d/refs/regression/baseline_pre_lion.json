@@ -1,0 +1,27 @@
+{
+ "seed": 20261004,
+ "res": 640,
+ "samples": 16,
+ "views_json": "/tmp/reg_base/regression_views.json",
+ "pinned_at_first_run": false,
+ "views": {
+  "hero": {
+   "png": "/tmp/reg_base/reg_hero.png",
+   "sha256": "92f417c7993681427e5c33fcd123c1ed859f9455872b01a32a5f4b1d9bd34599",
+   "mean_lum": 0.541,
+   "edge_energy": 0.0143
+  },
+  "side": {
+   "png": "/tmp/reg_base/reg_side.png",
+   "sha256": "27bae4fdf8ddcc5716593eaa8a1bb67720910fe162437fd9c0c58d0c6fc8aaee",
+   "mean_lum": 0.509,
+   "edge_energy": 0.0137
+  },
+  "top": {
+   "png": "/tmp/reg_top/reg_top.png",
+   "sha256": "2fe3498f90e2ac877b3a7f8ecb17042b8f017f4d1b1a7cc95c1d62f2aebc88df",
+   "mean_lum": 0.356,
+   "edge_energy": 0.0168
+  }
+ }
+}
