@@ -262,3 +262,7 @@
 - tools/cam_clay_compare.py: 同机位 clay 渲染(白名单物件, fog_volume/water 隐藏) + Blender 自投影控制点侧车 affine + 近面开口投影 void 掩膜; 分项: body IoU / void IoU / Chamfer / 驼峰 pearson+RMSE。
 - 结果(delivery/26, 图 27/28): similarity_landmarks 0.9718 但残差结构化; void 0.378 / body 0.254 / 驼峰 0.46 → **>=95% 照片几何相似不认证**; 误差源 = 拱形/跨距工作值(模型拱窄高 vs 实拍), 列 M11 反演候选。
 - 协议自身修复链(留证): PnP 平面歧义→look-at 先验; 相机 up 列反号; 拱筒非通透→开口投影掩膜; 0/1 掩膜 resize/warp 阈值病×3; Blender 内参约定→控制点侧车 affine; dtf 天空列污染×2; samp 全/半分辨率单位。
+
+## v6.4.1 (2026-10-05) 九审第1-5项审计工具链收口
+- 九审发现 v6.4.zip 装陈旧副本(K_bl 15.6%各向异性/k1±0.05/manifest无hash/certify单图/SVD非边缘化)。本批从实时文件重建并逐文件 md5 校验入包。
+- cam_clay_compare resolution 前置→26 K_bl fx=fy ratio=1.000000; cam_register k1±0.02; manifest 加 cert_gates sha256; certify.py 升级多照片+holdout ALL-AND(缺clay门判fail不默认通过); svd_analysis 改 Schur 补边缘化相机+列归一+active-bound, 措辞修正为"可辨识秩不足"; 30 status 降级 OPTIMIZATION_CONVERGED_DIAGNOSTIC_ONLY。
