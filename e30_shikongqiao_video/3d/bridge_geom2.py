@@ -44,7 +44,7 @@ def arch_rise_ratio(i):
     """M12 P0-2: 矢跨比剖面。真桥中央拱高瘦(≈0.70)、端孔矮(≈0.50), 非恒定半圆。
     照片实测: 中央孔洞口高/宽≈1.0-1.1(含起拱线以上矢高+以下到水面), 冠部收尖。"""
     u = abs(2 * i - (N_SPAN - 1)) / (N_SPAN - 1)   # 0=中央, 1=端
-    return 0.61 - 0.15 * u
+    return 0.56 - 0.10 * u
 
 
 def arch_rise(i):
@@ -61,21 +61,46 @@ def arch_e(a, b):
     return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
 
 
-def arch_z(x, xc, springer, a, b):
-    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a]。左半圆心(xc+e)、右半(xc-e)。"""
+# [六审四刀#1] 冠顶钝化: 尖拱 intrados = 两圆心圆的**下包络** min(h1,h2),
+# cusp 在两弧交点(冠)。soft-min(lo - s*ln(1+e^{-(hi-lo)/s})) 把尖角圆化:
+# 冠顶降 s*ln2 且斜率归 0(凸顶 C1), 离冠 (hi-lo)>>s 处精确回到原弧——
+# 肩点/单调性零污染。s=0.06b(六审: 真桥"圆弧主导+轻微收尖", 非哥特 cusp)。
+CROWN_BLUNT_S = 0.06
+
+
+def _arc_pair(x, xc, a, b):
+    """左右两圆心圆在 x 处的高度与斜率。左圆心(xc+e)弧管左半, 右(xc-e)管右半;
+    对侧远端根号参数截 0(该处由 min 取到本侧弧, 截值不影响包络)。"""
     e = arch_e(a, b)
     R = a + e
-    cc = (xc + e) if x <= xc else (xc - e)
-    dd = R * R - (x - cc) ** 2
-    return springer + (math.sqrt(dd) if dd > 0 else 0.0)
+    out = []
+    for cc in (xc + e, xc - e):
+        dd = R * R - (x - cc) ** 2
+        if dd > 1e-9:
+            sq = math.sqrt(dd)
+            out.append((sq, -(x - cc) / sq))
+        else:
+            out.append((0.0, 0.0))
+    return out
+
+
+def arch_z(x, xc, springer, a, b):
+    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a], 冠顶 soft-min 钝化。"""
+    (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
+    s = CROWN_BLUNT_S * b
+    lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
+    return springer + lo - s * math.log(1.0 + math.exp((lo - hi) / s))
 
 
 def arch_dzdx(x, xc, springer, a, b):
-    e = arch_e(a, b)
-    R = a + e
-    cc = (xc + e) if x <= xc else (xc - e)
-    dd = R * R - (x - cc) ** 2
-    return (-(x - cc) / math.sqrt(dd)) if dd > 1e-6 else 0.0
+    (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
+    s = CROWN_BLUNT_S * b
+    if h1 <= h2:
+        lo, hi, dlo, dhi = h1, h2, d1, d2
+    else:
+        lo, hi, dlo, dhi = h2, h1, d2, d1
+    w = math.exp((lo - hi) / s)
+    return (dlo + w * dhi) / (1.0 + w)
 
 SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
 PIER_X = []
