@@ -49,8 +49,8 @@ sc.camera = cam
 target = (0.05, 0.0, 0.56)
 # 正面 3.2m(85mm 竖幅 1.02m: 角尖 1.12m 恰全入画) / 3-4 侧 3.4m(含全身卷尾) /
 # 正面特写 1.6m(距吻端~0.95m, 演示"距兽 ~1m 可辨识"条款: 口裂/鼻卷/须珠在画)。
-for ang_deg, name, dist in ((0.0, "front", 4.40), (40.0, "threeq", 4.60),
-                            (0.0, "frontclose", 2.10)):
+for ang_deg, name, dist in ((0.0, "front", 5.60), (40.0, "threeq", 5.80),
+                            (0.0, "frontclose", 2.60)):
     a = math.radians(ang_deg)
     cx = target[0] + dist * math.cos(a)
     cy = target[1] + dist * math.sin(a)

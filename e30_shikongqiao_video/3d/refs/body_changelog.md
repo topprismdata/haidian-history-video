@@ -273,3 +273,11 @@
 - cmp10 悬空横条 = impost 起拱石(恒定z, 洞口边缘外凸), 且 impost/pier_plinth/voussoir 均未过 void 布尔。
 - 反演工具 tools/m12_geom_invert.py: 8参自由联合反演**证实退化**(eig最小=0, 全参顶界, ovf对齐崩) → 印证八九审"侧视不能同时定span/pier/camber/rise"。改受约束定标: span保持工作值, 冠随桥面, 只解 camber 幅度 → 桥面矢高≈5.4m(0.034×142/0.897)。
 - 并行子agent: BeastRebuild(整模)/LionRebuild(换母模)/RailMeasure(一开间测绘)。
+## M13 (2026-10-05) 逐块砌筑 + 尖拱 + 端头/机位/构件修正
+- 用户方法论转折: "先做每块石板再数" → masonry.py 真块石(放射券石环+错缝砧石), 总 2068 块, 统计入 masonry_stats.json。光滑体+噪声假纹判弃。
+- 两圆心尖拱(ogee): bridge_geom2 新增 arch_e/arch_z/arch_dzdx 单一来源, void+券石+qa_l2 三处同步(644采样面 0 fail)。
+- **矢跨比空改事故**: M12 比例回调把 replace 打在 masonry.py(字符串不存在→静默无操作), 真源头在 bridge_geom2:47。M13-B2 才落地: 0.70-0.20u -> 0.61-0.15u, 中央 e/a 0.48->0.24(近真桥缓ogee, 侧视对照 winter 确认)。
+- 券石块数改按照片目标表 VOUSSOIR_TARGET=[17,15,13,13,11,11,9,9,7](对称): 统一面宽数学上给不出端7/心17(半弧长比2.19≠块数比2.43)——真桥端孔块更宽。
+- arch 机位重写: 原机位退到桥端轴向被岸坡挡+auto-frame把全桥拉回(近景变全景); 改水面侧斜对第3孔、z按 bridge_body 世界bbox映射、不auto-frame。
+- **靠山兽姿态假设推翻**: 设计注释"伏卧前探+卷云顶1.23高过头"读错证据——真拍(3627588283)为蹲坐昂首、背火焰云多层顺脊、最高≈头高。BeastPoseFix 重做中。
+- 石狮官方近证 off_13: 蹲坐昂首、鬃为顺披火焰长棱(非圆球堆)、望柱柱台偏矮(我柱台≈狮高1.5x, 真≈1x)。并入 BeastPoseFix。

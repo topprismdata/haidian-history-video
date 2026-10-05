@@ -23,20 +23,20 @@ sc.render.resolution_x = res
 sc.render.resolution_y = int(res * 9 / 16)
 sc.render.image_settings.file_format = 'PNG'
 
-o = bpy.data.objects["lion_031_+1"]
+o = bpy.data.objects["lion_adult_031_+1"]
 AZ = -math.radians(112.0)
 facing = Vector((math.cos(AZ), math.sin(AZ), 0.0))
-head_local = Vector((0.05, 0.0, 0.21))          # 母模头部中心(单位高)
+head_local = Vector((0.05, 0.0, 0.55))          # 母模瞄准点(狮身中部, 头群组上仰后取中)
 head_w = o.matrix_world @ (head_local * o.scale.x)
-dist = 1.05
+dist = 0.85
 if which == "front":
     ang = 0.0
 else:
-    ang = math.radians(-38.0)                    # 3/4: 绕竖轴转
+    ang = math.radians(42.0)                     # 3/4: 绕竖轴转(2026-10-05 改向: 正脸侧)
 from mathutils import Matrix
 f2 = Matrix.Rotation(ang, 3, 'Z') @ facing
 outward = Vector((-0.927, 0.375, 0.0))           # side+1 栏外法向(实测正交于桥轴)
-camloc = head_w + f2 * dist + outward * 0.35     # 栏外机位: 支撑望柱入画
+camloc = head_w + f2 * dist + outward * 0.22     # 栏外机位: 支撑望柱入画
 aim = Vector((head_w.x, head_w.y, head_w.z + 0.045))  # 栏顶->望柱->狮全栈居中
 camloc.z = aim.z + 0.01
 cd = bpy.data.cameras.new("C"); cd.lens = 35   # 广角: 栏顶->望柱->狮 全栈入画

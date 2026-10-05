@@ -111,9 +111,11 @@ def build_deck_bm():
     import json as _rj
     RP = _rj.load(open(os.path.join(HERE, "refs/rail_params_m12.json")))
     PW = RP["post_width"] / 2.0            # 望柱半宽 ~0.135
-    POST_SHAFT = RP["post_height"] - 0.31  # 柱身(不含头块) ~1.03
     CAP_H = 0.31                            # 头块+垂饰
     RAIL_TOP = 0.92                         # 寻杖顶距桥面
+    # off_13 官拍整改(2026-10-05): 栏上柱台≈头块 0.31≈狮高。旧 post_height 1.34
+    # (栏上段 0.42≈1.3×狮高)偏高; 柱身收到寻杖顶+0.03, 柱全高 0.95+0.31=1.26。
+    POST_SHAFT = RAIL_TOP + 0.03           # 柱身(不含头块)
     PANEL_H = RP["panel_height"]            # 华板 0.36
     SILL_H = RP["lower_rail_thickness"]     # 地栿 0.11
     RAIL_T = RP["rail_top_thickness"]       # 寻杖 0.10
