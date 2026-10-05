@@ -30,7 +30,19 @@ from assumptions import BODY_BOTTOM, MESH_TOL, VOID_CUT_MARGIN   # G1 分家: �
 SEG = 40
 NSEG_X = 240            # 桥体纵向分段(高密度 -> 光滑)
 NSEG_ARC = 40           # 券洞圆弧分段
-SPRING_BASE = SPRINGER  # 起拱线
+SPRING_BASE = SPRINGER  # 起拱线(中央孔)
+SPANDREL = _F.SPANDREL   # M12: 冠顶到桥面恒定拱肩, 拱冠线随桥面 camber
+
+
+def arch_crown_z(i):
+    """M12: 第 i 孔拱冠标高 = 该孔中心处桥面标高 - 拱肩厚(冠线跟随桥面弧线)。"""
+    xc = (PIER_X[i] + PIER_X[i + 1]) / 2.0
+    return deck_z(xc) - SPANDREL
+
+
+def arch_springer_z(i):
+    """第 i 孔起拱线 = 冠 - 矢高(ARCH_RATIO*span)。端孔自动贴近水面(真实小端孔)。"""
+    return arch_crown_z(i) - (SPANS[i] / 2.0) * 2.0 * ARCH_RATIO
 
 SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
 PIER_X = []
@@ -127,6 +139,7 @@ def build_void_bm():
         xc = (PIER_X[i] + PIER_X[i + 1]) / 2.0
         a = span / 2.0
         b = a * 2.0 * ARCH_RATIO
+        springer = arch_springer_z(i)   # M12: 逐孔起拱线随桥面
         w = DECK_DOWN_W * 1.40
         # 截面 = 下部竖直边墙(矩形基座) + 上部半圆券。半圆严格从 SPRINGER 起,
         # 不允许在券圈内部多出一段直边(GPT v4 扣分点)。
@@ -135,12 +148,12 @@ def build_void_bm():
         prof = [
             (xc - a, BODY_BOTTOM - 0.8),
             (xc + a, BODY_BOTTOM - 0.8),
-            (xc + a, SPRINGER),
+            (xc + a, springer),
         ]
         for k in range(1, NSEG_ARC):
             t = math.pi * k / NSEG_ARC
-            prof.append((xc + a * math.cos(t), SPRINGER + b * math.sin(t)))
-        prof.append((xc - a, SPRINGER))
+            prof.append((xc + a * math.cos(t), springer + b * math.sin(t)))
+        prof.append((xc - a, springer))
         n = len(prof)
         deck_c = deck_z(xc)
 

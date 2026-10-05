@@ -27,7 +27,7 @@ def main():
     flipped = 0
     def fail(n, m): fails.append({"name": n, "msg": m})
     # 1) 对象存在
-    for n in ("bridge_body", "voussoir", "impost"):
+    for n in ("bridge_body", "voussoir"):
         o = bpy.data.objects.get(n)
         if o is None:
             fail("OBJ_EXIST", "缺对象 %s" % n)
@@ -88,12 +88,15 @@ def main():
     # 被测总体, 负控形同虚设。现翻"采样带内前10面", 保证必命中被测属性。
     def band_hit(poly):
         c = poly.center
-        if abs(c.y) >= 7.0 or c.z <= G.SPRINGER + 0.02 or abs(poly.normal.y) >= 0.5:
+        if abs(c.y) >= 7.0 or abs(poly.normal.y) >= 0.5:
             return None
         for i in range(G.N_SPAN):
             xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
             a = G.SPANS[i] / 2.0
-            dz = c.z - G.SPRINGER
+            spz = G.arch_springer_z(i)          # M12: 逐孔起拱线随桥面
+            if c.z <= spz + 0.02:
+                return None
+            dz = c.z - spz
             if abs(c.x - xc) >= a - 0.1 or dz >= a - 0.05:
                 continue
             r = math.hypot(c.x - xc, dz)
@@ -129,22 +132,7 @@ def main():
     elif neg > 0:
         fail("WALL_NORMAL", "拱腹法线偏离朝心超容差 %d/%d 面" % (neg, tot))
     body_ev.to_mesh_clear()
-    # 4) impost 构件语义(G2 修订: 面数≠几何正确; 查34个锚点附近有顶点)
-    #    锚点修订(2026-10-04 实测): 简报逐字版锚点 y=0 取 3D 距离, 但起拱线石按构造
-    #    贴在券洞两侧墙 |y|=hw±0.06(hw≈4.7~5.4), y=0 处永无顶点 -> 正检假红 34/34
-    #    (实测证据见 task-task-5-report)。锚点语义"起拱线处有石"是 x×z(桥轴纵剖面)
-    #    陈述, 距离改取 xz 平面距离, 阈值 0.5 不变。
-    imp_obj = bpy.data.objects["impost"]
-    vv = [v.co for v in imp_obj.data.vertices]     # 局部系(框架修订, 见上)
-    missing = 0
-    for i in range(G.N_SPAN):
-        xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
-        for sgn in (-1, 1):
-            anchor = Vector((xc + sgn * G.SPANS[i] / 2.0, 0, G.SPRINGER))
-            if not any(math.hypot(p.x - anchor.x, p.z - anchor.z) < 0.5 for p in vv):
-                missing += 1
-    if missing:
-        fail("IMPOST_ANCHOR", "起拱线石缺位锚点 %d/34" % missing)
+    # (M12: IMPOST_ANCHOR 判据随 impost 立体构件一并移除; 起拱线改材质表达)
     _emit(fails, warns, skips, tot=tot, neg=neg, flipped=flipped)
 
 def _emit(fails, warns, skips, tot=None, neg=None, flipped=0):

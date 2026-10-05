@@ -363,9 +363,10 @@ def build():
             if abs(c.x - xc) > a + 0.05: continue
             n = poly.normal
             if abs(n.y) > 0.05: continue          # 侧墙面(|y|法线)不判, 只判径向面
-            if c.z > G.SPRINGER + 0.05:
+            spz = G.arch_springer_z(idx)          # M12: 逐孔起拱线
+            if c.z > spz + 0.05:
                 b = a * 2.0 * G.ARCH_RATIO
-                dx, dz = c.x - xc, c.z - G.SPRINGER
+                dx, dz = c.x - xc, c.z - spz
                 if dz > b or (dx*dx + dz*dz) > (a + 0.2) ** 2: continue
                 ax_, az_ = -dx, -dz
             else:
@@ -397,31 +398,9 @@ def build():
         bmesh.ops.delete(bm, geom=rm, context='VERTS')
     bm.to_mesh(me); bm.free(); me.update()
     print("  翻转券洞内壁破面: %d" % flipped)
-    # ── 起拱线石 impost (GPT v4 建议第3项) ──
-    # 直边墙 -> 半圆券的转折处本该有一块横向凸出的承托石。
-    # 缺它时该处法线突变成锐棱, 在洞内形成一条贯通的黑色暗带(实测复现)。
-    imp = bmesh.new()
-    IMP_H, IMP_OUT = 0.50, 0.06
-    for i in range(G.N_SPAN):
-        xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
-        a = G.SPANS[i] / 2.0
-        deck_c = G.deck_z(xc)
-        for sgn in (-1, 1):
-            f = max(0.0, min(1.0, (G.SPRINGER - G.BODY_BOTTOM) / (deck_c - G.BODY_BOTTOM)))
-            hw = (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
-            # 起拱线石贴在券洞两侧的内壁上, 从 z-SPRINGER-IMP_H/2 到 +IMP_H/2
-            x0 = xc + sgn * a
-            v = [imp.verts.new(p) for p in (
-                (x0, sgn*(hw-0.02), G.SPRINGER-IMP_H/2),
-                (x0, sgn*(hw+IMP_OUT), G.SPRINGER-IMP_H/2),
-                (x0, sgn*(hw+IMP_OUT), G.SPRINGER+IMP_H/2),
-                (x0, sgn*(hw-0.02), G.SPRINGER+IMP_H/2))]
-            for f2 in ((0,1,2,3),(3,2,1,0)):
-                try: imp.faces.new([v[k] for k in f2])
-                except ValueError: pass
-    bmesh.ops.recalc_face_normals(imp, faces=imp.faces[:]); imp.normal_update()
-    bm_to_obj(imp, "impost", m_ring)
     bm_to_obj(build_voussoir_bm(), "voussoir", m_ring)
+    # M12: 起拱线石 impost 立体构件移除 —— 程序化挑出墩面必成"悬空横条"(九审 cmp10
+    # Critical)。真桥起拱线是极浅线脚, 改由后续材质暗线表达, 不做几何凸块。
     deck_bm, mortar_bm, spots = build_deck_bm()
     # 桥面专署汉白玉: 7cm 凹缝 bump 强刻画(横缝周期=柱距 2.381m), 掠射角读缝
     m_deck = MAT.stone_material("deck_marble", (0.865, 0.840, 0.795), joint=0.07,
@@ -567,7 +546,7 @@ def build():
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
-    for n in ("bridge_body","impost","voussoir","deck_rail","deck_mortar",
+    for n in ("bridge_body","voussoir","deck_rail","deck_mortar",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
     # 2026-10-05 M9 根因修复: 狮/兽对象此前只转朝向不转位置 -> 全桥狮群悬空错位
