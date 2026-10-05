@@ -126,3 +126,20 @@
 - commit: <待填——冻结包 commit 哈希，用户批准后回填>
 - 状态: 待用户目验（冻结包为**候选**，未锁定；见 `3d/refs/freeze_manifest.md`）
 - 冻结状态候选: `CONDITIONAL_RECONSTRUCTION_FREEZE`（依赖 12 条工作值 + 1 条图像推导，清单见 manifest §9）
+
+## 2026-10-05 M6 望柱蹲狮重雕（近景可辨识 + linked duplicates）
+
+- **触发**：用户判据「近景 0.8-1.2m 下石狮必须可辨识（头/吻/鬃毛/前肢/蹲姿）」；现状 `lions.py` 球块堆叠在近景为无定形白块（`lion_single.png` 存档），且 256 只并成单 mesh 后连通域 7168（每狮碎成 ~28 片）。
+- **造型依据**：`refs/lugou_lion/`（Wikimedia Commons，CC/GFDL，仅造型参照不入成片素材）。十七孔桥与卢沟桥同属明清官式蹲狮谱系，取解剖正确性（大头≈40%H、双层眉弓、凸眼、宽上翘吻、口裂、髭须卷、卷云鬃、阔胸垂饰、并拢前肢+趾、低臀、卷尾），纹样从简。
+- **实现**（新模块 `3d/lions2.py`，旧 `lions.py` 留盘不动——freeze manifest 记录文件）：
+  - 每变体一次"母模"：~48 个闭合体块 → EXACT 布尔并成单一水密实体 → SUBSURF(SIMPLE) 细分补密度（5.2.2 LTS 实测 `bmesh.ops.subdivide_edges` 对任意输入静默无操作，cube 复现，故走修改器管道）→ 归一化单位高。
+  - 场景接入改 **linked duplicates**（主控 2026-10-05 口径）：`place_lions(spots)` 建 256 对象共享 2 个 mesh datablock（主狮变体0 / 幼狮变体1），每对象 scale=H、微yaw ±2.6°；`build_scene2.py` 仅改 import、调用与旋转名单（build_lions_bm 合并版删除）。
+- **实测**（`blender -b e30_bridge.blend`）：
+  - unique mesh = 2（`_lion2_master_0` 10632 面 / `_lion2_master_1` 11026 面，均 ≥4000），**单 mesh 连通域 = 1（水密）**
+  - 对象数 256（主 128 + 幼 128）；主狮高 0.30m、幼狮高 0.17m【工作值，沿用旧 LOD 口径】；实际雕体总高=H（母模归一）
+  - **坐实**：抽 16 只主狮，底垫中心到 deck_rail 最近表面距离 <3cm 且法线 +Z（=底垫沉入柱顶 2cm，1.20−1.18）16/16 通过
+  - **本体零改动**：freeze_hash 三对象 sha_sorted 与改前逐位一致（bridge_body `861d8836…`、voussoir `b4421770…`、impost `5154f49e…`；注意 changelog 旧记 `6194d02d…` 是 manifest 标注"勿用于比对"的手算口径）
+- **hero A/B**（同机位同 seed=20261004，仅狮几何不同）：逐像素差 0.123%（1773px，容差>8），全部落于 y∈[359,461] 狮带；栏杆顶缘线新旧逐列一致（残差 std=0、列间跳变 0）。A=`refs/hero_AB_old_lions_samecam.png`，B=`shot_hero.png`。
+- **近景证据**：`lion_closeup_front.png` / `lion_closeup_threeq.png`（距狮头 1.1-1.3m，35mm，渲染纪律同 shot_auto2）。
+- **是否触及冻结本体**：**否**（lions 不在 M2.5 冻结范围；三对象哈希逐位实测一致）。
+- **已知限制**：①共享 mesh 后逐只几何差异消失（仅 transform 微差）——官式程式化本就以重复为常态，远景不可辨，近景同柱双狮不邻接；②狮底垫沉入柱顶 2cm（1.20 与 1.18 口径差，沿旧口径）；③ 544 只文献口径仍以 256 实体 + 柱头群轮廓表现（不变）；④近景平直面片 ~10mm 可见（凿石风格化，非缺陷）。

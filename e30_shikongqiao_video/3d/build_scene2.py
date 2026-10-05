@@ -3,7 +3,7 @@ import bpy, bmesh, os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bridge_geom2 as G
 import materials as MAT
-import lions as LIONS
+import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
 from mathutils import Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -100,7 +100,7 @@ def build_deck_bm():
             for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
                 try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
-            # 蹲狮: 独立 mesh(见 lions.py), 稍后合并
+            # 蹲狮: linked duplicate 见 lions2.py(由 build() 末段 place_lions 就位)
             LION_SPOTS.append((x, y, z + 1.18, i, side))
         # ── 石栏板(GPT v4 第2刀): 厚实体, 远景才读成"石栏板"而非"细横杆" ──
         # 有效高 0.62, 板厚 0.14; 下槛 0.18 高; 顶部扶手 0.13 厚
@@ -130,33 +130,6 @@ def build_deck_bm():
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.normal_update()
     return bm, LION_SPOTS
-
-
-def build_lions_bm(spots):
-    """每根望柱柱头放蹲狮。GPT v4: 每侧 16 根 5 狮柱 + 48 根 4 狮柱 = 272, 两侧 544。
-    544 只全做高模不现实 -> 每柱放 1 只 LOD-M(约 0.22m 高) + 柱侧 1 只小狮,
-    合计 2*64*2 = 256 只实体, 其余以柱头狮群轮廓表示(远景不可分辨)。"""
-    import math as _m
-    bm = bmesh.new()
-    for (x, y, z, idx, side) in spots:
-        L = LIONS.lion_bm(0.30, variant=idx % 2, seed=idx * 13 + side)
-        # 平移就位(望柱柱头)
-        bmesh.ops.translate(L, verts=L.verts, vec=(x, y, z))
-        # 合并
-        me = bpy.data.meshes.new("_tmp_lion")
-        L.to_mesh(me); L.free()
-        bm.from_mesh(me)
-        bpy.data.meshes.remove(me)
-        # 柱侧小狮(幼狮)
-        L2 = LIONS.lion_bm(0.17, variant=1, seed=idx * 29)
-        bmesh.ops.translate(L2, verts=L2.verts, vec=(x - 0.10, y + 0.11 * side, z - 0.02))
-        me2 = bpy.data.meshes.new("_tmp_lion2")
-        L2.to_mesh(me2); L2.free()
-        bm.from_mesh(me2)
-        bpy.data.meshes.remove(me2)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    bm.normal_update()
-    return bm
 
 
 def build_beast_bm():
@@ -360,8 +333,10 @@ def build():
     bm_to_obj(build_voussoir_bm(), "voussoir", m_ring)
     deck_bm, spots = build_deck_bm()
     bm_to_obj(deck_bm, "deck_rail", m_rail)
-    bm_to_obj(build_lions_bm(spots), "lions", m_rail)   # 蹲狮独立层
     bm_to_obj(build_beast_bm(), "beasts", m_rail)
+    # 蹲狮: linked duplicates(2026-10-05 口径) —— 256 对象共享 2 个 mesh datablock,
+    # 不再并成单个 "lions" 大 mesh(反模式: 文件膨胀/无法实例化/回归 diff 不归因)。
+    lion_objs = LIONS.place_lions(spots, m_rail)
     # ── 第4刀改版(2026-10-05, 燕翅型桥台): 引道缓坡 + 两侧八字燕翅墙 + 岸坡地形 ──
     # 文献: 桥台形式三型——带燕翅(古籍"雁翅")/凹字/一字; 前墙古称金刚墙, 两侧八字形
     # 挡墙称燕翅墙(顺水金刚墙) —— 茅以升基金会《中国古代石拱桥——古桥各部名称》
@@ -477,9 +452,11 @@ def build():
     # 2026-10-04 修: abutment_ground 曾漏在此名单外(旋转 0° vs 本体 -112°),
     # 导致引道块孤悬水中且遮挡正交侧立面。T6 出图时用 hide_render 规避是绕过,
     # 根因在此——它与本体同父级 m_body, 本就该一起转。
-    for n in ("bridge_body","impost","voussoir","deck_rail","lions","beasts",
+    for n in ("bridge_body","impost","voussoir","deck_rail","beasts",
               "pier_plinth","deck_cornice","abutment_ground","shore_bank"):
         bpy.data.objects[n].rotation_euler = (0,0,-math.radians(BRIDGE_AXIS_AZ))
+    for ob in lion_objs:   # 蹲狮随桥轴同转(叠加在各自柱头微yaw上)
+        ob.rotation_euler.z += -math.radians(BRIDGE_AXIS_AZ)
     # 照明
     w = bpy.data.worlds.new("World"); bpy.context.scene.world = w; w.use_nodes=True
     nt = w.node_tree

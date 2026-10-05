@@ -1,0 +1,67 @@
+{
+ "core": {
+  "bridge_body": {
+   "bbox_max": [
+    34.864,
+    72.273,
+    7.75
+   ],
+   "bbox_min": [
+    -34.864,
+    -72.273,
+    -2.2
+   ],
+   "nfaces": 2260,
+   "nverts": 4409,
+   "sha_order": "5a5c923275057a127fec2138a53b5b4a02bc66750639fb82978601e82b113674",
+   "sha_sorted": "861d8836b1704067d537ab7e7945f4a247043d9856743ab99e45cc40cea150f2"
+  },
+  "impost": {
+   "bbox_max": [
+    30.292,
+    69.837,
+    2.75
+   ],
+   "bbox_min": [
+    -30.292,
+    -69.837,
+    2.25
+   ],
+   "nfaces": 34,
+   "nverts": 136,
+   "sha_order": "13743527ae240699e76fc6365ab37b72537614eb76e9f37c905f4b987a30adf9",
+   "sha_sorted": "5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a"
+  },
+  "voussoir": {
+   "bbox_max": [
+    31.989,
+    69.841,
+    6.734
+   ],
+   "bbox_min": [
+    -31.997,
+    -69.844,
+    2.54
+   ],
+   "nfaces": 1242,
+   "nverts": 1656,
+   "sha_order": "1c7ded704ed262389bcab794dcc733396f76703ef8aa825ee36c04a0c8173a49",
+   "sha_sorted": "b4421770a9e7951965968341c8a3174433377fe3c326abc1c7a4ca5cc4db047f"
+  }
+ },
+ "objects_present": [
+  "Key",
+  "abutment_ground",
+  "beasts",
+  "bridge_body",
+  "deck_cornice",
+  "deck_rail",
+  "fog_volume",
+  "impost",
+  "lions",
+  "pier_plinth",
+  "shore_bank",
+  "voussoir",
+  "water"
+ ]
+}
