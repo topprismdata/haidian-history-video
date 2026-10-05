@@ -183,3 +183,10 @@
 !/assets/
 !/assets/hist_*/
 !/assets/hist_*/**
+
+# ── 放行：M11 实拍相机注册/几何反演协议（七审要求可复算）─────────────
+!e30_shikongqiao_video/3d/tools/cam_register.py
+!e30_shikongqiao_video/3d/tools/cam_clay_compare.py
+!e30_shikongqiao_video/3d/tools/geom_invert.py
+!e30_shikongqiao_video/3d/tools/cert_gates.json
+!e30_shikongqiao_video/3d/tools/photo_native_width.json
