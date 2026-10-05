@@ -130,22 +130,23 @@ def build_void_bm():
         w = DECK_DOWN_W * 1.40
         # 截面 = 下部竖直边墙(矩形基座) + 上部半圆券。半圆严格从 SPRINGER 起,
         # 不允许在券圈内部多出一段直边(GPT v4 扣分点)。
-        prof = [(xc - a, BODY_BOTTOM - 0.8), (xc + a, BODY_BOTTOM - 0.8),
-                (xc + a, SPRINGER)]
-        for k in range(NSEG_ARC + 1):
+        # 闭合轮廓: 逆时针封闭无自相交
+        # 底左 -> 底右 -> 右起拱点 -> 沿圆弧到左起拱点 -> 闭合回底左
+        prof = [
+            (xc - a, BODY_BOTTOM - 0.8),
+            (xc + a, BODY_BOTTOM - 0.8),
+            (xc + a, SPRINGER),
+        ]
+        for k in range(1, NSEG_ARC):
             t = math.pi * k / NSEG_ARC
-            prof.append((xc - a * math.cos(t), SPRINGER + b * math.sin(t)))
+            prof.append((xc + a * math.cos(t), SPRINGER + b * math.sin(t)))
         prof.append((xc - a, SPRINGER))
         n = len(prof)
         deck_c = deck_z(xc)
 
         def hw_at(z):
-            """该高度处桥体半宽 + 余量, 与 build_body_bm 的收分一致。
-
-            ⚠ 余量 = assumptions.VOID_CUT_MARGIN(0.05m): 若给到 0.80, 布尔会把
-            【两侧墙整块切穿】, 于是"券洞"其实是看穿的洞, 只剩 z=起拱线处两片残留断面,
-            它们投下的影子表现为"每个洞被一道黑横杠腰斩"(已实测复现)。
-            """
+            """该高度处桥体半宽 + 穿透余量 VOID_CUT_MARGIN(assumptions, 0.60m):
+            确保切刀完全贯穿前后双侧收分墙面; 自相交轮廓修复后大余量不再产生残面横杠。"""
             f = (z - BODY_BOTTOM) / (deck_c - BODY_BOTTOM)
             f = max(0.0, min(1.0, f))
             return (DECK_DOWN_W + (DECK_UP_W - DECK_DOWN_W) * f) / 2.0 + VOID_CUT_MARGIN

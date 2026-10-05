@@ -13,7 +13,7 @@
 | 文件 | SHA256 | 说明 |
 |---|---|---|
 | `3d/facts.py` | `f74f8312415647f8e1bf88c848ddca45829b77ae6960c25cdad6b7726db52012` | 22 条本体条目（终审 I12 新增 3 条判据阈值参数）；等级分布见 §9 |
-| `3d/assumptions.py` | `c6e8002911c6a2401a7b44b2030b3db9f42bb1444c412c0e013c2de213a26e7e` | 假设层，不进冻结，改动须记录（终审 I13 删 `BRIDGE_ABUT_TARGET`、I9/I12 外置 `VOID_CUT_MARGIN`） |
+| `3d/assumptions.py` | `eaf0493868ea6f0c7b80e70ca08e6c8e37cfbfc74e610cbcd5157f35286e5be8` | 假设层，不进冻结，改动须记录（终审 I13 删 `BRIDGE_ABUT_TARGET`、I9/I12 外置 `VOID_CUT_MARGIN`） |
 
 等级分布（facts.SOURCES 22 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 1**（ARCH_RATIO）、**工作值 15**（12 条本体尺寸 + 3 条判据阈值参数 CLOSURE_TOL / ARCH_RATIO_TARGET / ARCH_RATIO_TOL，清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。
 
@@ -23,17 +23,17 @@
 
 | 文件 | SHA256 | 角色 |
 |---|---|---|
-| `3d/bridge_geom2.py` | `d672173a4f88f774d506dd6af2869014fccc13609dbaa0a109ab7a63a85a991c` | 纯几何（消费 facts，零字面尺寸；终审 I13 删 BRIDGE_ABUT_TARGET 死透传、I14 闭合自检改 (N_SPAN−1) 口径、I9/I12 券洞余量改引用 assumptions.VOID_CUT_MARGIN —— 几何 SHA 不变，冷重建 A/B 实测 bridge_body sha_sorted 与冻结候选逐位一致） |
-| `3d/build_scene2.py` | `dc9ea05d81f51fddc45c3489ad7bb5ea450942609d4dbd67bfca2f87193b6bf1` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变；2026-10-05 M4 表现层：abutment_ground 改燕翅型桥台(前墙+八字燕翅墙)、新增 shore_bank/fog_volume 环境件——本体 bridge_body/voussoir/impost 顶点未动，qa_l2 正检 QA_L2_OK、register VERDICT PASS(IoU 0.8070 与冻结基线一致、void max\|Δxc\|=0.0181 不变)，见 body_changelog.md M4 节；2026-10-05 M6 蹲狮重雕：import 换 lions2(母模 EXACT 布尔并+SIMPLE 细分, 单 mesh 连通域=1)，build_lions_bm 合并版改 place_lions linked duplicates(256 对象/2 unique mesh)，build_scene2 其余零改动——freeze_hash 三对象逐位一致(861d8836…/b4421770…/5154f49e…)，hero A/B 同机位逐像素差 0.123% 且全部落于 y∈[359,461] 狮带，见 body_changelog.md M6 节；2026-10-05 M4b 雾岸修补：shore_bank 网格 24x40→72x120+横向随 u 收窄(±30→±46m, 埋翼墙/引道切面)+两档高频正弦岸线（本体零改动，freeze_hash 三对象逐位一致），见 body_changelog.md M4b 节） |
+| `3d/bridge_geom2.py` | `e985dc72fdc0382d3d8d221ed58e89327036803564e8ee8230aa31f6eeecb4c7` | 纯几何（消费 facts，零字面尺寸；终审 I13 删 BRIDGE_ABUT_TARGET 死透传、I14 闭合自检改 (N_SPAN−1) 口径、I9/I12 券洞余量改引用 assumptions.VOID_CUT_MARGIN —— 几何 SHA 不变，冷重建 A/B 实测 bridge_body sha_sorted 与冻结候选逐位一致） |
+| `3d/build_scene2.py` | `c4d0e9e1b3e9f5f78f914dd10b4c5b20d3b8b10fda2b2a8d75c633d6b54c9b12` | 场景构建（C6 后消费 facts.BRIDGE_ABUT=1.35；2026-10-04 补入 abutment_ground 桥轴旋转，核心三对象几何 SHA 未变；2026-10-05 M4 表现层：abutment_ground 改燕翅型桥台(前墙+八字燕翅墙)、新增 shore_bank/fog_volume 环境件——本体 bridge_body/voussoir/impost 顶点未动，qa_l2 正检 QA_L2_OK、register VERDICT PASS(IoU 0.8070 与冻结基线一致、void max\|Δxc\|=0.0181 不变)，见 body_changelog.md M4 节；2026-10-05 M6 蹲狮重雕：import 换 lions2(母模 EXACT 布尔并+SIMPLE 细分, 单 mesh 连通域=1)，build_lions_bm 合并版改 place_lions linked duplicates(256 对象/2 unique mesh)，build_scene2 其余零改动——freeze_hash 三对象逐位一致(861d8836…/b4421770…/5154f49e…)，hero A/B 同机位逐像素差 0.123% 且全部落于 y∈[359,461] 狮带，见 body_changelog.md M6 节；2026-10-05 M4b 雾岸修补：shore_bank 网格 24x40→72x120+横向随 u 收窄(±30→±46m, 埋翼墙/引道切面)+两档高频正弦岸线（本体零改动，freeze_hash 三对象逐位一致），见 body_changelog.md M4b 节） |
 | `3d/qa_bridge.py` | `22edb160edaacdff8316fb51ac41accf7b20e03f92456a050c14ff1a2603a530` | L1 判据（纯数据；终审 I11 损坏 facts 报告不崩溃、I12 阈值消费 facts.CLOSURE_TOL/ARCH_RATIO_TARGET/ARCH_RATIO_TOL） |
 | `3d/qa_l2.py` | `4457508cee6e53d5b5c6f0e03b932ab3ff7e6088115db614b6923bab8fa5beb2` | L2 判据（开 blend 查 evaluated mesh；2026-10-05 终审 I4/I6：零采样记 skip 且 ok=false，负控脱靶/未抓到一律 exit 1） |
-| `3d/materials.py` | `873c0a6dede8f49b7f9b4df516918d041f692976ff39c9826b7cb29279f3a03a` | 程序化材质（无 random，节点内置噪声同版本确定；2026-10-05 M4 表现层：stone 增逐块色差+bump 砌缝凹槽、water 三频波纹+粗糙度斑块、新增 earth/fog 材质——纯 shader 层，不触 mesh；2026-10-05 C2 纯追加 qingshi_material（青石桥体，来源逐字核实见 body_changelog.md C2 节），既有函数零改动，freeze_hash 三对象 sha 逐位不变；2026-10-05 WaterFix water/earth 调参（水 bump .20→.32+第四频 scale30+风纹 Mapping 转 90°+rough .02/.09；earth 干基 ×0.8+亮斑 (1.80,1.55,1.30) 作用原 palette+水线湿带 z∈[0,0.5]）——纯参数/节点零几何，函数签名不变，hero A/B 量化见 3d/ab_water/，见 body_changelog.md WaterFix 节） |
+| `3d/materials.py` | `a0d0e34cd86123579194b7f3c884456dcb09e39b7081710efb8292fbdfd003a1` | 程序化材质（无 random，节点内置噪声同版本确定；2026-10-05 M4 表现层：stone 增逐块色差+bump 砌缝凹槽、water 三频波纹+粗糙度斑块、新增 earth/fog 材质——纯 shader 层，不触 mesh；2026-10-05 C2 纯追加 qingshi_material（青石桥体，来源逐字核实见 body_changelog.md C2 节），既有函数零改动，freeze_hash 三对象 sha 逐位不变；2026-10-05 WaterFix water/earth 调参（水 bump .20→.32+第四频 scale30+风纹 Mapping 转 90°+rough .02/.09；earth 干基 ×0.8+亮斑 (1.80,1.55,1.30) 作用原 palette+水线湿带 z∈[0,0.5]）——纯参数/节点零几何，函数签名不变，hero A/B 量化见 3d/ab_water/，见 body_changelog.md WaterFix 节） |
 | `3d/lions.py` | `aa4c3b3e3f0314da3594a4c070aee4722660ee581a88b5122f5db5406610d627` | 狮母题（自带 LCG，seed 显式入参，确定） |
 | `3d/ortho.py` | `603140be8d42e0cd30992a092ab8b07a6bae55f33557c02c8d57fcda14a763d6` | 正交出图（T6 当日演进：新增 top/arch 机位，首采哈希 2fe76ce0… 已被取代；2026-10-05 终审 I2 回填——`4ce8475` M3-1 加水线 sidecar 后未同步 manifest；2026-10-05 M4 隐藏名单补 shore_bank/fog_volume 环境件，正交立面只认本体轮廓，IoU 0.8070 不变；M4b 相机 clip_end=20000——默认 1000m 截断雾盒出射面的根因修复同步到此，正交视图环境件仍隐藏，重渲后 VERDICT PASS 不变） |
 | `3d/render_shot.py` | `bef2368ccecb732aff765930aed3c7165e813d691eb849c0741b73630c647275` | 机位渲染（seed 显式；2026-10-05 终审 I2 回填实际盘上哈希——原记录 `95732262…` 是 `cf11ac3` 改文件前的旧值） |
 | `3d/shot_auto2.py` | `4d2dc0877081f8816cc6c179030e301804fd500e9a7454b8f3fa04ac51ebfde9` | 自动取景渲染（主控 2026-10-04 补 seed 显式化，已提交；2026-10-05 M4b 修天空硬边：相机 clip_end 1000→20000——默认 1000m 截断雾盒(侧壁 2600m/顶 123m)出射面, >1000m 出射的天空射线体积栈为空致雾效 binary 消失(实测硬边在仰角 6.9°=y173 处 Δ7.68, 修复后 0.79), seed=20261004 不变） |
 | `3d/freeze_hash.py` | `120e8e40be6d0992410809dbf5cd8b8347176f8308a61716884d45e154c4f370` | 核心几何哈希唯一定义点（随冻结包 commit `6d8a838`） |
-| `3d/register_overlay.py` | `7092146c922d9a3637d1714623bc3ebe6d1ebef5c494271c94c122a48249b134`（T7 `d30502f` 定版阈值；2026-10-05 终审 I3 增补券洞表硬判 void_verdict） | T7 L3 配准判据（OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02；T8 只引用不运行） |
+| `3d/register_overlay.py` | `d3da15cd9f09ce5c4bddd14084f5e59d4ad2133c7d0f40b0b8dfc74009eb7530`（T7 `d30502f` 定版阈值；2026-10-05 终审 I3 增补券洞表硬判 void_verdict） | T7 L3 配准判据（OVERLAY_IOU_MIN=0.76 / VOID_XC_TOL=0.02；T8 只引用不运行） |
 
 ## 3. Blender 版本
 

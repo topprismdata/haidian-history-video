@@ -1,0 +1,17 @@
+{
+ "fail": [
+  {
+   "name": "WALL_NORMAL",
+   "msg": "拱腹法线偏离朝心超容差 10/494 面"
+  }
+ ],
+ "warn": [],
+ "skip": [],
+ "ok": false,
+ "sampled": 494,
+ "negative": {
+  "flipped": 10,
+  "bad_faces": 10,
+  "caught": true
+ }
+}

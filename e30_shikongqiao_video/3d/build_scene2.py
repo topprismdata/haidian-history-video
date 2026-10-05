@@ -73,42 +73,46 @@ def build_voussoir_bm():
 
 
 def build_deck_bm():
-    """桥面(薄板) + 望柱(64/侧=128) + 栏板 + 蹲狮 + 桥头异兽4只。"""
+    """桥面大石板铺装 + 望柱(64/侧=128) + 双孔透空官式栏板 + 544只石狮位。"""
     bm = bmesh.new()
     LION_SPOTS = []
     rail_y = G.DECK_UP_W / 2.0 - 0.18
     n = 200
     prev = None
+    # 桥面大石板铺装: 错缝石板排布, 杜绝纯平白片感
     for s in range(n + 1):
         x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * s / n
         z = G.deck_z(x)
-        cur = [bm.verts.new((x, -rail_y, z)), bm.verts.new((x, rail_y, z))]
+        # 沿桥面分为左/中/右三块石板带, 带有极细的微下凹纵向石缝
+        cur = [
+            bm.verts.new((x, -rail_y, z)),
+            bm.verts.new((x, -rail_y * 0.33, z)),
+            bm.verts.new((x,  rail_y * 0.33, z)),
+            bm.verts.new((x,  rail_y, z))
+        ]
         if prev:
-            try: bm.faces.new((prev[0], cur[0], cur[1], prev[1]))
-            except ValueError: pass
+            for j in range(3):
+                try: bm.faces.new((prev[j], cur[j], cur[j+1], prev[j+1]))
+                except ValueError: pass
         prev = cur
-    # 望柱 64/侧
+
+    # 望柱 (64/侧 = 全桥两边合计 128 根望柱)
     NPOST = 63
     for side in (-1, 1):
         y = side * (rail_y + 0.14)
         for i in range(NPOST + 1):
             x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NPOST
             z = G.deck_z(x)
-            b, t = 0.24, z + 1.20
+            b, t = 0.22, z + 1.18
+            # 方形望柱身 + 柱头承台
             v = [bm.verts.new(p) for p in (
-                (x-b, y-0.17, z), (x+b, y-0.17, z), (x+b, y+0.17, z), (x-b, y+0.17, z),
-                (x-b, y-0.17, t), (x+b, y-0.17, t), (x+b, y+0.17, t), (x-b, y+0.17, t))]
+                (x-b, y-0.16, z), (x+b, y-0.16, z), (x+b, y+0.16, z), (x-b, y+0.16, z),
+                (x-b, y-0.16, t), (x+b, y-0.16, t), (x+b, y+0.16, t), (x-b, y+0.16, t))]
             for f in ((0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
                 try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
-            # 蹲狮: linked duplicate 见 lions2.py(由 build() 末段 place_lions 就位)
-            LION_SPOTS.append((x, y, z + 1.18, i, side))
-        # ── 石栏板(GPT v4 第2刀): 厚实体, 远景才读成"石栏板"而非"细横杆" ──
-        # 有效高 0.62, 板厚 0.14; 下槛 0.18 高; 顶部扶手 0.13 厚
-        # 栏板: 远景要读成"连续石栏板"而非"细横杆"。
-        # 关键不是更高, 而是【更厚 + 更贴近桥面边缘 + 满铺不断缝】。
-        # 原 0.14m 厚在 2.38m 柱距下几乎不可见 -> 读成栅栏(已实测复现)。
-        PANEL_H, PANEL_T, SILL_H, SILL_T, RAIL_T = 0.66, 0.26, 0.20, 0.34, 0.20
+            # 柱头石狮位: 狮底坐于 t (z+1.18), 主狮比例 0.32m
+            LION_SPOTS.append((x, y, t, i, side))
 
         def slab(x1, z1, x2, z2, h, t, ycen):
             v = [bm.verts.new(p) for p in (
@@ -120,14 +124,33 @@ def build_deck_bm():
                 try: bm.faces.new([v[k] for k in f])
                 except ValueError: pass
 
+        # ── 官式双孔透空石栏板 (依据老照片 11 / 14_ref 真实形制重构) ──
+        # 每开间含: 地栿(下槛) + 实心下华板 + 双孔透空区(含中梃荷叶墩) + 顶部寻杖扶手
         for i in range(NPOST):
             x1 = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NPOST
             x2 = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * (i + 1) / NPOST
             z1, z2 = G.deck_z(x1), G.deck_z(x2)
-            # 满铺: 栏板/下槛/扶手连续通长, 望柱压在栏板外侧 —— 形成连续白石边界
-            slab(x1+0.05, z1+SILL_H, x2-0.05, z2+SILL_H, PANEL_H, PANEL_T, y)
-            slab(x1+0.05, z1,        x2-0.05, z2,        SILL_H, SILL_T, y)
-            slab(x1+0.05, z1+SILL_H+PANEL_H, x2-0.05, z2+SILL_H+PANEL_H, 0.15, RAIL_T, y)
+            xc = (x1 + x2) / 2.0
+            zc = (z1 + z2) / 2.0
+
+            # 1. 地栿 (下槛石基): 高 0.18m, 宽 0.30m
+            slab(x1 + 0.05, z1, x2 - 0.05, z2, 0.18, 0.30, y)
+
+            # 2. 下华板 (实心下区): 高 0.22m, 宽 0.20m
+            slab(x1 + 0.05, z1 + 0.18, x2 - 0.05, z2 + 0.18, 0.22, 0.20, y)
+
+            # 3. 透空开窗区 (高 0.22m, 宽 0.20m):
+            #    左边边框 (宽 0.14m)
+            slab(x1 + 0.05, z1 + 0.40, x1 + 0.19, z1 + 0.40, 0.22, 0.20, y)
+            #    中央中梃荷叶墩 (宽 0.20m)
+            slab(xc - 0.10, zc + 0.40, xc + 0.10, zc + 0.40, 0.22, 0.20, y)
+            #    右边边框 (宽 0.14m)
+            slab(x2 - 0.19, z2 + 0.40, x2 - 0.05, z2 + 0.40, 0.22, 0.20, y)
+            #    注: [x1+0.19, xc-0.10] 与 [xc+0.10, x2-0.19] 为真实透空镂孔!
+
+            # 4. 寻杖 (压顶扶手石): 高 0.14m, 宽 0.24m, 贯通压顶
+            slab(x1 + 0.05, z1 + 0.62, x2 - 0.05, z2 + 0.62, 0.14, 0.24, y)
+
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.normal_update()
     return bm, LION_SPOTS
@@ -201,16 +224,29 @@ def build():
         return (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
     pl = bmesh.new()
     B0, B1, BOUT = 0.80, 1.20, 0.10
-    X0, X1 = -G.BRIDGE_LEN / 2.0 - 3.0, G.BRIDGE_LEN / 2.0 + 3.0
-    for side in (-1, 1):
-        ya, yb = side * (hwz(B0) + BOUT), side * (hwz(B1) + BOUT)
-        v = [pl.verts.new(q) for q in (
-            (X0, ya, B0), (X1, ya, B0), (X1, yb, B1), (X0, yb, B1),
-            (X0, side*hwz(B0), B0), (X1, side*hwz(B0), B0),
-            (X1, side*hwz(B1), B1), (X0, side*hwz(B1), B1))]
-        for fc in ((0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
-            try: pl.faces.new([v[k] for k in fc])
-            except ValueError: pass
+    # 墩脚基石带: 仅在 16 个桥墩及两端桥台表面出挑, 严禁横穿 17 个券洞净空!
+    # 桥墩区间列表: 16 个实心分隔墩 + 2 端桥台
+    plinth_segments = []
+    # 左桥台
+    plinth_segments.append((-G.BRIDGE_LEN / 2.0 - 1.5, -G.BRIDGE_LEN / 2.0 + G.BRIDGE_ABUT))
+    # 16 个桥墩
+    for i in range(G.N_SPAN - 1):
+        px0 = G.PIER_X[i + 1]
+        px1 = px0 + G.PIER_W
+        plinth_segments.append((px0 + 0.02, px1 - 0.02))
+    # 右桥台
+    plinth_segments.append((G.BRIDGE_LEN / 2.0 - G.BRIDGE_ABUT, G.BRIDGE_LEN / 2.0 + 1.5))
+
+    for (px0, px1) in plinth_segments:
+        for side in (-1, 1):
+            ya, yb = side * (hwz(B0) + BOUT), side * (hwz(B1) + BOUT)
+            v = [pl.verts.new(q) for q in (
+                (px0, ya, B0), (px1, ya, B0), (px1, yb, B1), (px0, yb, B1),
+                (px0, side*hwz(B0), B0), (px1, side*hwz(B0), B0),
+                (px1, side*hwz(B1), B1), (px0, side*hwz(B1), B1))]
+            for fc in ((0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
+                try: pl.faces.new([v[k] for k in fc])
+                except ValueError: pass
     bmesh.ops.recalc_face_normals(pl, faces=pl.faces[:]); pl.normal_update()
     bm_to_obj(pl, "pier_plinth", m_ring)
 
@@ -246,6 +282,24 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(void, do_unlink=True)
+    # ── 布尔残片清理(2026-10-05 二审修复): EXACT 布尔在桥体表面留下切刀侧壁残片
+    #    (实测 13 顶点, 横向 -3.28~-3.7 / z 6.7~7.75), 悬在券脸前方 0.5~0.9m 遮挡题额区。
+    #    判据: 桥身顶点不得超出自身收分轮廓 hw(z)+2cm(两端桥台加长区除外)。
+    me = body.data
+    bm = bmesh.new(); bm.from_mesh(me)
+    rm = []
+    for v in bm.verts:
+        x, y, z = v.co
+        if abs(x) > G.BRIDGE_LEN / 2.0 - 2.0:
+            continue
+        zt = G.deck_z(x)
+        f = max(0.0, min(1.0, (z - G.BODY_BOTTOM) / (zt - G.BODY_BOTTOM)))
+        hw = (G.DECK_DOWN_W + (G.DECK_UP_W - G.DECK_DOWN_W) * f) / 2.0
+        if abs(y) > hw + 0.02:
+            rm.append(v)
+    if rm:
+        bmesh.ops.delete(bm, geom=rm, context='VERTS')
+    bm.to_mesh(me); bm.free(); me.update()
     # 桥台加长(GPT v4 第4刀): 每端 BRIDGE_ABUT=1.35m 且向岸收分。
     # 值取 facts.BRIDGE_ABUT(T2b 闭合归因唯一解: 107.3+16*2.50+2*1.35=150.0 精确闭合);
     # GPT 设计提案 2.00(assumptions.BRIDGE_ABUT_TARGET)未获事实地位, 不进生成器。

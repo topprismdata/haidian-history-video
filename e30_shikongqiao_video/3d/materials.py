@@ -139,9 +139,21 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     mix_dark.inputs["Color2"].default_value = (0.74, 0.72, 0.70, 1.0)   # 缝内变暗
     nt.links.new(jmin.outputs[0], mix_dark.inputs["Fac"])
     nt.links.new(mix1.outputs["Color"], mix_dark.inputs["Color1"])
-    # 水线以下更暗更绿(藻痕)
+    # 水线以下更暗更绿(藻痕): 叠加低频噪声扰动 Z, 形成微小起伏与块石吸水率差异, 杜绝机械直横线
+    w_noise = nt.nodes.new("ShaderNodeTexNoise")
+    nt.links.new(geo.outputs["Position"], w_noise.inputs["Vector"])
+    w_noise.inputs["Scale"].default_value = 2.2
+    w_noise.inputs["Detail"].default_value = 4.0
+    w_pert = nt.nodes.new("ShaderNodeMath"); w_pert.operation = 'MULTIPLY_ADD'
+    nt.links.new(w_noise.outputs["Fac"], w_pert.inputs[0])
+    w_pert.inputs[1].default_value = 0.22      # ±0.11m 水线起伏
+    w_pert.inputs[2].default_value = -0.11
+    z_pert = nt.nodes.new("ShaderNodeMath"); z_pert.operation = 'ADD'
+    nt.links.new(sep.outputs["Z"], z_pert.inputs[0])
+    nt.links.new(w_pert.outputs[0], z_pert.inputs[1])
+
     wsub = nt.nodes.new("ShaderNodeMath"); wsub.operation = 'SUBTRACT'
-    nt.links.new(sep.outputs["Z"], wsub.inputs[0]); wsub.inputs[1].default_value = waterline_z
+    nt.links.new(z_pert.outputs[0], wsub.inputs[0]); wsub.inputs[1].default_value = waterline_z
     wdiv = nt.nodes.new("ShaderNodeMath"); wdiv.operation = 'DIVIDE'
     nt.links.new(wsub.outputs[0], wdiv.inputs[0]); wdiv.inputs[1].default_value = -waterline_h
     wcl = nt.nodes.new("ShaderNodeClamp")
@@ -149,9 +161,8 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     mix_water = nt.nodes.new("ShaderNodeMixRGB"); mix_water.blend_type = 'MIX'
     nt.links.new(wcl.outputs[0], mix_water.inputs["Fac"])
     nt.links.new(mix_dark.outputs["Color"], mix_water.inputs["Color1"])
-    mix_water.inputs["Color2"].default_value = (base_rgb[0]*0.42, base_rgb[1]*0.46, base_rgb[2]*0.36, 1.0)
+    mix_water.inputs["Color2"].default_value = (base_rgb[0]*0.36, base_rgb[1]*0.42, base_rgb[2]*0.32, 1.0)
     nt.links.new(mix_water.outputs["Color"], bsdf.inputs["Base Color"])
-
     # ── bump: 缝为凹槽(jmin: 缝0/面1) + 细颗粒 + 块间微错台 ──
     grain = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], grain.inputs["Vector"])
@@ -189,11 +200,11 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     return m
 
 
-def marble_material(name, base_rgb=(0.90, 0.893, 0.868)):
-    """汉白玉: 近白(栏杆/望柱/狮/靠山兽), 细腻, 微斑驳微块差。"""
-    return stone_material(name, base_rgb, joint=0.006, course_h=1.2,
-                          weather=0.20, waterline_h=0.3, block_var=0.05,
-                          bump_strength=0.22, base_rough=0.80)
+def marble_material(name, base_rgb=(0.865, 0.840, 0.795)):
+    """汉白玉: 暖象牙古玉白(栏杆/望柱/狮/靠山兽), 微雨蚀灰度, 消解纯白CGI感。"""
+    return stone_material(name, base_rgb, joint=0.008, course_h=1.2,
+                          weather=0.40, waterline_h=0.35, block_var=0.15,
+                          bump_strength=0.36, base_rough=0.78)
 
 
 def water_material(name="water", base=(0.05, 0.11, 0.14)):
@@ -338,12 +349,9 @@ def fog_material(name="fog", density=0.003, color=(0.70, 0.78, 0.88)):
 # (RGB 252,245,227), 青石基色本身是冷灰蓝 —— 两件事不矛盾, A/B 对照见
 # 3d/ab_qingshi_split.py 输出。
 
-def qingshi_material(name, base_rgb=(0.305, 0.342, 0.381)):
-    """青石(石灰岩)桥体: 冷灰蓝基色 + 可见砌缝 + 微斑驳。
-    基色推导: 青石新出面 sRGB 约 (149,157,165), 转线性 = (0.305,0.342,0.381)
-    (R<G<B 的冷灰蓝向)。参数比 stone_body 默认接法略强调砌缝与块差(青石块
-    石砌法可见), 复用 stone_material 节点栈, 不新增节点逻辑。
-    栏杆/望柱/狮仍用 marble_material —— 分工依据见上引文。"""
-    return stone_material(name, base_rgb, joint=0.010, course_h=0.60,
-                          weather=0.32, waterline_h=0.55, block_var=0.12,
-                          bump_strength=0.30, base_rough=0.84)
+def qingshi_material(name, base_rgb=(0.315, 0.352, 0.390)):
+    """青石(石灰岩)桥体: 冷灰蓝基色 + 鲜明大块条石横分层与纵错缝 + 块级灰度差。
+    依据二审意见: 杜绝'程序噪声混凝土抹灰'观感, 强化规整石砌实体与竖缝凹槽。"""
+    return stone_material(name, base_rgb, joint=0.024, course_h=0.46,
+                          weather=0.42, waterline_h=0.60, block_var=0.36,
+                          bump_strength=0.68, base_rough=0.86)

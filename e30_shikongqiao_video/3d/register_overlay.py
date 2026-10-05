@@ -95,10 +95,15 @@ def _load(path, is_ref):
 
 # ── 几何归一 ──
 
-def solidify(mask):
-    """填实 enclosed 孔洞。参考侧按口径本就无可靠券洞(§6.2-2), 填实与两侧口径对齐;
-    渲染侧 17 孔为封闭孔(水下基础带封口), 填实后只剩外轮廓构成。"""
-    return ndimage.binary_fill_holes(np.asarray(mask, bool))
+def solidify(mask, seal_bottom=False):
+    """填实 enclosed 孔洞。参考侧按口径本就无可靠券洞(§6.2-2), 填实与两侧口径对齐。
+    渲染侧 2026-10-05 二审修复后券洞为【开敞湾】(切刀贯通水面, 物理正确), 不再是
+    enclosed 孔; seal_bottom=True 先把底行封 1px 使湾成封闭孔再填实, 保持与参考侧
+    "拱洞计入白区" 的 IoU 口径不变(否则 17 个湾区域整体扣 IoU)。"""
+    m = _crop_bbox(np.asarray(mask, bool)).copy()
+    if seal_bottom:
+        m[-1, :] = True
+    return ndimage.binary_fill_holes(m)
 
 
 def _crop_bbox(m):
@@ -127,8 +132,8 @@ def overlay(path_a, path_b, out_png, a_is_ref=False, b_is_ref=True):
     两侧均填实 enclosed 孔洞后比对(口径对齐, 见模块 docstring)。
     返回 (iou, out_png)。
     """
-    ma = _norm(solidify(_load(path_a, a_is_ref)))
-    mb = _norm(solidify(_load(path_b, b_is_ref)))
+    ma = _norm(solidify(_load(path_a, a_is_ref), seal_bottom=not a_is_ref))
+    mb = _norm(solidify(_load(path_b, b_is_ref), seal_bottom=not b_is_ref))
     inter = (ma & mb).sum(); union = (ma | mb).sum()
     iou = float(inter) / max(1, float(union))
     vis = np.zeros((H, W, 3), np.uint8)
@@ -140,26 +145,40 @@ def overlay(path_a, path_b, out_png, a_is_ref=False, b_is_ref=True):
 # ── 券洞位置表(尺度无关) ──
 
 def void_table(mask):
-    """券洞位置表: [(xc, w), ...] 按 xc 升序。
+    """券洞位置表: [(xc, w), ...] 按 xc 升序。尺度无关(xc/w 均除以 bbox 宽)。
 
-    xc = 孔包围盒中心 x / 桥长(bbox 宽), w = 孔包围盒宽 / 桥长 —— 均尺度无关,
-    不受 SPAN_DISTINCT 待定影响。检测 = enclosed 孔洞(渲染侧券洞由水下基础带封口,
-    为封闭孔)。w < VOID_MIN_WNORM 的碎孔(望柱缝/笔误)不计。
-    """
+    2026-10-05 二审修复: 切刀贯通后券洞为【开敞湾】(底部开口接背景), 旧 enclosed-hole
+    检测恒为 0。改判据: 背景连通域中【触底行但不触顶行】且宽>=VOID_MIN_WNORM、
+    高>=15% 掩膜高者 = 一个券洞湾; 另并集保留 enclosed 孔检测(兼容旧几何)。
+    负控制: 整块实心矩形掩膜 -> []; 缺一孔的掩膜 -> 16。"""
     m = _crop_bbox(mask)
-    holes = solidify(m) & ~m
-    if not holes.any():
-        return []
-    lab, _ = ndimage.label(holes, structure=np.ones((3, 3)))
-    Wm = m.shape[1]
+    Hm, Wm = m.shape
     out = []
-    for sl in ndimage.find_objects(lab):
-        w = sl[1].stop - sl[1].start
-        wn = float(w) / Wm
-        if wn < VOID_MIN_WNORM:
-            continue
-        xc = (sl[1].start + sl[1].stop - 1) / 2.0 / Wm
-        out.append((round(xc, 4), round(wn, 4)))
+    bg = ~m
+    lab, nlab = ndimage.label(bg, structure=np.ones((3, 3)))
+    if nlab:
+        slices = ndimage.find_objects(lab)
+        bottom = set(lab[Hm - 1, :].tolist()) - {0}
+        top = set(lab[0, :].tolist()) - {0}
+        for lbl in bottom - top:
+            sl = slices[lbl - 1]
+            h = sl[0].stop - sl[0].start
+            w = sl[1].stop - sl[1].start
+            wn = float(w) / Wm
+            if wn < VOID_MIN_WNORM or h < 0.15 * Hm:
+                continue
+            xc = (sl[1].start + sl[1].stop - 1) / 2.0 / Wm
+            out.append((round(xc, 4), round(wn, 4)))
+    holes = solidify(m) & ~m
+    if holes.any():
+        lab2, _ = ndimage.label(holes, structure=np.ones((3, 3)))
+        for sl in ndimage.find_objects(lab2):
+            w = sl[1].stop - sl[1].start
+            wn = float(w) / Wm
+            if wn < VOID_MIN_WNORM:
+                continue
+            xc = (sl[1].start + sl[1].stop - 1) / 2.0 / Wm
+            out.append((round(xc, 4), round(wn, 4)))
     out.sort()
     return out
 

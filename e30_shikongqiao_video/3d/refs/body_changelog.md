@@ -200,3 +200,18 @@
 - **hero A/B（同机位同 seed）**：差 26.9%——分解：天空 0.00%、桥/栏/狮带 46.6%、水区 44.3% 且随距离 91%→0.5% 衰减。**归因警示**：A 用 927f940~1 旧 build_scene2（旧狮 + M6 期材质接线），B 用现 build_scene2（新狮 + 主控 M7 接线勘误青石冷色/WaterFix 水岸），故该差值=【新狮反射 + M7 材质接线差异】叠加，**不能全记狮几何**；狮几何无涉的硬证据是：栏杆顶缘线逐列一致（二阶去趋势残差 std=0、列间跳变 0）、天空 0 差、freeze_hash 三对象逐位一致。纯狮变量 A/B 需待 M7 接线落定后用同脚本换狮重渲。
 - **证据（覆盖原路径）**：`lion_closeup_front.png`、`lion_closeup_threeq.png`、`shot_hero.png`、`refs/hero_AB_old_lions_samecam.png`。
 - **未 commit**（主控统一提交）。
+
+
+## M8 (2026-10-05) ChatGPT 二审缺陷清零批（常规模式 Python 解包逐图审查, 综合 6.9/10 → 修复批）
+
+二审裁决原文: `3d/refs/gpt_review_round2.md`。本批只动表现层/附属构件/判据口径, 不动 facts 本体条目。
+
+- **M8-1 券洞切刀根因修复（bridge_geom2.py）**: 旧归因"余量 0.80 致黑横杠"证伪——真根因是 `build_void_bm` 轮廓自相交（起拱线处两次横穿直径生成水平残面）。轮廓改简单闭合法（底左→底右→右起拱→弧→左起拱）；`VOID_CUT_MARGIN` 0.05→0.60（assumptions.py, 射线实测 0.05 时背墙残留命中 dist=33.6m, 0.60 全高贯通 water/sky）。布尔后新增残片清理（桥身顶点不得超自身收分轮廓 hw+2cm, 实测清除 13 悬空顶点, 原残片悬在券脸前 0.5~0.9m 遮挡题额区）。
+- **M8-2 544 石狮体系（lions2.py）**: 撤回"256 只"口径。128 望柱×1 主狮 + 32 柱×4 幼狮 + 96 柱×3 幼狮 = 128+416 = **544**（官方口径）。4 主狮姿态母模 + 4 幼狮母模（8 套水密 mesh, linked duplicates）；幼狮偏移改沿桥轴坐标系贴柱头四角（旧版加在世界 X/Y 致悬空, 二审广角图实证）。主狮 0.32m 回归柱头比例。
+- **M8-3 栏板透空形制（build_scene2.py）**: 实心白板墙改官式四段: 地栿 0.18 + 下华板 0.22 + 双孔透空区 0.22（含中梃荷叶墩, 两真实镂孔）+ 寻杖 0.14, 依老照片 11/14_ref 实测形制。桥面改三带错缝大石板。
+- **M8-4 靠山兽返雕（beasts2.py）**: 废铜麒麟细颈卧态, 改老照片 11 实证蹲坐式: 直立粗壮前肢+宽爪按地、雄挺前胸、巨大阔吻头颅、卷云鬃环颈、背顺接桥台抱鼓（废多层展陈须弥座）。双变体水密 12.5k 面。
+- **M8-5 材质块级化（materials.py）**: 青石 course_h 0.60→0.46、joint 0.010→0.024、block_var 0.12→0.36、bump 0.30→0.68（大条石横分层+纵错缝+块级灰差）；汉白玉基色改暖象牙古玉白 (0.865,0.840,0.795) + weather 0.40 消 CGI 纯白；水线湿带叠加低频噪声扰动 Z（±0.11m 起伏, 废机械直横线）。
+- **M8-6 判据口径更正（register_overlay.py）**: 切刀贯通后券洞为开敞湾, 旧 enclosed-hole 检测恒 0（假阴性）。void_table 改"触底不触顶背景连通域=湾"并保留 enclosed 并集；solidify 增 seal_bottom（crop 后封底 1px）维持参考侧"拱洞计白区"IoU 口径。负控制: 实心掩膜→[]、缺孔→16（docstring 声明, test_register 覆盖）。
+- **判据复跑**: L1 qa_bridge exit=0；L2 `QA_L2_OK`；L3 IoU **0.8176**（≥0.76）+ VOID n=17 max|Δxc|=**0.0096**（≤0.02, 优于修复前 0.0181）VERDICT PASS。
+- **新增交付证据**: `delivery/render_arch_see_through.png`（中央孔低水位对穿, 射线全高 water/sky 命中）、`delivery/arch_registration.csv`（17 孔逐孔 xc/span/rise/rise_ratio/墩位）、`delivery/08_render_registration_overlay_with_voids.png`、`delivery/05/06_render_plaque_*.png`（南北题额 3D 刻字特写, 《日下旧闻考》卷84）。
+- **manifest**: §1 assumptions、§2 bridge_geom2/build_scene2/materials/register_overlay 哈希回填本批。
