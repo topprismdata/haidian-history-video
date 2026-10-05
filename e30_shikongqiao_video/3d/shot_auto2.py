@@ -79,6 +79,34 @@ else:
 cam.location = pos
 cam.rotation_euler = (ctr - pos).to_track_quat('-Z','Y').to_euler()
 
+# M13b: arch 机位重写——原(Nv*0.5+Bv*0.86)退到桥端轴向被岸坡挡死, 且 auto-frame
+# 把全桥拉回画面(近景变全景)。改为水面侧斜对第3孔, 以 bridge_body 世界bbox做
+# local->world z 映射, 瞄准起拱线以上1.5m, 不 auto-frame。
+if view == "arch":
+    import bridge_geom2 as G
+    bb = [o for o in BRIDGE if o.name == "bridge_body"][0]
+    bmn = Vector((1e9,)*3); bmx = Vector((-1e9,)*3)
+    for c in bb.bound_box:
+        w = bb.matrix_world @ Vector(c)
+        for k in range(3):
+            bmn[k] = min(bmn[k], w[k]); bmx[k] = max(bmx[k], w[k])
+    xc_l = (G.PIER_X[2] + G.PIER_X[3]) / 2.0
+    def wz(lz):  # local z -> world z(以桥体自身bbox线性映射)
+        return bmn.z + (lz - G.BODY_BOTTOM) / (G.DECK_Z_TOP - G.BODY_BOTTOM) * (bmx.z - bmn.z)
+    tgt = ctr + Bv * (xc_l * size.x / G.BRIDGE_LEN)
+    tgt.z = wz(G.arch_springer_z(2) + 1.5)
+    camdir = (Nv * 0.92 + Bv * 0.30).normalized()
+    cam.location = tgt + camdir * 26.0
+    cam.location.z = wz(1.6)                      # 近水面机位(实拍摄影位)
+    cam.rotation_euler = (tgt - cam.location).to_track_quat('-Z', 'Y').to_euler()
+    cd.lens = 40
+    out = os.path.join(HERE, "shot_%s.png" % view)
+    sc.render.filepath = out
+    print("SHOT arch pos=(%.0f,%.0f,%.0f) lens=%d" % (cam.location.x, cam.location.y, cam.location.z, cd.lens))
+    bpy.ops.render.render(write_still=True)
+    print("WROTE", out)
+    raise SystemExit
+
 # 自动取景: 反复微调距离直到全桥入画
 for _ in range(14):
     bpy.context.view_layer.update()
