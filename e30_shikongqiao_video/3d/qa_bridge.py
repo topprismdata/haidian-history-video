@@ -6,16 +6,29 @@ except ImportError:
     raise
 import math
 
+def _pier_w_at(f, i):
+    """第 i 内墩(1-based)宽: facts 声明 PIER_W_INT 表时查表(与 bridge_geom2.pier_w
+    消费同一张 facts 数据 —— 规则即数据, 不存在第二套公式可失同步);
+    未声明表的 facts(框架合成桥)保持常数 f.PIER_W 的拓扑语义。"""
+    tbl = getattr(f, "PIER_W_INT", None)
+    if tbl is None:
+        return f.PIER_W
+    return tbl[i - 1]
+
+
 def derive(f):
     """由 facts 推导 SPANS/PIER_X。递推规则必须与 bridge_geom2 完全一致:
-    墩台宽 = f.BRIDGE_ABUT(T2b 终审定稿维持 1.35, 16内墩口径;
+    桥台宽 = f.BRIDGE_ABUT(T2b 终审定稿维持 1.35, 16内墩口径;
     Task 4 已把 geom 的 BRIDGE_ABUT 回填机制废除断点)。
+    六审四刀#2: 内墩宽为逐墩剖面 —— facts.PIER_W_INT(i=1..16, 中央收窄/两端渐厚,
+    16 墩之和恒等 (N_SPAN-1)*PIER_W=40.0, 总桥长守恒 BRIDGE_LEN), 与
+    bridge_geom2.pier_w 同一数据源; 无表的 facts 退回常数 PIER_W。
     防御(终审 I11): SPAN_DISTINCT 不足 N_SPAN 项时不得 IndexError 崩溃 ——
     按 len(spans) 截断递推, 让 check_body 的 INV_SPANS_LEN 去"报告"这个破坏。"""
     spans = list(f.SPAN_DISTINCT) + list(reversed(f.SPAN_DISTINCT[:-1]))
     pier_x, acc = [], -f.BRIDGE_LEN / 2.0
     for i in range(min(f.N_SPAN, len(spans)) + 1):
-        w = f.BRIDGE_ABUT if i in (0, f.N_SPAN) else f.PIER_W
+        w = f.BRIDGE_ABUT if i in (0, f.N_SPAN) else _pier_w_at(f, i)
         pier_x.append(acc + w / 2.0)
         acc += w
         if i < f.N_SPAN and i < len(spans):
@@ -92,7 +105,19 @@ def check_body(f):
     # 初版误按 15 墩硬编码产生 -2.50m 假闭合差(及"桥台 2.60"凑数解, 已作废);
     # 改用 (N_SPAN-1) 使判据随 facts 变化。
     # 阈值(终审 I12): 消费 facts.CLOSURE_TOL(登记于 SOURCES, 工作值); 缺失 → skip(未执行不算通过)。
-    total = sum(d.SPANS) + (f.N_SPAN - 1) * f.PIER_W + 2 * f.BRIDGE_ABUT
+    # 六审四刀#2: 内墩宽为逐墩剖面(PIER_W_INT), 闭合必须按 derive 同一规则逐墩求和;
+    # 表缺失(合成 facts)→ 常数 PIER_W 拓扑; 表形状非法 → IMP_PIER_TABLE fail 并按常数降级
+    # (判据报告而非崩溃, 与 I11 同契约)。
+    tbl = getattr(f, "PIER_W_INT", None)
+    if tbl is not None and (not isinstance(tbl, (list, tuple))
+                            or len(tbl) != f.N_SPAN - 1
+                            or any(not _is_num(x) or x <= 0 for x in tbl)):
+        add("fail", "IMP_PIER_TABLE",
+            "PIER_W_INT 须为 N_SPAN-1=%d 个正数的表, 实为 %r" % (f.N_SPAN - 1, tbl))
+        tbl = None
+    total = sum(d.SPANS) + sum(
+        (tbl[i - 1] if tbl is not None else f.PIER_W)
+        for i in range(1, f.N_SPAN)) + 2 * f.BRIDGE_ABUT
     closure_tol = getattr(f, "CLOSURE_TOL", None)
     if closure_tol is None:
         add("skip", "MET_CLOSURE", "facts 未声明 CLOSURE_TOL, 未执行(阈值必须有依据且进台账)")

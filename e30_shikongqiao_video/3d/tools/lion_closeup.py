@@ -26,7 +26,7 @@ sc.render.image_settings.file_format = 'PNG'
 o = bpy.data.objects["lion_adult_031_+1"]
 AZ = -math.radians(112.0)
 facing = Vector((math.cos(AZ), math.sin(AZ), 0.0))
-head_local = Vector((0.17, 0.0, 0.72))          # v3 母模头部中心(单位高)
+head_local = Vector((0.09, 0.0, 0.78))          # v7 母模头部中心(六审: 头群收紧+下移, 取颅/吻质心)
 head_w = o.matrix_world @ (head_local * o.scale.x)
 dist = 2.2                                      # 三审口径: 拉远含透空栏板+邻柱语境, 杜绝"巨狮"误读
 if which == "front":

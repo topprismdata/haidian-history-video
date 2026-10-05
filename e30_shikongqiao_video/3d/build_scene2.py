@@ -111,10 +111,13 @@ def build_deck_bm():
     import json as _rj
     RP = _rj.load(open(os.path.join(HERE, "refs/rail_params_m12.json")))
     PW = RP["post_width"] / 2.0            # 望柱半宽 ~0.135
-    CAP_H = 0.31                            # 头块+垂饰
+    CAP_H = 0.16                            # 柱头承托石(六审"承托薄化": 0.31→0.16 薄板)
     RAIL_TOP = 0.92                         # 寻杖顶距桥面
     # off_13 官拍整改(2026-10-05): 栏上柱台≈头块 0.31≈狮高。旧 post_height 1.34
-    # (栏上段 0.42≈1.3×狮高)偏高; 柱身收到寻杖顶+0.03, 柱全高 0.95+0.31=1.26。
+    # (栏上段 0.42≈1.3×狮高)偏高; 柱身收到寻杖顶+0.03。
+    # 六审整改(2026-10-05 "望柱台身修长、承托薄, 狮如柱头自然生长"): 承托石 0.31 方台
+    # 压成 0.16 薄板(宽 1.08→1.04 柱宽, 近乎齐口), 柱身截面 0.27 细方不变;
+    # 柱全高 0.95+0.16=1.11, 狮高 0.272 直接蹲在薄板上。
     POST_SHAFT = RAIL_TOP + 0.03           # 柱身(不含头块)
     PANEL_H = RP["panel_height"]            # 华板 0.36
     SILL_H = RP["lower_rail_thickness"]     # 地栿 0.11
@@ -154,9 +157,9 @@ def build_deck_bm():
         for i in range(NPOST + 1):
             x = -G.BRIDGE_LEN / 2.0 + G.BRIDGE_LEN * i / NPOST
             z = G.deck_z(x)
-            # 柱身(素平, 转角线脚用材质) + 头块(略宽)
+            # 柱身(素平, 转角线脚用材质) + 柱头承托石(六审薄化: 近齐口薄板)
             _boxc(bm, x, y, z + POST_SHAFT/2, PW*2, PW*2, POST_SHAFT)
-            _boxc(bm, x, y, z + POST_SHAFT + CAP_H/2, PW*2*1.08, PW*2*1.08, CAP_H)
+            _boxc(bm, x, y, z + POST_SHAFT + CAP_H/2, PW*2*1.04, PW*2*1.04, CAP_H)
             LION_SPOTS.append((x, y, z + POST_SHAFT + CAP_H, i, side))
         def slab(x1, z1, x2, z2, h, t, ycen):
             v = [bm.verts.new(p) for p in (
@@ -298,9 +301,12 @@ def build():
     plinth_segments.append((-G.BRIDGE_LEN / 2.0 - 1.5, -G.BRIDGE_LEN / 2.0 + G.BRIDGE_ABUT))
     # 16 个桥墩
     for i in range(G.N_SPAN - 1):
-        px0 = G.PIER_X[i + 1]
-        px1 = px0 + G.PIER_W
-        plinth_segments.append((px0 + 0.02, px1 - 0.02))
+        # [M14 修复] 旧式 [center, center+PIER_W] 恒宽假设且右半偏覆盖:
+        # void 布尔把伸进洞口的部分裁掉后, 每墩只剩右半水线石, 左半裸墙。
+        # PIER_W 变剖面后此假设更错。改为中心 ± pier_w/2 全宽覆盖。
+        pc = G.PIER_X[i + 1]
+        hw2 = G.pier_w(i + 1) / 2.0
+        plinth_segments.append((pc - hw2 + 0.02, pc + hw2 - 0.02))
     # 右桥台
     plinth_segments.append((G.BRIDGE_LEN / 2.0 - G.BRIDGE_ABUT, G.BRIDGE_LEN / 2.0 + 1.5))
 

@@ -18,6 +18,8 @@ SPRINGER = _F.SPRINGER
 ARCH_RATIO = _F.ARCH_RATIO
 RING_T = _F.RING_T
 PIER_W = _F.PIER_W
+PIER_W_INT = list(_F.PIER_W_INT)   # 六审四刀#2: 逐墩宽度表(中央收窄/两端渐厚), facts 单一来源
+PIER_W_C, PIER_W_E = _F.PIER_W_C, _F.PIER_W_E
 PIER_MAIN_W = _F.PIER_MAIN_W
 PIER_FOUND_W = _F.PIER_FOUND_W
 PIER_MAIN_W_C = _F.PIER_MAIN_W_C
@@ -129,14 +131,30 @@ def arch_dzdx(x, xc, springer, a, b):
     return (dlo + w * dhi) / (1.0 + w)
 
 SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
+
+
+def pier_w(i):
+    """六审四刀#2: 第 i 内墩(i=1..16, 1-based)宽度。
+    中央(i=8,9)=2.27 收窄 -9.2%, 端内墩(i=1,16)=2.73 渐宽 +9.2%, 线性渐变,
+    严格轴对称; 16 墩之和恒等 (N_SPAN-1)*PIER_W=40.0 —— 总桥长严格守恒 BRIDGE_LEN=150.0。
+    数据在 facts.PIER_W_INT(单一来源), 生成器纯消费; qa_bridge.derive 消费同一张表
+    (规则即数据, 两处不存在可失同步的第二套公式)。"""
+    return PIER_W_INT[i - 1]
+
+
 PIER_X = []
 _acc = -BRIDGE_LEN / 2.0
 for i in range(N_SPAN + 1):
-    w = BRIDGE_ABUT if i in (0, N_SPAN) else PIER_W
+    w = BRIDGE_ABUT if i in (0, N_SPAN) else pier_w(i)
     PIER_X.append(_acc + w / 2.0)
     _acc += w
     if i < N_SPAN:
         _acc += SPANS[i]
+
+# 六审四刀#2 硬门: 变宽剖面上 PIER_X 累加必须严格回到 +BRIDGE_LEN/2(总长守恒)。
+assert abs(_acc - BRIDGE_LEN / 2.0) < 1e-9, \
+    "桥长闭合破坏: 墩台累加终点 %.9f != +%.1f (PIER_W_INT 总和须恒等 (N_SPAN-1)*PIER_W)" \
+    % (_acc, BRIDGE_LEN / 2.0)
 
 
 def deck_z(x):
@@ -271,9 +289,10 @@ if __name__ == "__main__":
     xs = [v.co.x for v in bd.verts]
     zs = [v.co.z for v in bd.verts]
     print("桥体 x %.3f..%.3f  z %.2f..%.2f" % (min(xs), max(xs), min(zs), max(zs)))
-    tot = sum(SPANS) + (N_SPAN - 1) * PIER_W + 2 * BRIDGE_ABUT
+    tot = sum(SPANS) + sum(pier_w(i) for i in range(1, N_SPAN)) + 2 * BRIDGE_ABUT
     # (N_SPAN-1) 口径 = T2b 终审: 17 孔之间是 16 墩。旧版写死 16 正是当年
     # "-2.50m 假闭合差"的数字形状(facts 改孔数时这里会静默失配), 终审 I14 改为拓扑式。
+    # 六审四刀#2: 内墩宽改逐墩剖面, 闭合校验必须按实际表求和(不再假定恒定 PIER_W)。
     print("闭合校验 %.2f (须 %.2f)" % (tot, BRIDGE_LEN))
     assert abs(tot - BRIDGE_LEN) < 0.01
     half = BRIDGE_LEN / 2.0
