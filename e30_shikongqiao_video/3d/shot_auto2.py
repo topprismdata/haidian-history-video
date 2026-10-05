@@ -66,6 +66,7 @@ VIEWS = {   # 方向(单位向量) : 拉远倍数
   "low":   (Nv*0.86 + Bv*0.50 + Vector((0,0,0.10)), 1.25),
   "arch":  (Nv*0.50 + Bv*0.86, 0.55),
   "top":   (Vector((0,0,1)), 1.20),
+  "deep":  (Nv, 1.0),  # 占位, 实际机位见下方特判
 }
 dirv, dist_k = VIEWS[view]
 dirv = dirv.normalized()
@@ -82,6 +83,33 @@ cam.rotation_euler = (ctr - pos).to_track_quat('-Z','Y').to_euler()
 # M13b: arch 机位重写——原(Nv*0.5+Bv*0.86)退到桥端轴向被岸坡挡死, 且 auto-frame
 # 把全桥拉回画面(近景变全景)。改为水面侧斜对第3孔, 以 bridge_body 世界bbox做
 # local->world z 映射, 瞄准起拱线以上1.5m, 不 auto-frame。
+# [六审尾注] 进深验证机位: 离水面很低、斜看中央3孔, 专查券洞进深/内壁砌石/
+# 桥墩侧面/分水构造(六审: "若拱洞只是正立面开孔+单一内筒, 斜角近景会暴露")。
+if view == "deep":
+    import bridge_geom2 as G
+    bb = [o for o in BRIDGE if o.name == "bridge_body"][0]
+    bmn = Vector((1e9,)*3); bmx = Vector((-1e9,)*3)
+    for c in bb.bound_box:
+        w = bb.matrix_world @ Vector(c)
+        for k in range(3):
+            bmn[k] = min(bmn[k], w[k]); bmx[k] = max(bmx[k], w[k])
+    xc_l = (G.PIER_X[8] + G.PIER_X[9]) / 2.0
+    def wz(lz):
+        return bmn.z + (lz - G.BODY_BOTTOM) / (G.DECK_Z_TOP - G.BODY_BOTTOM) * (bmx.z - bmn.z)
+    tgt = ctr + Bv * (xc_l * size.x / G.BRIDGE_LEN)
+    tgt.z = wz(G.arch_springer_z(8) + 1.2)
+    camdir = (Nv * 0.62 + Bv * 0.62).normalized()
+    cam.location = tgt + camdir * 30.0
+    cam.location.z = wz(0.9)
+    cam.rotation_euler = (tgt - cam.location).to_track_quat('-Z', 'Y').to_euler()
+    cd.lens = 35
+    out = os.path.join(HERE, "shot_%s.png" % view)
+    sc.render.filepath = out
+    print("SHOT deep pos=(%.0f,%.0f,%.0f)" % (cam.location.x, cam.location.y, cam.location.z))
+    bpy.ops.render.render(write_still=True)
+    print("WROTE", out)
+    raise SystemExit
+
 if view == "arch":
     import bridge_geom2 as G
     bb = [o for o in BRIDGE if o.name == "bridge_body"][0]
