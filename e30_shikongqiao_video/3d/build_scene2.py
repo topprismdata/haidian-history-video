@@ -358,30 +358,31 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(void, do_unlink=True)
-    # 桥台加长(GPT v4 第4刀): 每端 BRIDGE_ABUT=1.35m 且向岸收分。
-    # 值取 facts.BRIDGE_ABUT(T2b 闭合归因唯一解: 107.3+16*2.50+2*1.35=150.0 精确闭合);
-    # GPT 设计提案 2.00(assumptions.BRIDGE_ABUT_TARGET)未获事实地位, 不进生成器。
-    ab = bmesh.new()
-    for sgn in (-1, 1):
-        x_out = sgn * G.BRIDGE_LEN / 2.0
-        x_in = x_out - sgn * G.BRIDGE_ABUT
-        zt = G.deck_z(x_out)
-        w_out = G.DECK_UP_W * 1.05
-        w_in = G.DECK_DOWN_W * 0.98
-        vs = [ab.verts.new(p) for p in (
-            (x_out, -w_out/2, G.BODY_BOTTOM), (x_out, w_out/2, G.BODY_BOTTOM),
-            (x_in,  w_in/2,  G.BODY_BOTTOM), (x_in, -w_in/2, G.BODY_BOTTOM),
-            (x_out, -w_out/2, zt), (x_out, w_out/2, zt),
-            (x_in,  w_in/2,  zt), (x_in, -w_in/2, zt))]
-        for f in ((0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
-            try: ab.faces.new([vs[k] for k in f])
-            except ValueError: pass
-    bmesh.ops.recalc_face_normals(ab, faces=ab.faces[:]); ab.normal_update()
-    abut = bm_to_obj(ab, "abutments", m_body)
-    m2 = body.modifiers.new("ab", 'BOOLEAN'); m2.operation='UNION'; m2.solver='EXACT'; m2.object=abut
-    bpy.context.view_layer.objects.active = body
-    bpy.ops.object.modifier_apply(modifier=m2.name)
-    bpy.data.objects.remove(abut, do_unlink=True)
+    # ── 六审第3刀参数(2026-10-05: 两端桥台/引桥/坡道体量加重) ──
+    # GPT 六审定性: "桥两端的桥台、坡道、端部侧墙体量太弱...全桥像17孔拱廊模型"。
+    # 四项要求: ①引道加长 22~26m ②燕翅墙加厚外展、底面插入水底 ③端孔外侧 3.5~5.0m
+    # 实体石砌墩座 ④岸坡与桥台咬合无穿模无悬空。各值为[工作值](审查方向+实拍校准)。
+    # ⚠ 旧"卫星负读数 WING_L≤12 收窄"注记: 表现层六审裁定=加重, 收窄方案搁置;
+    #   WING_L 维持 24.0(与新引道长度对齐, 不再加长), 加强走厚度/展角/埋深三路。
+    ABUT_EXT = 3.0                     # 墩座前伸: 前端面至桥端 3.0m; 加埋入 0.10 与本体端墙
+                                       #   1.35, 末孔外石墙总厚 4.45m ∈ 3.5~5.0
+    ABUT_EMBED = 0.10                  # 墩座埋入本体端 0.10m(防露缝; 外轮廓全程高出本体
+                                       #   端面剪影 >=2cm, 无共面无 z-fighting)
+    ABUT_HALF_B = 7.45                 # 墩座底半宽(本体底半宽 7.3, +0.15 全高度包络)
+    ABUT_HALF_T = 3.60                 # 墩座顶半宽(台帽全宽 7.20 > 桥面 6.56)
+    RAMP_L = 24.0                      # 引道缓坡长 14.0 -> 24.0(顶面 3.56->2.95m, 2.5% 真实缓坡)
+    WING_L = 24.0                      # 翼墙水平投影长(不变, 与 RAMP_L 对齐)
+    WING_ANG = math.radians(38.0)      # 展角 35 -> 38 度(六审"向外展")
+    WING_T = 1.8                       # 翼墙厚 1.4 -> 1.8(六审"加厚"; 审查示例 0.60->0.85
+                                       #   低于现状值, 按方向性要求执行 +29%)
+    BED_BOTTOM = -2.8                  # 桥台系底面: 低于岸坡全域最低(-2.4), 实义"稳固插入水底"
+    BANK_Z = 2.1                       # 岸坡顶标高(实拍两端岸线高于水面约2m, 不变)
+    ROAD_ROOT_DROP = 0.04              # 引道顶面沉台帽下 4cm(帽石收边, 兼消共面 z-fighting)
+    # ⚠ 布尔废弃记录(2026-10-05 实测): 旧"abutments"块走 EXACT UNION 并入本体 ——
+    #   切割体底面与本体底面共面(-2.2)时可以并入, 底面下沉(-2.8)后 Blender 5.2 EXACT
+    #   求解器【静默失败】(双侧无效果; MANIFOLD 亦无效; 单侧成功/失败随浮动参数漂移)。
+    #   故墩座改为免布尔实体, 直接并入 abutment_ground(与引道/燕翅墙同材质同物体)。
+    #   实心性依据: 端面 x=±75 为实心墙(拱口在 ±y 侧翼, 距端面 1.695m), 墩座无需掏洞。
     # ── 布尔后修正券洞内壁法线 ──
     # EXACT 求解器会打乱内壁法线 -> 朝外的面渲染成黑楔/死黑洞(实测 494/494 拱腹面背心)。
     # 判据(几何上严格): 空腔内的面, 法线必须指向该洞的"内法线方向":
@@ -482,51 +483,58 @@ def build():
     # 蹲狮: linked duplicates(2026-10-05 口径) —— 256 对象共享 2 个 mesh datablock,
     # 不再并成单个 "lions" 大 mesh(反模式: 文件膨胀/无法实例化/回归 diff 不归因)。
     lion_objs = LIONS.place_lions(spots, m_rail)
-    # ── 第4刀改版(2026-10-05, 燕翅型桥台): 引道缓坡 + 两侧八字燕翅墙 + 岸坡地形 ──
+    # ── 引道缓坡 + 八字燕翅墙(六审第3刀改版 2026-10-05) ──
     # 文献: 桥台形式三型——带燕翅(古籍"雁翅")/凹字/一字; 前墙古称金刚墙, 两侧八字形
     # 挡墙称燕翅墙(顺水金刚墙) —— 茅以升基金会《中国古代石拱桥——古桥各部名称》
     # (https://www.mysf.org.cn/Detail/index.html?id=691&aid=291)。
     # 视觉根因: 原楔形块垂直插水, 桥像漂着; 燕翅墙向岸斜展 + 岸坡承接才形成"接岸"读感。
-    # 数值地位: 展开角35°/翼长24m/墙厚1.4m/岸坡顶2.1m 均为[工作值](无文献数值)。
-    # ⚠ 2026-10-05 燕翅研究(refs/abutment_design.md): 原注「常见做法30-45°」无源已删;
-    # 『带燕翅型』系形制推断非文献直陈; 卫星图版负读数: 岛端无出岸自由燕翅墙,
-    # WING_L=24 与图版矛盾(观测展宽带仅8-10m), 修订≤12m或锚岸式待表现层批处理;
-    # 本体端部1.35m桥台(facts.BRIDGE_ABUT, 已UNION进bridge_body)属本体, 不在此列, 未动。
-    WING_L = 24.0            # 翼墙水平投影长
-    WING_ANG = math.radians(35.0)
-    WING_T = 1.4             # 翼墙厚
-    BANK_Z = 2.1             # 岸坡顶标高(实拍两端岸线高于水面约2m)
+    # 历史: 第4刀(燕翅型)建立; 卫星图版负读数(refs/abutment_design.md, WING_L≤12 收窄)
+    # 已被六审裁定搁置——表现层实测渲染两端体量太弱是最大宏观遗漏, 方向=加重。
+    # 本刀: 墩座前伸 3.1m(恒截面收分棱柱, 全高度吞没本体端面, 见上方布尔废弃记录) /
+    # RAMP_L 14->24m / WING_T 1.4->1.8m / 展角 35->38° / 翼墙根移至墩座段
+    # (与石桥台连续) / 底面统一下沉 BED_BOTTOM(-2.8, 低于岸坡最低 -2.4)插入水底。
     ab = bmesh.new()
     for sgn in (-1, 1):
         x_e = sgn * G.BRIDGE_LEN / 2.0
         z_e = G.deck_z(x_e)
-        dy0 = G.DECK_DOWN_W / 2.0
-        dxw = WING_L * math.cos(WING_ANG)
-        dyw = dy0 + WING_L * math.sin(WING_ANG)
-        # (1) 引道缓坡: 根部断面与本体端墙收分齐平(底=下宽半+0.06埋入, 顶=上宽半+0.12),
-        #     坡面拍 battered 斜面 -> 与端墙无 V 形凹槽(垂直裙曾留黑三角缝, 实测复现)。
-        #     2026-10-05 收窄: 原全下宽14.6m 读成"混凝土平台"; 真引道是路面宽,
-        #     下部展开的端面由燕翅墙夹持(前墙/金刚墙读感)。
-        RT0, RT1, RAMP_L = G.DECK_UP_W / 2.0 + 0.12, 5.2, 14.0
-        B0W = dy0 + 0.06                       # 根部底半宽(埋入本体端墙)
-        x_r = x_e - sgn * 0.06
-        x_o = x_e + sgn * RAMP_L
+        # (0) 实体石砌桥台墩座: x ∈ [75-0.10, 75+3.0], 恒截面收分(底半宽 7.45 ->
+        #     顶半宽 3.60), 台帽平接桥面端标高。外轮廓全程高出本体端面剪影 >=2cm
+        #     (体侧) / 0.32m(顶缘) -> 本体端墙被完整包络, 无缝无共面; 底沉 BED_BOTTOM
+        #     成基脚。末孔券石到前端面之间 4.45m 实体石墙承托(六审#3 3.5~5.0m)。
+        xin = x_e + sgn * (G.BRIDGE_ABUT - ABUT_EMBED)     # = 74.90 (埋入本体端)
+        xfa = x_e + sgn * ABUT_EXT                         # = 78.00 (前端面)
+        vs = [ab.verts.new(p) for p in (
+            (xin, -ABUT_HALF_B, BED_BOTTOM), (xfa, -ABUT_HALF_B, BED_BOTTOM),
+            (xfa,  ABUT_HALF_B, BED_BOTTOM), (xin,  ABUT_HALF_B, BED_BOTTOM),
+            (xin, -ABUT_HALF_T, z_e), (xfa, -ABUT_HALF_T, z_e),
+            (xfa,  ABUT_HALF_T, z_e), (xin,  ABUT_HALF_T, z_e))]
+        for f in ((0,1,2,3),(4,5,6,7),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
+            try: ab.faces.new([vs[k] for k in f])
+            except ValueError: pass
+        # (1) 石砌引道缓坡: 根部嵌进墩座前墙 0.06m, 顶面沉台帽下 ROAD_ROOT_DROP
+        #     (帽石收边, 无共面); 以 2.5% 缓降延伸 RAMP_L=24m, 坡端没入岸坡;
+        #     底半宽 = 端部 apron 半宽 + 0.06 埋入。
+        RT0, RT1 = G.DECK_UP_W / 2.0 + 0.12, 5.2
+        B0W = RT1 + 0.06
+        x_r = x_e + sgn * (ABUT_EXT - 0.06)
+        x_o = x_e + sgn * (ABUT_EXT + RAMP_L)
+        zr0 = z_e - ROAD_ROOT_DROP
         zt_tip = BANK_Z + 0.85                 # 坡端没入岸坡顶下
         vs = [ab.verts.new(p) for p in (
-            (x_r, -B0W, G.BODY_BOTTOM), (x_r, B0W, G.BODY_BOTTOM),
-            (x_o,  RT1, G.BODY_BOTTOM), (x_o, -RT1, G.BODY_BOTTOM),
-            (x_r, -RT0, z_e), (x_r, RT0, z_e),
+            (x_r, -B0W, BED_BOTTOM), (x_r, B0W, BED_BOTTOM),
+            (x_o,  RT1, BED_BOTTOM), (x_o, -RT1, BED_BOTTOM),
+            (x_r, -RT0, zr0), (x_r, RT0, zr0),
             (x_o,  RT1, zt_tip), (x_o, -RT1, zt_tip))]
         for f in ((0,1,2,3),(4,7,6,5),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)):
             try: ab.faces.new([vs[k] for k in f])
             except ValueError: pass
-        # (2) 燕翅墙 x2: 自端墙根(埋入本体0.5m防露缝)八字斜展, 顶面沿轴向
-        #     从桥面端高下斜至岸坡顶上方0.35m, 墙身直落水下基座。
+        # (2) 燕翅墙 x2: 根部自墩座前段埋入 0.5m(与石桥台连续, 防露缝)八字斜展,
+        #     顶面沿轴向从台帽标高下斜至岸坡顶上方 0.35m, 墙身直落水底基床。
         for side in (-1, 1):
             d = Vector((math.cos(WING_ANG), side * math.sin(WING_ANG)))
             n = Vector((-side * math.sin(WING_ANG), math.cos(WING_ANG)))  # 离轴法向
-            z_root, z_tip = 3.60, BANK_Z + 0.35   # 翼墙顶=挡土墙高(工作值), 低于桥面
-            A = Vector((x_e - sgn * 0.5, side * (G.DECK_UP_W / 2.0 - 0.1)))
+            z_root, z_tip = z_e, BANK_Z + 0.35   # 翼墙顶=桥面端标高(台帽下缘), 低于桥面
+            A = Vector((x_e + sgn * (ABUT_EXT - 0.5), side * (G.DECK_UP_W / 2.0 - 0.1)))
             B = A + d * WING_L
             pts = [(A.x, A.y), (B.x, B.y),
                    (B.x + n.x * WING_T, B.y + n.y * WING_T),
@@ -534,7 +542,7 @@ def build():
             def _ztop(px, py):
                 f = max(0.0, min(1.0, (Vector((px, py)) - A).dot(d) / WING_L))
                 return z_root * (1.0 - f) + z_tip * f
-            vs = [ab.verts.new((px, py, G.BODY_BOTTOM)) for px, py in pts] \
+            vs = [ab.verts.new((px, py, BED_BOTTOM)) for px, py in pts] \
                + [ab.verts.new((px, py, _ztop(px, py))) for px, py in pts]
             for f in ((4,5,6,7), (0,3,2,1), (0,1,5,4), (1,2,6,5), (2,3,7,6), (3,0,4,7)):
                 try: ab.faces.new([vs[k] for k in f])
@@ -547,6 +555,48 @@ def build():
     bk = bmesh.new()
     for sgn in (-1, 1):
         x_e = sgn * G.BRIDGE_LEN / 2.0
+        z_e = G.deck_z(x_e)
+        # 六审#3④ 岸坡咬合(六审第3刀): 在引道与两道燕翅墙的走廊条带内, 岸坡肩线
+        # 强制压到石面以下 0.75m(smoothstep 过渡) —— 露出真挡墙高度, 保证:
+        #   ① 石引道两侧/燕翅墙身露出 0.75~1.8m 石颊, 是"石砌引桥压在坡地基座上"
+        #     而非贴地彩带(首版 0.45/0.28 低视角实测读感单薄, 复验后加深);
+        #   ② 走廊内任何 (u,v) 岸坡不高于石面 —— 无穿模;
+        #   ③ 石底面 BED_BOTTOM(-2.8) 低于岸坡全域最低(-2.4) —— 无悬空缝隙。
+        U_R0, U_R1 = ABUT_EXT - 0.06, ABUT_EXT - 0.06 + RAMP_L   # 坡根/坡端(局部 u)
+        Z_TIP = BANK_Z + 0.85
+        Z_R0 = z_e - ROAD_ROOT_DROP
+        RT0C, RT1C = G.DECK_UP_W / 2.0 + 0.12, 5.2
+        def _sm(t):
+            t = max(0.0, min(1.0, t))
+            return t * t * (3.0 - 2.0 * t)
+        def _corr_caps(u, v):
+            """走廊限高列表 [(cap_z, weight)]: 岸坡向 cap 作加权 min 下压。"""
+            caps = []
+            # 引道走廊: 坡端外再压 3m 保证端面咬合
+            if -1.0 < u < U_R1 + 3.0:
+                uc = min(u, U_R1)
+                fr = max(0.0, min(1.0, (uc - U_R0) / RAMP_L))
+                z_road = Z_R0 + (Z_TIP - Z_R0) * fr
+                half = RT0C + (RT1C - RT0C) * fr
+                wu = 1.0 if u <= U_R1 else _sm(1.0 - (u - U_R1) / 3.0)
+                wv = _sm((half + 2.5 - abs(v)) / 2.5)
+                caps.append((z_road - 0.75, wu * wv))
+            # 燕翅墙走廊 x2: 墙顶下 0.75
+            for side in (-1, 1):
+                ax_ = ABUT_EXT - 0.5
+                ay_ = side * (G.DECK_UP_W / 2.0 - 0.1)
+                dx_ = math.cos(WING_ANG)
+                dy_ = side * math.sin(WING_ANG)
+                t = ((u - ax_) * dx_ + (v - ay_) * dy_) / WING_L
+                t = max(0.0, min(1.0, t))
+                cx_ = ax_ + dx_ * WING_L * t
+                cy_ = ay_ + dy_ * WING_L * t
+                dist = math.hypot(u - cx_, v - cy_)
+                lim = WING_T / 2.0 + 0.9
+                if dist < lim:
+                    z_w = z_e * (1.0 - t) + (BANK_Z + 0.35) * t
+                    caps.append((z_w - 0.75, _sm((lim - dist) / 0.9)))
+            return caps
         # 2026-10-05 修"岸坡生硬立方体"(主控量化: 岸缘水平梯度 max 81.7):
         #   ① 网格 24x40 -> 72x120: 4m 级刻面让岸线读成折线硬边;
         #   ② 横向宽度随 u 收窄(近桥端 ±30m 塞进翼墙足迹下防露切面, 向外展到 ±46m 再收)
@@ -565,7 +615,11 @@ def build():
                   + 0.12 * math.sin(u * 0.53 + 0.6) * math.sin(v * 0.37 + 2.1)
                   + 0.10 * math.sin(u * 1.10 + 2.6) * math.cos(v * 0.83 + 0.4)
                   + 0.06 * math.sin(u * 2.30 + 0.9) * math.sin(v * 1.70 + 1.1))
-            return -2.4 + (zt + 2.4) * min(fall, ev)
+            z = -2.4 + (zt + 2.4) * min(fall, ev)
+            for z0, w0 in _corr_caps(u, v):
+                if w0 > 0.0:
+                    z += (min(z, z0) - z) * w0
+            return z
         grid = []
         for i in range(NU + 1):
             row = []
