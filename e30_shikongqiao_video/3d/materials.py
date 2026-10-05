@@ -110,11 +110,11 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     blk_mul_d = nt.nodes.new("ShaderNodeMixRGB"); blk_mul_d.blend_type = 'MULTIPLY'
     blk_mul_d.inputs["Fac"].default_value = 1.0
     blk_mul_d.inputs["Color1"].default_value = (base_rgb[0], base_rgb[1], base_rgb[2], 1.0)
-    blk_mul_d.inputs["Color2"].default_value = (0.93, 0.945, 0.915, 1.0)  # 偏冷偏暗块
+    blk_mul_d.inputs["Color2"].default_value = (0.975, 0.968, 0.955, 1.0)  # [八审x2] 块间色差减半(0.93级在提亮基色上读成棋盘格)
     blk_mul_l = nt.nodes.new("ShaderNodeMixRGB"); blk_mul_l.blend_type = 'MULTIPLY'
     blk_mul_l.inputs["Fac"].default_value = 1.0
     blk_mul_l.inputs["Color1"].default_value = (base_rgb[0], base_rgb[1], base_rgb[2], 1.0)
-    blk_mul_l.inputs["Color2"].default_value = (1.06, 1.042, 1.005, 1.0)  # 偏暖偏亮块
+    blk_mul_l.inputs["Color2"].default_value = (1.025, 1.018, 1.005, 1.0)  # [八审x2] 同上
     mix_blk = nt.nodes.new("ShaderNodeMixRGB"); mix_blk.blend_type = 'MIX'
     nt.links.new(blk_fac.outputs[0], mix_blk.inputs["Fac"])
     nt.links.new(blk_mul_d.outputs["Color"], mix_blk.inputs["Color1"])
@@ -130,6 +130,10 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     nt.links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
     ramp.color_ramp.elements[0].position = 0.35
     ramp.color_ramp.elements[1].position = 0.68
+    # [八审材质刀] 风化色斑改"局部暖灰污染"(真石灰岩铁质浸染), 原默认黑白噪声
+    # 乘出来偏冷灰脏。低值=暖褐积污, 高值=近白亮面。
+    ramp.color_ramp.elements[0].color = (0.78, 0.72, 0.62, 1.0)
+    ramp.color_ramp.elements[1].color = (1.06, 1.04, 0.99, 1.0)
     mix1 = nt.nodes.new("ShaderNodeMixRGB"); mix1.blend_type = 'MIX'
     nt.links.new(mix_blk.outputs["Color"], mix1.inputs["Color1"])
     nt.links.new(ramp.outputs["Color"], mix1.inputs["Color2"])
@@ -402,11 +406,13 @@ def fog_material(name="fog", density=0.003, color=(0.70, 0.78, 0.88)):
 # (RGB 252,245,227), 青石基色本身是冷灰蓝 —— 两件事不矛盾, A/B 对照见
 # 3d/ab_qingshi_split.py 输出。
 
-def qingshi_material(name, base_rgb=(0.315, 0.352, 0.390), joint=0.024,
+def qingshi_material(name, base_rgb=(0.430, 0.428, 0.408), joint=0.024,
                      block_var=0.36, bump_strength=0.68):
     """青石(石灰岩)桥体: 冷灰蓝基色 + 鲜明大块条石横分层与纵错缝 + 块级灰度差。
     依据二审意见: 杜绝'程序噪声混凝土抹灰'观感, 强化规整石砌实体与竖缝凹槽。
     [六审B] joint/block_var/bump 开放为参数, 支撑砌缝视觉三级层级。"""
+    # [八审x2] weather 0.42->0.22: 世界坐标噪声在每个独立石块面相位不同,
+    # 高权重在提亮基色上读成"棋盘斑块"(块间对比主因已由此承担)。
     return stone_material(name, base_rgb, joint=joint, course_h=0.46,
-                          weather=0.42, waterline_h=0.60, block_var=block_var,
+                          weather=0.22, waterline_h=0.60, block_var=block_var,
                           bump_strength=bump_strength, base_rough=0.86)
