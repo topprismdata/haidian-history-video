@@ -15,5 +15,6 @@
   - P4备忘(S4/S6): manifest created_utc不可复现→回归哈希时置可选; y向inset面不对称在T7/T8全桥gap_check贴边时回看
 - Task 7: implemented (1b5f9df, 188测+312, proxy逐字节回归独立证实, IoU0.9326非挪门柱[审查反向实验含coursing物理上限0.656]) — 审查质量FAIL单点H1(cap_to_deck slab误用wedge中心锚: 29越顶/9bbox坏/8静默弃) → complete (17b37dd修复, 复审PASS无一虚报: 越顶29→0/IoU0.9393/弃2救2raw对照/S4反驳成立)
 - Task 8: implemented (04f2e54, G2 PASS 5935石/1974打印单元fail=0/守恒排除3961带id, 试印包234石1546cm3≈129h, 212测) — 审查中
-- Task 9(新): backing退让半taper差(~90块BACK互穿38mm) → T9修复派定
+- Task 9(处方更正, T8审查实证): 真因=cap_to_deck截顶未重算transform[1](y面), 非backing退让公式; 旧处方"补taper/2"会把610对好石变空腔已拦。并入T8b单修复轮
+- Task 8: 审查BLOCK — C1吞没石漏进打印集(23块撞RING/17cm3死料)+C2包含型赦免+W1全量id+W2豁免无界+报告两处不实陈述+体积口径声明 → T8b修复轮派发中
   - T8接线清单(累积): ①core_cells x界必填已强制 ②退让读params['proud'] ③hw钳位折点带内加密 ④x梯度dz真实冒烟 ⑤clip石导出走烘焙网格(T7已raise化) ⑥ABUT分区空(桥台砌体未入账) ⑦layout无-112°方位属表现层 ⑧雕件白名单外(P4)
