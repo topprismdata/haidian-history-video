@@ -10,3 +10,6 @@
   - T8接线清单(复审非阻塞项): ①退让读params['proud']非模块常量 ②带跨hw钳位折点需带内加密(p8现不触发) ③backing_stones单面契约docstring ④x梯度dz分支真实数据冒烟
 - 主控待决策(S2): 雕件(lions2深互渗体块)进printcheck前是否CSG union——T6落笔前定
 - T4W8流程违规记录: 实现者跳过隔离树直提主树(未踩踏, 例外放行一次, 后续dispatch已加强)
+- Task 6: implemented (93a3dfa, 24测/171绿) — 审查Spec✅/Approved(0 Crit); 独立探针: inset半空间检验证不撑大桥/两量分离字节级/flip-M3自洽/超床独批不塞爆
+  - W3主控裁决: FIT改打印毫米口径(NORMAL=0.3print→模型15mm inset), coupon 1:1打印——修复轮进行中
+  - P4备忘(S4/S6): manifest created_utc不可复现→回归哈希时置可选; y向inset面不对称在T7/T8全桥gap_check贴边时回看
