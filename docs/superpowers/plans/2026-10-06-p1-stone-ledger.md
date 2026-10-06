@@ -434,6 +434,8 @@ def test_core_cells_evidence_and_height():
 
 ### Task 5: printcheck.py 验证器
 
+> **契约更新（T5 复审后，T6 实现者必读）**：`check_stone(verts, faces, *, scale, min_wall_print_mm)`；`gap_check((t6,(v,f)), (t6,(v,f)), *, tol_model_mm, scale)` 均返 `{ok, issues:[{code,detail}]}`（`PC._codes(r)` 辅助过滤）。scale 必须 0<s≤1；transform=6 元组 [x,y,z,rx,ry,rz]（Euler XYZ，R=Rz·Ry·Rx 与 Blender 实测一致）。判据集：NON_MANIFOLD/NON_PLANAR_FACE(abs阈1e-5, 对%.6f OBJ与float32回读安全)/INVALID_COORD(两入口)/NON_ORIENTABLE/MULTI_SHELL(无向边union-find, 对齐lions2水密口径)/DOUBLE_MATERIAL(vol≤bbox)/THIN_WALL(bbox+绕向自适应斜面代理)/FACE_INDEX_OUT_OF_RANGE/DEGENERATE_FACE/EMPTY_MESH。时序契约: 导出前对**post-inset**几何调用。
+
 **Files:** Create `3d/printcheck.py`；Test `tests/test_p1_printcheck.py`
 
 - [ ] **Step 1: 失败测试**（合成：好楔形 pass；开口盒报 NON_MANIFOLD；自交盒报 SELF_INTERSECT；0.5mm 薄片报 THIN_WALL@1:50；两盒重叠 1mm 报 PENETRATION）
@@ -464,7 +466,7 @@ def test_thin_wall_at_scale():
 
 def test_penetration():
     a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
-    r = PC.gap_check([(0,0,0), a], [(0.999,0,0), a], tol_mm=0.5, scale=1/50.0)
+    r = PC.gap_check([(0,0,0,0,0,0), a], [(0.999,0,0,0,0,0), a], tol_model_mm=0.5, scale=1/50.0)
     assert PC._codes(r)["PENETRATION"]  # gap_check 现返 {ok,issues:[{code,detail}]}
 ```
 
