@@ -205,3 +205,13 @@ e30_shikongqiao_video/3d/ledger_cache/
 #   入库(git add 仍需显式)。
 !e30_shikongqiao_video/3d/stones/
 !e30_shikongqiao_video/3d/stones/*.json
+
+# ── 放行：P1-T8 G2 门报告与中央孔试印包随件（2026-10-07）─────────────────
+# ⚠ 审计件入库(JSON/MD); STL/3MF/PNG/blend 等打印产物仍不入库(可由
+#   `blender -b --python 3d/p1a_slice.py -- --g2` 重建)。
+!e30_shikongqiao_video/3d/out/
+!e30_shikongqiao_video/3d/out/print/
+!e30_shikongqiao_video/3d/out/print/g2_report.json
+!e30_shikongqiao_video/3d/out/print/central_slice/
+!e30_shikongqiao_video/3d/out/print/central_slice/manifest.json
+!e30_shikongqiao_video/3d/out/print/central_slice/SLICE_NOTES.md

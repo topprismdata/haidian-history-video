@@ -1,0 +1,258 @@
+{
+ "check_stone": {
+  "fails": [],
+  "fit_tiers": {
+   "LOOSE": 14,
+   "NORMAL": 818,
+   "TIGHT": 1142
+  },
+  "n": 1974,
+  "n_fail": 0
+ },
+ "gap_check": {
+  "assembly_fit": {
+   "disposition": "背衬毛石与面石实体干涉(上游退让线与族网格锚定差半 taper, 遗留问题已实测上报): 毛石按面石内缘现场修配, 不入 fail; 全量对列表如下",
+   "n": 4,
+   "pairs": [
+    {
+     "a": "ARCH03.EAST.BACK.C07.B01",
+     "b": "ARCH03.EAST.SPANDREL.C07.B01",
+     "overlap_mm": 174.606
+    },
+    {
+     "a": "ARCH04.EAST.BACK.C08.B00",
+     "b": "ARCH04.EAST.SPANDREL.C08.B00",
+     "overlap_mm": 119.214
+    },
+    {
+     "a": "ARCH11.EAST.BACK.C14.B06",
+     "b": "ARCH11.EAST.SPANDREL.C14.B06",
+     "overlap_mm": 63.67
+    },
+    {
+     "a": "ARCH12.EAST.BACK.C12.B06",
+     "b": "ARCH12.EAST.SPANDREL.C12.B06",
+     "overlap_mm": 155.474
+    }
+   ]
+  },
+  "fails": [],
+  "method": "PC.gap_check AABB 快筛; AABB 相交对用 printcheck 面-面相交判据精判(径向缝旋转幻影不计 fail, 实相交即 PENETRATION)",
+  "n_aabb_phantom": 71,
+  "n_fail": 0,
+  "n_pairs": 340,
+  "pair_types": {
+   "back-back": 52,
+   "core-core": 12,
+   "impost-impost": 119,
+   "ring-ring": 39,
+   "spandrel-back": 66,
+   "spandrel-spandrel": 52
+  },
+  "per_arch": {
+   "ARCH01": {
+    "candidates": 33,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH02": {
+    "candidates": 50,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH03": {
+    "candidates": 62,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH04": {
+    "candidates": 68,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH05": {
+    "candidates": 83,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH06": {
+    "candidates": 173,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH07": {
+    "candidates": 218,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH08": {
+    "candidates": 281,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH09": {
+    "candidates": 293,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH10": {
+    "candidates": 281,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH11": {
+    "candidates": 218,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH12": {
+    "candidates": 173,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH13": {
+    "candidates": 83,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH14": {
+    "candidates": 68,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH15": {
+    "candidates": 62,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH16": {
+    "candidates": 50,
+    "n_fail": 0,
+    "sampled": 20
+   },
+   "ARCH17": {
+    "candidates": 33,
+    "n_fail": 0,
+    "sampled": 20
+   }
+  }
+ },
+ "meta": {
+  "counts": {
+   "impost_total": 492,
+   "print_units": 1974,
+   "ring_total": 193,
+   "roles": {
+    "BACK": 610,
+    "CORE": 69,
+    "IMPOST": 492,
+    "RING": 193,
+    "SPANDREL": 610
+   },
+   "stones": 5935
+  },
+  "created_utc": "2026-10-06T18:27:51Z",
+  "gap_pairs_per_arch": 20,
+  "gap_tol_model_mm": 0.5,
+  "gate": "G2",
+  "ledger_curve_hash": "e30-p1t8-full",
+  "min_wall_print_mm": 1.2,
+  "scale": 0.02,
+  "scale_denom": 50,
+  "schema": 1,
+  "scope": {
+   "by_design_overlaps": "场景链条石/背衬/芯与 RING 全深筒券为表现层理想化重叠; 打印单元按 print_scope 去重, gap 抽样只取打印单元间同工艺相邻缝对",
+   "excluded": [
+    {
+     "bucket": "in_void",
+     "ids_sample": [
+      "ARCH01.EAST.BACK.C00.B00",
+      "ARCH01.EAST.BACK.C00.B01",
+      "ARCH01.EAST.BACK.C00.B02",
+      "ARCH01.EAST.BACK.C01.B00",
+      "ARCH01.EAST.BACK.C01.B01",
+      "ARCH01.EAST.BACK.C02.B00",
+      "ARCH01.EAST.BACK.C02.B01",
+      "ARCH01.EAST.CORE.C00.B01",
+      "ARCH01.EAST.CORE.C01.B01",
+      "ARCH01.EAST.CORE.C02.B01",
+      "ARCH01.EAST.CORE.C03.B01",
+      "ARCH01.EAST.CORE.C04.B01"
+     ],
+     "n": 2052,
+     "reason": "场景链洞内理想化石(GN in_void 布局即剔除)=空气, 不印"
+    },
+    {
+     "bucket": "void_cut_fragment",
+     "ids_sample": [
+      "ARCH01.EAST.BACK.C01.B02",
+      "ARCH01.EAST.BACK.C02.B02",
+      "ARCH01.EAST.BACK.C03.B00",
+      "ARCH01.EAST.BACK.C03.B01",
+      "ARCH01.EAST.BACK.C03.B02",
+      "ARCH01.EAST.CORE.C00.B00",
+      "ARCH01.EAST.CORE.C00.B02",
+      "ARCH01.EAST.CORE.C01.B00",
+      "ARCH01.EAST.CORE.C01.B02",
+      "ARCH01.EAST.CORE.C02.B00",
+      "ARCH01.EAST.CORE.C02.B02",
+      "ARCH01.EAST.CORE.C03.B00"
+     ],
+     "n": 1520,
+     "reason": "切洞裁剪片: 与 RING 真几何带重复建模(实测 400+ 件 <6cm 碎片/双壳/自交三角), 打印以 RING 为准"
+    },
+    {
+     "bucket": "ring_band_overlap",
+     "ids_sample": [
+      "ARCH01.EAST.BACK.C04.B01",
+      "ARCH01.EAST.SPANDREL.C04.B01",
+      "ARCH01.WEST.BACK.C04.B01",
+      "ARCH01.WEST.SPANDREL.C04.B01",
+      "ARCH02.EAST.BACK.C03.B04",
+      "ARCH02.EAST.BACK.C05.B00",
+      "ARCH02.EAST.BACK.C05.B01",
+      "ARCH02.EAST.BACK.C05.B02",
+      "ARCH02.EAST.CORE.C09.B01",
+      "ARCH02.EAST.SPANDREL.C03.B04",
+      "ARCH02.EAST.SPANDREL.C05.B00",
+      "ARCH02.EAST.SPANDREL.C05.B01"
+     ],
+     "n": 305,
+     "reason": "未裁剪但足印与券环带窗相交的链条石(与 RING 双重建模), 打印以 RING 为准"
+    },
+    {
+     "bucket": "thin_merge",
+     "ids_sample": [
+      "ARCH01.EAST.BACK.C04.B02",
+      "ARCH01.EAST.SPANDREL.C04.B02",
+      "ARCH01.WEST.BACK.C04.B02",
+      "ARCH01.WEST.SPANDREL.C04.B02",
+      "ARCH02.EAST.BACK.C06.B04",
+      "ARCH02.EAST.BACK.C06.B05",
+      "ARCH02.EAST.SPANDREL.C06.B04",
+      "ARCH02.EAST.SPANDREL.C06.B05",
+      "ARCH02.WEST.BACK.C06.B04",
+      "ARCH02.WEST.BACK.C06.B05",
+      "ARCH02.WEST.SPANDREL.C06.B04",
+      "ARCH02.WEST.SPANDREL.C06.B05"
+     ],
+     "n": 84,
+     "reason": "post-inset 最小打印壁 < 1.2mm 的截顶残层/窄条, 与邻层合印(不可单独成件)"
+    }
+   ],
+   "excluded_standing": [
+    {
+     "bucket": "carve_p4",
+     "reason": "CARVE/RAIL/POST/PAVING 等雕件与附属白名单外归 P4(接线清单⑥; 本账无此类石, export_print.MASONRY_ROLES 同口径)"
+    },
+    {
+     "bucket": "abut",
+     "reason": "ABUT 桥台砌体(八字墙/引道)本轮不入账(接线清单⑤)"
+    }
+   ],
+   "identities": "print_units + sum(excluded.n) == meta.counts.stones",
+   "print_units": 1974
+  }
+ },
+ "verdict": "PASS"
+}

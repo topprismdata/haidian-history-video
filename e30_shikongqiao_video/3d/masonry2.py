@@ -243,14 +243,26 @@ def build_face_layer(stones_dir, hw_fn, arches, course_h=None):
 # 中心仍按整块语义, 与 GN 实例点(build_scene2.placement_point)严格同源。
 
 _ANCHOR_MIN_CORNER = ("slab",)
+# P1-T8(接线清单⑦): RING/IMPOST 两新族显式入锚分派, 未知族照旧 raise。
+#   ring-wedge: 质心锚 —— p1a_slice 逐石调 masonry._voussoir 提取的局部网格
+#               已平移到块 bbox 中心(=materialize 旋转中心/family_center 同点),
+#               transform = 块中心世界位, off = transform。
+#               ⚠ 刻意【不】进 _ANCHOR_MIN_CORNER: 那份名单还驱动 cap_to_deck
+#               的最小角截顶语义(slab 专用), 券环是真几何、永不参与桥面截顶。
+#   impost-step: wedge 语义 —— p1a_slice 逐石调 masonry._stone 提取的起拱线
+#               出挑脚步块, transform x/z=块中心、y=前脸位, 与 wedge-std 同式
+#               (params 带 w/h/proud)。
+_ANCHOR_CENTROID = ("ring-wedge",)
+_ANCHOR_WEDGE_FRONT = ("wedge-std", "impost-step")
 
 
 def anchor_offset(family, params, transform):
     # type: (str, Dict[str, Any], List[float]) -> Tuple[float, float, float]
-    """族锚点 -> 平移偏移(块最小角-系语义; 见节注释)。未知族 raise。"""
-    if family in _ANCHOR_MIN_CORNER:
+    """族锚点 -> 平移偏移。语义按族分派(见节注释): 最小角/质心锚 off=transform;
+    前脸锚(wedge) off=(tx-w/2, ty-proud, tz-h/2)。未知族 raise。"""
+    if family in _ANCHOR_MIN_CORNER or family in _ANCHOR_CENTROID:
         return (float(transform[0]), float(transform[1]), float(transform[2]))
-    if family == "wedge-std":
+    if family in _ANCHOR_WEDGE_FRONT:
         w = float(params["w"])
         h = float(params["h"])
         proud = float(params.get("proud", 0.0))

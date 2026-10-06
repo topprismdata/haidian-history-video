@@ -34,6 +34,21 @@ def _slab(params):
 
 FAMILIES = {"wedge-std": _wedge_std, "slab": _slab}
 
+
+def _baked(params):
+    # type: (Dict[str, Any]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """烘焙网格族(P1-T8: ring-wedge/impost-step 专用)。params["bake"] =
+    {"v": [[x,y,z]...], "f": [[i...]...]}, 由 p1a_slice 逐石调 masonry.
+    _voussoir/_stone 提取(单一真相), 本函数只做确定性还原 —— 不含第二套
+    砌体公式; 几何漂移由 p1a_slice 的顶点多重集互证闸门负责。"""
+    b = params["bake"]
+    return ([tuple(float(c) for c in v) for v in b["v"]],
+            [tuple(int(i) for i in f) for f in b["f"]])
+
+
+FAMILIES["ring-wedge"] = _baked
+FAMILIES["impost-step"] = _baked
+
 def family_mesh(family, params):
     # type: (str, Dict[str, Any]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
     return FAMILIES[family](params)
