@@ -120,3 +120,101 @@ def test_build_face_layer_derives_heights_by_default(tmp_path):
     tail = M2.build_face_layer(str(tmp_path), _hw, [8], course_h=0.40)
     assert [s["params"]["h"] for s in tail[:3]] == [
         0.290 - 0.146, 0.850 - 0.290, 0.40]
+
+
+# ── T4: 背衬层 + core cells ──────────────────────────────────────────
+# 背衬 role=BACK evidence=ashlar_truth, 深 0.8-1.2 伪随机, 内缘退到最深
+# 丁石之后 2mm(隐缝); core cells role=CORE evidence=core_reconstruction,
+# 每 0.6m 一层 × x 3 列 × 前后合并, bbox 入 params, 直盒水密。
+def test_backing_no_penetration_with_headers():
+    faces = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)
+    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
+    hdr = [s for s in faces if s["params"]["d"] == M2.HEADER_D]
+    for b in backs:
+        y_in = abs(b["transform"][1]) - b["params"]["d"]   # 背衬内缘
+        for h in hdr:
+            y_h_in = abs(h["transform"][1]) - h["params"]["d"]
+            if abs(b["transform"][2] - h["transform"][2]) < 0.55:
+                assert y_in <= y_h_in - 0.002   # 隐缝>=2mm 不穿透
+
+
+def test_core_cells_evidence_and_height():
+    cells = M2.core_cells(8, _hw, z_lo=1.0, z_hi=6.0, seed=7)
+    assert all(c["evidence"] == "core_reconstruction" for c in cells)
+    assert all(c["params"]["h"] <= 0.6 for c in cells)
+    assert len(cells) >= 8
+
+
+def test_backing_evidence_depth_and_clearance():
+    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
+    assert len(backs) == len(M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55))
+    assert all(s["role_struct"] == "BACK" for s in backs)
+    assert all(s["evidence"] == "ashlar_truth" for s in backs)
+    assert all(0.8 <= s["params"]["d"] <= 1.2 for s in backs)
+    # 2mm 隐缝记 params.gap_mm(几何事实); clearance_manufacturing_mm 保持
+    # None 挂 T6 时序(ledger I1: 置早被 validate_ledger 抓 CLEARANCE_PREMATURE)
+    assert all(s["params"]["gap_mm"] == 2.0 for s in backs)
+    assert all(s["clearance_manufacturing_mm"] is None for s in backs)
+    assert all(s["id"].split(".")[2] == "BACK" for s in backs)
+
+
+def test_backing_depth_is_pseudorandom_deterministic():
+    a = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
+    b = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
+    c = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=8)
+    same = lambda x, y: [(s["id"], s["transform"], s["params"]) for s in x] == \
+        [(s["id"], s["transform"], s["params"]) for s in y]
+    assert same(a, b)                      # 同种子逐位一致
+    assert not same(a, c)                  # 异种子深度序列确实变了
+    assert [s["transform"][1] for s in a] == \
+           [-s["transform"][1] for s in
+            M2.backing_stones(SPEC, 8, -1, _hw, course_h=0.55, seed=7)]
+
+
+def test_backing_penetration_negative_control():
+    # 判据负控制: 退让量被抵消再多推 1cm -> 穿透必须被抓住(判据非恒真)
+    faces = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)
+    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
+    hdr = [s for s in faces if s["params"]["d"] == M2.HEADER_D]
+
+    def worst(b):
+        return max((abs(b["transform"][1]) - b["params"]["d"])
+                   - (abs(h["transform"][1]) - h["params"]["d"]) - 0.002
+                   for h in hdr
+                   if abs(b["transform"][2] - h["transform"][2]) < 0.55)
+
+    assert all(worst(b) <= 0.0 for b in backs)
+    busted = dict(backs[0])
+    busted["params"] = dict(backs[0]["params"])
+    busted["transform"] = list(backs[0]["transform"])
+    busted["transform"][1] += busted["params"]["d"] + 0.01
+    assert worst(busted) > 0.0
+
+
+def test_backing_reuses_course_heights_contract():
+    # T3 审查硬契约: 背衬层高必须与面石同口径(_course_heights 推导)
+    f = M2.face_stones(UNEQUAL_SPEC, 8, 1, _hw)
+    b = M2.backing_stones(UNEQUAL_SPEC, 8, 1, _hw, seed=7)
+    assert [s["params"]["h"] for s in b] == [s["params"]["h"] for s in f]
+    assert [s["transform"][2] for s in b] == [s["transform"][2] for s in f]
+
+
+def test_core_cells_bbox_watertight_and_coverage():
+    cells = M2.core_cells(8, _hw, z_lo=1.0, z_hi=6.0, seed=7)
+    assert all(c["role_struct"] == "CORE" for c in cells)
+    assert all(c["id"].split(".")[2] == "CORE" for c in cells)
+    assert all(c["print"]["watertight"] is True for c in cells)
+    for c in cells:
+        bb = c["params"]["bbox"]
+        assert bb["z1"] == bb["z0"] + c["params"]["h"]   # 构造恒等式
+        assert bb["x1"] - bb["x0"] == c["params"]["w"]
+        assert abs((bb["y1"] - bb["y0"]) - c["params"]["d"]) < 1e-12
+        # 前后合并: 宽度 = 2 * hw(列心, 层中)
+        yh = _hw((bb["x0"] + bb["x1"]) / 2.0, (bb["z0"] + bb["z1"]) / 2.0)
+        assert abs(bb["y1"] - yh) < 1e-9 and abs(bb["y0"] + yh) < 1e-9
+    # z 覆盖无缝无叠: 按 (层,列) 排序后层界首尾相接
+    zs = sorted(set((c["params"]["bbox"]["z0"], c["params"]["bbox"]["z1"])
+                    for c in cells))
+    assert zs[0][0] == 1.0 and zs[-1][1] == 6.0
+    for (a0, a1), (b0, b1) in zip(zs, zs[1:]):
+        assert abs(a1 - b0) < 1e-9
