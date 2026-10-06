@@ -112,3 +112,35 @@ G2_VERDICT PASS stones=5935 ring=193 impost=492 gap_pairs=340
   `3d/out/print/central_slice/SLICE_NOTES.md`
 - 产物（不入库, 盘上交付）: `central_slice/*.stl|*.3mf`×234,
   `ledger_print.json`, `assembly_ortho.png`, `3d/out/ledger_full.json`
+
+## 修复轮 (T8b, 2026-10-07, commit c74d54f)
+
+**审查八条 + 审查方三裁 + 主控 1b/2A/六条增量 全部落地; G2 现状 = 诚实 FAIL(主控 2A 预授权红门), 归因清单如下。**
+
+### A1(核心修复, 全绿闭环)
+cap_to_deck wedge 截顶改 h/transform[2] 时同步重算 `transform[1] = side*(hw_wall(xm, z0+h2/2)+proud)`(backing front_c 语义同式兼容, 实际只有面石走此路径)。**A1 恒等式复验**(审查恒等式 `pen+BACKING_GAP ≡ −(|ty|−(hw+proud))`): 全链 2290 对逐对余量 **<1e-6mm**; pen>0 **116 对→0**(修复前最大 96.3mm, 全部是截顶石); G2 assembly_fit 实体相交 **30 对→0**(全量跑, 非抽样); 中央孔 0(与本审查方独立测定一致)。修复前 116/142 口径差 = 审查方按截顶石计 142、按 pen>0 对计 116, 同一机制。
+
+### B3+B4(处置宇宙, 机制完整、红门在案)
+- 面积判据: RING 烘焙网格逐三角 x-z 投影真剪影栅格(2cm), 分母=链石自身剪影格数; 吞没石(>50%)必排除(单测钉死)。
+- volume 宇宙: ring↔{SPANDREL,BACK,CORE} pre-inset(bbox 预筛+面级精判含 B2 包含分支), unique_vol=V(stone)−V(stone∩RING∪) 同栅格同原点同步长; case_A(unique≤1%·V 且 ≤50cm³ 且顶点包含复证)→subsume 出集; case_B→masonry._hole_cut_polyline 单一真相折线 print-view 裁剪(承压带保座石 z<spz−GAP、环 lift 包络计入——首跑两处几何根因已修: 承压带吞环端 193 撞、keystone lift +0.07 出切割线), 同位 partner 对称传播(缝一致性, 二跑 gap 216 的根因); trim_empty 归 subsume 桶; 裁片薄片落 thin_merge("trimmed sliver")。
+- final_scope_check: 最终 scope 全量独立 3D 复测(pre-inset), 不从桶成员/处置计数推导; 负控①(禁 subsume+强制 keep → n_colliding>0)真扰动管线验证, 非恒真。
+- 负控②③④全落单测(吞没盒 case_A/咬角 case_B/post-inset 拒绝/两环各半 case_B)。
+
+### D6/D7/E8
+- excluded_ids.json 桶→ids 全表入库(.gitignore 白名单)。
+- spandrel-back 全量跑(不再 20/孔), depth>5mm 或 AABB 交叠>100cm³ 计 fail, 界内豁免全量记账+WARN>50; 字段改名 aabb_min_axis_mm+新增 depth_mm(面级精判)。
+- 体积口径: 耳切对角约定敏感性 **6.171e-3 实测复现**(193 环石双对角体积, 最差 ARCH07.RING.B13), 129h 实心体上界、CORE 非加和写入 g2_report.meta.volume_caliber + SLICE_NOTES; 装箱 90°/45° 旋转, 220²对角 311mm 件改 fit_diagonal 非独占批(250x70 负控仍 oversize); SLICE_NOTES 旧"4/66 抽样/~90 块"陈述删除。
+
+### 主控六条回话
+1. 裁剪=方案(b)落地(p1a 消费侧, 零触碰 clip_footprint/T7)。
+2. 2A 执行: FAIL 即 raise 不出包, SLICE_NOTES 顶部"作废待 T9"横幅已打; **FAIL 时交付物=报告+excluded_ids+覆盖率审计+fail 矩阵, 全部落盘**。
+3. subsume 判据按修正版(AND 双条件+B2 复证)落地。
+4. 覆盖率审计入报告: in_void 160cm²(≈干净)/void_cut_fragment 262.4m²/ring_band 27.1m²/thin_merge 89.6cm²(全桥 17 孔; 审查方中央孔单孔 clip 桶 16.8m² 与我 17 孔 262m²/17≈15.4m² 同量级互证)。
+5. 对账表: /tmp/e30_probe/reconcile_arch09.json(35 id 双表共有, 审查方独有 112=已排除桶撞件[其表含 void_cut_fragment 全 population], 我独有 3=partner 传播件)。
+6. in_void 桶干净(160cm² 洞缘量化余量); thin_merge 注释改"谁都不单独印"。
+
+### 红门现状(主控 2A 预授权, T9 范围输入)
+verdict=**FAIL**: check_stone **106**(100% 为本轮带裁片 SELF_INTERSECT 1-2 面对级——耳切在折线 ARC_STEP 密采样+1.5mm 抽稀后的薄片三角伪交叉, 捏点断 run 后 475→54→106 波动属抽稀策略与耳切 eps 交互, 网格质量未收敛); gap **216**(全部 spandrel-back-bounds, 与 SELF_INTERSECT 石 id 集合重合——被自交片污染的面级判, 非真缝互穿[A1 恒等式全绿为证]); ring↔链残留 **87/903**(裁片几何未收敛所致的残留/伪撞混合, 需 T9 逐对甄别)。归因: **带裁片耳切网格化质量**一项, 判据/桶/阈值零放宽(主控禁令)。legacy clip 存量普查: 870/1520 fail(MULTI_SHELL 401/SELF_INTERSECT 560/THIN_WALL 1154, T5/T7 追偿输入)。
+
+### 回归(真树实测)
+e30 tests **224 passed**(基线 212+新 12, 含冻结哈希闸门)/bridge3d **312 passed**/freeze 三对象 sha_sorted **逐位一致**(build_scene2 仅 ledger 链改动)/qa_l2 **QA_L2_OK**+负控 **NEG_CAUGHT 10/10**/_check_abutment **ALL PASS**。中央孔试印包停在 T8 版+作废横幅(2A)。
