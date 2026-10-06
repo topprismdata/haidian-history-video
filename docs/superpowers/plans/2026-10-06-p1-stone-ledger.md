@@ -448,24 +448,24 @@ def test_good_wedge_passes():
     v, f = family_mesh("wedge-std", {"w": 1.0, "h": 0.4, "d": 1.0,
                                      "proud": 0.006, "back": 0.3,
                                      "hw_b": 6.0, "hw_t": 5.9})
-    r = PC.check_stone(v, f, scale=1/50.0, min_wall_mm=1.2)
+    r = PC.check_stone(v, f, scale=1/50.0, min_wall_print_mm=1.2)
     assert r["ok"] and not r["issues"]
 
 def test_open_box_non_manifold():
     v = [(0,0,0),(1,0,0),(1,1,0),(0,1,0),(0,0,1),(1,0,1),(1,1,1),(0,1,1)]
     f = [(0,1,2,3),(4,5,6,7),(0,1,5,4),(1,2,6,5)]   # 缺两面
-    r = PC.check_stone(v, f)
+    r = PC.check_stone(v, f, scale=1.0, min_wall_print_mm=1.2)
     assert any("NON_MANIFOLD" in i for i in r["issues"])
 
 def test_thin_wall_at_scale():
     v, f = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.03})  # 3cm@1:50=0.6mm
-    r = PC.check_stone(v, f, scale=1/50.0, min_wall_mm=1.2)
+    r = PC.check_stone(v, f, scale=1/50.0, min_wall_print_mm=1.2)
     assert any("THIN_WALL" in i for i in r["issues"])
 
 def test_penetration():
     a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
     r = PC.gap_check([(0,0,0), a], [(0.999,0,0), a], tol_mm=0.5, scale=1/50.0)
-    assert any("PENETRATION" in i for i in r)
+    assert PC._codes(r)["PENETRATION"]  # gap_check 现返 {ok,issues:[{code,detail}]}
 ```
 
 - [ ] **Step 2-4**：实现（manifold=边计数==2；thin=任一维 bbox*scale*1000 < min_wall；penetration=AABB 重叠且重叠深>tol；self-intersect 用逐面 AABB 粗筛+三角相交精检，合成自交盒必报）
