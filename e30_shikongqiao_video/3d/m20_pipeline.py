@@ -57,9 +57,9 @@ class Model:
 
     def hw(self, x, z):
         """墙面半宽(22° 收分): masonry._hw 同式。"""
-        xc = min(max(x, -self.half), self.half)
+        xc = np.clip(x, -self.half, self.half)   # np2 兼容(旧 min/max 链对 ndarray 失效)
         deck = self.deck_z(xc)
-        f = max(0.0, min(1.0, (z - self.c["BODY_BOTTOM"]) / (deck - self.c["BODY_BOTTOM"])))
+        f = np.clip((z - self.c["BODY_BOTTOM"]) / (deck - self.c["BODY_BOTTOM"]), 0.0, 1.0)
         return (self.c["DECK_DOWN_W"] + (self.c["DECK_UP_W"] - self.c["DECK_DOWN_W"]) * f) / 2.0
 
     def arch(self, i):
