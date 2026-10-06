@@ -353,11 +353,15 @@ def build():
     # 缝~60-70% 抢券石的戏): 几何 2068+ 块全保留, 只调材质权重。
     # [八审材质刀] 冷灰蓝→青白石暖灰高漫反射: 基色提亮去蓝(0.43 级中性暖灰),
     # 缝侵蚀浅灰化在 materials.py, 暖灰污染在风化 ramp。
+    # [M17] 缝权重按真照重定: 砧石间是零缝触边盒, 缝全靠程序线 -> 0.014m+0.72暗化
+    # 才在 10m 视距读得出砌层(原 0.008/0.024 太弱, 反被色差噪声淹没)。
+    # 券环: 放射缝是真实几何(JOINT_GAP 0.0125), 程序网格缝方向不对 -> joint≈0 关闭。
     m_body = MAT.qingshi_material("stone_body", block_var=0.08)
     m_ring = MAT.qingshi_material("stone_ring", (0.455, 0.450, 0.430),
-                                  joint=0.020, block_var=0.10, bump_strength=0.65)
+                                  joint=0.0005, block_var=0.10, bump_strength=0.65)
     m_course = MAT.qingshi_material("stone_course", (0.440, 0.436, 0.416),
-                                    joint=0.008, block_var=0.04, bump_strength=0.16)
+                                    joint=0.014, block_var=0.04, bump_strength=0.22,
+                                    uv_joints=True)
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
     m_earth = MAT.earth_material("shore_earth")

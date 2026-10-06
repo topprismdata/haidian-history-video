@@ -18,7 +18,8 @@ def _principled(mat):
 
 def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
                    waterline_z=0.0, waterline_h=0.55, block_var=0.12,
-                   bump_strength=0.38, base_rough=0.82):
+                   bump_strength=0.38, base_rough=0.82,
+                   course_w=None, z_phase=0.0, x_phase=0.0, uv_joints=False):
     """古建石构材质: 分层砌缝(横向) + 竖向错缝 + 逐块色差 + 风化斑驳
     + 缝凹槽/石面颗粒 bump + 水线以下更深更绿。"""
     m = bpy.data.materials.new(name)
@@ -37,8 +38,11 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     nt.links.new(geo.outputs["Position"], sep.inputs["Vector"])
 
     # ── 砌缝: 横向按 course_h 分层, 每层内竖向错缝(奇偶层半宽偏移) ──
+    _cw = course_w if course_w is not None else 2.0 * course_h
+    z_off = nt.nodes.new("ShaderNodeMath"); z_off.operation = 'SUBTRACT'
+    nt.links.new(sep.outputs["Z"], z_off.inputs[0]); z_off.inputs[1].default_value = z_phase
     z_scaled = nt.nodes.new("ShaderNodeMath"); z_scaled.operation = 'MULTIPLY'
-    nt.links.new(sep.outputs["Z"], z_scaled.inputs[0])
+    nt.links.new(z_off.outputs[0], z_scaled.inputs[0])
     z_scaled.inputs[1].default_value = 1.0 / course_h
     z_floor = nt.nodes.new("ShaderNodeMath"); z_floor.operation = 'FLOOR'
     nt.links.new(z_scaled.outputs[0], z_floor.inputs[0])
@@ -48,19 +52,24 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     z_par = nt.nodes.new("ShaderNodeMath"); z_par.operation = 'PINGPONG'
     z_par.inputs[1].default_value = 1.0; z_par.inputs[2].default_value = 1.0
     nt.links.new(z_floor.outputs[0], z_par.inputs[0])
-    # 竖向: X 方向按半块错开
+    # 竖向: X 按块宽 _cw 分缝, 奇数层错半块。[M17修bug] 原实现 (x_f+0.5)*z_par
+    # 在奇数层(z_par=0)恒为 0 -> thin() 判整行为缝 -> jmin 恒 0 -> 奇偶行明暗交替
+    # 横带 = "条纹贴面"棋盘真根因。改为 x_f + 0.5*(1-z_par)。
+    x_off = nt.nodes.new("ShaderNodeMath"); x_off.operation = 'SUBTRACT'
+    nt.links.new(sep.outputs["X"], x_off.inputs[0]); x_off.inputs[1].default_value = x_phase
     x_s = nt.nodes.new("ShaderNodeMath"); x_s.operation = 'MULTIPLY'
-    nt.links.new(sep.outputs["X"], x_s.inputs[0])
-    x_s.inputs[1].default_value = 1.0 / (course_h * 2.0)
+    nt.links.new(x_off.outputs[0], x_s.inputs[0])
+    x_s.inputs[1].default_value = 1.0 / _cw
     x_f = nt.nodes.new("ShaderNodeMath"); x_f.operation = 'FRACT'
     nt.links.new(x_s.outputs[0], x_f.inputs[0])
-    # 奇数层: 竖缝位置反向
-    x_add = nt.nodes.new("ShaderNodeMath"); x_add.operation = 'ADD'
-    nt.links.new(x_f.outputs[0], x_add.inputs[0])
-    x_add.inputs[1].default_value = 0.5
-    x_shift = nt.nodes.new("ShaderNodeMath"); x_shift.operation = 'MULTIPLY'
-    nt.links.new(x_add.outputs[0], x_shift.inputs[0])
-    nt.links.new(z_par.outputs[0], x_shift.inputs[1])
+    par_inv = nt.nodes.new("ShaderNodeMath"); par_inv.operation = 'SUBTRACT'
+    par_inv.inputs[0].default_value = 1.0
+    nt.links.new(z_par.outputs[0], par_inv.inputs[1])
+    half_off = nt.nodes.new("ShaderNodeMath"); half_off.operation = 'MULTIPLY'
+    nt.links.new(par_inv.outputs[0], half_off.inputs[0]); half_off.inputs[1].default_value = 0.5
+    x_shift = nt.nodes.new("ShaderNodeMath"); x_shift.operation = 'ADD'
+    nt.links.new(x_f.outputs[0], x_shift.inputs[0])
+    nt.links.new(half_off.outputs[0], x_shift.inputs[1])
     x_fin = nt.nodes.new("ShaderNodeMath"); x_fin.operation = 'FRACT'
     nt.links.new(x_shift.outputs[0], x_fin.inputs[0])
 
@@ -76,8 +85,25 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
         inv.inputs[0].default_value = 1.0
         nt.links.new(mx.outputs[0], inv.inputs[1])
         return inv
-    jz = thin(z_frac.outputs[0], joint / course_h)
-    jx = thin(x_fin.outputs[0], joint / (course_h * 2.0))
+    if uv_joints:
+        # [M17] 砧石前脸 UV 已按块局部米展平 -> 缝沿真实块界, 不跨收分斜面/不漂缝
+        attr = nt.nodes.new("ShaderNodeAttribute")
+        attr.attribute_name = "UVMap"
+        usep = nt.nodes.new("ShaderNodeSeparateXYZ")
+        nt.links.new(attr.outputs["Vector"], usep.inputs["Vector"])
+        vu_s = nt.nodes.new("ShaderNodeMath"); vu_s.operation = 'DIVIDE'
+        nt.links.new(usep.outputs["X"], vu_s.inputs[0]); vu_s.inputs[1].default_value = _cw
+        vu_f = nt.nodes.new("ShaderNodeMath"); vu_f.operation = 'FRACT'
+        nt.links.new(vu_s.outputs[0], vu_f.inputs[0])
+        vv_s = nt.nodes.new("ShaderNodeMath"); vv_s.operation = 'DIVIDE'
+        nt.links.new(usep.outputs["Y"], vv_s.inputs[0]); vv_s.inputs[1].default_value = course_h
+        vv_f = nt.nodes.new("ShaderNodeMath"); vv_f.operation = 'FRACT'
+        nt.links.new(vv_s.outputs[0], vv_f.inputs[0])
+        jz = thin(vv_f.outputs[0], joint / course_h)
+        jx = thin(vu_f.outputs[0], joint / _cw)
+    else:
+        jz = thin(z_frac.outputs[0], joint / course_h)
+        jx = thin(x_fin.outputs[0], joint / _cw)
     jmin = nt.nodes.new("ShaderNodeMath"); jmin.operation = 'MINIMUM'
     nt.links.new(jz.outputs[0], jmin.inputs[0]); nt.links.new(jx.outputs[0], jmin.inputs[1])
 
@@ -90,15 +116,17 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     nt.links.new(x_blk.outputs[0], bx_add.inputs[0]); bx_add.inputs[1].default_value = 0.5
     bx_mul = nt.nodes.new("ShaderNodeMath"); bx_mul.operation = 'MULTIPLY'
     nt.links.new(bx_add.outputs[0], bx_mul.inputs[0])
-    bx_mul.inputs[1].default_value = course_h * 2.0
+    bx_mul.inputs[1].default_value = _cw
     bz_add = nt.nodes.new("ShaderNodeMath"); bz_add.operation = 'ADD'
     nt.links.new(z_floor.outputs[0], bz_add.inputs[0]); bz_add.inputs[1].default_value = 0.5
     bz_mul = nt.nodes.new("ShaderNodeMath"); bz_mul.operation = 'MULTIPLY'
     nt.links.new(bz_add.outputs[0], bz_mul.inputs[0])
     bz_mul.inputs[1].default_value = course_h
+    bz_off = nt.nodes.new("ShaderNodeMath"); bz_off.operation = 'ADD'
+    nt.links.new(bz_mul.outputs[0], bz_off.inputs[0]); bz_off.inputs[1].default_value = z_phase
     blk_vec = nt.nodes.new("ShaderNodeCombineXYZ")
     nt.links.new(bx_mul.outputs[0], blk_vec.inputs["X"])
-    nt.links.new(bz_mul.outputs[0], blk_vec.inputs["Y"])
+    nt.links.new(bz_off.outputs[0], blk_vec.inputs["Y"])
     blk_vec.inputs["Z"].default_value = 3.17
     blk_noise = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(blk_vec.outputs["Vector"], blk_noise.inputs["Vector"])
@@ -123,7 +151,7 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     # ── 风化斑驳: Noise 扰动基色 ──
     noise = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], noise.inputs["Vector"])
-    noise.inputs["Scale"].default_value = 2.6
+    noise.inputs["Scale"].default_value = 0.6   # [M17] 2.6->0.6: 真照色斑2~4m大软斑, 原尺度=每块一格读成棋盘
     noise.inputs["Detail"].default_value = 6.0
     noise.inputs["Roughness"].default_value = 0.55
     ramp = nt.nodes.new("ShaderNodeValToRGB")
@@ -140,8 +168,12 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     mix1.inputs["Fac"].default_value = weather
 
     mix_dark = nt.nodes.new("ShaderNodeMixRGB"); mix_dark.blend_type = 'MULTIPLY'
-    mix_dark.inputs["Color2"].default_value = (0.74, 0.72, 0.70, 1.0)   # 缝内变暗
-    nt.links.new(jmin.outputs[0], mix_dark.inputs["Fac"])
+    mix_dark.inputs["Color2"].default_value = (0.80, 0.79, 0.77, 1.0)   # [M17] 缝内变暗(侵蚀浅灰)
+    # [M17修bug] 原 Fac=jmin(石面1/缝0) 把暗化乘在石面上、缝反而亮 —— 反向。
+    jm_inv = nt.nodes.new("ShaderNodeMath"); jm_inv.operation = 'SUBTRACT'
+    jm_inv.inputs[0].default_value = 1.0
+    nt.links.new(jmin.outputs[0], jm_inv.inputs[1])
+    nt.links.new(jm_inv.outputs[0], mix_dark.inputs["Fac"])
     nt.links.new(mix1.outputs["Color"], mix_dark.inputs["Color1"])
     # 水线以下更暗更绿(藻痕): 叠加低频噪声扰动 Z, 形成微小起伏与块石吸水率差异, 杜绝机械直横线
     w_noise = nt.nodes.new("ShaderNodeTexNoise")
@@ -165,7 +197,7 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     mix_water = nt.nodes.new("ShaderNodeMixRGB"); mix_water.blend_type = 'MIX'
     nt.links.new(wcl.outputs[0], mix_water.inputs["Fac"])
     nt.links.new(mix_dark.outputs["Color"], mix_water.inputs["Color1"])
-    mix_water.inputs["Color2"].default_value = (base_rgb[0]*0.36, base_rgb[1]*0.42, base_rgb[2]*0.32, 1.0)
+    mix_water.inputs["Color2"].default_value = (base_rgb[0]*0.52, base_rgb[1]*0.56, base_rgb[2]*0.48, 1.0)  # [M17] 0.36过黑, 真照水渍带是中深灰
     # ── M10.2 风化层(五审残留1/3): 腔隙积垢 + 棱缘磨亮 + 竖向雨痕 ──
     geo2 = nt.nodes.new("ShaderNodeNewGeometry")
     pr = nt.nodes.new("ShaderNodeValToRGB")
@@ -406,13 +438,19 @@ def fog_material(name="fog", density=0.003, color=(0.70, 0.78, 0.88)):
 # (RGB 252,245,227), 青石基色本身是冷灰蓝 —— 两件事不矛盾, A/B 对照见
 # 3d/ab_qingshi_split.py 输出。
 
-def qingshi_material(name, base_rgb=(0.430, 0.428, 0.408), joint=0.024,
-                     block_var=0.36, bump_strength=0.68):
+def qingshi_material(name, base_rgb=(0.448, 0.440, 0.412), joint=0.024,
+                     block_var=0.36, bump_strength=0.68,
+                     course_h=0.40, course_w=0.90, z_phase=0.15, x_phase=0.5,
+                     uv_joints=False):
     """青石(石灰岩)桥体: 冷灰蓝基色 + 鲜明大块条石横分层与纵错缝 + 块级灰度差。
     依据二审意见: 杜绝'程序噪声混凝土抹灰'观感, 强化规整石砌实体与竖缝凹槽。
     [六审B] joint/block_var/bump 开放为参数, 支撑砌缝视觉三级层级。"""
     # [八审x2] weather 0.42->0.22: 世界坐标噪声在每个独立石块面相位不同,
     # 高权重在提亮基色上读成"棋盘斑块"(块间对比主因已由此承担)。
-    return stone_material(name, base_rgb, joint=joint, course_h=0.46,
-                          weather=0.22, waterline_h=0.60, block_var=block_var,
+    # [M17] 网格对齐几何砧石(course_h=0.40/course_w=0.90/z起0.15/x相位0.5);
+    # 水线带抬到 z∈[0.55-0.9, 0.55] 覆盖贴面起砌带(原 z=0 半淹水下=干湿分界缺失)。
+    return stone_material(name, base_rgb, joint=joint, course_h=course_h,
+                          course_w=course_w, z_phase=z_phase, x_phase=x_phase,
+                          weather=0.16, waterline_z=0.55, waterline_h=0.90,
+                          block_var=block_var, uv_joints=uv_joints,
                           bump_strength=bump_strength, base_rough=0.86)

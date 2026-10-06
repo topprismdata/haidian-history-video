@@ -30,8 +30,7 @@ VOUSSOIR_FACE_W = 1.00      # 兜底面宽(仅当目标表缺项时用)
 VOUSSOIR_TARGET = [17, 15, 13, 13, 11, 11, 9, 9, 7]
 RING_T = 0.54              # [七审P0-2] 券脸径向宽 0.62->0.54(-13%): '轻一点的券环+更大孔占比', 厚重感一半来自环太宽
 JOINT = 0.02               # 灰缝 m
-FACE_DEPTH = 0.03          # [八审x3] 0.12->0.03: 贴面浮雕在低角光下自投影,
-                           # 才是'棋盘斑块'真因(非贴图); 真桥砧石近齐口灰缝
+FACE_DEPTH = 0.006         # [M17x2] 0.03->0.006: 真照砧石齐口平缝, 3cm 侧壁在掠射光仍投影成块影
 # [六审E] 券石改全深筒券: 真桥透洞可见阶梯状环石内壁, 原"前后薄浮雕"读成
 # "正立面开孔+光滑内筒"。内弧伸入洞口 BARREL_PROTRUDE, 邻块留放射缝 JOINT_GAP,
 # 端面出墙面 FACE_PROUD(保留正面环带阴影)。
@@ -39,7 +38,7 @@ BARREL_PROTRUDE = 0.03
 JOINT_GAP = 0.0125
 JOINT_GAP_BACK = 0.004     # [七审P1-2] 放射缝前后端不等宽: 前脸 0.0125, 内壁
                            #   0.004 → 深度权重 100→~35, 去"洋葱圈隧道"感
-FACE_PROUD = 0.02
+FACE_PROUD = 0.004        # [M17c] 0.02->0.004: 券石出挑2cm侧壁在掠射光下投影成暗三角(拱肩棋盘最后残留), 真照券脸近齐平
 COURSE_H = 0.40            # 砧石层高 m
 COURSE_W = 0.90            # 砧石宽 m
 
@@ -159,12 +158,13 @@ def build_coursing(bm, hw_front, half_depth):
             # 桥面曲线: 砧石顶不得超桥面; 且需在桥体收分轮廓内
             deck_here = G.deck_z(min(max(cx, -G.BRIDGE_LEN / 2), G.BRIDGE_LEN / 2))
             in_body = abs(cx) <= G.BRIDGE_LEN / 2 + 1.3
-            _m = max(COURSE_W, COURSE_H) / 2.0
+            _m = COURSE_H / 2.0 + 0.02  # [M17b] 0.08->0.02: 真照拱肩砧石直接切进券环线, 露体带=一条缝宽
             if in_body and cz < deck_here - 0.05 and not _in_arch(cx, cz, m=_m):
                 for side in (1, -1):
                     hw = _hw(cx, cz)
                     yb = side * hw - (half_depth if side > 0 else 0.0)
-                    _box(bm, cx, min(yb, yb + half_depth), cz, COURSE_W, half_depth, COURSE_H)
+                    _box(bm, cx, min(yb, yb + half_depth), cz, COURSE_W, half_depth, COURSE_H,
+                         uv_face=(cx - COURSE_W / 2.0, cz - COURSE_H / 2.0))
                     n += 1
             x += COURSE_W
         z += COURSE_H
@@ -172,19 +172,29 @@ def build_coursing(bm, hw_front, half_depth):
     return n
 
 
-def _box(bm, xc, yc, zc, dx, dy, dz):
+def _box(bm, xc, yc, zc, dx, dy, dz, uv_face=None):
+    """uv_face=(u0,z0): 传入则前脸(+Y)展平到块局部 UV(缝沿块界, 不跨块)。"""
     x0, x1 = xc - dx / 2, xc + dx / 2
     y0, y1 = yc, yc + dy
     z0, z1 = zc - dz / 2, zc + dz / 2
     vs = [bm.verts.new(p) for p in (
         (x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
         (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1))]
-    for f in ((0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2),
-              (2, 6, 7, 3), (3, 7, 4, 0)):
+    uv = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
+    for fi, f in enumerate(((0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2),
+                            (2, 6, 7, 3), (3, 7, 4, 0))):
         try:
-            bm.faces.new([vs[k] for k in f])
+            fc = bm.faces.new([vs[k] for k in f])
         except ValueError:
-            pass
+            continue
+        if uv_face is not None and fi in (0, 1):  # 前后脸都展平(桥两侧各有朝外脸)
+            u0, z0 = uv_face
+            # v[0..3]=(x0,y0,z0),(x1,..),(x1,y1,z0)... 前脸按局部米展平
+            for lp in fc.loops:
+                vi = lp.vert.index if hasattr(lp.vert, "index") else 0
+                lx = lp.vert.co.x - u0
+                lz = lp.vert.co.z - z0
+                lp[uv].uv = (lx, lz)
 
 
 def build_masonry(hw_front, half_depth=FACE_DEPTH):
