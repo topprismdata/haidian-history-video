@@ -3,10 +3,11 @@
 """P1-T6 打印导出器: inset 吃装配公差 -> 外翻 -> check -> STL/3MF -> manifest/coupon。
 
 canonical 永远是 mesh+ledger; STL/3MF 是派生物(打印件毫米口径 = 模型米 x scale x 1000)。
-- inset 语义(S2 裁决): clearance 只在装配接触面吃 -- 简化为对每石三轴 bbox 各面
-  内缩 clearance_model_mm/1000 模型米(装配对 = 两石各退一缝 -> 成对间隙 2x clearance)。
-  分档 FIT_TIERS 按块最小维: <0.3m TIGHT / <1.0m NORMAL / 否则 LOOSE, 分派结果
-  连同 clearance 写进 manifest 可追溯。
+- inset 语义(W3 口径, 主控裁决): 配合缝以**打印件毫米**计量 -- FIT_PRINT_MM 是
+  真实打印件上的配合缝; 模型侧 inset 量 = fit_print_mm/scale 模型毫米
+  (scale=1/50 -> NORMAL 在模型上吃 15mm)。分档按块最小维(模型米): <0.3m TIGHT /
+  <1.0m NORMAL / 否则 LOOSE; 每石 manifest 记 clearance_print_mm 与
+  clearance_model_mm 双值可追溯(装配对 = 两石各退一缝 -> 成对间隙打印当量 2x fit_print_mm)。
 - 绕向: 族库全体内翻(signed_volume<0); STL/3MF 出口必须外翻(法线朝外右手序),
   flip_outward 统一翻三角, 翻完过 printcheck.check_stone 复验(S3: post-inset 几何
   才准过, 在 inset 前跑 = 放行薄件)。
@@ -14,13 +15,17 @@ canonical 永远是 mesh+ledger; STL/3MF 是派生物(打印件毫米口径 = �
   roles= 白名单可显式覆盖; 雕件 CSG union 方案归 P4。
 - 导出几何一律取石账的局部族网格(底面贴床), 不应用 ledger transform(装配定位是
   拼装时的事); coupon 名义拼装间隙才用 transform 表达。
+- coupon 是 1:1 打印配合试片(修复轮裁决): 楔块用模型米真尺寸直接出(scale=1.0),
+  缝在打印件上即 2x fit_print_mm 可直接实测; 网格走公开口 coupon_mesh(tier, side)。
+
 """
+import io
 import json
 import os
 import struct
 import time
 import zipfile
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -29,7 +34,7 @@ import printcheck as PC
 from families import family_mesh
 
 PRINT_BED_MM = (220.0, 220.0)
-FIT_TIERS = {"TIGHT": 0.15, "NORMAL": 0.3, "LOOSE": 0.5}   # 模型毫米
+FIT_PRINT_MM = {"TIGHT": 0.15, "NORMAL": 0.3, "LOOSE": 0.5}   # 打印件毫米(打印件上的真实配合缝)
 # (最小维上限 m, 档名): 逐界判定, 否则 LOOSE
 _FIT_BOUNDS = ((0.3, "TIGHT"), (1.0, "NORMAL"))
 MASONRY_ROLES = ("RING", "SPANDREL", "PIER", "IMPOST", "BACK", "CORE", "PAVING")
@@ -54,15 +59,17 @@ def signed_volume(verts, faces):
     return total / 6.0
 
 
-def fit_for_block(dims_m):
-    # type: (Sequence[float]) -> Tuple[str, float]
-    """按块最小维分派 (tier, clearance_model_mm): <0.3m TIGHT / <1.0m NORMAL /
-    否则 LOOSE。边界负控: 恰在界上归更松一档。"""
+def fit_for_block(dims_m, scale=1 / 50.0):
+    # type: (Sequence[float], float) -> Tuple[str, float]
+    """按块最小维(模型米)分派: <0.3m TIGHT / <1.0m NORMAL / 否则 LOOSE。
+    返回 (tier, clearance_model_mm): 档值是打印件毫米 FIT_PRINT_MM, 经 /scale
+    换算成模型侧 inset 量(scale=1/50 -> NORMAL = 15 模型毫米)。
+    边界负控: 恰在界上归更松一档。"""
     d0 = min(dims_m)
     for bound, tier in _FIT_BOUNDS:
         if d0 < bound:
-            return tier, FIT_TIERS[tier]
-    return "LOOSE", FIT_TIERS["LOOSE"]
+            return tier, FIT_PRINT_MM[tier] / float(scale)
+    return "LOOSE", FIT_PRINT_MM["LOOSE"] / float(scale)
 
 
 def inset(verts, clearance_model_mm):
@@ -160,7 +167,6 @@ def _3mf_bytes(verts_mm, faces):
             '"http://schemas.openxmlformats.org/package/2006/relationships">'
             '<Relationship Id="rel0" Type="%s" Target="/3D/3dmodel.model"/>'
             '</Relationships>') % _3MF_REL_TYPE
-    import io
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", ct)
@@ -171,21 +177,21 @@ def _3mf_bytes(verts_mm, faces):
 
 # ---------------------------------------------------------------- 导出
 
-def export_stone(stone, verts, faces, out_dir, scale=1 / 50.0, fit="NORMAL"):
+def export_stone(stone, verts, faces, out_dir, scale=1 / 50.0, fit=None):
     # type: (Dict[str, Any], List[Tuple[float, float, float]], List[Tuple[int, ...]], str, float, Optional[str]) -> Dict[str, Any]
-    """单石导出。fit=None 时按块最小维自动分档; 显式档名直接生效。
-    管线: inset(clearance) -> flip_outward -> check_stone(post-inset, S3, 不过即
-    raise) -> STL+3MF(打印件毫米, 材质分组目录)。返回
-    {stl, stl3mf(全路径), volume_cm3(打印件), fit, clearance_mm};
-    manifest 里由 export_ledger 转相对路径。"""
+    """单石导出。fit=None(默认)按块最小维自动分档; 显式档名直接生效。
+    管线: inset(fit_print_mm/scale 模型毫米) -> flip_outward -> check_stone
+    (post-inset, S3, 不过即 raise) -> STL+3MF(打印件毫米, 材质分组目录)。返回
+    {stl, stl3mf(全路径), volume_cm3(打印件), fit, clearance_print_mm,
+    clearance_model_mm}; manifest 里由 export_ledger 转相对路径。"""
     if fit is None:
-        fit, clr = fit_for_block(_extents_m(verts))
+        fit, clr_model = fit_for_block(_extents_m(verts), scale)
     else:
-        if fit not in FIT_TIERS:
+        if fit not in FIT_PRINT_MM:
             raise ValueError("unknown fit tier: %r (expect one of %s)"
-                             % (fit, sorted(FIT_TIERS)))
-        clr = FIT_TIERS[fit]
-    v2 = inset(verts, clr)
+                             % (fit, sorted(FIT_PRINT_MM)))
+        clr_model = FIT_PRINT_MM[fit] / float(scale)
+    v2 = inset(verts, clr_model)
     v2, f2 = flip_outward(v2, faces)
     rep = PC.check_stone(v2, f2, scale=scale)
     if not rep["ok"]:
@@ -206,7 +212,8 @@ def export_stone(stone, verts, faces, out_dir, scale=1 / 50.0, fit="NORMAL"):
             "stl3mf": mf_path,
             "volume_cm3": float(PC.volume(v2, f2) * (scale ** 3) * 1e6),
             "fit": fit,
-            "clearance_mm": float(clr)}
+            "clearance_print_mm": float(FIT_PRINT_MM[fit]),
+            "clearance_model_mm": float(clr_model)}
 
 
 def _pack_beds(items, bed_mm=PRINT_BED_MM):
@@ -249,8 +256,10 @@ def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
     # type: (Dict[str, Any], Callable[[Dict[str, Any]], Tuple[list, list]], str, Optional[Sequence[str]], float) -> Dict[str, Any]
     """整账导出。基础校验(过不了即 raise) -> 角色白名单(默认 MASONRY_ROLES,
     雕件归 P4, 过滤件记 manifest.skipped 不静默消失) -> 逐石 fit 自动分档 +
-    clearance 置值(只置在导出账本 ledger_print.json 上, 原账目不改写) ->
-    STL/3MF(材质分组目录) -> 床装箱 -> manifest.json。返回 manifest dict。"""
+    clearance 双值置值(账本记模型侧 inset, manifest 记打印/模型双值; 只置在
+    导出账本 ledger_print.json 上, 原账目不改写) -> STL/3MF(材质分组目录) ->
+    床装箱 -> manifest.json。账本落盘后双验(W2): 置值内存验 + save 后
+    load_ledger 回读再验(顺带覆盖原子写损坏面)。返回 manifest dict。"""
     errs = L.validate_ledger(led)
     if errs:
         raise ValueError("base ledger invalid: %s" % errs[:5])
@@ -268,8 +277,8 @@ def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
             continue
         verts, faces = mesh_fn(src)
         rec = export_stone(src, verts, faces, out_dir, scale=scale, fit=None)
-        dst["clearance_manufacturing_mm"] = rec["clearance_mm"]
-        cm = rec["clearance_mm"] / 1000.0
+        dst["clearance_manufacturing_mm"] = rec["clearance_model_mm"]
+        cm = rec["clearance_model_mm"] / 1000.0
         ext = _extents_m(verts)
         footprint.append((max(0.0, (ext[0] - 2 * cm) * scale * 1000.0),
                           max(0.0, (ext[1] - 2 * cm) * scale * 1000.0),
@@ -279,7 +288,8 @@ def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
                            "role": src.get("role_struct"),
                            "material": src.get("material"),
                            "fit": rec["fit"],
-                           "clearance_mm": rec["clearance_mm"],
+                           "clearance_print_mm": rec["clearance_print_mm"],
+                           "clearance_model_mm": rec["clearance_model_mm"],
                            "stl": os.path.relpath(rec["stl"], out_dir),
                            "stl3mf": os.path.relpath(rec["stl3mf"], out_dir),
                            "volume_cm3": rec["volume_cm3"]})
@@ -295,6 +305,10 @@ def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
     if chk:
         raise ValueError("post-assignment ledger invalid: %s" % chk[:5])
     L.save_ledger(led_print, ledger_path)
+    readback = L.load_ledger(ledger_path)
+    chk_rb = L.validate_ledger(readback, allow_clearance=True)
+    if chk_rb:
+        raise ValueError("ledger_print readback invalid: %s" % chk_rb[:5])
     fams = {}       # type: Dict[str, Dict[str, Any]]
     mats = {}       # type: Dict[str, int]
     for s in sorted(stones_out, key=lambda x: x["id"]):
@@ -329,27 +343,33 @@ _COUPON_WEDGE = {"w": 0.3, "h": 0.2, "d": 0.15, "proud": 0.006,
                  "back": 0.144, "hw_b": 0.25, "hw_t": 0.245}
 
 
-def _coupon_mesh(rec, side):
-    # type: (Dict[str, Any], str) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
-    """coupon 单件 post-inset 局部网格(导出与名义拼装共用同一真相)。"""
-    return rec["_mesh"][side]
+def coupon_mesh(tier, side, scale=1.0):
+    # type: (str, str, float) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """coupon 单件网格(post-inset 已外翻, 导出即用; S5 公开口, 导出与名义拼装
+    共用同一真相)。1:1 口径: 楔块模型米真尺寸, inset = FIT_PRINT_MM[tier]/scale。"""
+    if tier not in FIT_PRINT_MM:
+        raise ValueError("unknown fit tier: %r (expect one of %s)"
+                         % (tier, sorted(FIT_PRINT_MM)))
+    if side not in ("a", "b"):
+        raise ValueError("unknown coupon side: %r (expect 'a' or 'b')" % side)
+    va0, fa = family_mesh("wedge-std", _COUPON_WEDGE)
+    return flip_outward(inset(va0, FIT_PRINT_MM[tier] / float(scale)), fa)
 
 
-def coupon_set(out_dir, scale=1 / 50.0):
+def coupon_set(out_dir, scale=1.0):
     # type: (str, float) -> Dict[str, Dict[str, Any]]
-    """三档间隙楔形对 coupon: 每档 A/B 两件各按该档 clearance inset(名义拼装
-    间隙 = 2x clearance, 拼得上/拼不上的物理标尺)。out_dir/coupon/ 下 6 件 STL
-    (+3MF)。返回 {tier: {clearance_mm, a, b, pair_gap_mm, w_m, _mesh}}。"""
+    """三档间隙楔形对 coupon(1:1 打印机配合试片): 楔块用模型米真尺寸直接出,
+    缝在打印件上 = 2x fit_print_mm 可直接实测 -- 若按 1:50 缩印, 缝只剩 6um,
+    失去配合标尺意义。out_dir/coupon/ 下 6 件 STL(+3MF)。返回
+    {tier: {clearance_print_mm, clearance_model_mm, a, b, pair_gap_print_mm,
+    w_m}}; 网格走 coupon_mesh(tier, side) 公开口。"""
     d = os.path.join(out_dir, "coupon")
     os.makedirs(d, exist_ok=True)
-    va0, fa = family_mesh("wedge-std", _COUPON_WEDGE)
     out = {}    # type: Dict[str, Dict[str, Any]]
     for tier in ("TIGHT", "NORMAL", "LOOSE"):
-        clr = FIT_TIERS[tier]
-        meshes = {}
         paths = {}
         for side in ("a", "b"):
-            v2, f2 = flip_outward(inset(va0, clr), fa)
+            v2, f2 = coupon_mesh(tier, side, scale=scale)
             rep = PC.check_stone(v2, f2, scale=scale)
             if not rep["ok"]:
                 raise ValueError("coupon %s/%s check_stone failed: %s"
@@ -362,9 +382,10 @@ def coupon_set(out_dir, scale=1 / 50.0):
                 fh.write(_stl_bytes(mm, f2))
             with open(os.path.join(d, base + ".3mf"), "wb") as fh:
                 fh.write(_3mf_bytes(mm, f2))
-            meshes[side] = (v2, f2)
             paths[side] = stl_path
-        out[tier] = {"clearance_mm": clr, "a": paths["a"], "b": paths["b"],
-                     "pair_gap_mm": 2.0 * clr, "w_m": _COUPON_WEDGE["w"],
-                     "_mesh": meshes}
+        out[tier] = {"clearance_print_mm": float(FIT_PRINT_MM[tier]),
+                     "clearance_model_mm": float(FIT_PRINT_MM[tier] / float(scale)),
+                     "a": paths["a"], "b": paths["b"],
+                     "pair_gap_print_mm": 2.0 * float(FIT_PRINT_MM[tier]),
+                     "w_m": _COUPON_WEDGE["w"]}
     return out

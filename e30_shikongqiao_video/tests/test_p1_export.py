@@ -1,5 +1,5 @@
 # P1-T6: export_print 导出器(inset 吃公差/flip 外翻/STL+3MF/manifest 分批/coupon) 单测。
-# 合成数据, 不渲桥。每条判据带负控制: FIT 分派边界/inset 不外扩/flip 幂等/coupon 档位可分。
+# 合成数据, 不渲桥。每条判据带负控: FIT 分派边界/打印毫米标尺换算/inset 不外扩/flip 幂等/coupon 三档互分.
 import json
 import math
 import os
@@ -108,19 +108,42 @@ def test_inset_zero_is_identity():
 # ---------------------------------------------------------------- FIT 分派
 
 def test_fit_dispatch_boundaries():
-    # 边界负控: <0.3 才 TIGHT, <1.0 才 NORMAL, 否则 LOOSE
-    assert E.fit_for_block((0.2999, 2.0, 2.0))[0] == "TIGHT"
-    assert E.fit_for_block((0.3, 2.0, 2.0))[0] == "NORMAL"
-    assert E.fit_for_block((0.9999, 2.0, 2.0))[0] == "NORMAL"
-    assert E.fit_for_block((1.0, 2.0, 2.0))[0] == "LOOSE"
-    assert E.fit_for_block((1.0001, 2.0, 2.0))[0] == "LOOSE"
+    # 边界负控: <0.3 才 TIGHT, <1.0 才 NORMAL, 否则 LOOSE(模型米最小维)
+    assert E.fit_for_block((0.2999, 2.0, 2.0), S50)[0] == "TIGHT"
+    assert E.fit_for_block((0.3, 2.0, 2.0), S50)[0] == "NORMAL"
+    assert E.fit_for_block((0.9999, 2.0, 2.0), S50)[0] == "NORMAL"
+    assert E.fit_for_block((1.0, 2.0, 2.0), S50)[0] == "LOOSE"
+    assert E.fit_for_block((1.0001, 2.0, 2.0), S50)[0] == "LOOSE"
 
 
 def test_fit_dispatch_returns_tier_clearance_pairs():
+    # W3 口径: FIT_PRINT_MM = 打印件上的真实配合缝(打印毫米);
+    # 模型侧 inset = fit_print_mm/scale(模型毫米, scale=1/50 -> NORMAL 吃 15mm)。
     for tier, mm in (("TIGHT", 0.15), ("NORMAL", 0.3), ("LOOSE", 0.5)):
-        assert E.FIT_TIERS[tier] == mm
-    fit, mm = E.fit_for_block((0.2, 0.2, 0.2))
-    assert fit == "TIGHT" and mm == E.FIT_TIERS[fit]
+        assert E.FIT_PRINT_MM[tier] == mm
+    fit, clr = E.fit_for_block((0.2, 0.2, 0.2), S50)
+    assert fit == "TIGHT"
+    assert clr == pytest.approx(0.15 / S50, abs=1e-9)      # 7.5 模型毫米
+    # scale 耦合负控: 换算若漏乘 scale, S50 与 1:1 会返回同值
+    assert E.fit_for_block((0.2, 0.2, 0.2), 1.0)[1] == pytest.approx(0.15, abs=1e-12)
+
+
+def test_thin_layer_survives_normal_inset():
+    # W3 物理标尺负控: 最薄 0.144m 层(coupon back 口径)在 NORMAL 下吃
+    # 2x15=30 模型毫米 -> 144-30=114mm 仍正; 打印当量 114/50=2.28mm > 1.2 最小壁。
+    import tempfile
+    params = {"w": 0.6, "h": 0.144, "d": 0.5}
+    v, f = family_mesh("slab", params)
+    stone = _stone("ARCH01", "EAST", "PAVING", 0, 0, "slab", params)
+    clr_model = E.FIT_PRINT_MM["NORMAL"] / S50
+    assert params["h"] * 1000.0 - 2 * clr_model == pytest.approx(114.0, abs=1e-9)
+    with tempfile.TemporaryDirectory() as td:
+        r = E.export_stone(stone, v, f, td, scale=S50, fit="NORMAL")
+        assert r["volume_cm3"] > 0.0                       # 薄层不塌成负体积
+        c = clr_model / 1000.0
+        assert r["volume_cm3"] == pytest.approx(
+            (0.6 - 2 * c) * (0.5 - 2 * c) * (0.144 - 2 * c)
+            * S50 ** 3 * 1e6, rel=1e-9)
 
 
 # ---------------------------------------------------------------- flip_outward
@@ -145,7 +168,7 @@ def test_flip_is_real_flip_and_idempotent():
 def test_flip_then_check_stone_ok():
     # S3 时序: inset -> flip -> check(post-inset 几何才准过)
     v, f = family_mesh("wedge-std", _wedge())
-    v2 = E.inset(v, 0.3)
+    v2 = E.inset(v, 15.0)   # NORMAL@1:50: 0.3 打印毫米 -> 15 模型毫米
     v2, f2 = E.flip_outward(v2, f)
     r = PC.check_stone(v2, f2, scale=S50)
     assert r["ok"], r["issues"]
@@ -187,11 +210,11 @@ def test_stl_volume_matches_print_scale_and_outward():
             a, b, c = (r[i].astype(float) for i in (1, 2, 3))  # [0]=法线
             sv += float(a @ np.cross(b, c)) / 6.0
         # 解析: 楔形 post-inset 体积 = (w-2c)(h-2c)(d-c)(inset 只动界顶点);
-        # float32 存储放宽 rel
-        cm = 0.3 / 1000.0
+        # c 为 W3 新口径的模型侧量: NORMAL 0.3 打印毫米 / (1/50) = 15 模型毫米。
+        cm = (0.3 / S50) / 1000.0
         expect_mm3 = (2.0 - 2 * cm) * (0.5 - 2 * cm) * (1.0 - cm) \
             * S50 ** 3 * 1e9
-        assert sv == pytest.approx(expect_mm3, rel=2e-4)
+        assert sv == pytest.approx(expect_mm3, rel=1e-5)
         assert sv > 0                        # 外翻(右手序朝外)
 
 
@@ -221,14 +244,28 @@ def test_export_stone_contract_and_volume():
     v, f = family_mesh("slab", params)
     stone = _stone("ARCH01", "EAST", "PIER", 0, 0, "slab", params)
     with tempfile.TemporaryDirectory() as td:
-        r = E.export_stone(stone, v, f, td, scale=S50)
-        assert set(r) == {"stl", "stl3mf", "volume_cm3", "fit", "clearance_mm"}
-        assert r["fit"] == "NORMAL" and r["clearance_mm"] == 0.3
+        r = E.export_stone(stone, v, f, td, scale=S50)     # S2: fit 默认 None 自动分档
+        assert set(r) == {"stl", "stl3mf", "volume_cm3", "fit",
+                          "clearance_print_mm", "clearance_model_mm"}
+        assert r["fit"] == "NORMAL"                        # 最小维 0.4m -> NORMAL
+        assert r["clearance_print_mm"] == pytest.approx(0.3, abs=1e-12)
+        assert r["clearance_model_mm"] == pytest.approx(0.3 / S50, abs=1e-9)
         assert os.path.isfile(r["stl"]) and os.path.isfile(r["stl3mf"])
-        c = 0.3 / 1000.0
+        c = (0.3 / S50) / 1000.0
         expect_cm3 = (1.0 - 2 * c) * (0.8 - 2 * c) * (0.4 - 2 * c) \
             * S50 ** 3 * 1e6
         assert r["volume_cm3"] == pytest.approx(expect_cm3, rel=1e-9)
+        # W3 scale 耦合负控: 1:1 导出时模型毫米 == 打印毫米
+        r1 = E.export_stone(stone, v, f, os.path.join(td, "one"), scale=1.0)
+        assert r1["clearance_model_mm"] == pytest.approx(0.3, abs=1e-12)
+        # 自动分档真实生效: 小块(最小维 0.2m)省略 fit -> TIGHT 7.5 模型毫米
+        small_p = {"w": 0.25, "h": 0.2, "d": 0.22}
+        small = _stone("ARCH01", "EAST", "PIER", 1, 0, "slab", small_p)
+        vs, fs = family_mesh("slab", small_p)
+        rs = E.export_stone(small, vs, fs, os.path.join(td, "two"), scale=S50)
+        assert rs["fit"] == "TIGHT"
+        assert rs["clearance_print_mm"] == pytest.approx(0.15, abs=1e-12)
+        assert rs["clearance_model_mm"] == pytest.approx(0.15 / S50, abs=1e-9)
 
 
 def test_export_stone_rejects_unknown_fit():
@@ -262,7 +299,7 @@ def test_manifest_family_batches(tmp_path):
     assert fam["stl"].endswith(".stl")
     # 楔形平行六面体体积 = w*h*d; inset 只动 bbox 界顶点 -> 底面缩 2c 顶面不动,
     # 平均深 d-c, 体积 = (w-2c)(h-2c)(d-c)
-    c = 0.3 / 1000.0
+    c = (0.3 / S50) / 1000.0   # NORMAL: 打印 0.3mm -> 模型侧 15mm
     one = (1.0 - 2 * c) * (0.4 - 2 * c) * (1.0 - c) * S50 ** 3 * 1e6
     assert fam["volume_cm3"] == pytest.approx(2 * one, rel=1e-9)
     assert [s["batch"] for s in man["stones"]] == [0, 0]
@@ -275,12 +312,16 @@ def test_manifest_records_fit_and_clearance_timing(tmp_path):
     led = _three_stone_ledger()
     man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
     by_id = {s["id"]: s for s in man["stones"]}
-    # 分派: 0.12m 最小维 -> TIGHT; 0.4 -> NORMAL
-    assert by_id["ARCH01.EAST.RING.C00.B00"]["fit"] == "NORMAL"
-    assert by_id["ARCH01.EAST.RING.C00.B00"]["clearance_mm"] == 0.3
+    # 分派: 最小维 0.125m -> TIGHT; 0.4 -> NORMAL; manifest 记打印/模型双值(W3 可追溯)
+    n = by_id["ARCH01.EAST.RING.C00.B00"]
+    t = by_id["ARCH02.WEST.SPANDREL.C01.B00"]
+    assert n["fit"] == "NORMAL"
+    assert n["clearance_print_mm"] == pytest.approx(0.3, abs=1e-12)
+    assert n["clearance_model_mm"] == pytest.approx(15.0, abs=1e-9)
     assert by_id["ARCH01.EAST.RING.C00.B01"]["fit"] == "NORMAL"
-    assert by_id["ARCH02.WEST.SPANDREL.C01.B00"]["fit"] == "TIGHT"
-    assert by_id["ARCH02.WEST.SPANDREL.C01.B00"]["clearance_mm"] == 0.15
+    assert t["fit"] == "TIGHT"
+    assert t["clearance_print_mm"] == pytest.approx(0.15, abs=1e-12)
+    assert t["clearance_model_mm"] == pytest.approx(7.5, abs=1e-9)
     # 时序纪律: 落盘 ledger 带 clearance(allow_clearance 才合法), 原账目不被改写
     assert led["stones"][0]["clearance_manufacturing_mm"] is None
     with open(os.path.join(str(tmp_path), "ledger_print.json")) as fh:
@@ -288,6 +329,12 @@ def test_manifest_records_fit_and_clearance_timing(tmp_path):
     assert L.validate_ledger(lp) != []            # 默认仍拒(置值必走导出时序)
     assert any(e.startswith("CLEARANCE_PREMATURE") for e in L.validate_ledger(lp))
     assert L.validate_ledger(lp, allow_clearance=True) == []
+    # 账目上记的是模型侧 inset(15 模型毫米), 不是打印当量
+    assert lp["stones"][0]["clearance_manufacturing_mm"] \
+        == pytest.approx(n["clearance_model_mm"], abs=1e-12)
+    # W2 双验: 落盘账回读(load_ledger)再过 allow_clearance -- 导出内建同一路径
+    rb = L.load_ledger(os.path.join(str(tmp_path), "ledger_print.json"))
+    assert L.validate_ledger(rb, allow_clearance=True) == []
     for s in man["stones"]:
         assert os.path.isfile(os.path.join(str(tmp_path), s["stl"]))
         assert os.path.isfile(os.path.join(str(tmp_path), s["stl3mf"]))
@@ -346,35 +393,57 @@ def test_export_ledger_rejects_invalid_base_ledger(tmp_path):
 
 # ---------------------------------------------------------------- coupon
 
-def test_coupon_six_pieces(tmp_path):
+def test_coupon_six_pieces_1to1(tmp_path):
+    # S2 裁决: coupon = 打印机配合试片, 1:1 打印 -- 楔块用模型米真尺寸直接出。
     out = E.coupon_set(str(tmp_path))
     assert set(out) == {"TIGHT", "NORMAL", "LOOSE"}
     n_stl = 0
     for tier, rec in out.items():
-        assert rec["clearance_mm"] == E.FIT_TIERS[tier]
+        assert rec["clearance_print_mm"] == E.FIT_PRINT_MM[tier]
+        assert rec["clearance_model_mm"] == pytest.approx(E.FIT_PRINT_MM[tier],
+                                                           abs=1e-12)   # 1:1: 模型==打印
         for k in ("a", "b"):
             assert os.path.isfile(rec[k])
             n_stl += 1
     assert n_stl == 6
+    # 1:1 负控: STL 真实物理尺寸(NORMAL A 件 x 跨度 = w*1000 - 2x0.3 打印毫米)。
+    # 若仍按 S50 缩放会得 ~6mm, 与本判据矛盾。
+    blob, cnt = _stl_counts(out["NORMAL"]["a"])
+    rows = np.frombuffer(blob[84:84 + 50 * cnt], dtype=np.uint8).reshape(cnt, 50)
+    pts = rows[:, :48].copy().view(np.float32).reshape(cnt, 4, 3)
+    xspan = float(pts[:, 1:, 0].max() - pts[:, 1:, 0].min())
+    assert xspan == pytest.approx(out["NORMAL"]["w_m"] * 1000.0
+                                  - 2 * out["NORMAL"]["clearance_print_mm"],
+                                  rel=1e-5)
 
 
-def test_coupon_pair_gap_is_two_clearance(tmp_path):
+def test_coupon_pair_gap_print_equivalent(tmp_path):
+    # 新口径成对缝负控: 打印当量 = 2 x fit_print_mm(0.3/0.6/1.0mm 三档互分)
     out = E.coupon_set(str(tmp_path))
     gaps = {}
     for tier, rec in out.items():
-        assert rec["pair_gap_mm"] == pytest.approx(2 * rec["clearance_mm"],
-                                                   abs=1e-9)
-        gaps[tier] = rec["pair_gap_mm"]
-        # 几何复核: 以名义 transform 拼装后量 x 向缝隙
-        va, fa = E._coupon_mesh(rec, "a")
-        vb, fb = E._coupon_mesh(rec, "b")
+        fp = E.FIT_PRINT_MM[tier]
+        assert rec["pair_gap_print_mm"] == pytest.approx(2 * fp, abs=1e-9)
+        gaps[tier] = rec["pair_gap_print_mm"]
+        # 几何复核(S5 公开口): 以名义 transform 拼装后量 x 向缝隙
+        va, fa = E.coupon_mesh(tier, "a")
+        vb, fb = E.coupon_mesh(tier, "b")
         w = rec["w_m"]
         tfa = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         tfb = (w, 0.0, 0.0, 0.0, 0.0, 0.0)
         xa = max(np.asarray(va)[:, 0]) + tfa[0]
         xb = min(np.asarray(vb)[:, 0]) + tfb[0]
-        assert (xb - xa) * 1000.0 == pytest.approx(2 * rec["clearance_mm"],
-                                                   abs=1e-9)
-        r = PC.gap_check((tfa, (va, fa)), (tfb, (vb, fb)), scale=S50)
-        assert r["ok"], r["issues"]              # 名义拼装不穿透
+        assert (xb - xa) * 1000.0 == pytest.approx(2 * fp, abs=1e-9)
+        r = PC.gap_check((tfa, (va, fa)), (tfb, (vb, fb)), scale=1.0)
+        assert r["ok"], r["issues"]              # 名义拼装不穿透(1:1 口径)
     assert gaps["TIGHT"] < gaps["NORMAL"] < gaps["LOOSE"]   # 三档互相可分
+
+
+def test_coupon_mesh_public_and_errors():
+    # S5: coupon_mesh(tier, side) 公开口径; a/b 同形; 未知档直接拒
+    va, fa = E.coupon_mesh("NORMAL", "a")
+    vb, fb = E.coupon_mesh("NORMAL", "b")
+    assert va == vb and fa == fb
+    assert E.signed_volume(va, fa) > 0.0         # 已外翻, 导出即用
+    with pytest.raises(ValueError):
+        E.coupon_mesh("WILD", "a")
