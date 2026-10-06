@@ -3653,5 +3653,8 @@
    "uuid": "5668dfea-9595-4286-9a5a-7a2f454974fa",
    "volume_cm3": 0.27887500122137343
   }
- ]
+ ],
+ "superseded": true,
+ "superseded_by": "T8c",
+ "superseded_reason": "G2 verdict=FAIL check=106 gap=0 ring_colliding=85; 明细 out/print/g2_report.json"
 }

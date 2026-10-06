@@ -135,12 +135,43 @@ cap_to_deck wedge 截顶改 h/transform[2] 时同步重算 `transform[1] = side*
 1. 裁剪=方案(b)落地(p1a 消费侧, 零触碰 clip_footprint/T7)。
 2. 2A 执行: FAIL 即 raise 不出包, SLICE_NOTES 顶部"作废待 T9"横幅已打; **FAIL 时交付物=报告+excluded_ids+覆盖率审计+fail 矩阵, 全部落盘**。
 3. subsume 判据按修正版(AND 双条件+B2 复证)落地。
-4. 覆盖率审计入报告: in_void 160cm²(≈干净)/void_cut_fragment 262.4m²/ring_band 27.1m²/thin_merge 89.6cm²(全桥 17 孔; 审查方中央孔单孔 clip 桶 16.8m² 与我 17 孔 262m²/17≈15.4m² 同量级互证)。
+4. 覆盖率审计入报告: in_void 160cm²(≈干净)/void_cut_fragment 262.4m²/ring_band 2.71m²/thin_merge 0.90m²(全桥 17 孔; 审查方中央孔单孔 clip 桶 16.8m² 与我 17 孔 262m²/17≈15.4m² 同量级互证; T8c 单位更正: 原 27.1m²/89.6cm² 两处 10× 单位误记)。
 5. 对账表: /tmp/e30_probe/reconcile_arch09.json(35 id 双表共有, 审查方独有 112=已排除桶撞件[其表含 void_cut_fragment 全 population], 我独有 3=partner 传播件)。
 6. in_void 桶干净(160cm² 洞缘量化余量); thin_merge 注释改"谁都不单独印"。
 
-### 红门现状(主控 2A 预授权, T9 范围输入)
-verdict=**FAIL**: check_stone **106**(100% 为本轮带裁片 SELF_INTERSECT 1-2 面对级——耳切在折线 ARC_STEP 密采样+1.5mm 抽稀后的薄片三角伪交叉, 捏点断 run 后 475→54→106 波动属抽稀策略与耳切 eps 交互, 网格质量未收敛); gap **216**(全部 spandrel-back-bounds, 与 SELF_INTERSECT 石 id 集合重合——被自交片污染的面级判, 非真缝互穿[A1 恒等式全绿为证]); ring↔链残留 **87/903**(裁片几何未收敛所致的残留/伪撞混合, 需 T9 逐对甄别)。归因: **带裁片耳切网格化质量**一项, 判据/桶/阈值零放宽(主控禁令)。legacy clip 存量普查: 870/1520 fail(MULTI_SHELL 401/SELF_INTERSECT 560/THIN_WALL 1154, T5/T7 追偿输入)。
+### 红门现状(主控 2A 预授权, T9 范围输入; T8c 归因更正)
+verdict=**FAIL**: check_stone **106**(全部为带裁片 trim=True 106/106, pre-inset 全过/post-inset 全坏, 1-2 面对级 SELF_INTERSECT); gap **216**(T8c 更正: 全由 C-T8b-1 带裁石 y 落位伪造 —— 坐标系修复后重跑 **216→0**, counterfactual 实证; 原文"与 SELF_INTERSECT 石 id 集合重合、被自交片污染的面级判"不成立: 216 fail 共 **432 端点, 仅 104 ∈ 106 集**); ring↔链残留 **87/903**(T8c 复跑 **85/903**, 逐对明细+体素体积已入 report.final_scope_check.pairs)。归因(T8c 更正, **两项**): ①带裁片网格化质量 —— check ~106(T8c 复审实测: 失败与 FIT 余量大小单调 0.1mm→0/106, 1mm→4, 3mm→8, 7.5/15/25mm→106/106; 与坐标系无关[修复帧重建仍 106/106]、与整体平移无关[y+5m 判定不变]; 交叉三角集中于切割下缘近共线顶点; 原"薄片"措辞作废——本批 bbox 最小维 0.328-0.709m 模型, 非薄片) ②切割线追不上环真剪影 —— final_scope 残留 ~85 + void_cut 桶 262.4m² 无接替材料。判据/桶/阈值零放宽(主控禁令)。legacy clip 存量普查: 870/1520 fail(MULTI_SHELL 401/SELF_INTERSECT 560/THIN_WALL 1154, T5/T7 追偿输入)。
 
 ### 回归(真树实测)
 e30 tests **224 passed**(基线 212+新 12, 含冻结哈希闸门)/bridge3d **312 passed**/freeze 三对象 sha_sorted **逐位一致**(build_scene2 仅 ledger 链改动)/qa_l2 **QA_L2_OK**+负控 **NEG_CAUGHT 10/10**/_check_abutment **ALL PASS**。中央孔试印包停在 T8 版+作废横幅(2A)。
+
+## T8c 窄修复轮 (2026-10-07)
+
+**范围: 复审 C-T8b-1(带裁石 y 落位)+ W-1(归因与单位更正)+ 重跑 G2 红门 + 复审第二轮可领走账折叠。红门维持红(主控 2A 预授权), 判据/桶/阈值零放宽。**
+
+### C-T8b-1 修复(全绿闭环)
+`_ring_trim_mesh` 改走 clip 同款局部管线: 世界足印 poly 先减锚 `lp=[(x-off0, z-off2)]` → `_prism_stitched(lp, yf, yb)`(保留 stitched 单壳) → 顶点 `M2.materialize` 回世界。反例锚 **ARCH03.EAST.SPANDREL.C07.B00**(ty=+3.3298): 修复前世界 y ∈ **[-5.0364, -2.5488]**, 修复后 **[0.8422, 3.3298]**(复审判定 ≈[0.84,3.33], 逐位吻合)。
+
+### G2 红门(重跑实测, 三计数全部落主控区间)
+verdict=**FAIL**: gap **216→0** / final_scope **87→85**(∈[80,90], n_pairs 903) / check_stone **106**(106±10; 且新旧 106 为**同一 id 集**, old∩new=106 —— 独立于 y bug, 如复审所判)。depth 记账: 旧 gap 216 条 fail 全为深度 0 的 containment 型命中(复审实测), 随伪落位消失; final_scope 85 条逐对明细入 report(24 条 depth_mm>0, max **60.012mm**; 61 条 depth=0 纯棱交叉退化), 严重度按体素体积降序, T9 首选前三 = ARCH06/12.EAST.CORE.C13.B01 vs RING.C00.B07(depth 60.012mm, ~8.6e4 cm³)与 ARCH09.EAST.CORE.C14.B01 vs RING.C00.B09 —— 与复审预判(CORE.C13/C14.B01 vs RING.B07/B09)一致。
+
+### 材料账(复审领走账落地)
+`removed_model_cm3.trimmed` 从恒 0.0 改为 **Σ 逐对 collide_vol_cm3_pre(=77,320,600 cm³ = 7.732e7, 单测钉死恒等)**; subsumed_by_area_bucket **5.83e7 cm³**(182 块, 与复审复算一致)。注: 复审预判 9.702e7 系守卫前口径(含 14 块异石足印传播件, 见下), 守卫后真值 7.732e7。
+
+### 落位回归测试(第二战果: 当场抓出新 bug)
+- 钉死③真总体 y 区间: `P.ring_trim_y_violations`(与 run_g2 内断言**同一实现**, 复审⑤升格) 对全部裁石断言世界 y ⊆ 原族整石带 ±1e-6; 总体 **475** 钉死。
+- 钉死④真总体 y 符号: EAST 质心 y>0/WEST<0; CORE 全墙胞 y 向对称, 判据换形态 |cy|≤1e-3(实测 20 石全 0.0)。
+- 钉死⑤ partner 传播足印契约: CORE→SPANDREL(_partner_id else 分支的错配)**拒绝传播**; 正向 SPANDREL→BACK 仍由既有钉死测试覆盖。
+- **第二战果**: 上述③④首轮实测 14/489 石 y 越带 ~0.3m —— 根因 `_propagate_to_partner` 把 CORE kept(x 跨 ~3.2m、z 低一层)整块交给 SPANDREL, 剖面在局部域 [0,h] 外线性外推(例: ARCH07.EAST.SPANDREL.C13.B00 管线 y∈[1.0541,3.7228] vs 族带 [0.8276,3.4093], 裁片还落在别人的 x-z 格)。修复=角色守卫; 14 石回 scope 由主循环按自身足印裁决; 复跑总体 489→475, 三计数不变(106/0/85)。
+- validate_g2_report 结构闸门 +4 组负控: final_scope.pairs 长度==n_colliding / n_trimmed↔trimmed_ids↔removed_model_cm3.trimmed 互证 / coverage uncovered_cm2↔uncovered_cells 同栅格互证(防审计被静默清零) / fail_matrix 求和==n_fail(真实嵌套结构 {code:{role:count}}); 合法 FAIL 变体作对照。
+- 其余: trim 材料账恒等断言; run_gate excluded_ids↔report 写后读回互证; run_g2 FAIL 分支交付卫生(manifest `superseded:true/superseded_by:"T8c"`+reason; SLICE_NOTES 用现行 writer 重生成正文杀掉 T8 版 "verdict: PASS" 行与已判不实的"抽样实测 4 对/~4%"句, 再压作废横幅)。
+- 卫生小账: sliver 双判第②条删除(2×clr 打印当量 0.3/0.6/1.0mm 全<①线 1.2mm, 死代码, n_trim_sliver=0 不变); D7 体积腿改 post-inset 同源(`_postinset_world` 单一构造点, gap 计数不变仍 0); SPANDREL_BACK_VOL_CM3 注释更正(体素交集体积, 非 AABB 盒); SLICE_NOTES 披露环-墙切割缝打印当量 = GAP_W 0.20 + 2×clr ≈ **0.5-0.8mm**(试印宽缝属口径预期)。
+
+### check 106 机制(复审实测事实; 假说不作结论)
+106/106 全部带裁片, pre-inset 全过/post-inset 全坏; 失败与 FIT 余量单调(clr 0.1mm→0, 1mm→4, 3mm→8, 7.5/15/25mm→106/106); 与坐标系无关(修复帧重建仍 106/106)、与整体平移无关(y+5m 判定不变); 单轴假设不成立(只关 z-inset, 24 抽样仅 5 转好); legacy clip 对照组同等顶点带内密度(p50=4)却零新增失败(80 抽样 newly-broken=0)→ 触发因子为带裁片特有几何特征, **尚未定位**; 交叉三角集中于切割下缘近共线顶点(距 z-min 0~4.8mm; 每件 8-10 顶点落在距极值面一个 clr 带内); "薄片"措辞作废(bbox 最小维 0.328-0.709m 模型 = 打印 6.6-14mm); 机制假说(inset 的 bbox 极值顶点位移 × 非均匀顶点分布 → 局部锯齿 → 相邻侧面翻折)两次合成复现失败, 不作结论。
+
+### 处方转达(T9/处方轮输入)
+P0 = inset 改按面分类内偏置(只对装配面施力) —— 正当理由是**语义正确性**与修 inset 对非箱形件的翻错, 不是"修复 106"的承诺; 落地必须同时回答切割面装配余量来源(逐面偏置 或 GAP_W/2 单独余量; 直接排除=精确贴合=装配失败)。P1 = 回归钉必须用真实失败件 fixture(现红, 机制修复后转绿; 合成非凸件已证抓不到)。P2 = 抽稀阈 ≥2×clr 仅降触发概率, 非根治。禁止: 调 sliver/min_wall 阈截走 106、豁免 MULTI_SHELL、final_scope de-minimis 界清 85。
+
+### 回归(真树实测)
+e30 tests **229 passed**(226+新 3, 含真总体钉死与结构闸门负控)/bridge3d **312 passed**/qa_l2 **QA_L2_OK**+负控 **NEG_CAUGHT 10/10**/_check_abutment **ALL PASS**/freeze 三对象 sha_sorted+sha_order **逐位一致**(bridge_body/voussoir/coursing)/validate_g2_report(新报告)=**[]**/excluded_ids↔report 桶计数读回一致。中央孔试印包: manifest 已记 superseded(T8c)+SLICE_NOTES 重生成+作废横幅。

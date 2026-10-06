@@ -299,6 +299,34 @@ def world_mesh(stone, statuses):
     return verts, triangulate_faces(verts, faces)
 
 
+RING_TRIM_Y_TOL_M = 1e-6     # T8c: 裁实体 ⊆ 原实体 的浮点余量(非放宽)
+
+
+def ring_trim_y_violations(led, statuses, tol=RING_TRIM_Y_TOL_M):
+    # type: (dict, dict, float) -> list
+    """T8c 落位遍历(复审建议由单测升格进 run_g2): 全部 ring_trim 裁片的
+    世界 y 区间必须 ⊆ 原族(未裁整石)世界 y 带 ±tol。几何依据: kept ⊆ 石
+    足印且 y 剖面同源 ⇒ 裁实体 ⊆ 原实体(刚体变换保包含)。首版坐标系 bug
+    用此遍历一次性抓到 487/489 越界; partner 足印错传(异石几何)抓到
+    14 石越带 ~0.3m。返回 [(id, trim_lo, trim_hi, fam_lo, fam_hi)], 空=过。"""
+    by_id = {s["id"]: s for s in led["stones"]}
+    bad = []
+    for sid in sorted(s for s, (st, _p) in statuses.items()
+                      if st == "ring_trim"):
+        s = by_id[sid]
+        ref = copy.deepcopy(s)
+        ref["params"].pop("clipped", None)
+        ref["params"].pop("clipped_by", None)
+        fv, _ff = world_mesh(ref, {sid: ("out", None)})
+        tv, _tf = world_mesh(s, statuses)
+        fys = [v[1] for v in fv]
+        tys = [v[1] for v in tv]
+        if not (min(fys) - tol <= min(tys) and max(tys) <= max(fys) + tol):
+            bad.append((sid, round(min(tys), 4), round(max(tys), 4),
+                        round(min(fys), 4), round(max(fys), 4)))
+    return bad
+
+
 def _arch_normal2(x, band):
     # type: (float, dict) -> tuple
     """内弧单位法向(指向拱外), 与 masonry._arch_normal 同式(facts 单一来源)。"""
@@ -425,6 +453,16 @@ def print_scope(led, statuses):
     return {"scope": scope, "buckets": buckets}
 
 
+def _postinset_world(stone, statuses):
+    # type: (dict, dict) -> tuple
+    """post-inset 世界网格(打印判据几何的唯一构造点): world_mesh ->
+    fit_for_block -> EP.inset。_gap_entry 与 D7 体积腿都从这里拿几何,
+    杜绝"判据吃 post-inset、体积腿吃 pre-inset"的混基准(复审 D7)。"""
+    verts, faces = world_mesh(stone, statuses)
+    _fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
+    return EP.inset(verts, clr_model), faces
+
+
 def _gap_entry(stone, statuses):
     # type: (dict, dict) -> tuple
     """gap_check entry = (transform 6 元组, (post-inset verts, faces))。
@@ -436,9 +474,7 @@ def _gap_entry(stone, statuses):
     if any(abs(r) > 1e-12 for r in stone["transform"][3:]):
         raise ValueError("_gap_entry: rotated stone %r not supported"
                          % (stone["id"],))
-    verts, faces = world_mesh(stone, statuses)
-    _fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
-    v2 = EP.inset(verts, clr_model)
+    v2, faces = _postinset_world(stone, statuses)
     t = stone["transform"]
     local = [(v[0] - t[0], v[1] - t[1], v[2] - t[2]) for v in v2]
     return (list(t), (local, faces))
@@ -755,7 +791,8 @@ RING_DEDUP_ROLES = ("SPANDREL", "BACK", "CORE")
 SUBSUME_REL_MAX = 0.01        # case_A: unique_vol <= 1% V(stone)
 SUBSUME_ABS_CM3 = 50.0        # case_A: 且 unique_vol <= 50cm3(模型, 绝对地板)
 SPANDREL_BACK_DEPTH_MM = 5.0   # D7: spandrel-back 实体相交豁免上界(模型 mm)
-SPANDREL_BACK_VOL_CM3 = 100.0  # D7: 相交 AABB 体积上界(模型 cm3)
+SPANDREL_BACK_VOL_CM3 = 100.0  # D7: 相交体素体积上界(模型 cm3, 复审[4]
+                               # 后为同栅格真实交集体积, 非 AABB 盒)
 SPANDREL_BACK_WARN_N = 50      # D7: 豁免数超此值打 WARN
 
 
@@ -1066,18 +1103,19 @@ def _ring_dedup_dispositions(led, statuses, scope, buckets, arch_idx_of):
         return ".".join([t[0], t[1], other, t[3], t[4]])
 
     def _apply_trim(stone, kept, entry):
+        nonlocal removed_trim_cm3
         statuses[stone["id"]] = ("ring_trim", kept)
         stone["params"]["clipped"] = True
         stone["params"]["clipped_by"] = "ring_band"
+        removed_trim_cm3 += entry.get("collide_vol_cm3_pre", 0.0)
         t_verts, _t_faces = world_mesh(stone, statuses)
         _fit, clr_model = EP.fit_for_block(EP._extents_m(t_verts), G2_SCALE)
         ext = EP._extents_m(EP.inset(t_verts, clr_model))
         min_print_mm = min(ext) * G2_SCALE * 1000.0
-        # 薄片双判: ①打印壁 <1.2mm(原判据); ②最小维 < 2×配合余量(复审[3]:
-        # 裁片近零厚保留条吃不下自身 FIT inset, 带伤进 check_stone 假报
-        # SELF_INTERSECT —— 那是可判定的物理薄片, 诚实归口 thin_merge)
-        if (min_print_mm < G2_MIN_WALL_PRINT_MM
-                or min(ext) < 2.0 * clr_model / 1000.0):
+        # 薄片判据: 打印壁 <1.2mm(T8b[3] 曾加"最小维<2×clr"第二判, 复审
+        # 实测为死代码: 2×clr 打印当量 TIGHT/NORMAL/LOOSE = 0.3/0.6/1.0mm
+        # 全 < 1.2mm, 永不独立触发 —— 已删; n_trim_sliver 观测 0 不变)
+        if min_print_mm < G2_MIN_WALL_PRINT_MM:
             entry["trim_sliver"] = True
             entry["sliver_note"] = ("min_ext=%.3fm, clr=%.1fmm(model), "
                                     "min_print=%.3fmm"
@@ -1096,6 +1134,16 @@ def _ring_dedup_dispositions(led, statuses, scope, buckets, arch_idx_of):
         if ps is None or ps not in scope:
             return
         if statuses[pid][0] != "out":
+            return
+        # 足印契约守卫: 传播语义 = 同块位【同 x-z 足印】(SPANDREL↔BACK,
+        # 见 _partner_id docstring)。_partner_id 的 else 分支会把 CORE 的
+        # "partner" 解析成 SPANDREL, 但 CORE 承压胞 x 跨 ~3.2m、z 低一层,
+        # 与拱面石足印完全不同 —— 直接把 CORE 的 kept 足印交给面石会得到
+        # 异石几何: 裁片落在别人的 x-z 格, 剖面在 [0,h] 之外线性外推,
+        # y 越出族带 ~0.3m(T8c 真总体钉死测试实测 14 石)。足印不同角色
+        # 不传播 —— partner 若自身撞环, 由主循环按其自身足印裁决。
+        if (stone.get("role_struct") not in ("SPANDREL", "BACK")
+                or ps.get("role_struct") not in ("SPANDREL", "BACK")):
             return
         entry2 = {"chain": pid, "rings": list(src_entry["rings"]),
                   "collide_vol_cm3_pre": src_entry["collide_vol_cm3_pre"],
@@ -1246,6 +1294,9 @@ def _ring_dedup_dispositions(led, statuses, scope, buckets, arch_idx_of):
     summary["removed_model_cm3"]["subsumed_by_area_bucket"] = \
         round(area_vol, 3)
     summary["n_area_bucket_measured"] = area_n
+    # 复审[5]: 残留严重度排序用体素体积(depth 在纯棱交叉时退化为 0,
+    # 61/85 条 —— 体积降序让 T9 开刀对象前置)
+    colliding_pairs.sort(key=lambda q: -q["collide_vol_cm3_pre"])
     return {"pairs": pairs_rep, "summary": summary,
             "subsumed_ids": subsumed, "trimmed_ids": trimmed,
             "trim_sliver_ids": trim_sliver,
@@ -1369,6 +1420,11 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     # T8b-B4: 环↔链处置(可变: statuses 多边形/scope/buckets)
     ring_dedup = _ring_dedup_dispositions(led, statuses, scope, buckets,
                                           arch_idx_of)
+    # T8c: 全裁片 y 落位断言(复审⑤) —— 坐标系/足印错传类回归在此响亮
+    y_bad = ring_trim_y_violations(led, statuses)
+    if y_bad:
+        raise RuntimeError("ring_trim 世界 y 越出原族带 %d 块 首3: %s"
+                           % (len(y_bad), y_bad[:3]))
     scope_ids = {s["id"] for s in scope}
     role_counts = {}
     fit_tiers = {}
@@ -1401,9 +1457,8 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
               "matrix": {}}
     for sid in buckets["void_cut_fragment"]:
         s = by_id[sid]
-        verts, faces = world_mesh(s, statuses)
-        _fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
-        v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
+        verts, faces = _postinset_world(s, statuses)
+        v2, f2 = EP.flip_outward(verts, faces)
         rep = PC.check_stone(v2, f2, scale=G2_SCALE,
                              min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
         if not rep["ok"]:
@@ -1458,10 +1513,12 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                 vol = None      # 深度腿已判 fail, 体积腿不再量
                 exempt = False
             else:
-                # 体积腿: 同栅格真实交集体积(AABB 交叠盒对同块位面对无判
-                # 别力, 复审[4])
-                va_, fa_ = world_mesh(by_id[ia], statuses)
-                vb_, fb_ = world_mesh(by_id[ib], statuses)
+                # 体积腿与判据同源(post-inset, 复审 D7: 判据吃 post-inset
+                # 而体积腿吃 pre-inset 是混基准; pre-inset 只留给处置不
+                # 变式与去重)。同栅格真实交集体积(AABB 交叠盒对同块位
+                # 面对无判别力, 复审[4])
+                va_, fa_ = _postinset_world(by_id[ia], statuses)
+                vb_, fb_ = _postinset_world(by_id[ib], statuses)
                 _v_stone, v_hit, _u, _vi = _voxel_unique_vol(
                     va_, fa_, [(vb_, _flat_tris(PC._face_tris(
                         np.asarray(vb_, dtype=float), fb_)))])
@@ -1678,6 +1735,55 @@ def validate_g2_report(rep):
     if not isinstance(rep.get("coverage_audit"), list) or \
             not rep.get("coverage_audit"):
         p.append("coverage_audit missing")
+    else:
+        # T8c: uncovered_cm2 必须与 uncovered_cells 同栅格口径互证 ——
+        # 只改 cm2 字段把洞"审计没"的篡改在此现形
+        for e in rep["coverage_audit"]:
+            if "cells" not in e or "uncovered_cells" not in e \
+                    or "uncovered_cm2" not in e:
+                p.append("coverage_audit[%s] 缺字段" % e.get("bucket", "?"))
+                break
+            if abs(e["uncovered_cm2"] - round(
+                    e["uncovered_cells"] * RING_RASTER_CELL ** 2 * 1e4,
+                    1)) > 0.05:
+                p.append("coverage_audit[%s].uncovered_cm2 与 "
+                         "uncovered_cells 不一致" % e.get("bucket", "?"))
+                break
+    # T8c: 全量记账结构闸门(复审两轮: 记账要到手, 也要防被静默抹掉)
+    sm = rd.get("summary", {})
+    for k in ("n_trimmed", "n_subsumed", "removed_model_cm3"):
+        if k not in sm:
+            p.append("ring_dedup.summary.%s missing" % k)
+    for k in ("trimmed_ids", "subsumed_ids"):
+        if k not in rd:
+            p.append("ring_dedup.%s missing" % k)
+    if "trimmed_ids" in rd and "n_trimmed" in sm \
+            and sm["n_trimmed"] != len(rd["trimmed_ids"]):
+        p.append("summary.n_trimmed != len(trimmed_ids)")
+    if "subsumed_ids" in rd and "n_subsumed" in sm \
+            and sm["n_subsumed"] != len(rd["subsumed_ids"]):
+        p.append("summary.n_subsumed != len(subsumed_ids)")
+    rm = sm.get("removed_model_cm3", {})
+    if sm.get("n_trimmed", 0) > 0 and not rm.get("trimmed", 0) > 0:
+        p.append("n_trimmed>0 但 removed_model_cm3.trimmed==0 (trim 材料"
+                 "账被抹)")
+    if (sm.get("n_subsumed", 0) > 0
+            and not (rm.get("subsumed", 0) > 0
+                     or rm.get("subsumed_by_area_bucket", 0) > 0)):
+        p.append("n_subsumed>0 但 subsume 材料账全零")
+    if "pairs" not in fsc:
+        p.append("final_scope_check.pairs missing")
+    elif isinstance(fsc.get("pairs"), list) \
+            and len(fsc["pairs"]) != fsc.get("n_colliding", -1):
+        p.append("final_scope_check.pairs 长度 != n_colliding (明细被清)")
+    fm = cs.get("fail_matrix")
+    if fm is not None:
+        # 真实结构 {code: {role: count}}(兼容扁平 {code: count})
+        fm_total = sum(v for cell in fm.values()
+                       for v in (cell.values() if isinstance(cell, dict)
+                                 else [cell]))
+        if fm_total != cs.get("n_fail"):
+            p.append("check_stone.fail_matrix 求和 != n_fail")
     if "volume_caliber" not in meta:
         p.append("meta.volume_caliber missing")
     return p
@@ -2147,6 +2253,9 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
         "- 装配制造间隙 FIT(TIGHT/NORMAL/LOOSE)= 0.15/0.30/0.50 (打印件",
         "  直接尺寸, 非 1:50 换算; 1:50 下历史缝仅 0.04-0.25mm, 打不出,",
         "  故配合靠 clearance 不靠历史缝)。",
+        "- 带裁片的环-墙切割缝: 切割面与 RING 相贴(表征界面)但同样吃 FIT",
+        "  余量, 打印当量 = GAP_W 0.20 + 2×clr ≈ 0.5-0.8mm —— 试印见此量",
+        "  级宽缝属口径预期, 不是模型错误(T8c 口径披露, 复审实测)。",
         "",
         "## 构成",
         "| 族 | 数量 | 体积 cm3(打印件) |",
@@ -2226,6 +2335,16 @@ def run_gate(do_slice=True):
     with open(rep_path, "w", encoding="utf-8") as fh:
         json.dump(report, fh, ensure_ascii=False, indent=1, sort_keys=True)
     write_excluded_ids(sc, led, os.path.join(PRINT_DIR, "excluded_ids.json"))
+    # T8c: 旁挂↔报告互证(复审: 写后立即读回比对, 防桶计数 silent 漂移)
+    with open(os.path.join(PRINT_DIR, "excluded_ids.json"),
+              encoding="utf-8") as fh:
+        ex_file = json.load(fh)
+    rep_ex = {e["bucket"]: e.get("n", 0)
+              for e in report["meta"]["scope"]["excluded"]}
+    mism = [(b, n, len(ex_file["buckets"].get(b, [])))
+            for b, n in sorted(rep_ex.items())
+            if len(ex_file["buckets"].get(b, [])) != n]
+    assert not mism, "excluded_ids.json 与 report 桶计数不一致(桶, report, file): %s" % mism
     problems = validate_g2_report(report)
     assert not problems, "g2_report 结构闸门失败: %s" % problems
     print("G2_REPORT written %s verdict=%s check_fails=%d gap_fails=%d "
@@ -2237,17 +2356,48 @@ def run_gate(do_slice=True):
         head = (report["check_stone"]["fails"]
                 + report["gap_check"]["fails"])[:3]
         notes = os.path.join(SLICE_DIR, "SLICE_NOTES.md")
-        if os.path.exists(notes):
-            with open(notes, "r", encoding="utf-8") as fh:
+        man = os.path.join(SLICE_DIR, "manifest.json")
+        # T8c 交付卫生(复审两轮同一发现): FAIL 时旧包不能横幅下压着失实
+        # 正文 —— T8 版 notes 有 "verdict: PASS" 行与已判不实的"抽样实测
+        # 4 对/~4%"数字, manifest 无作废标, 下游只读 manifest 会照旧下单。
+        # 做法: manifest 记 superseded; notes 用现行 writer 重生成正文
+        # (杀掉全部 T8 时代陈述)再压作废横幅。
+        if os.path.exists(man):
+            with open(man, encoding="utf-8") as fh:
+                manifest_old = json.load(fh)
+            manifest_old["superseded"] = True
+            manifest_old["superseded_by"] = "T8c"
+            manifest_old["superseded_reason"] = (
+                "G2 verdict=%s check=%d gap=%d ring_colliding=%d; 明细 "
+                "out/print/g2_report.json" % (
+                    report["verdict"], report["check_stone"]["n_fail"],
+                    report["gap_check"]["n_fail"],
+                    report["ring_dedup"]["final_scope_check"]
+                    ["n_colliding"]))
+            with open(man, "w", encoding="utf-8") as fh:
+                json.dump(manifest_old, fh, ensure_ascii=False, indent=1,
+                          sort_keys=True)
+            print("MANIFEST superseded: 中央孔旧包作废 (T8c)")
+        if os.path.exists(notes) and os.path.exists(man):
+            write_slice_notes(manifest_old, report, out_dir=SLICE_DIR)
+            with open(notes, encoding="utf-8") as fh:
                 body = fh.read()
-            banner = ("> **T8b 门未过(verdict=%s), 本包作废待 T9。**"
-                      "红门明细见 out/print/g2_report.json"
-                      "(check_stone.fail_matrix / ring_dedup)。\n\n" %
-                      report["verdict"])
-            if not body.startswith("> **T8b"):
+            banner = ("> **G2 门未过(verdict=%s), 本包作废待 T9。**红门明细"
+                      "见 out/print/g2_report.json(check_stone.fail_matrix"
+                      " / ring_dedup)。\n\n" % report["verdict"])
+            with open(notes, "w", encoding="utf-8") as fh:
+                fh.write(banner + body)
+            print("SLICE_NOTES banner: G2 门未过, 中央孔包作废待 T9")
+        elif os.path.exists(notes):
+            with open(notes, encoding="utf-8") as fh:
+                body = fh.read()
+            banner = ("> **G2 门未过(verdict=%s), 本包作废待 T9。**红门明细"
+                      "见 out/print/g2_report.json(check_stone.fail_matrix"
+                      " / ring_dedup)。\n\n" % report["verdict"])
+            if not body.startswith("> **G2"):
                 with open(notes, "w", encoding="utf-8") as fh:
                     fh.write(banner + body)
-            print("SLICE_NOTES banner: T8b 门未过, 中央孔包作废待 T9")
+            print("SLICE_NOTES banner: G2 门未过, 中央孔包作废待 T9")
         raise RuntimeError("G2 门 FAIL: check=%d gap=%d ring_colliding=%d "
                            "首3: %s"
                            % (report["check_stone"]["n_fail"],

@@ -248,9 +248,14 @@ def _good_report():
                                     "spandrel_back": 2, "n_fail": 0}
                                    for i in range(17)}},
         "ring_dedup": {"pairs": [], "summary": {"n_subsumed": 0,
-                                                "n_trimmed": 0},
+                                                "n_trimmed": 0,
+                                                "removed_model_cm3":
+                                                    {"subsumed": 0.0,
+                                                     "trimmed": 0.0}},
+                       "trimmed_ids": [], "subsumed_ids": [],
                        "final_scope_check": {"n_pairs": 0,
-                                             "n_colliding": 0}},
+                                             "n_colliding": 0,
+                                             "pairs": []}},
         "coverage_audit": [{"bucket": "in_void", "cells": 0,
                             "uncovered_cells": 0, "uncovered_cm2": 0.0}],
         "verdict": "PASS",
@@ -279,6 +284,42 @@ def test_validate_g2_report_negative_controls():
     r5 = copy.deepcopy(base)
     del r5["gap_check"]["per_arch"]["ARCH09"]    # 17 孔抽样缺孔
     assert P.validate_g2_report(r5) != []
+    # ── T8c 结构闸门负控(复审: 全量记账要到手, 也要防被静默抹掉) ──
+    r6 = copy.deepcopy(base)                     # 合法 FAIL 变体(对照)
+    r6["verdict"] = "FAIL"
+    r6["check_stone"]["n_fail"] = 1
+    r6["check_stone"]["fails"] = [{"id": "X", "issues": []}]
+    r6["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
+    r6["ring_dedup"]["final_scope_check"]["n_colliding"] = 1
+    r6["ring_dedup"]["final_scope_check"]["pairs"] = [{"chain": "X"}]
+    assert P.validate_g2_report(r6) == []
+    r6["ring_dedup"]["final_scope_check"]["pairs"] = []   # 明细被清空
+    assert any("pairs" in q for q in P.validate_g2_report(r6))
+    r7 = copy.deepcopy(base)                     # trim 计数/账本互证
+    r7["ring_dedup"]["summary"]["n_trimmed"] = 2
+    r7["ring_dedup"]["trimmed_ids"] = ["A", "B"]
+    r7["ring_dedup"]["summary"]["removed_model_cm3"]["trimmed"] = 12.5
+    assert P.validate_g2_report(r7) == []
+    r7["ring_dedup"]["trimmed_ids"] = []         # 计数被抹
+    assert any("n_trimmed" in q for q in P.validate_g2_report(r7))
+    r7["ring_dedup"]["trimmed_ids"] = ["A", "B"]
+    r7["ring_dedup"]["summary"]["removed_model_cm3"]["trimmed"] = 0.0
+    assert any("removed_model_cm3.trimmed" in q
+               for q in P.validate_g2_report(r7))
+    r8 = copy.deepcopy(base)                     # 覆盖率审计不许被清零
+    r8["coverage_audit"][0] = {"bucket": "in_void", "cells": 25,
+                               "uncovered_cells": 25, "uncovered_cm2": 0.0}
+    assert any("uncovered_cm2" in q for q in P.validate_g2_report(r8))
+    r8["coverage_audit"][0]["uncovered_cm2"] = 100.0     # 25 格 x 4cm2/格
+    assert P.validate_g2_report(r8) == []
+    r9 = copy.deepcopy(base)                     # fail_matrix 互证
+    r9["verdict"] = "FAIL"
+    r9["check_stone"]["n_fail"] = 1
+    r9["check_stone"]["fails"] = [{"id": "X", "issues": []}]
+    r9["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 2}
+    assert any("fail_matrix" in q for q in P.validate_g2_report(r9))
+    r9["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
+    assert P.validate_g2_report(r9) == []
 
 
 def test_g2_gate_constants():
@@ -680,3 +721,118 @@ def test_ring_trim_clears_partner_and_ring_solids():
         P._preinset_gap_entry(face, statuses),
         P._preinset_gap_entry(partner, statuses))
     assert rep["ok"], "裁后 face×partner 实体互穿: %r" % (rep["issues"],)
+
+
+# ---------------------------------------------------------------------------
+# T8c 真总体落位回归(C-T8b-1 防再犯): 现有判据全 x-z 口径, y 向错位不可
+# 见 —— 上面两条钉死测试是合成迷你账, 这里对【真账本全量 489 裁石】钉
+# y 区间与符号。管线一次 ~140s(纯 python, 无 blender), module 级 fixture
+# 两条测试共享。
+_LEDGER_FULL = os.path.join(os.path.dirname(__file__), "..", "3d",
+                            "out", "ledger_full.json")
+
+
+@pytest.fixture(scope="module")
+def real_ring_trim_state():
+    if not os.path.exists(_LEDGER_FULL):
+        pytest.skip("out/ledger_full.json 不在盘上: 先跑 blender -b "
+                    "--python 3d/p1a_slice.py -- --g2")
+    led = copy.deepcopy(json.load(open(_LEDGER_FULL)))
+    statuses = P.classify_full(led["stones"])
+    sc = P.print_scope(led, statuses)
+    arch_idx_of = {"ARCH%02d" % (i + 1): i for i in range(P.G2_N_ARCH)}
+    rd = P._ring_dedup_dispositions(led, statuses, sc["scope"],
+                                    sc["buckets"], arch_idx_of)
+    by_id = {s["id"]: s for s in led["stones"]}
+    trim_ids = sorted(sid for sid, st in statuses.items()
+                      if st[0] == "ring_trim")
+    return by_id, statuses, trim_ids, rd
+
+
+RING_TRIM_POPULATION = 475   # T8c 复测钉死: 传播守卫后真总体(漂移=总体变)
+
+
+def test_ring_trim_world_y_within_family_band_real_population(
+        real_ring_trim_state):
+    """T8c 钉死③(真总体 y 区间): 全部 ring_trim 裁片的世界 y 区间 ⊆ 原族
+    整石世界 y 带 ±1e-6(判据 = P.ring_trim_y_violations, 与 run_g2 内
+    断言同一实现, 不做第二套口径)。C-T8b-1 首版把世界 x-z 直喂局部剖
+    面: 489 块整体错位 3~5m(ARCH03.EAST.SPANDREL.C07.B00 修复前
+    y∈[-5.04,-2.55], 修复后 [0.84,3.33]; counterfactual: gap 216 -> 0)。
+    同一判据第二战果: 抓到 partner 足印错传(CORE kept 交给 SPANDREL,
+    剖面越域外推 y 越带 ~0.3m, 14 石)。"""
+    by_id, statuses, trim_ids, rd = real_ring_trim_state
+    assert len(trim_ids) == RING_TRIM_POPULATION, \
+        "裁片总体漂移: %d (期望 %d)" % (len(trim_ids), RING_TRIM_POPULATION)
+    bad = P.ring_trim_y_violations({"stones": list(by_id.values())},
+                                   statuses)
+    assert not bad, ("%d/%d 块裁片世界 y 越出原族 y 带(前10: id, trim_y, "
+                     "family_y): %r" % (len(bad), len(trim_ids), bad[:10]))
+    # trim 材料账: 账面值 == 逐对 collide_vol 之和(复审领走账, 目标口径)
+    sm = rd["summary"]
+    vol_sum = round(sum(p["collide_vol_cm3_pre"] for p in rd["pairs"]
+                        if p["disposition"] in ("trim", "trim_partner")), 3)
+    assert sm["n_trimmed"] == len(trim_ids)
+    assert sm["removed_model_cm3"]["trimmed"] > 0.0
+    assert sm["removed_model_cm3"]["trimmed"] == vol_sum, \
+        "trim 材料账 != 逐对 collide 之和: %r vs %r" % (
+            sm["removed_model_cm3"]["trimmed"], vol_sum)
+
+
+def test_ring_trim_east_west_centroid_y_sign_real_population(
+        real_ring_trim_state):
+    """T8c 钉死④(真总体 y 符号): EAST 裁片质心 y>0、WEST<0 —— 首版 ty>0
+    的 EAST 石落到负半平面(y∈[-5.04,-2.55]), x-z 口径判据全绿也看不见。
+    无侧别 id 的裁片计数必须为 0(符号判据覆盖面自证)。"""
+    by_id, statuses, trim_ids, _rd = real_ring_trim_state
+    bad = []
+    noside = []
+    for sid in trim_ids:
+        parts = sid.split(".")
+        side = parts[1] if len(parts) > 2 else None
+        role = parts[2] if len(parts) > 3 else None
+        if side not in ("EAST", "WEST"):
+            noside.append(sid)
+            continue
+        tv, _tf = P.world_mesh(by_id[sid], statuses)
+        tys = [v[1] for v in tv]
+        cy = sum(tys) / len(tys)
+        if role == "CORE":
+            # 全墙胞(y_extent=full_wall) y 向对称, 质心恒 ≈0 —— 符号判据
+            # 对它换形态: y 错位必然破坏 |cy|≈0(实测真总体 20 石全 0.0)
+            if abs(cy) > 1e-3:
+                bad.append((sid, "CORE:sym", round(cy, 4)))
+            continue
+        if side == "EAST" and not cy > 0.0:
+            bad.append((sid, "EAST", round(cy, 4)))
+        if side == "WEST" and not cy < 0.0:
+            bad.append((sid, "WEST", round(cy, 4)))
+    assert not noside, "无侧别裁片(符号判据盲区): %r" % noside[:10]
+    assert not bad, "%d 块裁片 y 符号错(侧别, 质心 y): %r" % (len(bad), bad[:10])
+
+
+def test_partner_propagation_requires_same_footprint_role_pair():
+    """T8c 钉死⑤: 传播只发生在 SPANDREL↔BACK 同足印对。_partner_id 的
+    else 分支会把 CORE 的"partner"解析成 SPANDREL, 但承压胞与拱面石足印
+    完全不同 —— 传播必须被拒, 否则面石拿到异石足印(CORE 胞 x 跨 ~3.2m、
+    z 低一层), 剖面在 [0,h] 外线性外推, y 越出族带 ~0.3m。SPANDREL→BACK
+    正向(传播仍发生)由 test_ring_trim_clears_partner_and_ring_solids 钉。"""
+    cz = _arch09_crown_z()
+    cut = cz + 0.55
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    core = _core_slab(-0.5, 0.5, 0.1, 0.9, cut - 0.35, cut + 0.35)
+    fp = {"w": 0.3, "h": 0.3, "d": 0.5, "proud": 0.006,
+          "hw_b": 0.6, "hw_t": 0.6, "back": 0.3}
+    face = LED.new_stone("ARCH09", "EAST", "SPANDREL", 0, 1, "wedge-std",
+                         fp, [0.0, 0.606, cut + 1.0, 0.0, 0.0, 0.0],
+                         "qingshi")
+    led, statuses, scope, buckets = _mini_disposition_led(
+        [ring], [core, face])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    disp = {p["chain"]: p["disposition"] for p in rd["pairs"]}
+    assert disp.get(core["id"]) == "trim", disp      # CORE 自身照常裁
+    assert disp.get(face["id"]) is None, \
+        "足印不同角色不得传播: %r" % disp.get(face["id"])
+    assert statuses[face["id"]][0] == "out", \
+        "面石足印未被碰到, 必须保持整石: %r" % (statuses[face["id"]][0],)
