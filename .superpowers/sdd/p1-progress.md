@@ -11,5 +11,7 @@
 - 主控待决策(S2): 雕件(lions2深互渗体块)进printcheck前是否CSG union——T6落笔前定
 - T4W8流程违规记录: 实现者跳过隔离树直提主树(未踩踏, 例外放行一次, 后续dispatch已加强)
 - Task 6: implemented (93a3dfa, 24测/171绿) — 审查Spec✅/Approved(0 Crit); 独立探针: inset半空间检验证不撑大桥/两量分离字节级/flip-M3自洽/超床独批不塞爆
-  - W3主控裁决: FIT改打印毫米口径(NORMAL=0.3print→模型15mm inset), coupon 1:1打印——修复轮进行中
+  - W3主控裁决已落地(6bc6783): FIT打印毫米+coupon 1:1(缝2×fit可实测, NORMAL打印当量0.600mm留证)+回读双验+W1/S1-S5, 173绿 → Task 6 complete
   - P4备忘(S4/S6): manifest created_utc不可复现→回归哈希时置可选; y向inset面不对称在T7/T8全桥gap_check贴边时回看
+
+- Task 7: implemented 进行中(materialize全局唯一放置算子+U2锚点裁决+三模式GN装配, Object<60)
