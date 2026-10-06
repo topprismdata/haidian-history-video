@@ -1,6 +1,7 @@
 # P1-T5: printcheck 验证器(流形/自交/壁厚@scale/穿透/平面性/多壳/绕向) 单测。合成数据, 不渲桥。
 # 修复轮(审查 BLOCK C1-C4/W1-W3/W5-W6/S1/S3): 每条新判据 = 失败测试 + 负控制。
 import math
+import numpy as np
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
 import printcheck as PC
@@ -377,3 +378,80 @@ def test_timing_contract_documented():
 def test_volume_matches_box():
     v, f = family_mesh("slab", {"w": 2.0, "d": 1.0, "h": 0.5})
     assert abs(PC.volume(v, f) - 1.0) < 1e-9
+
+
+# ---------- P1-T5 复审收口: M1 gap_check 闸门 / M2 导出安全平面阈 / M3 薄壁代理绕向自适应 ----------
+
+def _flip_faces(faces):
+    """整体反绕: 每面顶点序反转(无向边集不变 -> 流形/壳数/绕向一致性判据不受影响, 仅绕向翻转)。"""
+    return [tuple(reversed(f)) for f in faces]
+
+
+def test_gap_check_nan_entry_rejected():
+    # M1 CRITICAL: B 石含 NaN 顶点 + 真实重叠 0.2m(>tol)。旧实现 NaN 重叠比较
+    # (nan>0)=False -> not all -> 静默 ok=True 漏放穿透; 闸门必须 INVALID_COORD 拒。
+    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
+    bv = [list(p) for p in a[0]]
+    bv[0][2] = float("nan")
+    r = PC.gap_check(([0, 0, 0, 0, 0, 0], a), ([0.8, 0, 0, 0, 0, 0], (bv, a[1])),
+                     tol_model_mm=0.5, scale=S50)
+    assert not r["ok"] and _has(r, "INVALID_COORD"), r
+    assert not _has(r, "PENETRATION")   # 判据前闸门, 不到重叠深度分支
+
+
+def test_gap_check_empty_entry_does_not_crash():
+    # M1: 任一 entry 空顶点表 -> 结构化 EMPTY_MESH, 不 ValueError 崩(零尺寸数组 min/广播)。
+    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
+    for bad in (([], []), ([], a[1])):
+        r = PC.gap_check(([0, 0, 0, 0, 0, 0], a), ([0.5, 0, 0, 0, 0, 0], bad),
+                         tol_model_mm=0.5, scale=S50)
+        assert not r["ok"] and _has(r, "EMPTY_MESH"), bad
+
+
+def test_gap_check_nan_transform_rejected():
+    # M1: ledger transform 6 元组含 NaN(rz=NaN) -> 旋转矩阵污染全部顶点。
+    # isfinite 对 6 元组整体查必须抓到; 旧实现 NaN 传染 overlap 后静默 ok=True。
+    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
+    r = PC.gap_check(([0, 0, 0, 0, 0, float("nan")], a), ([2.0, 0, 0, 0, 0, 0], a),
+                     tol_model_mm=0.5, scale=S50)
+    assert not r["ok"] and _has(r, "INVALID_COORD"), r
+
+
+def test_planarity_export_round6_readback_negative():
+    # M2 留证: wedge-std 绕 Y 45° 后按 %.6f 量化回读(导出小数位截断),
+    # 实测面 dev=8.575e-08 —— 旧绝对阈 1e-12 必假报 NON_PLANAR; 新阈 1e-5 不得报。
+    # 折穿盒三档实测 dev=0.235~0.408m(test_non_planar_folded_box_reported 钉死仍报)。
+    v, f = family_mesh("wedge-std", _wedge_params())
+    q = [(float("%.6f" % x), float("%.6f" % y), float("%.6f" % z))
+         for (x, y, z) in _rot_y(v, 45.0)]
+    r = PC.check_stone(q, f, scale=S50, min_wall_print_mm=1.2)
+    assert not _has(r, "NON_PLANAR_FACE"), r["issues"]
+
+
+def test_planarity_export_float32_readback_negative():
+    # M2 留证: 同一 45° 斜置 wedge-std 过 float32 量化回读, 实测 dev=5.111e-09 -> 不得报。
+    v, f = family_mesh("wedge-std", _wedge_params())
+    q = [tuple(float(np.float32(c)) for c in p) for p in _rot_y(v, 45.0)]
+    r = PC.check_stone(q, f, scale=S50, min_wall_print_mm=1.2)
+    assert not _has(r, "NON_PLANAR_FACE"), r["issues"]
+
+
+def test_thin_wall_proxy_outward_winding_still_reported():
+    # M3 HIGH: 外翻绕向的整体反绕 45° 薄板 —— 旧实现「互相朝向」条件对反转法线
+    # 全部落空(0 条 pair, 假阴性); 绕向自适应(带符号体积判向+法线取反)后必须仍抓到 0.6mm。
+    v, f = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.03})
+    r = PC.check_stone(_rot_y(v, 45.0), _flip_faces(f), scale=S50, min_wall_print_mm=1.2)
+    det = [i for i in r["issues"] if i["code"] == "THIN_WALL"]
+    assert det and all("pair" in i["detail"] for i in det), det
+
+
+def test_thin_wall_proxy_outward_winding_cavity_not_flagged():
+    # M3 负控: 厚件带 5cm 缝(单流形壳棱柱)外翻绕向 —— 旧实现把空腔对壁当薄壁
+    # 假阳(实测 #5/#7 t=1.000mm<1.2mm); 绕向自适应后对壁背向被排除。内翻版对照同过。
+    poly = [(0.0, 0.0), (1.0, 0.0), (1.0, 0.8), (0.525, 0.8),
+            (0.525, 0.3), (0.475, 0.3), (0.475, 0.8), (0.0, 0.8)]
+    v, f = _prism(poly, 0.5)
+    r_in = PC.check_stone(v, f, scale=S50, min_wall_print_mm=1.2)
+    assert not _has(r_in, "THIN_WALL"), r_in["issues"]
+    r_out = PC.check_stone(v, _flip_faces(f), scale=S50, min_wall_print_mm=1.2)
+    assert not _has(r_out, "THIN_WALL"), r_out["issues"]

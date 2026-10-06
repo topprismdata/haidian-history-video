@@ -6,11 +6,15 @@
 - THIN_WALL 按打印件毫米: bbox 维(m) * scale * 1000 < min_wall_print_mm(brief 公式, 严格小于);
   另有方向无关面片对代理(W1, 见 _thin_wall_proxy_issues)。bbox 代理仅对局部轴对齐坐标有效,
   勿喂旋转后几何 -- 旋转薄壁由代理兜底。
+  M3 绕向自适应: 带符号体积判整网格绕向, 外翻(>0, 流形+单域闸门)时代理法线取反复用内翻语义
+  (真薄壁仍报, 空腔对壁仍不报); 内翻族库行为不变。
 - PENETRATION 按模型毫米: AABB 重叠深度(m) * 1000 > tol_model_mm。scale 仅用于消息中的打印当量。
 
 判据(全部纯 numpy, 零第三方几何依赖):
 - 流形 = 每条边(无向)恰被 2 个面使用; 退化面单独报且不参与任何计数;
-- NON_PLANAR_FACE (C1) = Newell 法线归一后顶点平面偏差 > max(abs_eps=1e-12, rel=1e-9 x 面片尺度);
+- NON_PLANAR_FACE (C1) = Newell 法线归一后顶点到面平面偏差 > max(abs_eps=1e-5, rel=1e-9 x 面片尺度);
+  M2 导出安全: 绝对阈 1e-5 = 0.01mm 模型当量, 45° 斜置 wedge-std %.6f/float32 量化回读
+  实测 dev=5.1e-9~8.6e-8 放行(旧阈 1e-12 假报), 真折叠 dev=0.235~0.408m 必报;
   负控: wedge/slab/L 棱柱/U 槽 dev=0~1.39e-17 全不报; 折穿盒 apex z=-0.5/-0.25/1e-7 全报;
 - INVALID_COORD (C2) = 顶点含 NaN/Inf, 在一切几何判据之前闸门(旧实现 ok=True 且 volume=nan 下流);
 - MULTI_SHELL (C3) = 面级 union-find 连通域 > 1(对齐 lions2.py assert_watertight 的连通域口径,
@@ -38,6 +42,10 @@ gap_check 旋转契约(W2): entry = (ledger transform 6 元组 [tx,ty,tz,rx,ry,r
 (test_gap_check_rotated_entry_contract 钉死)。Euler 'XYZ' 约定(R=Rz.Ry.Rx, 先 X 后 Y 后 Z,
 与 Blender rotation_euler 默认一致)。
 
+gap_check 坏输入闸门(M1, AABB 之前): 任一 entry 空顶点表 -> EMPTY_MESH(旧实现零尺寸数组广播
+ValueError 崩); transform 6 元组整体或旋后顶点 isfinite 不过 -> INVALID_COORD(旧实现 NaN 重叠
+比较 (nan>0)=False -> not all -> 静默 ok=True 漏放真实 0.2m 穿透)。
+
 时序契约(S3): check_stone 必须在导出前对最终 post-inset 几何调用; inset 还会再吃
 2x clearance, 若在 inset 前跑 = 放行薄件。
 
@@ -48,7 +56,7 @@ import numpy as np
 _EPS = 1e-9            # 3D 长度/平面距离容差(m)
 _EPS2 = 1e-12          # 2D 叉积容差(m^2, 面积量级)
 _REL_PLANAR = 1e-9     # C1 平面性相对阈( x 面片尺度)
-_ABS_PLANAR = 1e-12    # C1 平面性绝对阈(m)
+_ABS_PLANAR = 1e-5     # C1 平面性绝对阈(m): M2 导出安全=0.01mm 模型当量, 容 %.6f/float32 量化回读(dev~1e-8 放行)
 _PARALLEL_EPS = 1e-6   # W1 |ni.nj| > 1-此值 视为近平行
 _BBOX_VOL_SLACK = 1e-6  # C3 体积上界不变量容差
 
@@ -146,7 +154,9 @@ def _shell_issues(faces, degen):
 def _planarity_issues(V, faces, rel=_REL_PLANAR, abs_eps=_ABS_PLANAR):
     # type: (np.ndarray, list, float, float) -> list
     """C1: 逐面 Newell 法线归一, 顶点到面平面偏差 > max(abs_eps, rel x 面片尺度) => 报。
-    零法线(零面积/退化)面跳过(DEGENERATE_FACE 负责)。"""
+    零法线(零面积/退化)面跳过(DEGENERATE_FACE 负责)。
+    绝对阈同作零法线跳过阈: Newell 法线长 <=1e-5 的超小面(面积量级 ~5e-6 m^2)不查平面性
+    (族库/棱柱面尺度 >> 此值, 不受影响; 真退化由 DEGENERATE_FACE 负责)。"""
     bad = []
     for i, f in enumerate(faces):
         if len(f) < 3:
@@ -362,19 +372,23 @@ def _self_intersect_count(verts, faces):
 
 # ---------------------------------------------------------------- 壁厚代理
 
-def _thin_wall_proxy_issues(polys, normals, scale, min_wall_print_mm):
-    # type: (list, list, float, float) -> list
+def _thin_wall_proxy_issues(polys, normals, scale, min_wall_print_mm, outward=False):
+    # type: (list, list, float, float, bool) -> list
     """W1: 方向无关薄壁代理。bbox 判据只看轴向投影, 旋转后几何全漏;
     这里补: 法线近平行(|ni.nj| > 1-1e-6) 且互相朝向(nj 指向 i 一侧, 反之亦然)的面片对,
     以 j 面顶点到 i 面最小平面距离为壁厚(打印件毫米, 严格小于)。
-    绕向语义: 族库内翻绕向下「互相朝向」= 两墙之间夹实体(真薄壁);
-    槽腔对壁法线背向, 被排除, 不误报。
+    绕向语义(M3 自适应): 内翻绕向下「互相朝向」= 两墙之间夹实体(真薄壁);
+    槽腔对壁法线背向, 被排除, 不误报。外翻绕向(整体反绕)法线全体反转, 原判据对真薄壁
+    假阴性 + 对空腔对壁假阳性 -- outward=True 时先对法线统一取反, 复用内翻语义。
+    调用方闸门: 仅流形+单域时带符号体积才代表整网格绕向, 否则维持 outward=False 现行为。
     注意: bbox 代理仅局部轴对齐坐标有效, 勿喂旋转后几何; 本代理与其互补。"""
     issues = []
     nf = len(polys)
     cents = [p.mean(axis=0) for p in polys]
     uns = []
     for n in normals:
+        if outward:
+            n = -n
         ln = float(np.linalg.norm(n))
         uns.append(n / ln if ln > _EPS else None)
     for i in range(nf):
@@ -418,14 +432,20 @@ def _xform(V, tf):
 
 # ---------------------------------------------------------------- 体积
 
-def _volume(V, faces):
+def _signed_volume(V, faces):
     # type: (np.ndarray, list) -> float
+    """带符号散度定理体积: >0 外翻, <0 内翻(族库约定), ==0 无绕向语义(开放/零实体)。"""
     total = 0.0
     for f in faces:
         p0 = V[f[0]]
         for k in range(1, len(f) - 1):
             total += float(p0 @ np.cross(V[f[k]], V[f[k + 1]]))
-    return abs(total) / 6.0
+    return total / 6.0
+
+
+def _volume(V, faces):
+    # type: (np.ndarray, list) -> float
+    return abs(_signed_volume(V, faces))
 
 
 def volume(verts, faces):
@@ -483,7 +503,12 @@ def check_stone(verts, faces, scale=1.0 / 50.0, min_wall_print_mm=1.2):
         if mm < min_wall_print_mm:
             issues.append(_issue("THIN_WALL", "bbox %s=%.3fmm < %.3fmm @scale 1/%d"
                                  % (axis, mm, min_wall_print_mm, int(round(1.0 / s)))))
-    issues.extend(_thin_wall_proxy_issues(polys, normals, s, min_wall_print_mm))
+    # M3 绕向自适应: 仅流形+单域闭合网格带符号体积才代表整网格绕向;
+    # 开放网面/多壳(NON_MANIFOLD/MULTI_SHELL 已报) -> outward=False 维持现行为。
+    seen_codes = set(i["code"] for i in issues)
+    outward = ("NON_MANIFOLD" not in seen_codes and "MULTI_SHELL" not in seen_codes
+               and _signed_volume(V, faces) > 0.0)
+    issues.extend(_thin_wall_proxy_issues(polys, normals, s, min_wall_print_mm, outward))
     hits = _self_intersect_count(V, faces)
     if hits:
         issues.append(_issue("SELF_INTERSECT", "%d face-pair(s) cross (eps=%g)" % (hits, _EPS)))
@@ -501,6 +526,8 @@ def gap_check(entry_a, entry_b, tol_model_mm=0.5, scale=1.0 / 50.0):
     """两石空间关系检查。entry = (ledger transform 6 元组 [tx,ty,tz,rx,ry,rz], (verts, faces))。
     旋转契约(W2): 先按 transform 旋转+平移顶点再做 AABB -- 券石 RING 必带转角,
     纯 AABB 未旋系=假阳+漏判(test_gap_check_rotated_entry_contract 钉死)。
+    坏输入闸门(M1): 空顶点表 -> EMPTY_MESH; transform 6 元组或旋后顶点含 NaN/Inf ->
+    INVALID_COORD(带非有限计数); 结构化报出, 不崩也不静默 ok=True。
     返回 {"ok": bool, "issues": [{"code","detail"}]} (S1, 与 check_stone 同形, T6 只写一套):
     重叠深度(模型 mm) > tol_model_mm -> PENETRATION; 贴合/容差内/分离均 ok=True 且 issues=[]。
     scale 仅用于消息中的打印当量换算。scale 越界 raise ValueError(决策1, 旧 tol_mm 更名
@@ -508,8 +535,30 @@ def gap_check(entry_a, entry_b, tol_model_mm=0.5, scale=1.0 / 50.0):
     s = _check_scale(scale)
     pa, ma = entry_a
     pb, mb = entry_b
-    Va = _xform(np.asarray(ma[0], dtype=float), pa)
-    Vb = _xform(np.asarray(mb[0], dtype=float), pb)
+    Va = np.asarray(ma[0], dtype=float)
+    Vb = np.asarray(mb[0], dtype=float)
+    # M1 闸门: 空顶点表先拦(xform 广播会崩), 再 6 元组整体 isfinite(先于 _xform,
+    # 免 Inf 三角变换 RuntimeWarning), 最后旋后顶点 -- NaN 重叠比较 (nan>0)=False,
+    # 不拦则旧路径静默落进 ok=True。
+    if Va.size == 0 or Vb.size == 0:
+        return {"ok": False,
+                "issues": [_issue("EMPTY_MESH", "A: %d verts/%d faces; B: %d verts/%d faces"
+                                  % (len(Va), len(ma[1]), len(Vb), len(mb[1])))]}
+    ntf = (int((~np.isfinite(np.asarray(pa, dtype=float))).sum())
+           + int((~np.isfinite(np.asarray(pb, dtype=float))).sum()))
+    if ntf:
+        return {"ok": False,
+                "issues": [_issue("INVALID_COORD",
+                                  "%d non-finite transform value(s) (NaN/Inf) in ledger 6-tuples" % ntf)]}
+    Va = _xform(Va, pa)
+    Vb = _xform(Vb, pb)
+    if not np.isfinite(Va).all() or not np.isfinite(Vb).all():
+        na = int((~np.isfinite(Va)).sum())
+        nb = int((~np.isfinite(Vb)).sum())
+        return {"ok": False,
+                "issues": [_issue("INVALID_COORD",
+                                  "%d non-finite coord(s) (NaN/Inf) post-transform, A=%d B=%d"
+                                  % (na + nb, na, nb))]}
     a_lo, a_hi = Va.min(axis=0), Va.max(axis=0)
     b_lo, b_hi = Vb.min(axis=0), Vb.max(axis=0)
     overlap = np.minimum(a_hi, b_hi) - np.maximum(a_lo, b_lo)
