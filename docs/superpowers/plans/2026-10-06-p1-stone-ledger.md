@@ -38,7 +38,7 @@
 - Test: `e30_shikongqiao_video/tests/test_p1_ledger.py`
 
 **Interfaces:**
-- Produces: `new_stone(zone, role, course, block, family, params, transform, material, evidence="ashlar_truth", joint_historical_mm=10.0) -> dict`；`family_key(zone, role, course, block) -> str`；`load_ledger(path)/save_ledger(led, path)`；`validate_ledger(led) -> List[str]`；`query(led, zone=None, role=None, material=None) -> List[dict]`
+- Produces: `new_stone(zone, face, role, course, block, family, params, transform, material, evidence="ashlar_truth", joint_historical_mm=10.0) -> dict`（**5 拓扑参含 face=EAST/WEST**, T1 审查裁决逐字代码为权威）；`family_key(zone, face, role, course, block) -> str`；`load_ledger(path)/save_ledger(led, path)`；`validate_ledger(led) -> List[str]`；`query(led, zone=None, role=None, material=None) -> List[dict]`
 
 - [ ] **Step 1: 写失败测试**
 
