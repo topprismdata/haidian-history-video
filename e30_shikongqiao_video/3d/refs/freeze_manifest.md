@@ -105,9 +105,9 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 
 | 项 | 冻结候选 | 冷重建 | 一致? |
 |---|---|---|---|
-| `bridge_body` sha_sorted | `861d8836b1704067d537ab7e7945f4a247043d9856743ab99e45cc40cea150f2` | 同左 | **MATCH** |
+| `bridge_body` sha_sorted | `cdba970973a4e711c767385c52f4967e0db5af893ca0efc70622fad72945ea7b` | 同左 | **MATCH** |
 | `bridge_body` sha_order | `5a5c923275057a127fec2138a53b5b4a02bc66750639fb82978601e82b113674` | 同左 | **MATCH** |
-| `voussoir` sha_sorted | `b4421770a9e7951965968341c8a3174433377fe3c326abc1c7a4ca5cc4db047f` | 同左 | **MATCH** |
+| `voussoir` sha_sorted | `ba2e09516e1e5d3a256b02c9277861fd811343a49d0aaebac39cc6cd06993694` | 同左 | **MATCH** |
 | `voussoir` sha_order | `1c7ded704ed262389bcab794dcc733396f76703ef8aa825ee36c04a0c8173a49` | 同左 | **MATCH** |
 | `impost` sha_sorted | `5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a` | 同左 | **MATCH** |
 | `impost` sha_order | `13743527ae240699e76fc6365ab37b72537614eb76e9f37c905f4b987a30adf9` | 同左 | **MATCH** |
@@ -129,7 +129,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | `bridge_body` sha_order | `6442839341c987281d6b4bdf6c3234a6887045c77310a1c611d0b7ef61d41eac` |
 | `voussoir` sha_sorted | `ba2e09516e1e5d3a256b02c9277861fd811343a49d0aaebac39cc6cd06993694` |
 | `voussoir` sha_order | `bb2defc9c0595a61422e1be3c94c08302086dbe82cf811e98129275413840c96` |
-| `coursing` sha_sorted（第三核心, M19 拓扑: 原 impost 并入贴面系统） | `0bd11e712ef1e0f25dda741022a4740fb5f0495112ae7cca9d321886b3702c0d` |
+| `coursing` sha_sorted（第三核心, M19 拓扑: 原 impost 并入贴面系统） | `f2968f4c70fd92943478c0b28b34d8233ef50077049982a63ffad24274b03f77` |
 | `impost` sha_sorted（末次独立记录, 对象已废除） | `5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a`（M2.5 候选） |
 | `bridge_body` 顶点/面数 | 2648 / 1520 |
 | `voussoir` 顶点/面数 | 2316 / 1544 |
