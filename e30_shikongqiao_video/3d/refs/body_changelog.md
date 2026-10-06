@@ -358,3 +358,15 @@
 **改动文件**: `build_scene2.py`(头部导入守护化 + 尾部纯逻辑段/三模式; 默认 proxy 路径零改动)、`masonry2.py`(新增 materialize/anchor_offset/_euler_xyz_matrix, U2 全局唯一放置算子)、`export_print.py`(export_ledger mesh_fn=None 默认走 materialize 回床; 显式路径逐位不变)、新增 `tests/test_p1_scene.py`(15 条 blender-free 单测)。
 
 **冻结影响**: 本体 bridge_body/voussoir/coursing freeze_hash 三对象 sha_sorted/sha_order 逐位一致(隔离树实测 CORE_HASH_IDENTICAL: True); qa_l2 正检 QA_L2_OK(fail/warn/skip 0/0/0)、负控 NEG_CAUGHT 10/10、_check_abutment ALL PASS。`--emit-lib` 出 out/families.blend(FAMILIES_EMIT 与纯 python 族清点互证相等)、`--layout` 出 out/e30_layout.blend(场景 Object 20 < 60; GN 点云 5250 石 × Pick Instance)。layout vs proxy 结构砌体正交侧视剪影(1200px/24spp) SILHOUETTE_IOU=0.9326(>0.9) 且像素非全等(对照口径与残差见 .superpowers/sdd/p1-task-7-report.md)。
+
+## 2026-10-07 P1-T7 审查修复轮(H1/W1/W3/W4/S1/S4) —— 本体零几何
+
+**改动文件**: `build_scene2.py`(cap_to_deck 按族分派锚语义+超底弃石归账; classify_stones clip 打标; 守护导入响亮化; LAYOUT_MAX_OBJECTS 60→50)、`masonry2.py`(materialize 对无烘焙网格的 clipped 石显式 raise)、`tests/test_p1_scene.py`(+6 条/扩 1 条)、`.gitignore`(stones/*.json 反豁免, S4)。
+
+- **H1**: cap_to_deck 旧版把 slab(core cells, 最小角锚)当块中心锚截顶: z0=tz−h/2 半高虚低+桥面采样误用最小角 x0 → 截顶线系统性偏高, CORE 顶穿桥面(全 role 旧断言口径实测 29 块越顶)。修复: 锚语义按 masonry2._ANCHOR_MIN_CORNER 分派——slab z0=transform[2] 不动、只改 params.h/bbox.z1(不变式 bbox.z0==transform[2])、桥面采样 x=bbox 中点; wedge 分支逐位保持。整块超底弃石不再静默: bridge_ledger 记 meta.skipped_below_deck(_ids) 并打 SKIPPED_BELOW_DECK 日志(含审查点名的 ARCH11.EAST.CORE.C15.B02/ARCH14.EAST.CORE.C12.B02)。越顶断言从"只扫 SPANDREL"扩到全 role(世界顶 ≤ 块心桥面, 1e-9)。
+- **W1**: LAYOUT_MAX_OBJECTS 60→50(对齐简报; 实测 20 仍过)。
+- **W4**: 跨洞裁剪石由 classify_stones 打 params.clipped=True; materialize 对 verts=None 的带标石 raise("clip 石导出必须传烘焙网格")——"整块族网格静默顶替裁剪片"的前向陷阱变响亮错误。
+- **S1**: 守护导入分两组: bpy 组缺失→静默 None(pytest 路径不变); bpy 可用而本体模块(G/MAT/LIONS/BEASTS)缺失→显式 ImportError, 不再吞成 bpy=None 静默降级。
+- **S4**: .gitignore 反豁免 `!e30_shikongqiao_video/3d/stones/` + `!e30_shikongqiao_video/3d/stones/*.json`(父目录被 `*` 排除时文件级 ! 规则不可达, 须两条; stones_deck.json 只可见不入库)。
+- **W3**(仅报告口径): coursing 层"洞内 348 面"改可复现口径(质心入洞三角面数, 探针 rev_iou2.py 口径), 见 p1-task-7-report.md 修复轮节。
+- **验收**(隔离树 /tmp/e30_p1/fix1 实测): 本体三对象 freeze_hash 逐位一致(cdba9709…/ba2e0951…/f2968f4c…, proxy 路径零改动, blender 重建零错 SAVED v2); FAMILIES_EMIT 3327→3327 不变(CORE 胞族身份由 bbox x 界决定, 截顶改 h/bbox.z1 不改族数; 纯链 census 互证相等); LAYOUT_STONES 5250→5250(弃审查点名超底 2 块, 救回 buggy 截顶误弃的端带 2 块 ARCH01.EAST.CORE.C08.B01/ARCH03.EAST.CORE.C11.B01); LAYOUT_OBJECTS 20 ≤ 50; SILHOUETTE_IOU 0.9326→0.9393(掩膜 XOR 1852→1657px); layout 掩膜越桥面像素 181→28; W3 复算 coursing 质心入洞 4872 三角面(带内 7306/全层 121960)与审查数逐位一致; tests 193 passed / qa_l2 正检 QA_L2_OK + 负控 NEG_CAUGHT 10/10 / _check_abutment ALL PASS。

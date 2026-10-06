@@ -11,16 +11,32 @@ _c=math.cos; _s=math.sin; _pi=math.pi
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # blender 依赖一律守护导入: 无 bpy 环境(pytest/纯链复用)下置 None,
 # blender 模式逐位不变; 纯逻辑段只用 facts/masonry2/families/ledger/export_print。
+# S1(2026-10-07 审查修复): bpy 组与本体组分两个 try —— 旧版一把抓曾把
+# "blender 可用但 bridge_geom2 等本体缺文件"吞成 bpy=None 静默降级; 现在
+# bpy 可用而任一本体模块缺失即显式 ImportError, blender-free 环境不受影响。
 try:
     import bpy, bmesh
+    from mathutils import Vector, Matrix
+    _HAS_BPY = True
+except ImportError:   # pragma: no cover - blender-free 环境
+    bpy = bmesh = None
+    Vector = Matrix = None
+    _HAS_BPY = False
+try:
     import bridge_geom2 as G
     import materials as MAT
     import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
     import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
-    from mathutils import Vector, Matrix
-except ImportError:   # pragma: no cover - blender-free 环境
-    bpy = bmesh = G = MAT = LIONS = BEASTS = None
-    Vector = Matrix = None
+except ImportError:
+    G = MAT = LIONS = BEASTS = None
+if _HAS_BPY and (G is None or MAT is None or LIONS is None or BEASTS is None):
+    raise ImportError(
+        "build_scene2: bpy 可用但本体模块导入失败(G/MAT/LIONS/BEASTS 缺失="
+        "%r) —— 不再静默降级" % ([n for n, m in (("bridge_geom2", G),
+                                                 ("materials", MAT),
+                                                 ("lions2", LIONS),
+                                                 ("beasts2", BEASTS))
+                                 if m is None],))
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRIDGE_AXIS_AZ = 112.0     # 北京建筑大学口径(东端略南/西端略北), 供后续光影用
@@ -973,7 +989,7 @@ import ledger as _LED
 import export_print as _EP
 
 COL_FAMILIES = "COL_FAMILIES"
-LAYOUT_MAX_OBJECTS = 60          # --layout 场景 Object 硬门(主场景不持有 5000 Object)
+LAYOUT_MAX_OBJECTS = 50          # --layout 场景 Object 硬门(主场景不持有 5000 Object; W1 对齐简报, 实测 20)
 ARC_STEP = 0.04                  # void 弧段折线采样步长(m); 折线内接矢高 ~1e-4m 亚像素
 CLIP_EPS = 1e-9
 VOID_Z_MIN = _BODY_BOTTOM - 2.0  # void 矩形部下界(低于一切砌体; 只为 SH 裁剪有限化)
@@ -1277,7 +1293,10 @@ def stone_world_bbox(stone):
 
 def classify_stones(stones, bands=None):
     # type: (List[Dict[str, Any]], Optional[List[Dict[str, float]]]) -> Dict[str, Tuple[str, List[List[Tuple[float, float]]]]]
-    """逐石 void 分类(各石只对自己孔带判定; 孔带互不重叠, 块不会跨带)。"""
+    """逐石 void 分类(各石只对自己孔带判定; 孔带互不重叠, 块不会跨带)。
+    W4(2026-10-07 审查): 判为 clip 的石在 params 打 clipped=True 标 ——
+    masonry2.materialize 对无烘焙网格的带标石显式 raise, 把"整块族网格
+    静默顶替裁剪片"的前向陷阱(导出/再放置路径)变成响亮错误。"""
     if bands is None:
         bands = [arch_band(i) for i in range(_F.N_SPAN)]
     zone_idx = {"ARCH%02d" % (i + 1): i for i in range(_F.N_SPAN)}
@@ -1288,7 +1307,10 @@ def classify_stones(stones, bands=None):
             out[s["id"]] = ("out", [])
             continue
         x0, x1, z0, z1 = stone_world_bbox(s)
-        out[s["id"]] = clip_footprint(x0, x1, z0, z1, bands[i], band_key=i)
+        status, polys = clip_footprint(x0, x1, z0, z1, bands[i], band_key=i)
+        if status == "clip":
+            s["params"]["clipped"] = True
+        out[s["id"]] = (status, polys)
     return out
 
 
@@ -1397,31 +1419,51 @@ def load_spec(stones_dir, arch_idx):
     return mirror_spec(spec) if arch_idx > half else spec
 
 
-def cap_to_deck(stones, min_h=0.025):
-    # type: (List[Dict[str, Any]], float) -> List[Dict[str, Any]]
+def cap_to_deck(stones, min_h=0.025, stats=None):
+    # type: (List[Dict[str, Any]], float, Optional[Dict[str, Any]]) -> List[Dict[str, Any]]
     """场景链收口: 砌体顶截到桥面弧线。
 
     砖谱末层 z0 是照片描摹的平线; 桥面是抛物线(端孔一孔内落差可达 0.5m),
-    平线末层按谱层高直砌会在桥面上方露出条带。规则: 每块按块心桥面标高
-    截顶(h 缩、zm 随实高、wedge hw_t / slab bbox 同步重算); 整块底已高于
-    桥面(截后 h <= min_h)的场景侧不留 —— 那里的墙不存在。只改本链自建
-    stone dict, 不触碰 masonry2 生成器与其冻结测试语义。"""
+    平线末层按谱层高直砌会在桥面上方露出条带。规则: 每块按【块心】桥面标高
+    截顶; 整块底已高于桥面(截后 h <= min_h)的场景侧不留 —— 那里的墙不存在,
+    但必须记数归账(stats["skipped_below_deck"/"skipped_ids"], H1: 静默弃曾
+    把超底 slab 藏成账实不符)。
+    锚语义按族分派(masonry2.anchor_offset 同一分派表, H1 修复核心):
+      wedge-std 块中心锚: z0=tz-h/2, 截顶后 zm=z0+h2/2、hw_t 随实高重算;
+      slab 最小角锚:     z0=tz(=bbox.z0), 截顶只改 params.h 与 bbox.z1,
+                         transform[2] 不动, 维持 bbox.z0==transform[2]。
+    桥面采样 x 一律块心: slab 用 bbox 中点 —— 旧版对 slab 误用最小角锚公式
+    (z0=tz-h/2 半高虚低 + 采样 x0), 截顶线系统性偏高, CORE 顶穿桥面
+    (实测越顶 29 块/旧断言口径)。只改本链自建 stone dict, 不触碰 masonry2
+    生成器与其冻结测试语义。"""
     out = []
     for s in stones:
         p = s["params"]
         h = float(p["h"])
-        z0 = float(s["transform"][2]) - h / 2.0
-        cap = deck_z_at(float(s["transform"][0]))
+        if s["family"] in _M2._ANCHOR_MIN_CORNER:
+            bb = p["bbox"]
+            z0 = float(s["transform"][2])
+            cap = deck_z_at(0.5 * (float(bb["x0"]) + float(bb["x1"])))
+        else:
+            z0 = float(s["transform"][2]) - h / 2.0
+            cap = deck_z_at(float(s["transform"][0]))
         h2 = min(h, cap - z0)
         if h2 <= min_h:
+            if stats is not None:
+                stats["skipped_below_deck"] = \
+                    stats.get("skipped_below_deck", 0) + 1
+                stats.setdefault("skipped_ids", []).append(s["id"])
             continue
         if h2 < h - 1e-12:
             p["h"] = h2
-            s["transform"][2] = z0 + h2 / 2.0
-            if s["family"] == "wedge-std" and "hw_t" in p:
-                p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
-            if "bbox" in p:
-                p["bbox"]["z1"] = z0 + h2
+            if s["family"] in _M2._ANCHOR_MIN_CORNER:
+                p["bbox"]["z1"] = z0 + h2   # 最小角锚: transform[2] 不动
+            else:
+                s["transform"][2] = z0 + h2 / 2.0
+                if s["family"] == "wedge-std" and "hw_t" in p:
+                    p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
+                if "bbox" in p:
+                    p["bbox"]["z1"] = z0 + h2
         out.append(s)
     return out
 
@@ -1430,10 +1472,12 @@ def bridge_ledger(stones_dir=None):
     # type: (Optional[str]) -> Dict[str, Any]
     """全桥砌体账目: 面石(谱)+背衬+core × 17 孔 × 东西两面。
     末层高兜底 = 拱心线桥面标高 - 谱末层 z0(砌体顶随桥面弧线封口);
-    core 带界 = 孔带(首末孔外扩到桥端, 补桥台条带); z 带 = 水下底..桥面。"""
+    core 带界 = 孔带(首末孔外扩到桥端, 补桥台条带); z 带 = 水下底..桥面。
+    整块超底弃石记入 meta.skipped_below_deck(_ids) 并打日志(H1 归账)。"""
     if stones_dir is None:
         stones_dir = os.path.join(HERE, "stones")
     px, _spans = piers_and_spans()
+    skipped = {"skipped_below_deck": 0, "skipped_ids": []}
     stones = []    # type: List[Dict[str, Any]]
     for i in range(_F.N_SPAN):
         spec = load_spec(stones_dir, i)
@@ -1441,17 +1485,20 @@ def bridge_ledger(stones_dir=None):
         ch = max(0.05, band["z_hi"] - spec["courses"][-1]["z0"])
         for side in (1, -1):
             faces = _M2.face_stones(spec, i, side, hw_wall, course_h=ch)
-            faces = cap_to_deck(faces)
+            faces = cap_to_deck(faces, stats=skipped)
             stones.extend(faces)
             stones.extend(cap_to_deck(
-                _M2.backing_stones(faces, hw_wall, seed=i)))
+                _M2.backing_stones(faces, hw_wall, seed=i), stats=skipped))
         x_lo = -_F.BRIDGE_LEN / 2.0 if i == 0 else band["x_lo"]
         x_hi = _F.BRIDGE_LEN / 2.0 if i == _F.N_SPAN - 1 else band["x_hi"]
         stones.extend(cap_to_deck(
             _M2.core_cells(i, hw_wall, _BODY_BOTTOM, band["z_hi"],
-                           x_lo, x_hi, seed=i)))
+                           x_lo, x_hi, seed=i), stats=skipped))
+    print("SKIPPED_BELOW_DECK n=%d" % skipped["skipped_below_deck"])
     return {"meta": {"schema": _LED.SCHEMA, "curve_hash": "e30-p1t7-bridge",
-                     "seed": 0},
+                     "seed": 0,
+                     "skipped_below_deck": skipped["skipped_below_deck"],
+                     "skipped_below_deck_ids": skipped["skipped_ids"]},
             "stones": stones}
 
 

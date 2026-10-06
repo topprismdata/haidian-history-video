@@ -299,6 +299,18 @@ def _independent_chain_count():
     return len(BS.census(capped, BS.classify_stones(capped)))
 
 
+def _world_top_center_x(s):
+    """家族锚语义的世界顶 z 与块心 x(H1): slab=最小角锚(顶=tz+h, 心=bbox
+    中点), wedge=中心锚(顶=tz+h/2, 心=transform[0])。与 masonry2
+    anchor_offset 的分派表同源, 不另立第二语义。"""
+    if s["family"] in M2._ANCHOR_MIN_CORNER:
+        bb = s["params"]["bbox"]
+        return (float(s["transform"][2]) + float(s["params"]["h"]),
+                0.5 * (float(bb["x0"]) + float(bb["x1"])))
+    return (float(s["transform"][2]) + float(s["params"]["h"]) / 2.0,
+            float(s["transform"][0]))
+
+
 def test_bridge_ledger_structure_and_family_count_crosscheck():
     led = BS.bridge_ledger()
     errs = LED.validate_ledger(led)
@@ -330,11 +342,15 @@ def test_bridge_ledger_structure_and_family_count_crosscheck():
         assert xs_a == xs_b, "%s 与 %s 镜像足印不一致" % (z, zt2)
         mirror_pairs += 1
     assert mirror_pairs >= F.N_SPAN // 2
-    # 面石顶不越过桥面弧线(cap_to_deck 收口; 端孔谱平线末层逐块截顶)
+    # 顶不越桥面弧线(cap_to_deck 收口; 端孔谱平线末层逐块截顶)——H1 修复后
+    # 断言从"只扫 SPANDREL"扩到全 role: 世界顶 <= 该块【块心 x】处桥面标高
+    # (容差 1e-9)。修复前同口径(旧采样 transform[0])全 role 实测 29 块越顶,
+    # 全部是 CORE slab(slab 被当块中心锚截顶, 顶穿桥面弧线)。
     for s in stones:
-        if s["role_struct"] == "SPANDREL":
-            zt = s["transform"][2] + s["params"]["h"] / 2.0
-            assert zt <= BS.deck_z_at(s["transform"][0]) + 1e-9
+        zt, xc = _world_top_center_x(s)
+        assert zt <= BS.deck_z_at(xc) + 1e-9, \
+            "%s 世界顶 %r 越过块心(%r)桥面 %r" % (s["id"], zt, xc,
+                                                 BS.deck_z_at(xc))
     # 独立链互证族数(FAMILIES_EMIT 的可测替身)
     assert len(BS.census(stones, BS.classify_stones(stones))) \
         == _independent_chain_count()
@@ -415,3 +431,108 @@ def test_export_default_mesh_fn_is_materialize_translation():
     dev2 = max(max(abs((a[i] - b[i]) - t2[i]) for i in range(3))
                for a, b in zip(v_def, v_bad2))
     assert dev2 > 1e-3, "等价判据对真差异无感"
+
+
+# ── P1-T7 修复轮(2026-10-07 审查 H1/W1/W4/S1) ────────────────────────
+
+def test_cap_to_deck_slab_min_corner_anchor_negative_control(monkeypatch):
+    """H1 slab 负控: 最小角锚石截顶只改 h/bbox.z1, transform[2] 不动;
+    不变式 bbox.z0==transform[2] 与"世界 z 跨度==bbox 跨度"维持; 截后顶
+    ==块心桥面标高(1e-9); 整块超底的弃且记数。wedge 中心锚同步回归
+    (zm 随实高平移, 现状语义不变)。"""
+    cells = M2.core_cells(8, lambda x, z: 3.0, z_lo=4.0, z_hi=5.2,
+                          x_lo=-1.0, x_hi=1.0)
+    assert sorted(c["transform"][2] for c in cells) == [4.0] * 3 + [4.6] * 3
+    stats = {}
+    monkeypatch.setattr(BS, "deck_z_at", lambda x: 4.5)  # 平桥面
+    out = BS.cap_to_deck(cells, stats=stats)
+    # z0=4.6 层整块超底: 弃且记数; z0=4.0 层截到 0.5 存活
+    assert len(out) == 3 and stats["skipped_below_deck"] == 3
+    assert sorted(stats["skipped_ids"]) == sorted(
+        c["id"] for c in cells if c["id"] not in {o["id"] for o in out})
+    kept = out[0]
+    assert kept["transform"][2] == 4.0, "最小角锚 transform[2] 不得动"
+    assert kept["params"]["h"] == pytest.approx(0.5)
+    bb = kept["params"]["bbox"]
+    assert bb["z0"] == kept["transform"][2], "bbox.z0==transform[2] 不变式"
+    assert bb["z1"] == pytest.approx(4.5)
+    verts, _ = M2.materialize(kept)
+    assert max(v[2] for v in verts) == pytest.approx(4.5, abs=1e-9)
+    zspan = max(v[2] for v in verts) - min(v[2] for v in verts)
+    assert zspan == pytest.approx(bb["z1"] - bb["z0"], abs=1e-12)
+    # wedge 回归: 中心锚石截顶后 zm=z0+h2/2(旧语义逐位保持)
+    w = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)[0]
+    w["transform"][2] = 5.0 - w["params"]["h"] / 2.0    # 顶贴 z=5
+    out2 = BS.cap_to_deck([w])
+    assert len(out2) == 1
+    # h2 = 4.5 - (5.0-0.55) = 0.05; zm = z0 + h2/2
+    assert out2[0]["transform"][2] == pytest.approx(4.45 + 0.05 / 2.0)
+
+
+def test_bridge_ledger_records_below_deck_stones():
+    """H1: 整块超底石不得静默消失 —— 计数+ids 记入 meta 且与账面一致。
+    审查点名的两块超底 CORE slab 必须在记录里(修复前它们要么被静默弃、
+    要么带着错误锚位混进账面, 账实不符)。"""
+    led = BS.bridge_ledger()
+    rec_n = led["meta"]["skipped_below_deck"]
+    rec_ids = led["meta"]["skipped_below_deck_ids"]
+    assert rec_n >= 1
+    assert rec_n == len(rec_ids) == len(set(rec_ids)), "计数与 ids 必须对账"
+    named = {"ARCH11.EAST.CORE.C15.B02", "ARCH14.EAST.CORE.C12.B02"}
+    assert named <= set(rec_ids), sorted(named - set(rec_ids))
+    kept = {s["id"] for s in led["stones"]}
+    assert not (named & kept), "被记弃石不得同时出现在账面"
+
+
+def test_layout_object_gate_is_50():
+    """W1: --layout 场景 Object 硬门对齐简报 50(实测 20, 不再用放宽的 60)。"""
+    assert BS.LAYOUT_MAX_OBJECTS == 50
+
+
+def test_clip_stones_marked_and_materialize_demands_baked_mesh():
+    """W4: 跨洞裁剪石 params.clipped=True; materialize 无烘焙网格必须
+    响亮 raise —— 把"整块族网格静默顶替裁剪片"的前向陷阱变成显式错误。
+    未裁剪石不打标、默认路径照常。"""
+    led = BS.bridge_ledger()
+    statuses = BS.classify_stones(led["stones"])
+    clips = [s for s in led["stones"] if statuses[s["id"]][0] == "clip"]
+    outs = [s for s in led["stones"] if statuses[s["id"]][0] == "out"]
+    assert clips and outs, "真实账目必须同时有跨洞石与洞外石"
+    for s in clips:
+        assert s["params"].get("clipped") is True, s["id"]
+    assert all("clipped" not in s["params"] for s in outs)
+    st = clips[0]
+    with pytest.raises(ValueError, match="clipped"):
+        M2.materialize(st)
+    verts, faces = BS.stone_local_mesh(st, "clip", statuses[st["id"]][1])
+    wv, wf = M2.materialize(st, verts, faces)
+    assert len(wv) == len(verts) and len(wf) == len(faces)
+    M2.materialize(_wedge_stone())   # 未裁剪石: 默认族网格路径不受影响
+
+
+def test_guarded_import_loud_when_bpy_present_but_body_modules_missing():
+    """S1: bpy 可用而本体模块(G/MAT/LIONS/BEASTS)缺失 -> 显式 ImportError。
+    旧守护 except 一把抓曾把 blender 环境的本体缺文件吞成 bpy=None 静默降级。"""
+    import importlib
+    import types
+    names = ("bpy", "bmesh", "mathutils", "bridge_geom2", "materials",
+             "lions2", "beasts2", "build_scene2")
+    saved = {k: sys.modules.get(k) for k in names}
+    try:
+        for k in ("bpy", "bmesh"):
+            sys.modules[k] = types.ModuleType(k)
+        mu = types.ModuleType("mathutils")
+        mu.Vector = mu.Matrix = object
+        sys.modules["mathutils"] = mu
+        # sys.modules 值置 None -> import 该名即 ImportError(真模块不执行)
+        for k in ("bridge_geom2", "materials", "lions2", "beasts2"):
+            sys.modules[k] = None
+        with pytest.raises(ImportError):
+            importlib.reload(BS)
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = v
+        importlib.reload(BS)

@@ -287,9 +287,17 @@ def materialize(stone, verts=None, faces=None):
 
     verts/faces 缺省用 families.family_mesh(family, params) 生成; 传入裁剪
     unique 网格时, 放置中心仍取完整族网格 bbox 中点(整块语义, 见节注释)。
-    不改写 stone 与传入网格。返回 (world_verts, faces)。
+    W4(2026-10-07 审查): params.clipped=True 的石(跨洞裁剪片, build_scene2.
+    classify_stones 打标)缺省路径会拿【整块】族网格静默顶替裁剪片 —— 必须
+    传烘焙网格(stone_local_mesh 产物), 否则 raise。不改写 stone 与传入网格。
+    返回 (world_verts, faces)。
     """
     if verts is None:
+        if stone["params"].get("clipped"):
+            raise ValueError(
+                "materialize: %s clip 石导出必须传烘焙网格"
+                "(params.clipped=True, 族网格只代表整块; 用 "
+                "build_scene2.stone_local_mesh 产物)" % stone.get("id"))
         verts, faces = FAM.family_mesh(stone["family"], stone["params"])
     off = anchor_offset(stone["family"], stone["params"], stone["transform"])
     rx, ry, rz = (float(stone["transform"][3]), float(stone["transform"][4]),

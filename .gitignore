@@ -196,3 +196,12 @@ e30_shikongqiao_video/3d/shot_*.png
 e30_shikongqiao_video/3d/*.blend
 e30_shikongqiao_video/3d/*.blend1
 e30_shikongqiao_video/3d/ledger_cache/
+
+# ── 放行：E30 砖谱 JSON（2026-10-07 S4 反豁免）───────────────────────────
+# ⚠ 全桥账目链(--emit-lib/纯链测试)必需输入; p0..p9 此前逐文件 force-add,
+#   p10+ 会被上面 `*` 静默吞掉(干净克隆 --emit-lib 直接 FileNotFoundError)。
+# ⚠ 必须先反豁免目录本身: gitignore 语义下父目录被排除时, 单条文件级 !
+#   规则不可达(check-ignore 实测)。stones_deck.json 本链不消费, 只可见不
+#   入库(git add 仍需显式)。
+!e30_shikongqiao_video/3d/stones/
+!e30_shikongqiao_video/3d/stones/*.json
