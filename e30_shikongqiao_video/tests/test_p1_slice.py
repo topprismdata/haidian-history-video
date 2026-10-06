@@ -626,3 +626,57 @@ def test_negative_control_disable_subsume_surfaces_collision():
     assert rd["pairs"][0]["disposition"] == "trim"
     assert rd["final_scope_check"]["n_colliding"] >= 1, \
         "禁用 subsume 后不变式必须破 —— 判据非恒真"
+
+
+def test_ring_trim_world_y_interval_pinned():
+    """复审[2]钉死测试①: 裁片世界 y 区间必须 ⊆ 名义 y 区间 ± clearance+eps
+    —— 首版把世界 x-z 直喂局部 y 剖面且漏 off_y, 489 块整体错位 3~5m。
+    y 区间判据零成本(纯 materialize, blender-free)。"""
+    cz = _arch09_crown_z()
+    cut = cz + 0.55
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    biter = _core_slab(-0.5, 0.5, 0.1, 0.9, cut - 0.35, cut + 0.35)
+    led, statuses, scope, buckets = _mini_disposition_led([ring], [biter])
+    P._ring_dedup_dispositions(led, statuses, scope, buckets, {"ARCH09": 8})
+    assert statuses[biter["id"]][0] == "ring_trim"
+    wv, _wf = P.world_mesh(biter, statuses)
+    ys = [v[1] for v in wv]
+    p = biter["params"]["bbox"]
+    lo_nom, hi_nom = p["y0"], p["y1"]
+    assert lo_nom - 1e-9 <= min(ys) and max(ys) <= hi_nom + 1e-9, \
+        "裁片世界 y 越出名义区间: [%r, %r] vs [%r, %r]" % (
+            min(ys), max(ys), lo_nom, hi_nom)
+
+
+def test_ring_trim_clears_partner_and_ring_solids():
+    """复审[2]钉死测试②: 裁后与同位 partner、与 RING 的实体相交必须为 0
+    (pre-inset 面级判) —— 钉'裁片不再撞'而非钉比值。面石/背衬同块位跨
+    切割线, y 向按真实缝(面内缘 0.1 / 背衬外缘 0.098, 隐缝 2mm)。"""
+    cz = _arch09_crown_z()
+    cut = cz + 0.55
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    fp = {"w": 1.0, "h": 0.7, "d": 0.5, "proud": 0.006,
+          "hw_b": 0.6, "hw_t": 0.6, "back": 0.3}
+    face = LED.new_stone("ARCH09", "EAST", "SPANDREL", 0, 1, "wedge-std",
+                         fp, [0.0, 0.606, cut, 0.0, 0.0, 0.0], "qingshi")
+    bp = {"w": 1.0, "h": 0.7, "d": 0.5, "proud": 0.0,
+          "hw_b": 0.6, "hw_t": 0.6, "front_c": 0.0}
+    partner = LED.new_stone("ARCH09", "EAST", "BACK", 0, 1, "wedge-std",
+                            bp, [0.0, 0.098, cut, 0.0, 0.0, 0.0], "maoshi")
+    led, statuses, scope, buckets = _mini_disposition_led(
+        [ring], [face, partner])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    trims = {p["chain"]: p["disposition"] for p in rd["pairs"]}
+    assert trims.get(face["id"]) == "trim", trims
+    assert trims.get(partner["id"]) == "trim_partner", trims
+    stones = {s_["id"]: s_ for s_ in led["stones"]}
+    for sid in (face["id"], partner["id"]):
+        rep, _ph, _d = P.gap_check_pair(
+            P._preinset_gap_entry(stones[sid], statuses),
+            P._preinset_gap_entry(ring, statuses))
+        assert rep["ok"], "%s 裁后仍撞 RING: %r" % (sid, rep["issues"])
+    rep, _ph, _d = P.gap_check_pair(
+        P._preinset_gap_entry(face, statuses),
+        P._preinset_gap_entry(partner, statuses))
+    assert rep["ok"], "裁后 face×partner 实体互穿: %r" % (rep["issues"],)
