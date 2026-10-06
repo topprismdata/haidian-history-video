@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
 import masonry2 as M2  # noqa: E402
 import families as FAM  # noqa: E402
 import ledger as LED  # noqa: E402
+import build_scene2 as BS  # noqa: E402
 import p1a_slice as P  # noqa: E402
 
 
@@ -227,7 +228,8 @@ def test_sample_even_deterministic_and_bounded():
 
 def _good_report():
     return {
-        "meta": {"schema": 1, "gate": "G2", "scale": 0.02, "scale_denom": 50,
+        "meta": {"schema": 2, "gate": "G2", "scale": 0.02, "scale_denom": 50,
+                 "volume_caliber": {"statement": "x"},
                  "counts": {"stones": 3, "print_units": 2,
                             "ring_total": 193, "impost_total": 492},
                  "scope": {"print_units": 2, "excluded": [
@@ -235,12 +237,22 @@ def _good_report():
                      {"bucket": "void_cut_fragment", "n": 0},
                      {"bucket": "ring_band_overlap", "n": 0},
                      {"bucket": "thin_merge", "n": 0}]}},
-        "check_stone": {"n": 2, "n_fail": 0, "fails": []},
+        "check_stone": {"n": 2, "n_fail": 0, "fails": [],
+                        "fail_matrix": {}, "legacy_clip_survey":
+                            {"n": 0, "n_fail": 0, "matrix": {}}},
         "gap_check": {"n_pairs": 4, "n_fail": 0, "fails": [],
+                      "assembly_fit": {"n": 0, "n_exempt": 0, "warn": None,
+                                       "pairs": []},
                       "per_arch": {"ARCH%02d" % (i + 1):
                                    {"candidates": 4, "sampled": 4,
-                                    "n_fail": 0}
+                                    "spandrel_back": 2, "n_fail": 0}
                                    for i in range(17)}},
+        "ring_dedup": {"pairs": [], "summary": {"n_subsumed": 0,
+                                                "n_trimmed": 0},
+                       "final_scope_check": {"n_pairs": 0,
+                                             "n_colliding": 0}},
+        "coverage_audit": [{"bucket": "in_void", "cells": 0,
+                            "uncovered_cells": 0, "uncovered_cm2": 0.0}],
         "verdict": "PASS",
     }
 
@@ -324,7 +336,8 @@ def test_run_g2_synthetic_scope_buckets_and_report():
 def test_gap_check_pair_negative_control_real_cross_and_phantom():
     """负控制: ①真实互穿的两盒 -> PENETRATION;
     ②AABB 相交但实体不相交(平行斜条带 = 径向缝幻影造型) -> ok+aabb_phantom;
-    ③完全分离 -> ok。"""
+    ③完全分离 -> ok; ④吞没盒(包含型, 面不相交但顶点在对方体内) ->
+    PENETRATION; ⑤共面贴合(零体积重叠) -> ok。"""
     def box(x0, x1, y0, y1, z0, z1):
         v = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
              (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
@@ -350,7 +363,7 @@ def test_gap_check_pair_negative_control_real_cross_and_phantom():
     # ① 真互穿: 两盒在 x 上重叠 0.2
     va, fa = box(0, 1, 0, 1, 0, 1)
     vb, fb = box(0.8, 1.8, 0, 1, 0, 1)
-    rep, ph = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
+    rep, ph, _depth = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
                                entry(vb, fb, (0, 0, 0, 0, 0, 0)))
     assert not rep["ok"] and not ph
     assert rep["issues"][0]["code"] == "PENETRATION"
@@ -358,11 +371,258 @@ def test_gap_check_pair_negative_control_real_cross_and_phantom():
     #    (带间隙 0.15/√2 ≈ 0.106 > 0; 径向缝幻影同构: AABB 咬合、面不相交)
     va, fa = diag_slab(0.0, 0.0)
     vb, fb = diag_slab(0.075, -0.075)
-    rep, ph = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
+    rep, ph, _depth = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
                                entry(vb, fb, (0, 0, 0, 0, 0, 0)))
     assert ph is True and rep["ok"]
     # ③ 完全分离
     vc, fc = box(5, 6, 0, 1, 0, 1)
-    rep, ph = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
+    rep, ph, _depth = P.gap_check_pair(entry(va, fa, (0, 0, 0, 0, 0, 0)),
                                entry(vc, fc, (0, 0, 0, 0, 0, 0)))
     assert rep["ok"] and not ph
+    # ④ 吞没盒(C2 包含型负控): 小盒完全在大盒体内 —— AABB 全轴正重叠、
+    #    两网格面永不相交, 旧两级判放成 aabb_phantom; 任一实体顶点在对方
+    #    体内 => PENETRATION(包含型互穿不是缝)。
+    vbig, fbig = box(0, 4, 0, 4, 0, 4)
+    vsml, fsml = box(1, 2, 1, 2, 1, 2)
+    rep, ph, _depth = P.gap_check_pair(entry(vbig, fbig, (0, 0, 0, 0, 0, 0)),
+                               entry(vsml, fsml, (0, 0, 0, 0, 0, 0)))
+    assert not rep["ok"] and not ph, "吞没盒必须判 PENETRATION(包含型)"
+    assert rep["issues"][0]["code"] == "PENETRATION"
+    # 反向(小盒作 A)同判 —— 包含判据对称
+    rep, ph, _depth = P.gap_check_pair(entry(vsml, fsml, (0, 0, 0, 0, 0, 0)),
+                               entry(vbig, fbig, (0, 0, 0, 0, 0, 0)))
+    assert not rep["ok"] and not ph
+    # 接触不算包含: 两盒共面贴合(面接触、零体积重叠)仍 ok
+    vtan, ftan = box(4, 5, 0, 4, 0, 4)
+    rep, ph, _depth = P.gap_check_pair(entry(vbig, fbig, (0, 0, 0, 0, 0, 0)),
+                               entry(vtan, ftan, (0, 0, 0, 0, 0, 0)))
+    assert rep["ok"], "共面贴合不得判包含互穿"
+
+
+# ── T8b-B3: ring_band_overlap 面积判据(吞没石必排除, 低重叠回收) ──────
+
+def _box_ring_entry(x0, x1, z0, z1, block=1):
+    """合成 RING 条目: bake 网格 = x-z 矩形棱柱(质心锚), y 厚 1.0。"""
+    cx, cz = (x0 + x1) / 2.0, (z0 + z1) / 2.0
+    verts = [(x0, 0.0, z0), (x1, 0.0, z0), (x1, 0.0, z1), (x0, 0.0, z1),
+             (x0, 1.0, z0), (x1, 1.0, z0), (x1, 1.0, z1), (x0, 1.0, z1)]
+    faces = [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2),
+             (2, 6, 7, 3), (3, 7, 4, 0)]
+    local = [(v[0] - cx, v[1] - 0.5, v[2] - cz) for v in verts]
+    params = {"bake": {"v": local, "f": faces}}
+    return LED.new_stone("ARCH09", "EAST", "RING", 0, block, "ring-wedge",
+                         params, [cx, 0.5, cz, 0.0, 0.0, 0.0], "qingshi")
+
+
+def _spandrel_at(xc, zc, w, h, course=0, block=1):
+    params = {"w": w, "h": h, "d": 1.2, "proud": 0.006, "back": 0.3,
+              "hw_b": 3.4, "hw_t": 3.3}
+    return LED.new_stone("ARCH09", "EAST", "SPANDREL", course, block,
+                         "wedge-std", params,
+                         [xc, 3.3, zc, 0.0, 0.0, 0.0], "qingshi")
+
+
+def test_ring_band_raster_area_criterion():
+    """B3: 排除判据从 point-in-bbox 改面积法 —— 石足印与 RING 栅格(2cm x-z)
+    交面积占比 >50% 才排除; 完全吞没石 ratio=1 必排除; 角碰低重叠石
+    (ratio<=0.5)不得再被过剔(回收进 scope, 真撞与否交 gap 宇宙裁决)。"""
+    ring = _box_ring_entry(0.0, 1.0, 4.0, 4.5)
+    engulfed = _spandrel_at(0.5, 4.25, 0.4, 0.3)     # 足印全在 RING 足印内
+    corner = _spandrel_at(1.1, 4.6, 0.4, 0.4)        # 只碰一角(overlap 6%级)
+    far = _spandrel_at(5.0, 6.0, 0.5, 0.5)           # 与 RING 无涉
+    led = {"meta": {"schema": LED.SCHEMA, "curve_hash": "syn", "seed": 0},
+           "stones": [ring, engulfed, corner, far]}
+    statuses = {s["id"]: ("out", []) for s in led["stones"]}
+    raster = P._ring_footprint_raster(led)
+    assert raster["ARCH09"], "RING 足印栅格为空"
+    assert P._ring_overlap_ratio(engulfed, raster, statuses) == pytest.approx(1.0)
+    r_corner = P._ring_overlap_ratio(corner, raster, statuses)
+    assert 0.0 < r_corner <= 0.5, "角碰石占比应落在回收区间: %r" % r_corner
+    assert P._ring_overlap_ratio(far, raster, statuses) == 0.0
+    sc = P.print_scope(led, statuses)
+    got = sc["buckets"]["ring_band_overlap"]
+    assert got == [engulfed["id"]], "吞没石必排除, 角碰石必回收: %r" % (got,)
+    scope_ids = {s["id"] for s in sc["scope"]}
+    assert corner["id"] in scope_ids and far["id"] in scope_ids
+
+
+def test_write_excluded_ids_sidecar(tmp_path):
+    """D6: 排除件全量 id 旁挂 out/print/excluded_ids.json(桶->ids 全表,
+    含 standing 空桶), 守恒计数入 meta。"""
+    sc = {"scope": [{"id": "KEEP.1"}],
+          "buckets": {"in_void": ["A"], "void_cut_fragment": [],
+                      "ring_band_overlap": ["B", "C"], "thin_merge": []}}
+    led = {"meta": {"curve_hash": "e30-p1t8-full"}, "stones": []}
+    path = P.write_excluded_ids(sc, led, str(tmp_path / "excluded_ids.json"))
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert data["buckets"]["in_void"] == ["A"]
+    assert data["buckets"]["ring_band_overlap"] == ["B", "C"]
+    assert data["buckets"]["void_cut_fragment"] == []
+    assert data["buckets"]["thin_merge"] == []
+    assert data["buckets"]["carve_p4"] == [] and data["buckets"]["abut"] == []
+    assert data["meta"]["curve_hash"] == "e30-p1t8-full"
+    assert data["meta"]["excluded_total"] == 3
+    assert data["meta"]["print_units"] == 1
+
+
+def test_validate_g2_report_t8b_schema_negative_controls():
+    """T8b 结构闸门负控: PASS 与 n_colliding>0 矛盾、旧 overlap_mm 字段、
+    assembly_fit 缺真深度、缺 coverage_audit / volume_caliber 必被抓。"""
+    base = _good_report()
+    r1 = copy.deepcopy(base)
+    r1["ring_dedup"]["final_scope_check"]["n_colliding"] = 2
+    assert P.validate_g2_report(r1) != []
+    r2 = copy.deepcopy(base)
+    r2["gap_check"]["assembly_fit"] = {
+        "n": 1, "pairs": [{"a": "X", "b": "Y", "overlap_mm": 3.0}]}
+    assert P.validate_g2_report(r2) != []
+    r3 = copy.deepcopy(base)
+    r3["gap_check"]["assembly_fit"] = {
+        "n": 1, "pairs": [{"a": "X", "b": "Y", "aabb_min_axis_mm": 3.0}]}
+    assert P.validate_g2_report(r3) != []       # 缺 depth_mm(真深度)
+    r4 = copy.deepcopy(base)
+    r4.pop("coverage_audit")
+    assert P.validate_g2_report(r4) != []
+    r5 = copy.deepcopy(base)
+    r5["meta"].pop("volume_caliber")
+    assert P.validate_g2_report(r5) != []
+    r6 = copy.deepcopy(base)
+    r6["verdict"] = "FAIL"                      # 与全零 fail 矛盾
+    assert P.validate_g2_report(r6) != []
+
+
+# ── T8b-B4: volume 宇宙处置(审查四条负控 + case_A/B 边界) ─────────────
+
+def _core_slab(x0, x1, y0, y1, z0, z1, block=1):
+    params = {"w": x1 - x0, "h": z1 - z0, "d": y1 - y0,
+              "bbox": {"x0": x0, "x1": x1, "y0": y0, "y1": y1,
+                       "z0": z0, "z1": z1}}
+    return LED.new_stone("ARCH09", "EAST", "CORE", 0, block, "slab",
+                         params, [x0, y0, z0, 0.0, 0.0, 0.0], "maoshi")
+
+
+def _mini_disposition_led(rings, chains):
+    led = {"meta": {"schema": LED.SCHEMA, "curve_hash": "syn", "seed": 0},
+           "stones": list(rings) + list(chains)}
+    statuses = {s["id"]: ("out", []) for s in led["stones"]}
+    scope = list(chains)
+    buckets = {"in_void": [], "void_cut_fragment": [],
+               "ring_band_overlap": [], "thin_merge": []}
+    return led, statuses, scope, buckets
+
+
+def _arch09_crown_z():
+    band = BS.arch_band(8)
+    return band["springer"] + band["b"]      # 冠底(intrados 顶) z
+
+
+def test_case_a_engulfed_stone_subsumed_by_volume():
+    """审查负控②a: 完全吞没石(体积 100% 在 RING 内)必须走完整处置函数落
+    case_A(subsume) —— 出打印集归 ring_band_overlap, final_scope_check=0。"""
+    cz = _arch09_crown_z()
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    ring_whole = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4, block=2)
+    engulfed = _core_slab(-0.1, 0.1, 0.1, 0.9, cz - 0.1, cz + 0.3)
+    led, statuses, scope, buckets = _mini_disposition_led(
+        [ring, ring_whole], [engulfed])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    assert rd["summary"]["n_subsumed"] == 1
+    assert engulfed["id"] in buckets["ring_band_overlap"]
+    assert all(s["id"] != engulfed["id"] for s in scope)
+    e = rd["pairs"][0]
+    assert e["disposition"] == "subsume" and e["unique_vol_cm3"] <= 50.0
+    assert rd["final_scope_check"]["n_colliding"] == 0
+
+
+def test_case_b_corner_bite_trimmed_not_discarded():
+    """审查负控②b: 只咬一角/底带的石(独有材料大)必须落 case_B(trim),
+    不得进 case_A —— 防止'凡撞必丢'退化。裁片入 scope, params 记
+    clipped_by=ring_band。"""
+    cz = _arch09_crown_z()
+    cut = cz + 0.55                       # 冠处切割线≈intrados+RING_T+GAP
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    biter = _core_slab(-0.5, 0.5, 0.1, 0.9, cut - 0.35, cut + 0.35)
+    led, statuses, scope, buckets = _mini_disposition_led([ring], [biter])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    e = rd["pairs"][0]
+    assert e["disposition"] == "trim", e
+    assert e["unique_vol_cm3"] > P.SUBSUME_ABS_CM3, "咬合石不得误判 case_A"
+    assert rd["summary"]["n_trimmed"] == 1
+    assert biter["params"]["clipped_by"] == "ring_band"
+    kept_ids = {s["id"] for s in scope}
+    assert biter["id"] in kept_ids, "case_B 石必须保留(裁不是丢)"
+
+
+def test_case_b_two_rings_each_half_not_case_a():
+    """审查负控④: 两块环各吞一半的合成石(unique≈50%)必须落 case_B 而非
+    case_A —— 防'单块 max 低估'与阈值口径漂移。"""
+    cz = _arch09_crown_z()
+    cut = cz + 0.55                       # 冠处切割线(intrados+RING_T+GAP)
+    r1 = _box_ring_entry(-0.6, -0.1, cut - 0.5, cut - 0.05, block=1)
+    r2 = _box_ring_entry(0.1, 0.6, cut - 0.5, cut - 0.05, block=2)
+    half = _core_slab(-0.5, 0.5, 0.1, 0.9, cut - 0.3, cut + 0.3)
+    led, statuses, scope, buckets = _mini_disposition_led([r1, r2], [half])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    e = rd["pairs"][0]
+    assert set(e["rings"]) == {r1["id"], r2["id"]}, "须对两环并集体素求交"
+    assert e["disposition"] == "trim"
+    assert e["unique_vol_cm3"] > 0.01 * e["v_stone_cm3"]
+
+
+def test_disposition_uses_preinset_geometry():
+    """审查负控③: 处置判据必须吃 pre-inset 几何 —— 构造 y 向仅 5mm 搭接
+    的吞没石(post-inset 配合余量会把接触洗成无碰), 若实现误用 post-inset
+    则宇宙根本找不到撞对, 处置不会发生。"""
+    cz = _arch09_crown_z()
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    sliver = _core_slab(-0.1, 0.1, 0.4, 0.6, cz - 0.1, cz + 0.3)
+    # 石 y 深度 0.2m, 与环 y[0,1] 重叠; post-inset NORMAL 档 15mm/side 仍
+    # 重叠 —— 改用更狠的判别: 断言处置用的 entry 无 inset(直接查函数)
+    led, statuses, scope, buckets = _mini_disposition_led([ring], [sliver])
+    rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                    {"ARCH09": 8})
+    assert rd["summary"]["n_subsumed"] + rd["summary"]["n_trimmed"] >= 1
+    # 机制钉死: pre-inset entry 顶点没有 inset 收缩(与 _gap_entry 差异)
+    world = M2.materialize(sliver)[0]
+    pre = P._preinset_gap_entry(sliver, statuses)
+    post = P._gap_entry(sliver, statuses)
+    w = max(v[1] for v in world) - min(v[1] for v in world)
+    wp = (max(v[1] for v in pre[1][0]) - min(v[1] for v in pre[1][0]))
+    wo = (max(v[1] for v in post[1][0]) - min(v[1] for v in post[1][0]))
+    assert wp == pytest.approx(w, abs=1e-12), "pre-inset entry 不得收缩"
+    assert wo < wp - 1e-3, "post-inset entry 应收缩(对照, 证明两者不同)"
+
+
+def test_negative_control_disable_subsume_surfaces_collision():
+    """审查负控①: 真扰动管线 —— 对已知 case_A 石禁用 subsume 通道且令
+    带裁剪失效(裁剪返回整块), 重跑处置+复测: final_scope_check 必须
+    n_colliding>0(不变式可破坏, 非恒真)。"""
+    cz = _arch09_crown_z()
+    ring = _box_ring_entry(-0.2, 0.2, cz - 0.2, cz + 0.4)
+    engulfed = _core_slab(-0.1, 0.1, 0.1, 0.9, cz - 0.1, cz + 0.3)
+    led, statuses, scope, buckets = _mini_disposition_led([ring],
+                                                          [engulfed])
+    orig = P._band_trim_polys
+    x0, x1, z0, z1 = BS.stone_world_bbox(engulfed)
+    full = [[(x0, z0), (x1, z0), (x1, z1), (x0, z1)]]
+
+    def keep_all(stone, arch_idx, rings):
+        return list(full), 0.0
+
+    P._band_trim_polys = keep_all
+    P.SUBSUME_ABS_CM3 = -1.0
+    P.SUBSUME_REL_MAX = -1.0
+    try:
+        rd = P._ring_dedup_dispositions(led, statuses, scope, buckets,
+                                        {"ARCH09": 8})
+    finally:
+        P._band_trim_polys = orig
+        P.SUBSUME_ABS_CM3 = 50.0
+        P.SUBSUME_REL_MAX = 0.01
+    assert rd["pairs"][0]["disposition"] == "trim"
+    assert rd["final_scope_check"]["n_colliding"] >= 1, \
+        "禁用 subsume 后不变式必须破 —— 判据非恒真"

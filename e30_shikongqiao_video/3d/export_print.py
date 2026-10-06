@@ -21,6 +21,7 @@ canonical 永远是 mesh+ledger; STL/3MF 是派生物(打印件毫米口径 = �
 """
 import io
 import json
+import math
 import os
 import struct
 import time
@@ -220,17 +221,28 @@ def export_stone(stone, verts, faces, out_dir, scale=1 / 50.0, fit=None):
 def _pack_beds(items, bed_mm=PRINT_BED_MM):
     # type: (List[Tuple[float, float, str]], Tuple[float, float]) -> Tuple[Dict[str, int], List[Dict[str, Any]]]
     """220x220 床贪心货架装箱。items=(foot_w_mm, foot_d_mm, key), 按 max 维降序。
-    超床件独占一批(oversize=True)。返回 (key->batch, batches 列表)。"""
+    允许旋转(T8b-E8④, 装箱器判据): 90° 归一后仍超床、且 (w+d)<=sqrt(2)*bed
+    的件按 45° 对角斜置(旋转外接方 (w+d)/sqrt2)入【非独占批】, 批记
+    fit_diagonal=[ids]; 仍放不下的真超床件独占一批(oversize=True)。
+    返回 (key->batch, batches 列表)。"""
+    diag_lim = math.sqrt(2.0) * bed_mm[0] + 1e-9
     assign = {}     # type: Dict[str, int]
     batches = []    # type: List[Dict[str, Any]]
     cur_keys = None     # type: Optional[List[str]]
     cx = cy = row_h = ux = uy = 0.0
-    for w, d, key in sorted(items, key=lambda t: -max(t[0], t[1])):
-        if w > bed_mm[0] or d > bed_mm[1]:
-            batches.append({"batch": len(batches), "stones": [key],
-                            "used_mm": [float(w), float(d)], "oversize": True})
-            assign[key] = batches[-1]["batch"]
-            continue
+    for w0, d0, key in sorted(items, key=lambda t: -max(t[0], t[1])):
+        w, d = (d0, w0) if d0 > w0 else (w0, d0)   # 90° 旋转归一(长边横向)
+        diag = False
+        if max(w, d) > bed_mm[0]:                  # 90° 也救不了: 试 45°
+            if w + d <= diag_lim:
+                w = d = (w0 + d0) / math.sqrt(2.0)   # 45° 外接方
+                diag = True
+            else:
+                batches.append({"batch": len(batches), "stones": [key],
+                                "used_mm": [float(w0), float(d0)],
+                                "oversize": True})
+                assign[key] = batches[-1]["batch"]
+                continue
         if cur_keys is None:
             cur_keys = []
             batches.append({"batch": len(batches), "stones": cur_keys,
@@ -245,6 +257,8 @@ def _pack_beds(items, bed_mm=PRINT_BED_MM):
             cx = cy = row_h = ux = uy = 0.0
         cur_keys.append(key)
         assign[key] = batches[-1]["batch"]
+        if diag:
+            batches[-1].setdefault("fit_diagonal", []).append(key)
         cx += w
         row_h = max(row_h, d)
         ux = max(ux, cx)
@@ -310,9 +324,12 @@ def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0):
                            "stl3mf": os.path.relpath(rec["stl3mf"], out_dir),
                            "volume_cm3": rec["volume_cm3"]})
     assign, batches = _pack_beds(footprint)
+    diag_ids = {k for b in batches for k in b.get("fit_diagonal", [])}
     by_uuid = {s["uuid"]: d for s, d in zip(led["stones"], led_print["stones"])}
     for s in stones_out:
         s["batch"] = assign[s["id"]]
+        if s["id"] in diag_ids:
+            s["fit_diagonal"] = True
         pdst = by_uuid[s["uuid"]]
         pdst["print"]["batch"] = assign[s["id"]]
         pdst["print"]["min_feature_ok"] = True

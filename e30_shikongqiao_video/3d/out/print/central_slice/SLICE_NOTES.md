@@ -1,3 +1,5 @@
+> **T8b 门未过(verdict=FAIL), 本包作废待 T9。**红门明细见 out/print/g2_report.json(check_stone.fail_matrix / ring_dedup)。
+
 # ARCH09 中央孔试印包 SLICE_NOTES
 
 G2 门产物: 全石流形+壁厚+分批+装配图 (report verdict: PASS)

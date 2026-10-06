@@ -212,6 +212,7 @@ e30_shikongqiao_video/3d/ledger_cache/
 !e30_shikongqiao_video/3d/out/
 !e30_shikongqiao_video/3d/out/print/
 !e30_shikongqiao_video/3d/out/print/g2_report.json
+!e30_shikongqiao_video/3d/out/print/excluded_ids.json
 !e30_shikongqiao_video/3d/out/print/central_slice/
 !e30_shikongqiao_video/3d/out/print/central_slice/manifest.json
 !e30_shikongqiao_video/3d/out/print/central_slice/SLICE_NOTES.md

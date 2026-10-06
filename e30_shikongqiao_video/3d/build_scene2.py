@@ -1429,7 +1429,9 @@ def cap_to_deck(stones, min_h=0.025, stats=None):
     但必须记数归账(stats["skipped_below_deck"/"skipped_ids"], H1: 静默弃曾
     把超底 slab 藏成账实不符)。
     锚语义按族分派(masonry2.anchor_offset 同一分派表, H1 修复核心):
-      wedge-std 块中心锚: z0=tz-h/2, 截顶后 zm=z0+h2/2、hw_t 随实高重算;
+      wedge-std 块中心锚: z0=tz-h/2, 截顶后 zm=z0+h2/2、hw_t 随实高重算,
+                         transform[1] 前脸锚按新层中同步重算(T8b-A1:
+                         旧值锚原层中, 截顶石内错撞进背衬退让线);
       slab 最小角锚:     z0=tz(=bbox.z0), 截顶只改 params.h 与 bbox.z1,
                          transform[2] 不动, 维持 bbox.z0==transform[2]。
     桥面采样 x 一律块心: slab 用 bbox 中点 —— 旧版对 slab 误用最小角锚公式
@@ -1462,6 +1464,18 @@ def cap_to_deck(stones, min_h=0.025, stats=None):
                 s["transform"][2] = z0 + h2 / 2.0
                 if s["family"] == "wedge-std" and "hw_t" in p:
                     p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
+                    # T8b-A1: 截顶后层带中点下移, 前脸锚(transform[1])必须
+                    # 按新层中重算 —— 旧值仍锚在原层中 hw(zm_orig)+proud,
+                    # 截顶石前脸/内缘面整体内错 δ=hw(zm_orig)-hw(zm_new),
+                    # 撞进同位背衬退让线(审查恒等式
+                    # pen+BACKING_GAP ≡ −(|ty|−(hw+proud)), 修复前全链
+                    # 116 对 pen>0 全部是截顶石)。背衬石(front_c 锚)生而已
+                    # 截不经此路径, 同式重算亦保持其语义。
+                    c_key = "front_c" if "front_c" in p else "proud"
+                    y_new = hw_wall(float(s["transform"][0]),
+                                    z0 + h2 / 2.0) + float(p[c_key])
+                    s["transform"][1] = (y_new if s["transform"][1] >= 0.0
+                                         else -y_new)
                 if "bbox" in p:
                     p["bbox"]["z1"] = z0 + h2
         out.append(s)

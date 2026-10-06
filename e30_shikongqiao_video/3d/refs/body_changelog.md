@@ -370,3 +370,16 @@
 - **S4**: .gitignore 反豁免 `!e30_shikongqiao_video/3d/stones/` + `!e30_shikongqiao_video/3d/stones/*.json`(父目录被 `*` 排除时文件级 ! 规则不可达, 须两条; stones_deck.json 只可见不入库)。
 - **W3**(仅报告口径): coursing 层"洞内 348 面"改可复现口径(质心入洞三角面数, 探针 rev_iou2.py 口径), 见 p1-task-7-report.md 修复轮节。
 - **验收**(隔离树 /tmp/e30_p1/fix1 实测): 本体三对象 freeze_hash 逐位一致(cdba9709…/ba2e0951…/f2968f4c…, proxy 路径零改动, blender 重建零错 SAVED v2); FAMILIES_EMIT 3327→3327 不变(CORE 胞族身份由 bbox x 界决定, 截顶改 h/bbox.z1 不改族数; 纯链 census 互证相等); LAYOUT_STONES 5250→5250(弃审查点名超底 2 块, 救回 buggy 截顶误弃的端带 2 块 ARCH01.EAST.CORE.C08.B01/ARCH03.EAST.CORE.C11.B01); LAYOUT_OBJECTS 20 ≤ 50; SILHOUETTE_IOU 0.9326→0.9393(掩膜 XOR 1852→1657px); layout 掩膜越桥面像素 181→28; W3 复算 coursing 质心入洞 4872 三角面(带内 7306/全层 121960)与审查数逐位一致; tests 193 passed / qa_l2 正检 QA_L2_OK + 负控 NEG_CAUGHT 10/10 / _check_abutment ALL PASS。
+
+## 2026-10-07 P1-T8b G2 收口修复轮(A1/B2/B3/B4/D6/D7/E8, 审查 BLOCK 收口) —— 本体零几何
+
+**改动文件**: `build_scene2.py`(cap_to_deck wedge 截顶重算 transform[1] 前脸锚, 仅此一处)、`p1a_slice.py`(B2 包含型 gap 判/B3 RING 真剪影栅格面积判据/B4 ring↔链 volume 处置宇宙+final_scope_check/覆盖率审计/D6 excluded_ids 旁挂/D7 spandrel-back 全量带界/E8 体积口径/2A 红门纪律)、`export_print.py`(装箱允许 90°/45° 旋转, fit_diagonal 非独占批)、`tests/test_p1_slice.py`(+12)、`tests/test_p1_scene.py`(+2)、`tests/test_p1_export.py`(+2)、`.gitignore`(excluded_ids.json 白名单)、`3d/refs/freeze_manifest.md`(build_scene2 哈希)。
+
+- **A1**(审查 T9 处方更正): cap_to_deck 截顶改 h/transform[2] 时同步重算 transform[1]=side*(hw(xm,z0+h2/2)+proud) —— 旧值锚原层中, 截顶石内错撞进同位背衬退让线。验收恒等式(审查给出): pen+BACKING_GAP ≡ −(|ty|−(hw+proud)), 全链 2290 对余量<1e-6mm, pen>0 修复前 116 对→0; G2 assembly_fit 实体相交 30 对→0。
+- **B2**: gap_check_pair 第三级包含判(顶点入体⇒PENETRATION, 射线奇偶), 负控: 吞没盒必抓/共面贴合不抓/反向对称。
+- **B3**: ring_band_overlap 判据 point-in-bbox→面积法(RING 烘焙网格逐三角 x-z 投影真剪影栅格 2cm, 分母=链石自身剪影格数), 完全吞没石必排除(单测)。面积 ratio 只记账, 处置由 B4 裁决。
+- **B4**(审查三裁+主控 1b/2A): ring↔{SPANDREL,BACK,CORE} pre-inset dedup 宇宙(bbox 预筛+面级精判), PENETRATION 不进缝 fail; 处置按 unique_vol=V(stone)−V(stone∩RING∪) 同栅格度量: case_A(≤1%·V 且 ≤50cm³ 且顶点包含复证)subsume 出集; case_B 按 masonry._hole_cut_polyline 单一真相折线 print-view 裁剪(承压带保座石 z<spz-GAP, 加环 lift 包络), 同位 partner 对称传播(缝一致性); final_scope_check 独立 3D 复测不从桶成员推导。负控 4 条(关 subsume 破不变式/吞没盒 case_A/咬角 case_B/post-inset 拒绝)。
+- **D6**: out/print/excluded_ids.json 桶→ids 全表(入库白名单)。**D7**: spandrel-back 全量(不抽样), 实体相交 depth>5mm 或 AABB 交叠>100cm³ 计 fail, 界内豁免全量记账, >50 打 WARN。
+- **E8**: 体积口径声明(耳切对角约定 6.2e-3 实测复现/129h 实心体上界/CORE 非加和)、装箱旋转(fit_diagonal)、SLICE_NOTES 重写。
+- **红门现状**(主控 2A 预授权 FAIL 交付): verdict=FAIL —— check_stone 106(全部为带裁片 SELF_INTERSECT 1-2 面对级, 耳切在折线密采样+抽稀后的薄片三角伪交叉, 属本轮新裁片网格质量)、gap 216(全部 spandrel-back-bounds, 与 SELF_INTERSECT 石同 id 集合——被自交片污染的面级判)、ring↔链残留 87/903。归因: 裁片耳切网格化质量, T9 范围输入; 判据/桶/阈值零放宽(主控禁令)。
+- **冻结影响**: build_scene2 仅 cap_to_deck ledger 链改动, 本体 bridge_body/voussoir/coursing 三对象几何零变化(freeze_hash 实测见 p1-task-8-report 修复轮节); p1a_slice/export_print 不在冻结清单。

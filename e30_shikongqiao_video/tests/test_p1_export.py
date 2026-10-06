@@ -447,3 +447,38 @@ def test_coupon_mesh_public_and_errors():
     assert E.signed_volume(va, fa) > 0.0         # 已外翻, 导出即用
     with pytest.raises(ValueError):
         E.coupon_mesh("WILD", "a")
+
+
+# ── T8b-E8④: 装箱允许旋转(对角斜置非独占批) ──────────────────────────
+
+def test_pack_bed_rotates_diagonal_fit_stone():
+    """240x70mm 足印 90° 竖放仍超宽(240>220), 但 (240+70)=310 <= 311.1
+    -> 45° 对角斜置入【非独占批】(batch.fit_diagonal), used_mm<=220;
+    250x70(=320>311.1) 仍真超床独占(oversize)。负控: 判据不是恒真 ——
+    311.2x1 就该被拒(312.2>311.127)。"""
+    assign, batches = E._pack_beds([(240.0, 70.0, "A"), (70.0, 240.0, "B"),
+                                    (250.0, 70.0, "C")])
+    byb = {b["batch"]: b for b in batches}
+    for k in ("A", "B"):
+        b = byb[assign[k]]
+        assert not b.get("oversize"), k
+        assert k in b.get("fit_diagonal", [])
+        assert b["used_mm"][0] <= 220.0 and b["used_mm"][1] <= 220.0
+    ob = byb[assign["C"]]
+    assert ob.get("oversize") is True and ob["stones"] == ["C"]
+    # 边界负控: 恰好超对角界的一维超长件必被拒(不能总是斜置)
+    assign2, batches2 = E._pack_beds([(311.2, 1.0, "D")])
+    b2 = [b for b in batches2 if b["stones"] == ["D"]][0]
+    assert b2.get("oversize") is True
+
+
+def test_pack_bed_90_rotation_fits_without_diagonal():
+    """210x230 足印: 90° 旋转(230 横放 210 竖)后 210<=220 且 230>220 ——
+    长边仍超!归一后 max=230>220 -> 落对角判 (210+230)=440>311 -> oversize。
+    而 230x210 与 220x205 这类 90° 可救的件必须正常入批(不标 diagonal)。"""
+    assign, batches = E._pack_beds([(210.0, 230.0, "T")])
+    b = batches[0]
+    assert b.get("oversize") is True
+    assign2, batches2 = E._pack_beds([(220.0, 205.0, "N")])
+    assert not batches2[0].get("oversize")
+    assert not batches2[0].get("fit_diagonal")

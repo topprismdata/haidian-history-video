@@ -52,6 +52,34 @@ except ImportError:   # pragma: no cover - blender-free 环境
     G = None
     _HAS_BLENDER = False
 
+# T8b(case_B 带裁剪): masonry 的切割折线纯函数(_hole_cut_polyline/
+# _bottom_bound/_clip_jamb)不触 bmesh, 但模块顶部 import bmesh 挡住了
+# blender-free 环境。用空 bmesh 桩完成导入(用完即撤桩, masonry 持有的
+# 是模块引用), 让"洞∪券环带"单一真相折线在 pytest 下可测 —— 裁剪与
+# 提取(真 bmesh 用户)仍严格分离。
+_MAS_PURE = False
+if not _HAS_BLENDER:
+    import types as _types
+    _stubs = {}
+    for _name in ("bmesh", "mathutils"):
+        if sys.modules.get(_name) is None:
+            _mod = _types.ModuleType(_name)
+            if _name == "mathutils":
+                # masonry 只在 bmesh 路径用 Vector/Matrix; 纯函数不触
+                _mod.Vector = _mod.Matrix = object
+            sys.modules[_name] = _mod
+            _stubs[_name] = True
+    try:
+        import masonry as _mas_pure
+        _MAS = _mas_pure          # 纯函数可用; 提取函数仍 _HAS_BLENDER 门控
+        _MAS_PURE = True
+    except ImportError:           # pragma: no cover
+        pass
+    finally:
+        for _name in _stubs:
+            sys.modules.pop(_name, None)
+    del _types, _stubs
+
 import build_scene2 as BS
 import export_print as EP
 import facts as _F
@@ -259,6 +287,9 @@ def world_mesh(stone, statuses):
     clip 石 raise 是期望防线。输出经 triangulate_faces(打印视图: 三角面
     恒平面且耳切无覆盖; 顶点表逐位不动)。"""
     status, polys = statuses[stone["id"]]
+    if status == "ring_trim":
+        # T8b case_B: 带裁保留片(世界坐标 _prism_stitched 单壳)
+        return _ring_trim_mesh(polys, stone)
     if status == "clip":
         local, faces = BS.stone_local_mesh(stone, status, polys)
         verts, faces = M2.materialize(stone, local, faces)
@@ -275,39 +306,76 @@ def _arch_normal2(x, band):
     return (-d / lng, 1.0 / lng)
 
 
-def _ring_band_points(led):
-    # type: (dict) -> dict
-    """每孔券环带边界采样点: 直接取 RING 账目的站点(stations)与其内/外弧
-    z(lift 计入) —— 环带的真实上下边界, 无 AABB 幻影重叠。链面石足印矩形
-    (margin 收 5mm)含任一点 = 与环带真重叠。"""
-    bands = {}
-    out = {}     # type: dict
+RING_RASTER_CELL = 0.02      # B3: RING 真剪影栅格步长(2cm x-z, 审查 probe13 口径)
+RING_OVERLAP_RATIO = 0.5     # 面积占比 > 50% 才入 ring_band_overlap(只记账,
+                             # 绝不是丢弃许可 —— 处置由 volume 宇宙裁决)
+
+
+def _xz_cells_of_tris(tris, cell=RING_RASTER_CELL):
+    # type: (list, float) -> set
+    """三角面片 x-z 投影逐三角填格(格心在三角内)。闭曲面剪影 = 全部面
+    投影的并集 —— 逐格中心采样, 不用 bbox(弦框含弦-弧间空气, 审查 B 口径)。"""
+    cells = set()
+    for t in tris:
+        pa, pb, pc = t
+        x0 = min(pa[0], pb[0], pc[0])
+        x1 = max(pa[0], pb[0], pc[0])
+        z0 = min(pa[2], pb[2], pc[2])
+        z1 = max(pa[2], pb[2], pc[2])
+        ix0, ix1 = int(math.floor(x0 / cell)), int(math.ceil(x1 / cell))
+        iz0, iz1 = int(math.floor(z0 / cell)), int(math.ceil(z1 / cell))
+        if ix1 <= ix0 or iz1 <= iz0:
+            continue
+        gx = (np.arange(ix0, ix1) + 0.5) * cell
+        gz = (np.arange(iz0, iz1) + 0.5) * cell
+        GX, GZ = np.meshgrid(gx, gz, indexing="ij")
+        d1 = (pb[0] - pa[0]) * (GZ - pa[2]) - (pb[2] - pa[2]) * (GX - pa[0])
+        d2 = (pc[0] - pb[0]) * (GZ - pb[2]) - (pc[2] - pb[2]) * (GX - pb[0])
+        d3 = (pa[0] - pc[0]) * (GZ - pc[2]) - (pa[2] - pc[2]) * (GX - pc[0])
+        inside = ~(((d1 < 0) | (d2 < 0) | (d3 < 0))
+                   & ((d1 > 0) | (d2 > 0) | (d3 > 0)))
+        for ii, jj in zip(*np.nonzero(inside)):
+            cells.add((ix0 + int(ii), iz0 + int(jj)))
+    return cells
+
+
+def _stone_silhouette_cells(stone, statuses, cell=RING_RASTER_CELL):
+    # type: (dict, dict, float) -> set
+    """石块世界网格 x-z 真剪影格(可打印几何: clip/带裁石=裁后棱柱)。"""
+    verts, faces = world_mesh(stone, statuses)
+    return _xz_cells_of_tris(_flat_tris(PC._face_tris(
+        np.asarray(verts, dtype=float), faces)), cell)
+
+
+def _ring_footprint_raster(led, cell=RING_RASTER_CELL):
+    # type: (dict, float) -> dict
+    """RING 真剪影栅格(B 口径, 审查 probe13): {zone: set((ix,iz))} —— 每块
+    RING 烘焙网格逐三角投影 x-z 填格的并集。不取石 bbox(弦框把弦-弧间
+    空气记成环, 测的是另一个量)。"""
+    raster = {}
     for s in led["stones"]:
         if s.get("role_struct") != "RING":
             continue
         zone = s["id"].split(".")[0]
-        if zone not in bands:
-            bands[zone] = BS.arch_band(int(zone[4:]) - 1)
-            out[zone] = []
-        band = bands[zone]
-        p = s["params"]
-        for x in p["stations"]:
-            zi = _F.arch_z(x, band["xc"], band["springer"],
-                           band["a"], band["b"])
-            _nx, nz = _arch_normal2(x, band)
-            out[zone].append((x, zi))
-            out[zone].append((x, zi + (RING_T_REF + float(p["lift"])) * nz))
-    return out
+        verts, faces = world_mesh(s, {s["id"]: ("out", [])})
+        cells = raster.setdefault(zone, set())
+        cells |= _xz_cells_of_tris(_flat_tris(PC._face_tris(
+            np.asarray(verts, dtype=float), faces)), cell)
+    return raster
 
 
-def _stone_intersects_band(stone, band_pts):
-    # type: (dict, list) -> bool
-    x0, x1, z0, z1 = BS.stone_world_bbox(stone)
-    m = 0.005
-    for (px, pz) in band_pts:
-        if x0 + m < px < x1 - m and z0 + m < pz < z1 - m:
-            return True
-    return False
+def _ring_overlap_ratio(stone, raster, statuses, cell=RING_RASTER_CELL):
+    # type: (dict, dict, dict, float) -> float
+    """石足印(自身真剪影格数=分母, 非 bbox)与所在孔 RING 剪影并集的交
+    面积占比。面积 ratio 只做记账/排除吞没石, 不做丢弃许可(T8b 纪律)。"""
+    zone = stone["id"].split(".")[0]
+    cells = raster.get(zone)
+    if not cells:
+        return 0.0
+    own = _stone_silhouette_cells(stone, statuses, cell)
+    if not own:
+        return 0.0
+    return len(own & cells) / float(len(own))
 
 
 def print_scope(led, statuses):
@@ -317,12 +385,16 @@ def print_scope(led, statuses):
       in_void           场景链洞内理想化石(布局即剔除) = 空气, 不印;
       void_cut_fragment 切洞裁剪片: 与 RING 带重复建模(实测 400+ 件 <6cm
                         碎片/双壳), 打印以 RING 为准;
-      ring_band_overlap 未裁剪但足印含券环带边界采样点的链条石(与 RING
-                        双重建模), 打印以 RING 为准;
-      thin_merge        post-inset 最小打印壁 < 1.2mm 的截顶残层/窄条,
-                        与邻层合印(不可单独成件)。
+      ring_band_overlap 未裁剪但足印(真剪影面积)与 RING 剪影交占比 >50%
+                        的链条石(与 RING 双重建模; 完全吞没石必落此桶),
+                        打印以 RING 为准。面积 ratio 只做排除吞没石的
+                        记账判据, 低重叠回收石的真撞处置由 volume 宇宙
+                        (ring_dedup)裁决 —— 它不是丢弃许可;
+      thin_merge        post-inset 最小打印壁 < 1.2mm 的截顶残层/窄条。
+                        语义 = 谁都不单独印它: 与邻层合印(合印后材料仍在
+                        件上), 不可单独成件。
     雕件/桥台本就不在账(P4/接线清单⑤), 与 export 白名单同口径。"""
-    band_pts = _ring_band_points(led)
+    raster = _ring_footprint_raster(led)
     scope = []
     buckets = {"in_void": [], "void_cut_fragment": [],
                "ring_band_overlap": [], "thin_merge": []}
@@ -338,8 +410,7 @@ def print_scope(led, statuses):
         if st == "clip":
             buckets["void_cut_fragment"].append(s["id"])
             continue
-        zone = s["id"].split(".")[0]
-        if zone in band_pts and _stone_intersects_band(s, band_pts[zone]):
+        if _ring_overlap_ratio(s, raster, statuses) > RING_OVERLAP_RATIO:
             buckets["ring_band_overlap"].append(s["id"])
             continue
         verts, _faces = world_mesh(s, statuses)
@@ -464,12 +535,17 @@ def gap_check_pair(entry_a, entry_b,
       transform 转角正是为此, 但 ABB 盒判对斜缝天然假阳) —— 复用
       printcheck 的面-面相交判据对两网格逐面对精检: 闭曲面实体相交
       <=> 表面相交; 无面相交 = 幻影重叠(aabb_phantom, ok)。
-    返回 (report, aabb_phantom)。实相交 -> PENETRATION(缝面相穿即不合格,
-    不设深度容差; 制造间隙由 inset 表达)。"""
+    ③ 包含型(C2/T8b): 面不相交但任一实体顶点严格入对方体内 = 吞没/包含
+      互穿(AABB 必相交、表面永不相交, ②判不了) —— 射线奇偶判
+      (_mesh_contains_points), 命中即 PENETRATION, 真实非幻影。
+    返回 (report, aabb_phantom, depth_mm)。实相交 -> PENETRATION(缝面相穿
+    即不合格, 不设深度容差; 制造间隙由 inset 表达)。depth_mm = 面级精判出
+    的真深度(包含顶点最大入体深度, 模型毫米; 无包含顶点的纯棱交叉退化
+    0.0 —— 深度记账交给 AABB 最小轴字段), ok 时恒 0.0。"""
     rep = PC.gap_check(entry_a, entry_b, tol_model_mm=tol_model_mm,
                        scale=scale)
     if rep["ok"]:
-        return rep, False
+        return rep, False, 0.0
     (ta, (va, fa)) = entry_a
     (tb, (vb, fb)) = entry_b
     Va = PC._xform(np.asarray(va, dtype=float), ta)
@@ -489,11 +565,118 @@ def gap_check_pair(entry_a, entry_b,
     for i, j in zip(*np.nonzero(ov)):
         if _pair_faces_cross(polys_a[i], polys_b[j], norm_a[i], norm_b[j],
                              tris_a[i], tris_b[j]):
+            # 交叉对的真深度: 取 A 顶点入 B 体的最大深度(无包含顶点的
+            # 纯棱交叉退化为 0.0, 深度记账交给 AABB 字段)
+            depth = _containment_depth_mm(Va, _flat_tris(tris_b))
             return {"ok": False,
                     "issues": [{"code": "PENETRATION",
                                 "detail": "mesh faces cross (refined), "
-                                          "face A#%d x B#%d" % (i, j)}]}, False
-    return {"ok": True, "issues": []}, True
+                                          "face A#%d x B#%d" % (i, j)}]}, \
+                False, depth
+    # ③ 包含型: 面不相交但顶点入体(吞没) —— 对称双向
+    for (pts, other, label) in ((Va, (Vb, _flat_tris(tris_b)), "A"),
+                                (Vb, (Va, _flat_tris(tris_a)), "B")):
+        ins = _mesh_contains_points(other[1], pts)
+        if ins.any():
+            depths = {k: float(_point_tris_distance(pts[k], other[1]))
+                      for k in np.nonzero(ins)[0]}
+            k = max(depths, key=depths.get)
+            return {"ok": False,
+                    "issues": [{"code": "PENETRATION",
+                                "detail": "containment: vertex %s#%d inside "
+                                          "other solid (depth %.3fmm)"
+                                          % (label, k, depths[k] * 1000.0)}]}, \
+                False, depths[k] * 1000.0
+    return {"ok": True, "issues": []}, True, 0.0
+
+
+def _containment_depth_mm(Va, tris_b):
+    # type: (object, object, list) -> float
+    """A 的顶点入 B 体的最大深度(模型毫米; 无包含顶点返回 0.0)。"""
+    ins = _mesh_contains_points(tris_b, Va)
+    if not ins.any():
+        return 0.0
+    return max(float(_point_tris_distance(Va[k], tris_b))
+               for k in np.nonzero(ins)[0]) * 1000.0
+
+
+def _flat_tris(face_tris):
+    # type: (list) -> list
+    """PC._face_tris 的 [face -> [(3,3),...]] 摊平成 [(3,3),...]。"""
+    return [t for face in face_tris for t in face]
+
+
+def _mesh_contains_points(tris, pts):
+    # type: (object, list, object) -> object
+    """闭曲面包含判(射线奇偶, +x 向): 每点射线与网格全部三角求交, 奇数次
+    => 点在体内。Möller–Trumbore 逐三角向量化(三角数小、点数大: 三角为
+    外层循环, 点分块内层广播)。面上/共棱的点计 0 或 2 次 => 不算入 ——
+    接触不是包含(C2 语义)。tris=摊平坐标三角(_flat_tris), pts=(n,3)。"""
+    P = np.asarray(pts, dtype=float)
+    inside = np.zeros(P.shape[0], dtype=np.int32)
+    T = np.asarray(tris, dtype=float)                          # (m,3,3)
+    e1 = T[:, 1] - T[:, 0]
+    e2 = T[:, 2] - T[:, 0]
+    d = np.array([1.0, 0.0, 0.0])
+    pvec = np.cross(d, e2)                     # (m,3)
+    det = np.einsum("ij,ij->i", e1, pvec)      # (m,)
+    ok = np.abs(det) > 1e-14
+    if not ok.any():
+        return inside.astype(bool)
+    inv = np.where(ok, 1.0 / np.where(ok, det, 1.0), 0.0)
+    lo = np.min(T.reshape(-1, 3), axis=0)
+    hi = np.max(T.reshape(-1, 3), axis=0)
+    L = float((hi - lo).max()) + 1.0
+    chunk = 200_000
+    for c0 in range(0, P.shape[0], chunk):
+        Pc = P[c0:c0 + chunk]
+        tvec = Pc[:, None, :] - T[None, :, 0, :]               # (n,m,3)
+        u = np.einsum("nmk,mk->nm", tvec, pvec) * inv[None, :]
+        qvec = np.cross(tvec, e1[None, :, :])
+        v = np.einsum("nmk,k->nm", qvec, d) * inv[None, :]
+        t = np.einsum("nmk,mk->nm", qvec, e2) * inv[None, :]
+        hit = (ok[None, :] & (u >= 0.0) & (v >= 0.0) & (u + v <= 1.0)
+               & (t > 1e-12) & (t < L))
+        inside[c0:c0 + chunk] = np.count_nonzero(hit, axis=1) % 2
+    return inside.astype(bool)
+
+
+def _point_tris_distance(pt, tris):
+    # type: (object, list) -> float
+    """点到三角网格表面最小距离(模型米): 投影在三角形内取平面距, 否则取
+    三条棱的点到线段距, 逐三角取最小。tris=摊平坐标三角(_flat_tris)。"""
+    p = np.asarray(pt, dtype=float)
+    T = np.asarray(tris, dtype=float)
+    a, b, c = T[:, 0], T[:, 1], T[:, 2]
+    ab, ac = b - a, c - a
+    n = np.cross(ab, ac)
+    nn = np.einsum("ij,ij->i", n, n)
+    good = nn > 1e-18
+    best = np.inf
+    if good.any():
+        ap = p - a
+        d11 = np.einsum("ij,ij->i", ab, ab)
+        d01 = np.einsum("ij,ij->i", ac, ac)
+        d20 = np.einsum("ij,ij->i", ab, ap)
+        d21 = np.einsum("ij,ij->i", ac, ap)
+        d_ba = np.einsum("ij,ij->i", ab, ac)
+        den = np.where(good, d11 * d01 - d_ba * d_ba, 1.0)
+        v = (d01 * d20 - d11 * d21) / den
+        w = (d11 * d21 - d_ba * d20) / den
+        inside = good & (v >= 0.0) & (w >= 0.0) & (v + w <= 1.0)
+        if inside.any():
+            planar = np.abs(np.einsum("ij,ij->i", n, ap)) \
+                / np.sqrt(np.maximum(nn, 1e-18))
+            best = float(planar[inside].min())
+    for (pa, pb) in ((a, b), (b, c), (c, a)):
+        seg = pb - pa
+        L2 = np.einsum("ij,ij->i", seg, seg)
+        tt = np.clip(np.einsum("ij,ij->i", seg, p - pa)
+                     / np.where(L2 > 1e-18, L2, 1.0), 0.0, 1.0)
+        q = pa + tt[:, None] * seg
+        edge = float(np.sqrt((np.einsum("ij,ij->i", q - p, q - p)).min()))
+        best = min(best, edge)
+    return best
 
 
 def _pair_faces_cross(pts_i, pts_j, ni, nj, tris_i, tris_j):
@@ -565,16 +748,571 @@ def _issue(code, detail):
     return {"code": code, "detail": detail}
 
 
+# ── T8b-B4: ring↔链 dedup 宇宙 + 体积处置(case_A subsume / case_B trim) ──
+
+RING_DEDUP_ROLES = ("SPANDREL", "BACK", "CORE")
+SUBSUME_REL_MAX = 0.01        # case_A: unique_vol <= 1% V(stone)
+SUBSUME_ABS_CM3 = 50.0        # case_A: 且 unique_vol <= 50cm3(模型, 绝对地板)
+SPANDREL_BACK_DEPTH_MM = 5.0   # D7: spandrel-back 实体相交豁免上界(模型 mm)
+SPANDREL_BACK_VOL_CM3 = 100.0  # D7: 相交 AABB 体积上界(模型 cm3)
+SPANDREL_BACK_WARN_N = 50      # D7: 豁免数超此值打 WARN
+
+
+def _zone_rings(led):
+    # type: (dict) -> dict
+    """{zone: [RING stone, ...]}(按 id 排序, 确定性)。"""
+    out = {}
+    for s in led["stones"]:
+        if s.get("role_struct") == "RING":
+            out.setdefault(s["id"].split(".")[0], []).append(s)
+    for z in out:
+        out[z].sort(key=lambda s: s["id"])
+    return out
+
+
+def _preinset_world(stone, statuses):
+    # type: (dict, dict) -> tuple
+    """pre-inset 世界网格(处置体素判据用 —— FIT inset 会把配合缝当清道夫,
+    用 post-inset 判处置 = 制造余量洗白重影, 审查负控③钉死此项)。"""
+    return world_mesh(stone, statuses)
+
+
+def _prism_stitched(poly, y_front, y_back):
+    # type: (list, object, object) -> tuple
+    """x-z 简单多边形 -> 沿 y 双剖面棱柱(单一闭合壳): 帽面耳切三角化
+    (_triangulate_simple, 非凸安全 —— 券环带切割保留片是 x-单调但可非凸
+    的多边形, _prism 的顶点扇形化会产生覆盖/自交三角, T8b 首跑实测
+    MULTI_SHELL 475 石即此病)。侧沿每边界边一四边形, 前/背帽逐三角反向,
+    水密单壳; 朝向交给 flip_outward 单一归一。"""
+    n = len(poly)
+    vf = [(x, float(y_front(z)), z) for (x, z) in poly]
+    vb = [(x, float(y_back(z)), z) for (x, z) in poly]
+    verts = vf + vb
+    faces = []
+    for (i, j, k) in _triangulate_simple(list(poly)):
+        faces.append((i, j, k))
+        faces.append((n + k, n + j, n + i))
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((j, i, n + i, n + j))
+    return verts, faces
+
+
+def _ring_trim_mesh(polys, stone):
+    # type: (list, dict) -> tuple
+    """带裁保留片 -> 世界坐标网格(每 run 一条简单多边形 -> _prism_stitched
+    单壳; 多 run = 真断开的材料, 各自闭合壳)。y 剖面与 BS.stone_local_mesh
+    同源(_family_y_profiles 单一真相), 场景层零触碰。"""
+    yf, yb = BS._family_y_profiles(stone)
+    verts = []     # type: list
+    faces = []     # type: list
+    for poly in polys:
+        pv, pf = _prism_stitched(poly, yf, yb)
+        faces.extend(tuple(i + len(verts) for i in fc) for fc in pf)
+        verts.extend(pv)
+    return EP.flip_outward(verts, faces)
+
+
+def _band_trim_polys(stone, arch_idx, rings):
+    # type: (dict, int, list) -> tuple
+    """case_B print-view 裁剪: 石足印减『洞∪券环带』。减除区间按 x 竖条:
+      洞/拱带 |x-xc| < a+GAP_W:            减 z <= zc(x)  (void+band, 单一
+      真相 = masonry._hole_cut_polyline 折线, 与贴拱切块同几何);
+      承压带 a+GAP_W <= |x-xc| <= a+RING_T+GAP_W:
+                                           减 [spz-GAP_W, zc(x)] —— 下界
+        是座石面(环端承压于 z=spz, 墙顶 spz-GAP, masonry 同规则): 保留
+        座石 z<spz-GAP 与环背上缘 z>zc(x) 两段;
+      带外: 不减。
+    zc(x) 加【环石 lift 包络】: 各 RING 的 params.lift 是账目单一真相
+    (keystone 刚性上提, T8b 首跑漏计 -> 冠环上缘 0.06 高出切割线, 193 对
+    残留互穿), bound(x) = zc(x) + max{lift_s: x ∈ station_s}。
+    保留域 x-单调; 按 run 断开后每 run 一条简单多边形(底=bound 折线,
+    顶=z1), 座石条为矩形, 供 _ring_trim_mesh 耳切成单壳。
+    返回 (kept_polys 世界x-z, removed_z_area m^2); kept 空 = 全剔。
+    场景层零触碰(statuses/多边形只活在 p1a 打印视图, 主控 1b 裁定)。"""
+    x0, x1, z0, z1 = BS.stone_world_bbox(stone)
+    pts = _MAS._hole_cut_polyline(arch_idx, x0, x1)
+    if pts is None:
+        return [], 0.0
+    xc, spz, a, _b = _MAS._arch_of(arch_idx)
+    gap = _MAS.GAP_W
+    t_out = a + _MAS.RING_T + gap          # 减除域外缘(jamb 中心距)
+    jamb = a + gap
+    px = [p[0] for p in pts]
+    pz = [p[1] for p in pts]
+
+    def zc(x):
+        # pts 对 x 单调(masonry 保证); 端点外 -> None(不减)
+        if x < px[0] - 1e-9 or x > px[-1] + 1e-9:
+            return None
+        if x <= px[0]:
+            return pz[0]
+        if x >= px[-1]:
+            return pz[-1]
+        lo, hi = 0, len(px) - 1
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            if px[mid] <= x:
+                lo = mid
+            else:
+                hi = mid
+        dx = px[hi] - px[lo]
+        if abs(dx) < 1e-12:
+            return max(pz[lo], pz[hi])     # 陡降段取高者(masonry 同规)
+        f = (x - px[lo]) / dx
+        return pz[lo] + f * (pz[hi] - pz[lo])
+
+    def lift_at(x):
+        # 环 lift 包络: 仅计 station 覆盖 x 的环(账目 params, 单一真相;
+        # stations/lift 缺失的合成条目按 0 计 —— 真 ledger 由 make_ring_entry
+        # 恒写这两键)
+        best = 0.0
+        for r in rings:
+            p = r["params"]
+            st = p.get("stations")
+            if st and st[0] - 1e-9 <= x <= st[1] + 1e-9:
+                best = max(best, float(p.get("lift", 0.0)))
+        return best
+
+    def seat(x):
+        # 承压带座石面(z<spz-GAP 为墙); 非承压带 -> None(无座条)
+        d = abs(x - xc)
+        if jamb <= d <= t_out:
+            return spz - gap
+        return None
+
+    xs = sorted({x0, x1}
+                | {px_ for (px_, _pz) in pts if x0 < px_ < x1}
+                | {b for b in (xc - jamb, xc + jamb, xc - t_out, xc + t_out)
+                   if x0 < b < x1})
+    upper = []       # (sa, sb, bound0, bound1) bound 已钳 [z0, z1]
+    seats = []       # (sa, sb, seat_z)
+    removed = 0.0
+    for sa, sb in zip(xs[:-1], xs[1:]):
+        if sb - sa <= 1e-12:
+            continue
+        zc0, zc1 = zc(sa), zc(sb)
+        s0, s1 = seat(sa), seat(sb)
+        if zc0 is None and zc1 is None:
+            # 竖条与减除域无交(strip 端点均在折线覆盖外) -> 全保留
+            continue
+        b0 = min(zc0 + lift_at(sa), z1 + 1.0) if zc0 is not None else None
+        b1 = min(zc1 + lift_at(sb), z1 + 1.0) if zc1 is not None else None
+        # 座石条: 承压带内 z0..spz-GAP 保留(环端下缘从 spz 起, 留 GAP_W 缝)
+        if s0 is not None and s1 is not None:
+            seat_z = max(s0, s1, z0)
+            if seat_z > z0 + 1e-12:
+                seats.append((sa, sb, seat_z))
+        # 上缘保留: z > zc+lift
+        b0 = z0 if b0 is None else b0
+        b1 = z0 if b1 is None else b1
+        b0c = min(max(b0, z0), z1)
+        b1c = min(max(b1, z0), z1)
+        if b0c >= z1 - 1e-12 and b1c >= z1 - 1e-12:
+            removed += (sb - sa) * (z1 - z0)   # 全在带/洞内
+            continue
+        upper.append((sa, sb, b0c, b1c))
+        kept_h = (z1 - b0c + z1 - b1c) / 2.0
+        removed += (sb - sa) * max(0.0, (z1 - z0) - kept_h)
+    # run 断分(上缘保留域): 部分切割 strip(一端钳到 z1)是零高捏点 ——
+    # 捏点进同一多边形会产生折叠三角(首跑 SELF_INTERSECT 86 处+假 AxB
+    # 交叉的根因), 必须以捏点断 run; 断点两侧由相邻 run 各自收边。
+    runs = []
+    cur = []
+    for st in upper:
+        sa, sb, r0, r1 = st
+        if min(r0, r1) >= z1 - 1e-9:
+            if cur:
+                runs.append(cur)
+                cur = []
+            continue
+        cur.append(st)
+    if cur:
+        runs.append(cur)
+    kept = []
+    for run in runs:
+        poly = []
+        for (sa, sb, r0, r1) in run:
+            if r0 < z1 - 1e-9:
+                if not poly or poly[-1][0] < sa - 1e-12:
+                    poly.append((sa, r0))
+                elif abs(poly[-1][1] - r0) > 1e-12:
+                    poly.append((sa, r0))
+            if r1 < z1 - 1e-9:
+                poly.append((sb, r1))
+        if len(poly) < 2:
+            continue
+        poly.append((poly[-1][0], z1))
+        poly.append((poly[0][0], z1))
+        # 抽稀: 共线偏差 < 1.5mm 的中间点丢弃(折线 ARC_STEP 密采样产生
+        # 大量近共线点 -> 耳切出薄片三角, printcheck eps=1e-9 边界假交叉;
+        # 1.5mm << GAP_W=10mm, 不越缝口径)。共线点【跳过】, 不得拖动端点
+        # (拖动会让边界穿过保留域, 首版实测自交根因)。
+        simp = [poly[0], poly[1]]
+        for p in poly[2:-1]:
+            a, b = simp[-2], simp[-1]
+            area2 = abs((b[0] - a[0]) * (p[1] - a[1])
+                        - (b[1] - a[1]) * (p[0] - a[0]))
+            seg = math.hypot(b[0] - a[0], b[1] - a[1])
+            if seg > 1e-9 and area2 / seg > 1.5e-3:
+                simp.append(p)
+        simp.append(poly[-1])
+        dedup = []
+        for p in simp:
+            if dedup and abs(dedup[-1][0] - p[0]) < 1e-12 \
+                    and abs(dedup[-1][1] - p[1]) < 1e-12:
+                continue
+            dedup.append(p)
+        if len(dedup) >= 3 and abs(_poly_signed_area2(dedup)) > 1e-12:
+            kept.append(dedup)
+    for (sa, sb, seat_z) in seats:
+        kept.append([(sa, z0), (sb, z0), (sb, seat_z), (sa, seat_z)])
+    return kept, removed
+
+
+def _voxel_unique_vol(verts_s, faces_s, ring_meshes):
+    # type: (list, list, list) -> tuple
+    """同栅格体积吞没度量(审查修坑版): V(stone) 与 V(stone∩RING∪) 在
+    【同原点同步长】格上数; step = min(2cm, 最小维/4)(薄片石自适应加密,
+    防 step 失配出 ratio>1)。返回 (v_stone_cm3, v_hit_cm3, unique_cm3,
+    any_vert_inside)。unique = stone 格数 − hit 格数(同一格集合作差,
+    比值恒 <=1)。ring_meshes = [(verts, flat_tris), ...](bbox 已预筛)。"""
+    Vs = np.asarray(verts_s, dtype=float)
+    lo, hi = Vs.min(axis=0), Vs.max(axis=0)
+    step = min(RING_RASTER_CELL, float((hi - lo).min()) / 4.0)
+    step = max(step, 1e-4)
+    gx = np.arange(math.floor(lo[0] / step) * step + step / 2.0,
+                   hi[0] + step, step)
+    gy = np.arange(math.floor(lo[1] / step) * step + step / 2.0,
+                   hi[1] + step, step)
+    gz = np.arange(math.floor(lo[2] / step) * step + step / 2.0,
+                   hi[2] + step, step)
+    GX, GY, GZ = np.meshgrid(gx, gy, gz, indexing="ij")
+    pts = np.stack([GX.ravel(), GY.ravel(), GZ.ravel()], axis=1)
+    tris_s = _flat_tris(PC._face_tris(Vs, faces_s))
+    in_s = _mesh_contains_points(tris_s, pts)
+    n_stone = int(in_s.sum())
+    hit = np.zeros(pts.shape[0], dtype=bool)
+    any_inside = False
+    for (rv, rtris) in ring_meshes:
+        R = np.asarray(rv, dtype=float)
+        rlo, rhi = R.min(axis=0), R.max(axis=0)
+        sel = np.all((pts >= rlo - step) & (pts <= rhi + step), axis=1)
+        sel &= ~hit
+        if not sel.any():
+            continue
+        sub = np.nonzero(sel)[0]
+        ins = _mesh_contains_points(rtris, pts[sub])
+        hit[sub[ins]] = True
+        if not any_inside and ins.any():
+            # B2 复证: 任一石顶点在任一环体内(case_A 双确认的第二条)
+            any_inside = bool(_mesh_contains_points(rtris, Vs).any())
+    v_cell = step ** 3 * 1e6   # m^3 -> cm3
+    v_stone = n_stone * v_cell
+    v_hit = int((in_s & hit).sum()) * v_cell
+    return v_stone, v_hit, v_stone - v_hit, any_inside
+
+
+def _preinset_gap_entry(stone, statuses):
+    # type: (dict, dict) -> tuple
+    """pre-inset gap entry(处置/复测专用): 与 _gap_entry 同构但不做 inset
+    —— FIT 制造余量会把真重影洗成"无接触"(审查负控③), 处置判据与
+    final_scope_check 必须吃 pre-inset 几何。"""
+    if any(abs(r) > 1e-12 for r in stone["transform"][3:]):
+        raise ValueError("_preinset_gap_entry: rotated stone %r not supported"
+                         % (stone["id"],))
+    verts, faces = world_mesh(stone, statuses)
+    t = stone["transform"]
+    local = [(v[0] - t[0], v[1] - t[1], v[2] - t[2]) for v in verts]
+    return (list(t), (local, faces))
+
+
+def _ring_dedup_dispositions(led, statuses, scope, buckets, arch_idx_of):
+    # type: (dict, dict, list, dict, dict) -> dict
+    """ring↔{SPANDREL,BACK,CORE} dedup 宇宙(pre-inset, bbox 预筛+面级精判
+    含包含分支)与处置。verdict 语义: PENETRATION 不进 gap_check.fails
+    (环↔链不是缝, 是同一材料两种表征), 按体积吞没裁决:
+      case_A subsume: unique_vol <= 1%·V(stone) 且 <= 50cm3(模型) 且 B2
+                      顶点包含复证 -> 整块出打印集归 ring_band_overlap
+                      (理由带 unique_vol), 材料由 RING 全权代表;
+      case_B trim:    其余真撞石不丢(丢了在墙上开洞) -> 按 masonry 单一
+                      真相折线做 print-view 带裁剪(主控 1b), params 记
+                      clipped_by="ring_band"; 裁后薄片落 thin_merge
+                      ("trimmed sliver", 诚实归口);
+      trim 空片 = 全在带/洞内 -> 同 case_A 归口(理由 trim_empty)。
+    裁剪不改变石账目 id/transform, 只改 statuses 多边形(打印视图)。
+    返回 ring_dedup 报告节。"""
+    rings = _zone_rings(led)
+    by_id = {s["id"]: s for s in led["stones"]}
+    ring_entries = {}
+    for z, rs in rings.items():
+        ring_entries[z] = [(r["id"],) + world_mesh(r, statuses) for r in rs]
+    ring_vol_cache = {}
+    pairs_rep = []
+    subsumed, trimmed, trim_sliver = [], [], []
+    removed_sub_cm3 = removed_trim_cm3 = 0.0
+
+    def _partner_id(stone):
+        # 同位背衬/面石: ARCHxx.<face>.<ROLE>.C<i>.B<j> 的 ROLE 互换
+        t = stone["id"].split(".")
+        other = "BACK" if t[2] == "SPANDREL" else "SPANDREL"
+        return ".".join([t[0], t[1], other, t[3], t[4]])
+
+    def _apply_trim(stone, kept, entry):
+        statuses[stone["id"]] = ("ring_trim", kept)
+        stone["params"]["clipped"] = True
+        stone["params"]["clipped_by"] = "ring_band"
+        t_verts, _t_faces = world_mesh(stone, statuses)
+        _fit, clr_model = EP.fit_for_block(EP._extents_m(t_verts), G2_SCALE)
+        v2 = EP.inset(t_verts, clr_model)
+        ext = EP._extents_m(v2)
+        if min(ext) * G2_SCALE * 1000.0 < G2_MIN_WALL_PRINT_MM:
+            entry["trim_sliver"] = True
+            trim_sliver.append(stone["id"])
+            buckets["thin_merge"].append(stone["id"])
+            scope.remove(stone)
+        else:
+            trimmed.append(stone["id"])
+
+    def _propagate_to_partner(stone, kept, src_entry):
+        """case_B 对称传播: 面石/背衬同块位同 x-z 足印, 一侧裁另一侧不裁
+        会让 spandrel-back 缝对实体互穿(T8b 二跑 gap 216 fail 根因)。"""
+        pid = _partner_id(stone)
+        ps = by_id.get(pid)
+        if ps is None or ps not in scope:
+            return
+        if statuses[pid][0] != "out":
+            return
+        entry2 = {"chain": pid, "rings": list(src_entry["rings"]),
+                  "collide_vol_cm3_pre": src_entry["collide_vol_cm3_pre"],
+                  "v_stone_cm3": src_entry["v_stone_cm3"],
+                  "unique_vol_cm3": src_entry["unique_vol_cm3"],
+                  "disposition": "trim_partner",
+                  "reason": "same-block partner of %s (seam consistency)"
+                            % stone["id"]}
+        _apply_trim(ps, [list(p) for p in kept], entry2)
+        pairs_rep.append(entry2)
+    for s in list(scope):
+        if s.get("role_struct") not in RING_DEDUP_ROLES:
+            continue
+        if statuses[s["id"]][0] != "out":
+            continue    # 已被 partner 传播裁剪, 不再单独裁决
+        zone = s["id"].split(".")[0]
+        x0, x1, z0, z1 = BS.stone_world_bbox(s)
+        hits = []
+        for (rid, rv, rf) in ring_entries.get(zone, []):
+            if rid in ring_vol_cache:
+                rx0, rx1, rz0, rz1 = ring_vol_cache[rid]
+            else:
+                rx0, rx1, rz0, rz1 = BS.stone_world_bbox(by_id[rid])
+                ring_vol_cache[rid] = (rx0, rx1, rz0, rz1)
+            if x1 <= rx0 or x0 >= rx1 or z1 <= rz0 or z0 >= rz1:
+                continue
+            rep, _ph, _depth = gap_check_pair(_preinset_gap_entry(s, statuses),
+                                              _preinset_gap_entry(by_id[rid],
+                                                                  statuses))
+            if rep["ok"]:
+                continue
+            hits.append(rid)
+        if not hits:
+            continue
+        # 真撞: 同栅格体素度量(zone 全部相握环求并, 非单块 max —— 单 max
+        # 会低估 collide、误判 case_B, 偏保守方向, 注明不当作精确值)
+        verts, faces = _preinset_world(s, statuses)
+        ring_meshes = []
+        for rid in hits:
+            rv, rf = world_mesh(by_id[rid], statuses)
+            ring_meshes.append((rv, _flat_tris(PC._face_tris(
+                np.asarray(rv, dtype=float), rf))))
+        v_stone, v_hit, v_uniq, vert_inside = _voxel_unique_vol(
+            verts, faces, ring_meshes)
+        uniq_cm3 = v_uniq
+        entry = {"chain": s["id"], "rings": hits,
+                 "collide_vol_cm3_pre": round(v_hit, 3),
+                 "v_stone_cm3": round(v_stone, 3),
+                 "unique_vol_cm3": round(uniq_cm3, 3)}
+        is_case_a = (uniq_cm3 <= SUBSUME_REL_MAX * v_stone
+                     and uniq_cm3 <= SUBSUME_ABS_CM3 and vert_inside)
+        if is_case_a:
+            entry["disposition"] = "subsume"
+            entry["reason"] = ("subsumed by RING (unique_vol=%.3fcm3, "
+                               "vert_inside=true)" % uniq_cm3)
+            subsumed.append(s["id"])
+            buckets["ring_band_overlap"].append(s["id"])
+            scope.remove(s)
+            removed_sub_cm3 += v_uniq
+        else:
+            kept, _removed_area = _band_trim_polys(
+                s, arch_idx_of[zone], rings.get(zone, []))
+            if not kept:
+                entry["disposition"] = "trim_empty"
+                entry["reason"] = ("band trim kept nothing "
+                                   "(fully in void+band; unique=%.3fcm3)"
+                                   % uniq_cm3)
+                subsumed.append(s["id"])
+                buckets["ring_band_overlap"].append(s["id"])
+                scope.remove(s)
+                removed_sub_cm3 += v_uniq
+            else:
+                entry["disposition"] = "trim"
+                entry["reason"] = ("trimmed to band cut line (masonry "
+                                   "polyline; bearing seat kept below "
+                                   "spz-GAP; ring lift envelope added)")
+                st, _polys = statuses[s["id"]]
+                assert st == "out", "trim 只适用于未裁剪石: %s" % s["id"]
+                _apply_trim(s, kept, entry)
+                _propagate_to_partner(s, kept, entry)
+        pairs_rep.append(entry)
+    # final_scope_check(独立 3D 复测): 处置后对【最终】scope 全量重测
+    # ring↔链(pre-inset 面级精判含包含分支) —— 不从处置计数/桶成员推导。
+    n_colliding = 0
+    final_pairs = 0
+    for s in list(scope):
+        if s.get("role_struct") not in RING_DEDUP_ROLES:
+            continue
+        zone = s["id"].split(".")[0]
+        x0, x1, z0, z1 = BS.stone_world_bbox(s)
+        for (rid, rv, rf) in ring_entries.get(zone, []):
+            rx0, rx1, rz0, rz1 = BS.stone_world_bbox(by_id[rid])
+            if x1 <= rx0 or x0 >= rx1 or z1 <= rz0 or z0 >= rz1:
+                continue
+            rep, _ph, _depth = gap_check_pair(
+                _preinset_gap_entry(s, statuses),
+                _preinset_gap_entry(by_id[rid], statuses))
+            final_pairs += 1
+            if not rep["ok"]:
+                n_colliding += 1
+    summary = {"n_pairs_refined": len(pairs_rep),
+               "n_subsumed": len(subsumed),
+               "n_trimmed": len(trimmed),
+               "n_trim_sliver": len(trim_sliver),
+               "removed_model_cm3": {"subsumed": round(removed_sub_cm3, 3),
+                                     "trimmed": round(removed_trim_cm3, 3)},
+               "note": "unique_vol 同栅格度量; 相握环取并集(单块 max 会低"
+                       "估 collide, 偏保守, 不作精确值); 处置判据全为 "
+                       "pre-inset(post-inset 会把配合缝当清道夫, 审查负"
+                       "控③)"}
+    return {"pairs": pairs_rep, "summary": summary,
+            "subsumed_ids": subsumed, "trimmed_ids": trimmed,
+            "trim_sliver_ids": trim_sliver,
+            "final_scope_check": {
+                "n_pairs": final_pairs, "n_colliding": n_colliding,
+                "method": "最终 scope 全量 ring↔链 bbox 预筛+面级精判(含包"
+                          "含分支)独立复测, 不从处置计数或桶成员推导"}}
+
+
+def _coverage_audit(led, statuses, buckets, scope, arch_idx_of):
+    # type: (dict, dict, dict, list, dict) -> list
+    """覆盖率审计(主控第4条): 每排除/裁剪桶被剔材料的 x-z 面积中, 不被
+    RING/void/任何 scope 石足印覆盖的部分(cm2)—— n_colliding=0 不足以
+    证明墙上没洞, 此量下降才是"洞被补上"的真证据。分母用可打印几何
+    (clip/裁片=裁后棱柱); 未覆盖 = own & ~ring & ~void & ~scope。"""
+    cell = RING_RASTER_CELL
+    raster = _ring_footprint_raster(led)
+    scope_cells = {}
+    for s in scope:
+        zone = s["id"].split(".")[0]
+        scope_cells.setdefault(zone, set()).update(
+            _stone_silhouette_cells(s, statuses, cell))
+    audit = []
+    for bname in ("in_void", "void_cut_fragment", "ring_band_overlap",
+                  "thin_merge"):
+        per_zone = {}
+        for sid in buckets[bname]:
+            zone = sid.split(".")[0]
+            per_zone.setdefault(zone, []).append(sid)
+        uncovered = 0
+        total = 0
+        for zone, sids in sorted(per_zone.items()):
+            i = arch_idx_of[zone]
+            band = BS.arch_band(i)
+            own = set()
+            by_id = {s["id"]: s for s in led["stones"]}
+            for sid in sids:
+                own |= _stone_silhouette_cells(by_id[sid], statuses, cell)
+            total += len(own)
+            void = _void_cells(band, own, cell)
+            unc = (own - raster.get(zone, set()) - void
+                   - scope_cells.get(zone, set()))
+            uncovered += len(unc)
+        audit.append({"bucket": bname, "cells": total,
+                      "uncovered_cells": uncovered,
+                      "uncovered_cm2": round(uncovered * cell * cell * 1e4,
+                                             1)})
+    return audit
+
+
+def _void_cells(band, cells, cell=RING_RASTER_CELL):
+    # type: (dict, set, float) -> set
+    """格集合中的洞内格(BS.point_in_void 同式同源, 标量判 —— 券腹曲线带
+    双心弧+钝化分支, 不做第二套向量化公式)。"""
+    out = set()
+    for (ix, iz) in cells:
+        if BS.point_in_void((ix + 0.5) * cell, (iz + 0.5) * cell, band):
+            out.add((ix, iz))
+    return out
+
+
+def _pair_overlap_vol_cm3(entry_a, entry_b):
+    # type: (tuple, tuple) -> float
+    """两 entry 世界网格 AABB 交叠盒体积(模型 cm3) —— 相交体量的上界,
+    只作 D7 豁免界记账, 不当精确相交体积。"""
+    (ta, (va, _fa)) = entry_a
+    (tb, (vb, _fb)) = entry_b
+    Va = PC._xform(np.asarray(va, dtype=float), ta)
+    Vb = PC._xform(np.asarray(vb, dtype=float), tb)
+    ov = (np.minimum(Va.max(axis=0), Vb.max(axis=0))
+          - np.maximum(Va.min(axis=0), Vb.min(axis=0)))
+    if not np.all(ov > 0.0):
+        return 0.0
+    return float(np.prod(ov) * 1e6)
+
+
+def write_excluded_ids(sc, led, path):
+    # type: (dict, dict, str) -> str
+    """D6: 排除件全量 id 旁挂(桶->ids 全表, 含 standing 空桶)。审计件
+    入库(gitignore 白名单), 报告 excluded[].ids_sample 只是样本, 全表
+    以本文件为准。返回路径。"""
+    standing = {"carve_p4": [], "abut": []}
+    all_buckets = dict(sc["buckets"])
+    all_buckets.update({k: v for k, v in standing.items()
+                        if k not in all_buckets})
+    data = {"meta": {
+                "schema": 1,
+                "curve_hash": led.get("meta", {}).get("curve_hash"),
+                "stones": len(led.get("stones", [])),
+                "print_units": len(sc["scope"]),
+                "excluded_total": sum(len(v) for v in sc["buckets"].values()),
+                "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                             time.gmtime())},
+            "buckets": {k: sorted(v) for k, v in sorted(all_buckets.items())}}
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=1, sort_keys=True)
+    print("EXCLUDED_IDS written", path)
+    return path
+
+
 def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     # type: (dict, dict, int) -> dict
-    """G2 全桥 printcheck(纯): 打印单元划分(print_scope) -> 逐石 post-inset
-    check_stone + 每孔相邻缝对抽样 gap_check(只取打印单元对)。verdict PASS
-    当且仅当两张 fail 列表全空; 排除桶全部带 id 如实入报告 scope(雕件/
-    桥台本就不在账, 接线清单⑤⑥)。"""
+    """G2 全桥 printcheck(T8b 版): 打印单元划分(print_scope 面积判据) ->
+    ring↔链 dedup 宇宙处置(case_A subsume / case_B 带裁剪, 审查裁决:
+    PENETRATION 不进缝 fail —— 环↔链是同一材料的两种表征, 按体积吞没
+    unique_vol 处置) -> 逐石 post-inset check_stone -> 缝宇宙(同工艺缝
+    20/孔抽样 + spandrel-back 全量带界: 实体相交 depth>5mm 或 AABB 交叠
+    >100cm3 计 fail, 界内豁免全量记账, 豁免>50 打 WARN) -> ring_dedup
+    报告 + final_scope_check(对最终 scope 独立 3D 复测, 不从桶成员推导)
+    + 覆盖率审计(被剔材料 x-z 不被 ring/void/scope 覆盖的洞面积)。
+    verdict = PASS iff check_stone.n_fail==0 AND gap_check.n_fail==0 AND
+    final_scope_check.n_colliding==0。"""
     if statuses is None:
         statuses = classify_full(led["stones"])
     sc = print_scope(led, statuses)
     scope = sc["scope"]
+    buckets = sc["buckets"]
+    arch_idx_of = {"ARCH%02d" % (i + 1): i for i in range(G2_N_ARCH)}
+    # T8b-B4: 环↔链处置(可变: statuses 多边形/scope/buckets)
+    ring_dedup = _ring_dedup_dispositions(led, statuses, scope, buckets,
+                                          arch_idx_of)
     scope_ids = {s["id"] for s in scope}
     role_counts = {}
     fit_tiers = {}
@@ -590,13 +1328,39 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
         rep = PC.check_stone(v2, f2, scale=G2_SCALE,
                              min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
         if not rep["ok"]:
-            fails.append({"id": s["id"], "issues": rep["issues"]})
+            fails.append({"id": s["id"], "role": s["role_struct"],
+                          "trim": s["params"].get("clipped_by") == "ring_band",
+                          "issues": rep["issues"]})
+    # fail 矩阵(code x role, 新裁/存量归因 —— 主控 2A: T9 范围输入)
+    matrix = {}
+    for f in fails:
+        for iss in f["issues"]:
+            code = iss["code"]
+            matrix.setdefault(code, {}).setdefault(f["role"], 0)
+            matrix[code][f["role"]] += 1
+    # 旧 clip 片存量普查(void_cut_fragment 全量, 同判据; 只记账不入 verdict
+    # —— 它们已按 RING 为准排除, 但其几何质量是 T5/T7 追偿的范围输入)
+    by_id = {s["id"]: s for s in led["stones"]}
+    legacy = {"n": len(buckets["void_cut_fragment"]), "n_fail": 0,
+              "matrix": {}}
+    for sid in buckets["void_cut_fragment"]:
+        s = by_id[sid]
+        verts, faces = world_mesh(s, statuses)
+        _fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
+        v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
+        rep = PC.check_stone(v2, f2, scale=G2_SCALE,
+                             min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
+        if not rep["ok"]:
+            legacy["n_fail"] += 1
+            for iss in rep["issues"]:
+                legacy["matrix"][iss["code"]] = \
+                    legacy["matrix"].get(iss["code"], 0) + 1
     gap_fails = []
     assembly_fit = []
+    sb_warn = None
     pair_type_counts = {}
     n_phantom = 0
     per_arch = {}
-    by_id = {s["id"]: s for s in led["stones"]}
     entries_cache = {}
 
     def _entry(sid):
@@ -606,52 +1370,81 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
 
     for zi in range(G2_N_ARCH):
         zone = "ARCH%02d" % (zi + 1)
-        in_scope = [p for p in adjacent_pairs(by_zone.get(zone, []))
-                    if p[1] in scope_ids and p[2] in scope_ids]
-        sampled = _sample_even(in_scope, pairs_per_arch)
+        cands = [p for p in adjacent_pairs(by_zone.get(zone, []))
+                 if p[1] in scope_ids and p[2] in scope_ids]
+        seam = [p for p in cands if p[0] != "spandrel-back"]
+        sb = [p for p in cands if p[0] == "spandrel-back"]
+        sampled = _sample_even(seam, pairs_per_arch)
         n_fail_z = 0
         for (typ, ia, ib) in sampled:
             pair_type_counts[typ] = pair_type_counts.get(typ, 0) + 1
-            rep, phantom = gap_check_pair(_entry(ia), _entry(ib),
-                                          tol_model_mm=G2_GAP_TOL_MODEL_MM,
-                                          scale=G2_SCALE)
+            rep, phantom, _depth = gap_check_pair(_entry(ia), _entry(ib),
+                                                  tol_model_mm=G2_GAP_TOL_MODEL_MM,
+                                                  scale=G2_SCALE)
             if phantom:
                 n_phantom += 1
-            if not rep["ok"] and typ == "spandrel-back":
-                # 背衬(毛石 maoshi)与同位面石的实体干涉: 链条退让线与
-                # wedge-std 族网格层中锚定相差半 taper(上游 masonry2.
-                # backing_stones 遗留, 全桥约 4% BACK 石; 已实测并如实
-                # 记录)。打印处置: 背衬按面石内缘现场修配(毛石本非
-                # 精件), 不入 fail —— 单独 assembly_fit 桶全量列出。
-                depth = _pair_overlap_depth_mm(_entry(ia), _entry(ib))
-                assembly_fit.append({"a": ia, "b": ib,
-                                     "overlap_mm": round(depth, 3)})
-                continue
             if not rep["ok"]:
                 n_fail_z += 1
-                gap_fails.append({"a": ia, "b": ib, "issues": rep["issues"]})
-        per_arch[zone] = {"candidates": len(in_scope), "sampled": len(sampled),
-                          "n_fail": n_fail_z}
+                gap_fails.append({"a": ia, "b": ib, "type": typ,
+                                  "issues": rep["issues"]})
+        # D7: spandrel-back 全量跑(不再 20/孔抽样), 实体相交带界
+        n_sb_fail_z = 0
+        for (_typ, ia, ib) in sb:
+            rep, _ph, depth = gap_check_pair(_entry(ia), _entry(ib),
+                                             tol_model_mm=G2_GAP_TOL_MODEL_MM,
+                                             scale=G2_SCALE)
+            if rep["ok"]:
+                continue
+            aabb = _pair_overlap_depth_mm(_entry(ia), _entry(ib))
+            vol = _pair_overlap_vol_cm3(_entry(ia), _entry(ib))
+            exempt = not (depth > SPANDREL_BACK_DEPTH_MM
+                          or vol > SPANDREL_BACK_VOL_CM3)
+            assembly_fit.append({
+                "a": ia, "b": ib,
+                "aabb_min_axis_mm": round(aabb, 3),
+                "depth_mm": round(depth, 3),
+                "overlap_volume_cm3": round(vol, 3),
+                "exempt": exempt})
+            if not exempt:
+                n_sb_fail_z += 1
+                gap_fails.append({
+                    "a": ia, "b": ib, "type": "spandrel-back-bounds",
+                    "issues": [{"code": "PENETRATION",
+                                "detail": "spandrel-back 实体相交超豁免界 "
+                                          "(depth>%.1fmm 或 vol>%.0fcm3)"
+                                          % (SPANDREL_BACK_DEPTH_MM,
+                                             SPANDREL_BACK_VOL_CM3)}]})
+        n_fail_z += n_sb_fail_z
+        exempt_n = sum(1 for e in assembly_fit if e["exempt"])
+        if exempt_n > SPANDREL_BACK_WARN_N:
+            sb_warn = ("spandrel-back 豁免对 %d > %d(现场修配毛石量偏大, "
+                       "复配工时告警)" % (exempt_n, SPANDREL_BACK_WARN_N))
+        per_arch[zone] = {"candidates": len(cands), "sampled": len(sampled),
+                          "spandrel_back": len(sb), "n_fail": n_fail_z}
     bucket_reasons = {
         "in_void": "场景链洞内理想化石(GN in_void 布局即剔除)=空气, 不印",
         "void_cut_fragment": "切洞裁剪片: 与 RING 真几何带重复建模(实测 "
                              "400+ 件 <6cm 碎片/双壳/自交三角), 打印以 "
                              "RING 为准",
-        "ring_band_overlap": "未裁剪但足印与券环带窗相交的链条石(与 RING "
-                             "双重建模), 打印以 RING 为准",
-        "thin_merge": "post-inset 最小打印壁 < 1.2mm 的截顶残层/窄条, "
-                      "与邻层合印(不可单独成件)",
+        "ring_band_overlap": "足印(真剪影面积)与 RING 剪影交占比>50% 的吞"
+                             "没石 + volume 宇宙 case_A(subsume)石 —— 与 "
+                             "RING 双重建模, 打印以 RING 为准(处置明细见 "
+                             "gap_check.ring_dedup)",
+        "thin_merge": "post-inset 最小打印壁 < 1.2mm 的截顶残层/窄条/带裁"
+                      "薄片(trimmed sliver), 谁都不单独印: 与邻层合印",
     }
     excluded = []
     for bname in ("in_void", "void_cut_fragment", "ring_band_overlap",
                   "thin_merge"):
-        ids = sc["buckets"][bname]
+        ids = buckets[bname]
         excluded.append({
             "bucket": bname, "n": len(ids), "reason": bucket_reasons[bname],
             "ids_sample": sorted(ids)[:12],
         })
+    # final_scope_check 已在 _ring_dedup_dispositions 内对最终 scope 独立
+    # 复测(pre-inset, 不从桶成员推导); run_g2 只消费。
     report = {
-        "meta": {"schema": 1, "gate": "G2",
+        "meta": {"schema": 2, "gate": "G2",
                  "scale": float(G2_SCALE),
                  "scale_denom": int(round(1.0 / G2_SCALE)),
                  "min_wall_print_mm": float(G2_MIN_WALL_PRINT_MM),
@@ -660,6 +1453,19 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                  "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                               time.gmtime()),
                  "ledger_curve_hash": led.get("meta", {}).get("curve_hash"),
+                 "volume_caliber": {
+                     "statement": "manifest 体积=散度定理逐面求和, 三角化"
+                                  "按 triangulate_faces 约定(四边形固定 "
+                                  "0-2 对角剖分+>=5边形 x-z 耳切); "
+                                  "_voussoir 侧面为翘曲四边形(JOINT_GAP "
+                                  "前12.5/后4.0), 两对角约定实测最大体积"
+                                  "相对差 6.2e-3 —— 体积数字是【耳切对角"
+                                  "约定】口径, 换剖分器有 ~0.6% 级漂移",
+                     "hours_basis": "12cm3/h 为 0.4mm 喷嘴 FDM 实心体经验"
+                                    "上界, 未扣 infill/支撑/失败重打",
+                     "core_overlap": "CORE y_extent=full_wall 与面石有意重"
+                                     "叠(牺牲芯建模语义), 不是可加和的净"
+                                     "打印料"},
                  "counts": {"stones": len(led["stones"]),
                             "print_units": len(scope),
                             "roles": dict(sorted(role_counts.items())),
@@ -682,28 +1488,44 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                                     "(接线清单⑤)"}],
                      "by_design_overlaps":
                          "场景链条石/背衬/芯与 RING 全深筒券为表现层理想化"
-                         "重叠; 打印单元按 print_scope 去重, gap 抽样只取"
-                         "打印单元间同工艺相邻缝对"}},
+                         "重叠; 打印单元按 print_scope 去重, 缝抽样只取"
+                         "打印单元间同工艺缝对; 环↔链真撞由 volume 宇宙"
+                         "处置(subsume/带裁剪)"}},
         "check_stone": {"n": len(scope), "n_fail": len(fails),
                         "fails": fails,
+                        "fail_matrix": matrix,
+                        "legacy_clip_survey": legacy,
                         "fit_tiers": dict(sorted(fit_tiers.items()))},
         "gap_check": {"n_pairs": sum(v["sampled"] for v in per_arch.values()),
                       "n_fail": len(gap_fails), "fails": gap_fails,
                       "n_aabb_phantom": n_phantom,
                       "assembly_fit": {
                           "n": len(assembly_fit),
-                          "disposition": "背衬毛石与面石实体干涉(上游退让线"
-                                         "与族网格锚定差半 taper, 遗留问题"
-                                         "已实测上报): 毛石按面石内缘现场"
-                                         "修配, 不入 fail; 全量对列表如下",
+                          "n_exempt": sum(1 for e in assembly_fit
+                                          if e["exempt"]),
+                          "warn": sb_warn,
+                          "bounds": {"depth_mm": SPANDREL_BACK_DEPTH_MM,
+                                     "volume_cm3": SPANDREL_BACK_VOL_CM3},
+                          "disposition": "背衬毛石与同位面石实体干涉已根修"
+                                         "(T8b-A1 截顶重算 y 锚, 全链恒等"
+                                         "式 pen+GAP≡-(|ty|-(hw+proud)) "
+                                         "2290 对余量<1e-6mm); 残留实体相"
+                                         "交全量记账, 超 5mm/100cm3 界计 "
+                                         "fail, 界内豁免=毛石现场修配",
                           "pairs": assembly_fit},
                       "method": "PC.gap_check AABB 快筛; AABB 相交对用 "
                                 "printcheck 面-面相交判据精判(径向缝旋转"
-                                "幻影不计 fail, 实相交即 PENETRATION)",
+                                "幻影不计 fail, 实相交即 PENETRATION); "
+                                "spandrel-back 全量(不抽样)",
                       "pair_types": dict(sorted(pair_type_counts.items())),
                       "per_arch": per_arch},
+        "ring_dedup": ring_dedup,
+        "coverage_audit": _coverage_audit(led, statuses, buckets, scope,
+                                          arch_idx_of),
     }
-    ok = report["check_stone"]["n_fail"] == 0 and report["gap_check"]["n_fail"] == 0
+    ok = (report["check_stone"]["n_fail"] == 0
+          and report["gap_check"]["n_fail"] == 0
+          and ring_dedup["final_scope_check"]["n_colliding"] == 0)
     report["verdict"] = "PASS" if ok else "FAIL"
     return report
 
@@ -744,10 +1566,13 @@ def validate_g2_report(rep):
         if need not in names:
             p.append("scope.excluded 缺桶 %s" % need)
     v = rep.get("verdict")
+    rd = rep.get("ring_dedup", {})
     if v not in ("PASS", "FAIL"):
         p.append("verdict not PASS/FAIL")
     else:
-        expect = "PASS" if cs.get("n_fail") == 0 and gp.get("n_fail") == 0 else "FAIL"
+        expect = ("PASS" if cs.get("n_fail") == 0 and gp.get("n_fail") == 0
+                  and rd.get("final_scope_check", {}).get("n_colliding") == 0
+                  else "FAIL")
         if v != expect:
             p.append("verdict inconsistent with n_fail")
         if v == "PASS" and (cs.get("fails") or gp.get("fails")):
@@ -758,6 +1583,33 @@ def validate_g2_report(rep):
     for z, info in sorted(pa.items()):
         if not info.get("sampled"):
             p.append("%s empty gap sample" % z)
+    # T8b 新结构: ring_dedup + final_scope_check + assembly_fit 形状
+    if "summary" not in rd or "pairs" not in rd:
+        p.append("ring_dedup missing summary/pairs")
+    fsc = rd.get("final_scope_check", {})
+    if "n_colliding" not in fsc:
+        p.append("ring_dedup.final_scope_check.n_colliding missing")
+    elif v == "PASS" and fsc.get("n_colliding", -1) != 0:
+        p.append("PASS with final_scope_check.n_colliding > 0")
+    af = gp.get("assembly_fit", {})
+    if "n" not in af or "pairs" not in af:
+        p.append("gap_check.assembly_fit missing n/pairs")
+    else:
+        if af["n"] != len(af["pairs"]):
+            p.append("assembly_fit.n != len(pairs)")
+        for pr in af["pairs"]:
+            if "overlap_mm" in pr:
+                p.append("assembly_fit 旧字段 overlap_mm 未改名 "
+                         "aabb_min_axis_mm")
+                break
+            if "aabb_min_axis_mm" not in pr or "depth_mm" not in pr:
+                p.append("assembly_fit pair 缺 aabb_min_axis_mm/depth_mm")
+                break
+    if not isinstance(rep.get("coverage_audit"), list) or \
+            not rep.get("coverage_audit"):
+        p.append("coverage_audit missing")
+    if "volume_caliber" not in meta:
+        p.append("meta.volume_caliber missing")
     return p
 
 
@@ -1168,10 +2020,13 @@ def _add_text(sc, body, loc, size):
 def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
                       arch_idx=SLICE_ZONE_IDX):
     # type: (dict, dict, str, int) -> str
-    """切片说明(带实测数): 1:50 口径/缝打印当量/超床件清单/切片器注意。"""
+    """切片说明(带实测数): 1:50 口径/体积口径声明/缝打印当量/fit_diagonal
+    斜置批/RING 真相弃用件清单/切片器注意。"""
     zone = "ARCH%02d" % (arch_idx + 1)
     overs = [b for b in manifest["batches"] if b.get("oversize")]
     over_ids = [i for b in overs for i in b["stones"]]
+    diag_ids = [i for b in manifest["batches"]
+                for i in b.get("fit_diagonal", [])]
     fam_lines = []
     for fam, info in sorted(manifest["families"].items()):
         fam_lines.append("| %s | %d | %.2f |" %
@@ -1181,6 +2036,10 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
     role_counts = manifest["slice"]["roles"]
     total_cm3 = sum(v["volume_cm3"] for v in manifest["families"].values())
     est_h = total_cm3 / 12.0     # 0.4mm 喷嘴 FDM 经验 12 cm3/h
+    rd = report.get("ring_dedup", {})
+    rd_pairs = rd.get("pairs", [])
+    trim_ids = sorted(p["chain"] for p in rd_pairs
+                      if p.get("disposition") == "trim")
     lines = [
         "# %s 中央孔试印包 SLICE_NOTES" % zone,
         "",
@@ -1189,11 +2048,28 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
         "",
         "## 口径",
         "- 模型比例 1:50 (scale=0.02); 打印件毫米 = 模型米 x 20。",
-        "- 床 220x220mm; 贪心货架装箱(manifest.batches), 超床件独占一批"
-        " (oversize=true)。",
+        "- 床 220x220mm; 贪心货架装箱(manifest.batches), 允许旋转: 90° 归一"
+        "+45° 对角斜置(fit_diagonal 非独占批), 真放不下才 oversize 独占。",
         "- 配合缝双值: 每石 clearance_print_mm/clearance_model_mm 见"
         " manifest.stones (FIT 自动分档: 最小维 <0.3m TIGHT / <1.0m NORMAL"
         " / 否则 LOOSE)。",
+        "",
+        "## 体积口径声明(T8b-E8, 审查点 2/5)",
+        "1. manifest 体积 = 散度定理逐面求和, 三角化按 triangulate_faces",
+        "   约定(四边形固定 0-2 对角剖分 + ≥5 边形 x-z 耳切)。_voussoir",
+        "   侧面是翘曲四边形(JOINT_GAP 前缘 12.5 / 后缘 4.0mm), 体积对剖分",
+        "   对角约定敏感: 两对角约定实测最大相对差 6.2e-3 —— 本 manifest",
+        "   的 cm3/h 数字是【耳切对角约定】口径, 换剖分器有 ~0.6% 级漂移,",
+        "   不是同一数字。",
+        "2. 估时 %.1fh 是【实心体上界】(12cm3/h 经验): 未扣 infill/支撑/" % est_h,
+        "   失败重打; 实际耗时的唯一权威是切片器实测。",
+        "3. CORE 体积与面石【有意重叠】(y_extent=full_wall, 牺牲芯建模语",
+        "   义) —— 各族体积不可加和成'净打印料'; 与面石同批时以面石外形",
+        "   为准抠芯。",
+        "4. 超床件以旋转后判定: 对角斜置(fit_diagonal)非独占批 %d 块: %s"
+        % (len(diag_ids), ", ".join(diag_ids[:8]) or "无"),
+        "   真超床独占批(oversize) %d 块: %s"
+        % (len(over_ids), ", ".join(over_ids[:8]) or "无"),
         "",
         "## 缝的打印当量(模型 mm -> 打印件 mm)",
         "- 券环放射缝 JOINT_GAP 12.5 -> 0.25; 后端 4.0 -> 0.08。",
@@ -1209,11 +2085,19 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
         "",
         "- 石数: %d (roles: %s)" % (manifest["slice"]["stones"],
                                     json.dumps(role_counts, sort_keys=True)),
-        "- 总体积: %.1f cm3; 0.4mm 喷嘴 FDM 经验估时 ~%.1f h (12cm3/h)。"
-        % (total_cm3, est_h),
-        "- 超床件 %d 块(独占批): %s" % (len(over_ids),
-                                        ", ".join(over_ids[:8]) +
-                                        ("…" if len(over_ids) > 8 else "")),
+        "- 总体积: %.1f cm3(耳切对角约定口径, 实心体上界); 0.4mm 喷嘴 FDM"
+        " 经验估时 ~%.1f h。" % (total_cm3, est_h),
+        "",
+        "## RING 真相弃用/修配件清单(T8b ring_dedup)",
+        "- 带 subsume(整块弃, 材料由 RING 代表): %d 块; trim(按 masonry 切"
+        "割折线裁短后保留拼装): %d 块; 裁后薄片(thin_merge, 不单独印): %d "
+        "块。明细: g2_report.json ring_dedup.pairs(逐块 collide/unique 体"
+        "积 pre-inset 口径)。" % (rd.get("summary", {}).get("n_subsumed", 0),
+                                  rd.get("summary", {}).get("n_trimmed", 0),
+                                  rd.get("summary", {}).get("n_trim_sliver",
+                                                            0)),
+    ] + (["- trim 修配件 id: " + ", ".join(trim_ids[:12])]
+         if trim_ids else []) + [
         "",
         "## 切片器注意",
         "1. 底面平板朝上打印序: 每石以【最大平整面】贴床 —— RING/IMPOST 以",
@@ -1229,10 +2113,9 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
         "5. 装配图 assembly_ortho.png 为 -Y 正射侧视(账目坐标系未旋桥轴),",
         "   RB<块>=券环块号, IM.<阶>.<段>=西墙起拱脚步, S<层>.<块>=西墙面石;",
         "   全 id -> 文件映射见 manifest.json stones[].stl。",
-        "6. 背衬(毛石)与面石存在实体干涉(G2 抽样实测 %d 对, 全桥估计 ~4%%"
-        " BACK 石; g2_report.json gap_check.assembly_fit 全量可查): 毛石按"
-        " 面石内缘现场修配, 不影响面石/券环精件。" 
-        % report["gap_check"]["assembly_fit"]["n"],
+        "6. 面石-背衬隐缝设计值 2mm(T8b-A1 修复后全链恒等式核验); 若个别",
+        "   对仍示实体干涉, 见 g2_report.json gap_check.assembly_fit(全量"
+        "   对+真深度), 毛石按面石内缘现场修配。",
         "",
         "## 复现",
         "```",
@@ -1258,7 +2141,10 @@ def _save_full_ledger(led):
 
 def run_gate(do_slice=True):
     # type: (bool) -> dict
-    """G2 全链(blender): 建账+互证 -> G2 报告(FAIL 即 raise) -> 试印包。"""
+    """G2 全链(blender): 建账+互证 -> G2 报告 -> 试印包。
+    T8b 2A(主控裁定): verdict FAIL 即 raise、不出包 —— 含已知互穿件的包
+    对打印者是陷阱; 交付物=报告+excluded_ids+覆盖率审计+fail 归因矩阵。
+    中央孔旧包停在 T8 版, SLICE_NOTES 顶部打"作废"横幅。"""
     led = bridge_ledger_full()
     _save_full_ledger(led)
     statuses = classify_full(led["stones"])
@@ -1269,17 +2155,35 @@ def run_gate(do_slice=True):
     rep_path = os.path.join(PRINT_DIR, "g2_report.json")
     with open(rep_path, "w", encoding="utf-8") as fh:
         json.dump(report, fh, ensure_ascii=False, indent=1, sort_keys=True)
+    write_excluded_ids(sc, led, os.path.join(PRINT_DIR, "excluded_ids.json"))
     problems = validate_g2_report(report)
     assert not problems, "g2_report 结构闸门失败: %s" % problems
-    print("G2_REPORT written %s verdict=%s check_fails=%d gap_fails=%d"
+    print("G2_REPORT written %s verdict=%s check_fails=%d gap_fails=%d "
+          "ring_colliding=%d"
           % (rep_path, report["verdict"],
-             report["check_stone"]["n_fail"], report["gap_check"]["n_fail"]))
+             report["check_stone"]["n_fail"], report["gap_check"]["n_fail"],
+             report["ring_dedup"]["final_scope_check"]["n_colliding"]))
     if report["verdict"] != "PASS":
-        raise RuntimeError("G2 门 FAIL: check=%d gap=%d 首 3: %s"
+        head = (report["check_stone"]["fails"]
+                + report["gap_check"]["fails"])[:3]
+        notes = os.path.join(SLICE_DIR, "SLICE_NOTES.md")
+        if os.path.exists(notes):
+            with open(notes, "r", encoding="utf-8") as fh:
+                body = fh.read()
+            banner = ("> **T8b 门未过(verdict=%s), 本包作废待 T9。**"
+                      "红门明细见 out/print/g2_report.json"
+                      "(check_stone.fail_matrix / ring_dedup)。\n\n" %
+                      report["verdict"])
+            if not body.startswith("> **T8b"):
+                with open(notes, "w", encoding="utf-8") as fh:
+                    fh.write(banner + body)
+            print("SLICE_NOTES banner: T8b 门未过, 中央孔包作废待 T9")
+        raise RuntimeError("G2 门 FAIL: check=%d gap=%d ring_colliding=%d "
+                           "首3: %s"
                            % (report["check_stone"]["n_fail"],
                               report["gap_check"]["n_fail"],
-                              (report["check_stone"]["fails"]
-                               + report["gap_check"]["fails"])[:3]))
+                              report["ring_dedup"]["final_scope_check"]
+                              ["n_colliding"], head))
     out = {"ledger": led, "statuses": statuses, "report": report,
            "scope_ids": scope_ids}
     if do_slice:

@@ -469,6 +469,84 @@ def test_cap_to_deck_slab_min_corner_anchor_negative_control(monkeypatch):
     assert out2[0]["transform"][2] == pytest.approx(4.45 + 0.05 / 2.0)
 
 
+# ── P1-T8b 修复轮(A1: cap_to_deck 截顶同步重算前脸锚) ─────────────────
+
+def _sb_pairs(led):
+    """账本里同位 (SPANDREL, BACK) 对列表(同 zone/face/course/block)。"""
+    bypos = {}
+    for s in led["stones"]:
+        t = s["id"].split(".")
+        if t[2] in ("SPANDREL", "BACK"):
+            bypos.setdefault((t[0], t[1], t[3], t[4]), {})[t[2]] = s
+    return [d for k, d in sorted(bypos.items())
+            if "SPANDREL" in d and "BACK" in d]
+
+
+def _pair_pen_mm(sf, sb):
+    """审查恒等式的 pen 侧(面石内缘面相对同位背衬外缘面的穿透深度, 模型
+    毫米; 负值 = 设计隐缝间隙): pen = |ty_B| - (|ty_F| - d_F)。"""
+    pf = sf["params"]
+    d_f = pf.get("d", pf.get("back", 0.3) + pf.get("proud", 0.0))
+    return (abs(sb["transform"][1]) - (abs(sf["transform"][1]) - d_f)) * 1000.0
+
+
+def test_cap_to_deck_wedge_cut_recomputes_front_anchor(monkeypatch):
+    """A1: wedge-std 截顶(h2<h)时 transform[1] 必须按新层中重算:
+    ty = side*(hw(xm, z0+h2/2)+proud)。旧值锚在原层中(zm_orig 高于新层中),
+    hw 随 z 递减 -> 截顶石前脸/内缘整体内错, 撞进同位背衬退让线(审查恒等式
+    pen+BACKING_GAP == -(|ty|-(hw+proud)), 修复前全链 116 对 pen>0 全为
+    截顶石)。截顶层带变薄、hw_t 随实高重算语义不变。"""
+    s = _wedge_stone()
+    p = s["params"]
+    h = float(p["h"])
+    z0 = float(s["transform"][2]) - h / 2.0
+    # 深截: 桥面压到层底上方 0.1m(桩内自洽: hw_wall 消费同一 patched 线)
+    cap = z0 + 0.10
+    monkeypatch.setattr(BS, "deck_z_at", lambda x: cap)
+    out = BS.cap_to_deck([dict(s, params=dict(s["params"]),
+                               transform=list(s["transform"]))])
+    o = out[0]
+    h2 = float(o["params"]["h"])
+    assert h2 == pytest.approx(0.10)
+    assert float(o["transform"][2]) == pytest.approx(z0 + h2 / 2.0)
+    # A1 断言: 前脸锚随新层中重算
+    want = BS.hw_wall(float(o["transform"][0]), z0 + h2 / 2.0) + p["proud"]
+    assert abs(o["transform"][1]) == pytest.approx(want, abs=1e-12)
+    # 负控: 旧锚(原层中)与 A1 新锚必须可区分 —— 判据不是恒真
+    stale = BS.hw_wall(float(o["transform"][0]), z0 + h / 2.0) + p["proud"]
+    assert abs(stale - want) > 1e-4, "深截下新旧锚重合, 测试无判别力"
+    assert abs(o["transform"][1]) != pytest.approx(stale, abs=1e-4)
+    # 未截顶石(h2==h)锚逐位不动
+    monkeypatch.setattr(BS, "deck_z_at", lambda x: z0 + 10.0)
+    out3 = BS.cap_to_deck([dict(s, params=dict(s["params"]),
+                                transform=list(s["transform"]))])
+    assert out3[0]["transform"][1] == pytest.approx(s["transform"][1],
+                                                    abs=1e-12)
+
+
+def test_bridge_ledger_spandrel_back_hidden_gap_identity():
+    """A1 全链门(T8 审查恒等式): 每对同位 (SPANDREL, BACK)
+       pen + BACKING_GAP == -(|ty_F| - (hw(xm, zm)+proud))   (1e-6mm)
+    且 pen <= -BACKING_GAP + 1e-9 —— 修复前 116 对截顶石 pen>0(最大
+    ~96mm), 修复后必须归 0(全部落回设计 2mm 隐缝)。"""
+    led = BS.bridge_ledger()
+    gap_mm = M2.BACKING_GAP * 1000.0
+    n = 0
+    for d in _sb_pairs(led):
+        sf = d["SPANDREL"]
+        pen = _pair_pen_mm(sf, d["BACK"])
+        zm = float(sf["transform"][2])
+        hw = BS.hw_wall(float(sf["transform"][0]), zm)
+        rhs = -(abs(sf["transform"][1])
+                - (hw + float(sf["params"]["proud"]))) * 1000.0
+        assert abs(pen + gap_mm - rhs) < 1e-6, \
+            "%s 恒等式破坏: pen=%.6f rhs=%.6f" % (sf["id"], pen, rhs)
+        assert pen <= -gap_mm + 1e-9, \
+            "%s 背衬互穿 pen=%.3fmm (应<= %.3f)" % (sf["id"], pen, -gap_mm)
+        n += 1
+    assert n > 2000, "全链面石-背衬对数异常: %d" % n
+
+
 def test_bridge_ledger_records_below_deck_stones():
     """H1: 整块超底石不得静默消失 —— 计数+ids 记入 meta 且与账面一致。
     审查点名的两块超底 CORE slab 必须在记录里(修复前它们要么被静默弃、
