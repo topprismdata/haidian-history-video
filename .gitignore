@@ -192,3 +192,7 @@
 !e30_shikongqiao_video/3d/tools/photo_native_width.json
 e30_shikongqiao_video/3d/refs/video_raw/
 e30_shikongqiao_video/3d/refs/video_frames/
+e30_shikongqiao_video/3d/shot_*.png
+e30_shikongqiao_video/3d/*.blend
+e30_shikongqiao_video/3d/*.blend1
+e30_shikongqiao_video/3d/ledger_cache/
