@@ -27,3 +27,4 @@
 - Task 8b/8c: 红门收敛链 (c74d54f→9eb2d15→10cb405): 坐标系Critical(487/489位移p50=3.53m)+partner足印错传(14石越带)双修, gap 216→0/colliding 85(真)/check 106(真,机制=未证实假说仅记实测), 结构闸门补防篡改5等式, 交付卫生闭环; 229+312全门绿 freeze逐位
 - Task 8c: complete (10cb405, 窄复审APPROVE 6/6: 28篡改探针+32真体测试; W1/W2收口并入T9)
 - Task 9(范围已锁): ①106裁片inset×密折线翻折(先钉真实失败件fixture再修, P0处方须交代切割面装配余量来源) ②85残留逐对(首选ARCH06/12.CORE.C13.B01 vs RING.B07 60mm) ③legacy clip存量870/1520(T5/T7追偿) ④MULTI_SHELL run升格独立打印单元+谱系记账(禁豁免)
+- Task 9: implemented (648ea30) — G2 PASS(check0/gap0/final0), 仿射inset定理级修106+lift三根因修85+run升格+W1W2; 主树全门绿237/312/L2/NEG/33/freeze逐位; 出口审查在跑
