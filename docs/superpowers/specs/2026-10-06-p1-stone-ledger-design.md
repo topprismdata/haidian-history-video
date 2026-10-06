@@ -66,6 +66,21 @@
 - 导出走"逐块临时实例化→bake→销毁"脚本路径，主场景恒轻
 - 三角形预算 ≤60 万（现基线待实测）；ledger 读写 <2s
 
+## 5b. 场景文件架构（2026-10-06 用户质疑"全在一个模型"触发调研后补）
+业界标准 = 模块化资产库 + Link + Library Override + 分阶段文件；单体 .blend 混合一切是反模式。本项目分层：
+```
+3d/
+├── (代码) build_scene2.py 等         # 唯一真相, git 追踪
+├── stones/*.json                     # 砖谱数据, git 追踪
+├── lib/families.blend                # [P1] 族库(每族一 mesh, mark as asset), 由 bake_families.py 生成
+├── out/e30_bridge.blend              # [P1] 全桥 layout(链接 families, 不 append), gitignore
+├── out/shots/SHxx.blend              # [P3] 每镜头文件: link layout + Library Override 打关键帧, gitignore
+└── out/lighting_render.blend         # [P3] 渲染主文件: link 动画结果 + 灯光/合成, gitignore
+```
+- 纪律: 产物一律 gitignore(已落: shot png/blend/ledger_cache); Link 不 Append; 相对路径; 不 Pack 外部数据
+- build_scene2.py 增加 `--emit-lib` 模式(产 families.blend)与 `--layout` 模式(产链接式 assembly)
+- 现有单文件工作流不废弃: 十审/砖谱验证仍用一键重建, 分层文件是 P1/P3 的交付形态
+
 ## 6. 验证与测试
 - 单测（合成小场景，不渲桥）：schema 校验/确定性(双跑 hash 等)/穿透检查抓人造重叠/间隙检查抓人造共面/族库参数边界(最小壁厚 1:50 下 <1.2mm 报 fail)
 - 集成：桥全量生成 → printcheck 全石 pass → 导出 100 石试包(G2 门) → L2/32 断言/312 测试在 proxy 模式零回归
