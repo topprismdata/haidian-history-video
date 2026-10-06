@@ -24,3 +24,5 @@
 - 闸门收紧: final_scope_check.n_colliding==0须独立3D复测禁从桶推导; 三条负控(关case_A必红/咬角盒落B不落A/post-inset判处置被钉死)
 - 顺序 B2→B3→B4; 两侧"23"按id对账
 - 主控预备: 若fixer报case_C, 优先要求补裁剪而非签署降级(用户目标=可装配)
+- Task 8b/8c: 红门收敛链 (c74d54f→9eb2d15→10cb405): 坐标系Critical(487/489位移p50=3.53m)+partner足印错传(14石越带)双修, gap 216→0/colliding 85(真)/check 106(真,机制=未证实假说仅记实测), 结构闸门补防篡改5等式, 交付卫生闭环; 229+312全门绿 freeze逐位
+- Task 9(范围已锁): ①106裁片inset×密折线翻折(先钉真实失败件fixture再修, P0处方须交代切割面装配余量来源) ②85残留逐对(首选ARCH06/12.CORE.C13.B01 vs RING.B07 60mm) ③legacy clip存量870/1520(T5/T7追偿) ④MULTI_SHELL run升格独立打印单元+谱系记账(禁豁免)
