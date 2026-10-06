@@ -324,3 +324,31 @@
 - 验收: build 零错 / QA_L2_OK(负控 10/10) / ABUTMENT_CHECK ALL PASS /
   pytest tests/bridge3d 312 过 / e30_shikongqiao_video/tests 15 fail = M18 存量零新增 /
   平色消融同机位 1200s 对比无新暗块(见 .superpowers/sdd/m19-brief.md M19 报告)。
+
+## M19b (2026-10-06) 治理层随 M19 重整(govfix: 15 红→0, 判据本体不许放松)
+- 背景: M18/M19 落地后 e30_shikongqiao_video/tests 15 条治理测试红(全部为台账/
+  契约/判据期望未跟随几何重标定, 无一为几何错误; 逐条归因见 .superpowers/sdd/govfix-report.md)。
+- facts.py: inline [等级] 注释与 SOURCES 双向对齐(M19 七常量: DECK_Z_TOP/DECK_Z_END/
+  SPANDREL_C/SPANDREL_E/RISE_E 改标[图像推导], SPRINGER 归位[工作值]+沿用锚说明);
+  新登记 RISE_C[图像推导] / CROWN_BLUNT_K / CROWN_BLUNT_CAP / SPRINGER_WATER_MIN=0.15[工作值]
+  —— 0.15 即 M19 RISE_E 重标定依据的"springer≥0.15 硬约束"升格为判据阈值。
+- qa_bridge.py(MET 重整, 阈值/精度零放松):
+  ①MET_ARCH_FAMILY 冠高期望 spz+矢 → spz+矢−s·ln2(s=facts.blunt_s, 七审P1-1 已登记
+    的冠钝化设计特征; 删钝化/放大越界同判据即红);
+  ②MET_SPRINGER 新增水上硬下限(z=0 常水位为 M19 唯一绝对基准; deck 相对判据按构造
+    平移不变, 全局 Z 漂移唯一绝对判据, 抓 M12 枯湖基准事故重演);
+  ③MET_SPRINGER 新增 SPRINGER"声明=导出"恒等校验(facts 值域, 容差=声明粒度半字 0.005)。
+- freeze_hash.py: CORE 第三对象 impost→coursing(M19 起 impost 线脚 204 块并入 coursing,
+  单 mesh 对象废除; 末次独立记录 5154f49e… 见 manifest §7)。
+- freeze_manifest.md: §1/§2 全量重哈希(含 M18/M19 已改未同步的 materials/qa_l2/shot_auto2);
+  §5 MET_ARCH_RATIO 0.56±0.02; §8-6 DECK_Z_TOP 改标注; §9 工作值清单重建(18 条,
+  补 PIER_W_C/E/INT + CROWN_BLUNT_K/CAP + SPRINGER_WATER_MIN, DECK_Z_AT_PIER 废除行删除);
+  §7 追加 M19 后重采基线表(bridge_body cdba9709…/voussoir ba2e0951…/coursing 0bd11e71…,
+  bbox z max 7.3)。
+- spec §9: 契约标高推导值同步 7.30/2.20(三处 7.75/5.05), 加 M19 同步注。
+- tests: 负控打击面跟随判据数据通路更新(M14 后 ARCH_RATIO 退出通路→RISE_C 活通路 +
+  monkeypatch 模块全局; 全局 Z 漂移负控 MET_RING_FIT→MET_SPRINGER; MET_CLOSURE 负控
+  PIER_W→PIER_W_INT 表; 新增 PIER_W 均值锚特异性正判据)。测试期望更新均有几何/机制
+  依据, 判据阈值与精度零放松。
+- 验收(隔离副本实测): tests 64 passed / tests/bridge3d 312 passed / blender 重建零错
+  SAVED v2 / QA_L2_OK / NEG_CAUGHT 10/10 / ABUTMENT_CHECK ALL PASS。

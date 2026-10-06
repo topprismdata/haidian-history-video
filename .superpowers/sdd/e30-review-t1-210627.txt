@@ -1,0 +1,327 @@
+=== COMMITS 56f66cc..d413985 ===
+d413985 feat(e30): T1 facts骨架+assumptions假设层+来源完备性测试
+549076c fix(e30): T2b/T3 三处硬错误——闭合差实测-2.50m、圆拟合反例改尖顶三心(椭圆残差0.0025抓不到)、Z平移破坏量校准至1.0m
+
+=== STAT ===
+ .../plans/2026-10-04-e30-bridge-body-m0-m25.md     |  38 ++++++--
+ e30_shikongqiao_video/3d/assumptions.py            |   9 ++
+ e30_shikongqiao_video/3d/facts.py                  |  63 +++++++++++++
+ e30_shikongqiao_video/tests/test_facts.py          | 101 +++++++++++++++++++++
+ 4 files changed, 204 insertions(+), 7 deletions(-)
+
+=== DIFF ===
+diff --git a/docs/superpowers/plans/2026-10-04-e30-bridge-body-m0-m25.md b/docs/superpowers/plans/2026-10-04-e30-bridge-body-m0-m25.md
+index f72e13c..3045b4d 100644
+--- a/docs/superpowers/plans/2026-10-04-e30-bridge-body-m0-m25.md
++++ b/docs/superpowers/plans/2026-10-04-e30-bridge-body-m0-m25.md
+@@ -170,21 +170,23 @@ git commit -m "feat(e30): facts.py 本体节骨架+来源完备性测试(全[待
+ 
+ ---
+ 
+ ### Task 2b: 闭合差归因与冲突登记（G3 增设, 在 T4 前完成）
+ 
+ **Files:**
+ - Modify: `3d/facts.py`（BRIDGE_ABUT 定稿）、`3d/refs/FACTS.md`（冲突登记表）
+ 
+ **Interfaces:**
+ - Consumes: L1 的 MET_CLOSURE 判据
+-- Produces: 闭合差 1.2m 的归因结论（桥台推导值 (150−107.3−37.5)/2=2.60m，或修正墩宽/跨序，或桥长口径修正），每个数值冲突一个 ID（C1 闭合差、C2 宽度6.56vs8、C3 高7vs7.75），状态 ∈{open,resolved,wontfix+理由}
++- Produces: 闭合差 -2.50m 的归因结论（桥台推导值 (150−107.3−37.5)/2=2.60m，或修正墩宽/跨序，或桥长口径修正），每个数值冲突一个 ID（C1 闭合差、C2 宽度6.56vs8、C3 高7vs7.75），状态 ∈{open,resolved,wontfix+理由}
++
++- [ ] **Step 0: 先看判据**——`MET_CLOSURE` 当前 fail（147.5 vs 150，差 -2.50m），这是**判据要暴露的真矛盾**，不是 bug。禁止调宽容差让它绿。
+ 
+ - [ ] **Step 1**: 用 MET_CLOSURE 输出归因分析写入 FACTS.md 冲突登记表；BRIDGE_ABUT 定稿回填 facts
+ - [ ] **Step 2**: pytest 全绿（含 baseline）；Commit `feat(e30): T2b 闭合差归因+冲突登记`
+ 
+ ---
+ 
+ ### Task 2c: 方法论文献核查与可信度缺口登记（用户 2026-10-04 追加）
+ 
+ **Files:**
+ - Modify: `3d/refs/FACTS.md`（新增"史料节"与"方法论依据"两节）
+@@ -323,21 +325,21 @@ def check_body(f):
+     else:
+         if any(d.SPANS[i] != d.SPANS[16 - i] for i in range(8)):
+             add("fail", "INV_SPANS_SYM", "跨序不对称")
+         if any(d.SPANS[i] < d.SPANS[i - 1] - 1e-9 for i in range(1, 9)):
+             add("fail", "INV_SPANS_MONO", "左半跨序非单调不减")
+         if any(d.SPANS[i] < d.SPANS[i + 1] - 1e-9 for i in range(8, 16)):
+             add("fail", "INV_SPANS_MONO", "右半跨序非单调增")
+     # ── MET 几何闭合(G2 增补: 抓'对称但整体尺度错') ──
+     total = sum(d.SPANS) + 15 * f.PIER_W + 2 * f.BRIDGE_ABUT
+     if abs(total - f.BRIDGE_LEN) > 0.5:
+-        add("fail", "MET_CLOSURE", "几何闭合差 %.2fm: 跨和+墩+台=%.1f != 桥长%.1f (当前数据实测差1.2m, M0须归因)" % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
++        add("fail", "MET_CLOSURE", "几何闭合差 %.2fm: 跨和+墩+台=%.1f != 桥长%.1f (2026-10-04 实测 -2.50m: 桥台1.35偏小, 闭合推导应为2.60m, M0须归因)" % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
+     # ── MET 券族: 圆拟合残差(G2: f/l 只是必要条件) ──
+     for i in range(17):
+         xc = (d.PIER_X[i] + d.PIER_X[i + 1]) / 2.0
+         a = d.SPANS[i] / 2.0
+         pts = [(xc - a * math.cos(math.pi * k / 20.0),
+                 f.SPRINGER + a * math.sin(math.pi * k / 20.0)) for k in range(21)]
+         rtol, _ = circle_fit_residual(pts)
+         if rtol > A.CIRCLE_FIT_RTOL:
+             add("fail", "MET_ARCH_FAMILY", "孔%d 圆拟合残差/R=%.4f 超限(非圆弧?)" % (i + 1, rtol))
+         # f/l 只留宽幅 sanity(设计意图半圆)
+@@ -381,44 +383,66 @@ def _fails_on(name, **kw):
+ def test_baseline_green():
+     r = qa_bridge.check_body(facts)
+     fails = [x for x in r if x[0] == "fail"]
+     assert not fails, "基线不应 fail: %s" % fails
+ 
+ def test_circle_fit_synthetic():
+     # 真圆: 残差≈0
+     pts = [(math.cos(t), math.sin(t)) for t in [math.pi*k/40 for k in range(41)]]
+     rtol, _ = qa_bridge.circle_fit_residual(pts)
+     assert rtol < 1e-3
+-    # 三心拱(G2 反例): 同 f/l=0.5 但非圆, 残差必须大
+-    pts3 = [(x, math.sqrt(max(0.0, 1 - x*x*0.5))) for x in [-1 + 2*k/40 for k in range(41)]]
+-    rtol3, _ = qa_bridge.circle_fit_residual(pts3)
+-    assert rtol3 > 0.05
++    # 三心拱反例(G2): 同 f/l=0.5 但非圆, 残差必须大。
++    # 注意: 椭圆(1-0.5x^2)残差仅 0.0025 < 阈值, 抓不到; 尖顶双心拱残差 0.0626 才对
++    def _three_center(n=41, pointiness=0.30):
++        pts = []
++        for k in range(n):
++            t = -1.0 + 2.0 * k / (n - 1)
++            z = 0.5 * math.sqrt(max(0.0, 1.0 - t * t)) * (1.0 + pointiness * abs(t))
++            pts.append((t, z))
++        return pts
++    rtol3, _ = qa_bridge.circle_fit_residual(_three_center())
++    assert rtol3 > 0.05, "尖顶三心拱残差 %.4f 未超 0.05, 判据抓不住非圆券" % rtol3
++    # 椭圆必须被放行(它在圆拟合容差内, 不得误杀)
++    rtol_e, _ = qa_bridge.circle_fit_residual(
++        [(x, math.sqrt(max(0.0, 1 - x * x * 0.5))) for x in [-1 + 2 * k / 40 for k in range(41)]])
++    assert rtol_e < 0.01, "椭圆残差 %.4f 过大, 判据过严" % rtol_e
+ 
+ # ── 边界负控(G2 A类: 符号方向证明) ──
+ def test_boundary_mono():
+     r = qa_bridge.check_body(_mutate(SPAN_DISTINCT=[4.5,4.9,5.4,5.9,6.4,6.9,7.4,7.4,8.0]))
+     assert not [x for x in r if x[0] == "fail" and x[1].startswith("INV_SPANS_MONO")], "相等应放行(非严格单调)"
+     _fails_on("INV_SPANS_MONO", SPAN_DISTINCT=[4.5,4.9,5.4,5.95,5.9,6.4,6.9,7.4,8.0])
+ 
+ # ── 单点破坏(G2 B类: 一孔坏必须全局红) ──
+ def test_single_arch_break():
+     sd = list(facts.SPAN_DISTINCT); sd[3] = sd[3] + 0.4   # 只改左第4孔
+     _fails_on("INV_SPANS_SYM", SPAN_DISTINCT=sd)
+ 
+ # ── 对称但尺度错(G2 C类: 关系判据抓不住, 闭合判据必须抓) ──
+ def test_symmetric_scale_break():
+     sd = [x * 1.05 for x in facts.SPAN_DISTINCT]
+     _fails_on("MET_CLOSURE", SPAN_DISTINCT=sd)
+ 
+ # ── 全局Z平移(G2 G类: 相对判据全过, datum判据须抓) ──
++# 数值校准: 当前基线 RING_FIT 余量最小为孔1/17 的 +0.17m。
++# 平移 0.5m 仍在容差内(抓不住, 已实测), 故破坏量取 1.0m 越过最小余量。
+ def test_global_z_shift_break():
+-    _fails_on("MET_RING_FIT", DECK_Z_TOP=facts.DECK_Z_TOP - 0.5, DECK_Z_END=facts.DECK_Z_END - 0.5)
++    _fails_on("MET_RING_FIT",
++              DECK_Z_TOP=facts.DECK_Z_TOP - 1.0, DECK_Z_END=facts.DECK_Z_END - 1.0)
++
++
++# ── 边界: 平移量恰在容差内必须放行(证明判据不是恒真的) ──
++def test_global_z_shift_within_tolerance_passes():
++    r = qa_bridge.check_body(_mutate(DECK_Z_TOP=facts.DECK_Z_TOP - 0.1,
++                                     DECK_Z_END=facts.DECK_Z_END - 0.1))
++    assert not [x for x in r if x[0] == "fail" and x[1] == "MET_RING_FIT"], \
++        "0.1m 平移(小于最小余量0.17m)不应触发 RING_FIT"
+ 
+ # ── 特异性(G2 J类: 无关破坏不应触发无关判据) ──
+ def test_specificity():
+     r = qa_bridge.check_body(_mutate(PIER_MAIN_W=3.3))   # 改非本体字段
+     fails = {x[1] for x in r if x[0] == "fail"}
+     assert not fails, "无关字段改动不应触发本体判据: %s" % fails
+ ```
+ 
+ > 注：`MET_CLOSURE` 在当前工作值下**预期基线红**（148.8 vs 150，差1.2m）——这是判据要暴露的真矛盾，M0 研究必须归因（调整桥台长为推导值 2.6m，或修正墩宽/跨序），禁止调宽容差迁就。test_baseline_green 在 Task 2 归因前允许 xfail 标记。
+ 
+diff --git a/e30_shikongqiao_video/3d/assumptions.py b/e30_shikongqiao_video/3d/assumptions.py
+new file mode 100644
+index 0000000..1be6c5d
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/assumptions.py
+@@ -0,0 +1,9 @@
++# -*- coding: utf-8 -*-
++"""建模假定与判据参数。非文物事实, 不进冻结; 改动须记录。
++G2 修订: 废除无据的 CROWN_CLEARANCE_MIN=0.30(GPT聊天值), 换成结构自洽判据:
++  拱背(extrados)=拱腹+RING_T 必须低于桥面 —— 这是拓扑必需, 不是经验常数。"""
++BODY_BOTTOM = -2.20          # 桥体底面(水下不可见), 建模工作值
++MESH_TOL = 0.005             # 网格数值容差(5mm), 券石入净空判据的 epsilon
++CIRCLE_FIT_RTOL = 0.01       # 圆拟合残差/半径 上限(G2: f/l 只是必要条件, 半圆须残差证明)
++NSEG_ARC = 40                # 券弧离散段数(实现参数, 非文物事实)
++NSEG_X = 240                 # 桥体纵向分段(实现参数)
+diff --git a/e30_shikongqiao_video/3d/facts.py b/e30_shikongqiao_video/3d/facts.py
+new file mode 100644
+index 0000000..ea0bfb4
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/facts.py
+@@ -0,0 +1,63 @@
++# -*- coding: utf-8 -*-
++"""E30 十七孔桥 尺寸事实清单（单一来源）。
++
++等级: 测绘 > 档案 > 官方 > 图像推导 > 工作值。
++"待核"只允许存在于 RESEARCH_DONE=False 期间。
++冻结(M2.5)只锁非[工作值]条目; 改锁死条目必须写 3d/refs/body_changelog.md 并重跑本体判据。
++禁令: 未标定照片不得产生绝对米制尺寸; 超分(ESRGAN)结果禁止进计量链; GPT 聊天记录不算来源。
++Z 基准: Z=0 = 常水位水面(建模约定)。
++"""
++
++# --- 研究轮旗标: M0 完成后置 True ---
++RESEARCH_DONE = False
++
++# --- 全局 ---
++BRIDGE_LEN = 150.0        # [官方] 北京市公园管理中心专题页"长150米"; 中新网2025/visitbeijing 多源一致
++N_SPAN = 17               # [官方] 官方页明示17个券洞(非"桥名"推知, G1 修正)
++
++# --- 桥面 ---
++DECK_Z_TOP = 7.75         # [工作值] 现脚本值(GPT建议); 官方"高7米"基准面未注明, 见 PUBLISHED_BRIDGE_HEIGHT
++DECK_Z_END = 5.05         # [工作值] 现脚本值
++DECK_UP_W = 6.56          # [官方] 公园管理中心2019: "桥面上宽6.56米"
++DECK_DOWN_W = 14.6        # [官方] 同页: "桥面下宽14.6米"
++PUBLISHED_GENERAL_WIDTH = 8.0   # [官方] 2018页"宽八米"=通俗概括; 与 DECK_UP_W 口径冲突, conflict_unresolved
++PUBLISHED_BRIDGE_HEIGHT = 7.0   # [官方] "高7米"; 测点/基准面未注明, 禁止映射 DECK_Z_TOP
++
++# --- 券洞 ---
++ARCH_RATIO = 0.50         # [图像推导] 近正面原始照目视近正对孔宽高比≈1.00; ESRGAN 版测量已退出计量链, 待测绘升级
++SPRINGER = 2.50           # [工作值] 现脚本值
++RING_T = 0.40             # [工作值] 现脚本值
++SPAN_DISTINCT = [4.50, 4.90, 5.40, 5.90, 6.40, 6.90, 7.40, 8.00, 8.50]  # [工作值] 9个完整净跨(对称展开17孔), 总水路107.3m+墩台≈150m 自洽; 中央孔8.50无公开测绘值(G1复核)
++
++# --- 墩与桥台 ---
++PIER_W = 2.50             # [待核] 墩颈
++PIER_MAIN_W = 2.80        # [待核] 水线上主墩
++PIER_FOUND_W = 3.10       # [待核] 基础外扩
++PIER_MAIN_W_C = 2.90      # [待核] 中央区加重
++PIER_FOUND_W_C = 3.20     # [待核] 中央区基础
++BRIDGE_ABUT = 1.35         # [待核] 现脚本生效值; T2b 闭合归因后定稿(候选: 2.00 GPT设计 / 2.60 闭合推导)
++
++# --- 桥面纵坡控制点 ---
++DECK_Z_AT_PIER = [5.30, 5.53, 5.82, 6.11, 6.40, 6.69, 6.97, 7.29, 7.55]  # [待核] 现脚本值
++
++SOURCES = {
++    "BRIDGE_LEN": ("官方", "北京市公园管理中心专题页; 中新网2025-12多源一致"),
++    "N_SPAN": ("官方", "官方页明示17券洞"),
++    "DECK_Z_TOP": ("工作值", "现脚本值; 官方高7米基准未注明"),
++    "DECK_Z_END": ("工作值", "现脚本值"),
++    "DECK_UP_W": ("官方", "公园管理中心2019: 桥面上宽6.56米"),
++    "DECK_DOWN_W": ("官方", "同页: 桥面下宽14.6米"),
++    "PUBLISHED_GENERAL_WIDTH": ("官方", "2018页: 宽八米; 与6.56口径冲突并存"),
++    "PUBLISHED_BRIDGE_HEIGHT": ("官方", "高7米; 测点未注明, 禁映射DECK_Z_TOP"),
++    "ARCH_RATIO": ("图像推导", "近正面原始照比例假设; ESRGAN退出计量链"),
++    "SPRINGER": ("工作值", "现脚本值"),
++    "RING_T": ("工作值", "现脚本值"),
++    "SPAN_DISTINCT": ("工作值", "GPT冻结表, 中央孔8.50无公开测绘值"),
++    "PIER_W": ("工作值", "现脚本值"),
++    "PIER_MAIN_W": ("工作值", "现脚本值"),
++    "PIER_FOUND_W": ("工作值", "现脚本值"),
++    "PIER_MAIN_W_C": ("工作值", "现脚本值"),
++    "PIER_FOUND_W_C": ("工作值", "现脚本值"),
++    "BRIDGE_ABUT": ("待核", "现生效1.35; T2b闭合归因后定稿"),
++    "DECK_Z_AT_PIER": ("工作值", "现脚本值"),
++}
+diff --git a/e30_shikongqiao_video/tests/test_facts.py b/e30_shikongqiao_video/tests/test_facts.py
+new file mode 100644
+index 0000000..754c44b
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/test_facts.py
+@@ -0,0 +1,101 @@
++# -*- coding: utf-8 -*-
++"""E30 Task1 来源完备性测试。
++
++判据语义: 只有 fail 阻塞; skip 不算通过。
++- 核心判据: facts 本体常量必须逐个登记进 SOURCES(漏一即 fail)。
++- 旗标闸门: RESEARCH_DONE=False 允许[待核]/[工作值]; True 禁止二者。
++- G1 分家: assumptions 的名字不得出现在 SOURCES(假设层不参与冻结)。
++- 文档禁令可执行化: facts docstring 必须写明 ESRGAN / 计量 禁令。
++"""
++import importlib
++import sys
++from pathlib import Path
++
++import pytest
++
++_3D_DIR = Path(__file__).resolve().parents[1] / "3d"
++sys.path.insert(0, str(_3D_DIR))
++
++facts = importlib.import_module("facts")
++assumptions = importlib.import_module("assumptions")
++
++ALLOWED_LEVELS = {"测绘", "档案", "官方", "图像推导", "工作值", "待核"}
++
++
++def _public_constants():
++    out = []
++    for n in dir(facts):
++        if n.startswith("_") or n in ("SOURCES", "RESEARCH_DONE"):
++            continue
++        v = getattr(facts, n)
++        if isinstance(v, (int, float, list)):
++            out.append(n)
++    return sorted(out)
++
++
++def test_every_constant_has_source():
++    """核心判据: 每个本体常量都必须有来源登记, 漏一个即 fail。"""
++    missing = [n for n in _public_constants() if n not in facts.SOURCES]
++    assert not missing, "缺来源登记: %s" % missing
++
++
++def test_sources_keys_are_live_names():
++    """SOURCES 不得残留指向已改名/已删除常量的键(如旧名 SPANS/HALF_SPANS)。"""
++    stale = [k for k in facts.SOURCES if not hasattr(facts, k)]
++    assert not stale, "SOURCES 指向不存在的常量: %s" % stale
++
++
++def test_sources_value_shape():
++    """每个 SOURCES 值是 (等级, 说明) 二元组, 等级属于 G1 五级+待核。"""
++    for name, val in facts.SOURCES.items():
++        assert isinstance(val, tuple) and len(val) == 2, (
++            "%s 的来源须为 (等级, 说明) 二元组, 实为 %r" % (name, val))
++        lvl, note = val
++        assert lvl in ALLOWED_LEVELS, "%s 等级非法: %r" % (name, lvl)
++        assert isinstance(note, str) and note.strip(), "%s 出处说明为空" % name
++
++
++def test_research_done_initially_false():
++    assert facts.RESEARCH_DONE is False, "RESEARCH_DONE 初始必须为 False"
++
++
++def test_pending_gate_tracks_flag():
++    """旗标闸门(随 RESEARCH_DONE 变化):
++    False 期间允许[待核]/[工作值]; 置 True 后二者一律禁止。"""
++    forbidden = ("待核", "工作值") if facts.RESEARCH_DONE else ()
++    offenders = sorted(
++        n for n, (lvl, _note) in facts.SOURCES.items() if lvl in forbidden)
++    assert not offenders, "RESEARCH_DONE=%s 时仍存在禁用等级条目: %s" % (
++        facts.RESEARCH_DONE, offenders)
++
++
++def test_span_distinct_shape_and_symmetric_closure():
++    """SPAN_DISTINCT 是 9 个完整净跨; 对称展开成 17 跨后:
++    总水路 = 107.3m, 加中央区 9*PIER_W = 22.5m 与 107.3+22.5 自洽。
++    (简报的 sum(SPANS)+15*PIER_W+2*BRIDGE_ABUT 全桥闭合判据属 T2b, 不在本测试。)"""
++    sd = facts.SPAN_DISTINCT
++    assert len(sd) == 9, "SPAN_DISTINCT 须为 9 个完整净跨, 实为 %d" % len(sd)
++    assert len(facts.DECK_Z_AT_PIER) == 9, "DECK_Z_AT_PIER 须为 9 个纵坡控制点"
++    # 对称展开: 9 值 + 前 8 值镜像(中央孔 8.50 只计一次) = 17 跨
++    expanded = list(sd) + list(reversed(sd[:-1]))
++    assert len(expanded) == facts.N_SPAN
++    water = sum(expanded)
++    assert water == pytest.approx(107.3, abs=1e-9), (
++        "对称展开总水路 %r != 107.3" % water)
++    assert water + 9 * facts.PIER_W == pytest.approx(107.3 + 22.5, abs=1e-9), (
++        "水路+9*PIER_W 自洽校验失败: %r" % (water + 9 * facts.PIER_W))
++
++
++def test_assumptions_not_in_sources():
++    """G1 分家: 假设层参数(判据参数+建模假定)不进来源注册表、不参与冻结。"""
++    assumption_names = [n for n in dir(assumptions) if not n.startswith("_")]
++    assert assumption_names, "assumptions 模块异常: 无公开参数"
++    for n in assumption_names:
++        assert n not in facts.SOURCES, "假设层 %s 不得进 SOURCES" % n
++
++
++def test_docstring_carries_bans():
++    """文档级禁令的可执行版本: 禁令写进模块 docstring 并被测试锁住。"""
++    doc = facts.__doc__ or ""
++    assert "ESRGAN" in doc, "facts docstring 缺 ESRGAN 禁令(超分结果禁进计量链)"
++    assert "计量" in doc, "facts docstring 缺 计量 禁令"

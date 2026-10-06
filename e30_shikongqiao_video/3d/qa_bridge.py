@@ -159,8 +159,17 @@ def check_body(f):
            any(zs[k + 1] - zs[k] > 1e-9 for k in range(half, 40)):
             add("fail", "MET_ARCH_FAMILY", "孔%d 拱线非左升右降(多峰?)" % (i + 1,))
         crown_z = f.arch_z(xc, xc, sp_i, a, b_i)
-        if abs(crown_z - (sp_i + b_i)) > 1e-3:
-            add("fail", "MET_ARCH_FAMILY", "孔%d 冠高%.3f≠spz+矢%.3f" % (i + 1, crown_z, sp_i + b_i))
+        # [M19/七审P1-1 期望更新 2026-10-06] 冠部钝化(facts.CROWN_BLUNT_K/CAP, s=K·e
+        # 封顶 CAP·a)是已登记的设计特征(目标 cusp 13°->~9°): 冠顶两弧等高(lo=hi),
+        # log-sum-exp 精确下沉 s·ln2 —— 冠高期望由 spz+矢 修正为 spz+矢−s·ln2。
+        # 这不是放松: 扣减量完全由 facts 钝化参数经 facts.blunt_s 导出(单一数据源),
+        # 阈值仍 1e-3 —— 钝化被删(K=0 而肩点仍圆化)或被放大越界都会被同一判据抓。
+        # M19 前 SPANDREL/RISE 剖面无钝化路径, 旧期望 spz+矢 对孔8/9/10 系统性
+        # 偏高 s·ln2(中央 0.08·ln2≈0.056), 即本次基线红的全部来源。
+        s_blunt = f.blunt_s(a, b_i)
+        crown_expect = sp_i + b_i - s_blunt * math.log(2.0)
+        if abs(crown_z - crown_expect) > 1e-3:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 冠高%.3f≠spz+矢−钝化%.3f" % (i + 1, crown_z, crown_expect))
         # f/l 设计意图(终审 I12): 消费 facts.ARCH_RATIO_TARGET±ARCH_RATIO_TOL(原 0.50±0.05 硬写)。
         # 缺任一 → skip(未执行不算通过); 与框架 met_arch_ratio 同语义。
         ratio_target = getattr(f, "ARCH_RATIO_TARGET", None)
@@ -178,8 +187,36 @@ def check_body(f):
         crown_i = d.deck_z(xc) - f.spandrel(i)
         if crown_i + f.RING_T > d.deck_z(xc) + 1e-9:
             add("fail", "MET_RING_FIT", "孔%d 拱背%.2f 高于桥面%.2f(券圈穿出桥面)" % (i + 1, crown_i + f.RING_T, d.deck_z(xc)))
+        # MET_SPRINGER(2026-10-06 M19 语义重整, 三条):
+        # ①相对: 起拱线不得高于所在孔桥面(结构自洽, 平移不变);
         if sp_i >= d.deck_z(xc):
             add("fail", "MET_SPRINGER", "孔%d 起拱线高于桥面" % (i + 1))
+        # ②绝对(M19 新增): 起拱线 ≥ 常水位水上硬下限 SPRINGER_WATER_MIN。M19 冬照
+        #   重标定后 z=0=常水位是唯一绝对基准(facts RISE_E 重推依据 springer>=0.15
+        #   硬约束); deck 相对判据按构造平移不变, 全局 Z 漂移(重演 M12 枯湖基准
+        #   事故)由此条唯一绝对判据抓。阈值缺位 → skip(未执行不算通过)。
+        water_min = getattr(f, "SPRINGER_WATER_MIN", None)
+        if water_min is None:
+            add("skip", "MET_SPRINGER", "facts 未声明 SPRINGER_WATER_MIN, 水上硬下限未执行")
+        elif not _is_num(water_min) or water_min < 0:
+            add("fail", "IMP_TOLERANCE", "SPRINGER_WATER_MIN=%r 须为非负数(水上硬下限)" % (water_min,))
+        elif sp_i < water_min:
+            add("fail", "MET_SPRINGER", "孔%d 起拱线 %.3f 低于水上硬下限 %.2f(全局Z漂移/没水)"
+                % (i + 1, sp_i, water_min))
+    # MET_SPRINGER ③声明恒等(M19 新增, facts 层): facts.SPRINGER 自称"中央孔导出
+    # 起拱线"(M19 起降级为兼容锚, 定义处注释明示恒等式 = DECK_Z_TOP-SPANDREL_C
+    # -rise_ratio(8)*SPAN_MAX)。在 facts 值域上核对恒等, 不在扰动后的布局上核 ——
+    # 桥台/跨长突变会平移逐孔导出值, 那是 MET_CLOSURE 的管辖区; 容差 0.005 =
+    # 常量声明粒度(2 位小数)的半字。兼容锚被单改、或 facts 重标定后忘同步 → 此处红。
+    ci = (f.N_SPAN - 1) // 2
+    sp_decl = getattr(f, "SPRINGER", None)
+    if (f.N_SPAN % 2 == 1 and len(d.SPANS) == f.N_SPAN and _is_num(sp_decl)):
+        # 展开跨表复用 derive 同一规则(d.SPANS), 不造第二套展开公式
+        sp_expect = f.DECK_Z_TOP - f.spandrel(ci) - f.rise_ratio(ci) * d.SPANS[ci]
+        if abs(sp_decl - sp_expect) > 0.005:
+            add("fail", "MET_SPRINGER",
+                "SPRINGER 声明 %.3f ≠ facts 导出起拱线 %.3f(M19 导出恒等被破坏)"
+                % (sp_decl, sp_expect))
     if not (0 < f.DECK_UP_W < f.DECK_DOWN_W):
         add("fail", "MET_TAPER", "顶宽须小于底宽(收分)")
     if f.DECK_Z_TOP <= f.DECK_Z_END:

@@ -1,0 +1,134 @@
+{
+  "_meta": {
+    "task": "一开间(两望柱之间)栏板望柱 1:1 比例测绘，供 build_deck_bm 重建",
+    "date": "2026-10-05",
+    "author": "RailMeasure",
+    "python": "3.9.6",
+    "method": "多张近侧照片读图 + 扫描线亮度/白度轮廓定位边缘（PIL+numpy），以望柱中心距 2.381m 定标；垂直尺寸以寻杖顶-桥面高 0.92m 交叉锚定（文献 0.8-1.0m + 人形参照）",
+    "primary_photo": {
+      "file": "refs/community_photos_details/Man_launching_kites_on_Seventeen_Arch_Bridge_in_the_park_of_the_Summer_Palace_in_Beijing_IMG_0442_IMG_0453.jpg",
+      "size_px": [3429, 2286],
+      "license": "CC BY-SA 4.0 (Luu, Wikimedia Commons)",
+      "role": "主测量：角柱望柱全高立面(狮子/柱头/柱身/寻杖/瘿项/栏板/地栿/仰天石) + 一整开间栏板雕框",
+      "key_readings_px": {
+        "post_center_to_center_projected": 800,
+        "post_face_P_width": 275,
+        "post_face_along_axis_width": 115,
+        "lion_height": 400,
+        "head_die_block": 225,
+        "head_lower_band": 120,
+        "shaft_deck_to_head": 1130,
+        "rail_tube_vertical": 105,
+        "rail_top_above_deck_curb": 1010,
+        "vase_height": 345,
+        "vase_width": 190,
+        "vase_zone_height": 380,
+        "panel_face_height": 395,
+        "panel_frame_width": 445,
+        "clear_span_projected": 526,
+        "digeng_bottom_rail": 125
+      }
+    },
+    "corroborating_photos": [
+      "refs/community_photos_details/Summer_Palace_颐和园_(Beijing_China_2014)_-_panoramio.jpg (2592x1547, CC BY 3.0) — 连续两开间透视、每开间 2 瘿项计数",
+      "refs/community_photos_details/Summer_Palace_Lake_Kunming_(9865110543).jpg (3888x2592, CC0, Gary Todd) — 柱头雕饰近正侧 + 人物比例尺(栏杆顶≈腰高)",
+      "refs/community_photos_details/Summer_Palace_Beijing_The_first_of_the_17_pillars_(14759792334).jpg (4288x2848, CC BY 2.0) — 桥端柱/狮",
+      "refs/community_photos_details/Seventeen-spans_(272077449).jpg (3072x2304, CC BY 2.0) — 翼栏宝珠头柱变体",
+      "refs/community_photos_details/Summer_Palace_Beijing_IMG_2627_(8353256174).jpg — 翼栏宝珠头柱剪影(冬季)",
+      "refs/community_photos_gptpack/crops/06_historical_rail_lions_crop_from_Lai_Afong.jpg (c.1879) — 历史形制佐证"
+    ]
+  },
+  "_calibration": {
+    "anchor": "望柱中心距 2.381 m (任务给定既有值)",
+    "cross_checks": [
+      "柱面法: 角柱两相邻雕饰面投影 275px/115px → 桥轴与视线夹角 gamma=16-23°; 由 2.381m 定标反推 gamma=17.8° — 独立吻合",
+      "开间反算: 中心距投影 800px ↔ 2.381m 且与栏板净跨(526px投影)自洽 (框宽/净跨=0.85 实测)",
+      "人形参照: 寻杖顶-桥面 1010px/0.92m = 1098px/m, 与 2.381m 定标(1100px/m)一致; 栏杆顶≈成人腰高, 文献栏高 0.8-1.0m",
+      "文献: 桥两侧望柱共 124 根、石狮共 544 只(含幼狮)、汉白玉栏杆 — 与照片柱距/狮数密度相符"
+    ],
+    "px_per_m_at_primary_plane": 1100,
+    "view_geometry": "相机近顺桥轴 (gamma≈17.8°), 透视压缩强; 水平开间类尺寸置信 M, 同平面竖向比例置信 H",
+    "conflict_flag": "若将 2.381m 误当作'栏板净跨'(而非中心距), 或按 150m/63 孔重新推导, 将得到与照片矛盾的比例 — 本表按'中心距=2.381m'使用"
+  },
+  "post_height": 1.34,
+  "post_width": 0.27,
+  "post_cap_shape": "方形柱头: 狮子坐于方头块上(姿态各异, 部分带幼狮); 方头块立面雕大菱形(斜方胜)+四朵团花(金钱纹)锦纹; 其下一段矮块雕垂莲/如意垂饰(角部下探的尖叶垂花), 再下为素平柱身, 转角处带竖向凹槽线脚; 柱身方形断面, 头块略宽于柱身(~5-10%)",
+  "panel_height": 0.36,
+  "panel_width": 2.11,
+  "rail_top_thickness": 0.10,
+  "lower_rail_thickness": 0.11,
+  "opening_shape": "每开间透空层(寻杖以下、栏板以上)高≈0.35m: 圆寻杖由 2 根瓶式瘿项(宝瓶)支承, 瓶设于净跨两端≈±35% 处, 瓶间与瓶-柱间为敞开通空; 寻杖两端以雕云纹卷叶(荷叶墩/云拱式)下弯收头嵌入柱身; 栏板本身为整石实板(不透空), 无拱券列、无矩形双洞。远景所见的'小拱列'即瓶间空档+瓶身曲线的视觉轮廓",
+  "lion_height_vs_post": {
+    "lion_height_m": 0.36,
+    "lion_to_post_width": 1.34,
+    "lion_to_post_total_height": 0.27,
+    "note": "常规栏柱顶狮≈0.32-0.40m; 桥端四角大狮≈0.7-0.9m(人像照片锚定), 为常规狮的≈2倍"
+  },
+  "stone_course_lines": [
+    "仰天石(桥面缘石): 顶面高出铺装≈0.10-0.15m, 单层厚石",
+    "地栿(下枋): 高 0.11m 素平通长石条, 望柱坐于其上",
+    "栏板(华板): 整石高 0.36m, 顶面为外露平台(瓶足立于其上), 前脸每开间一线双勾凹框(合角拐子纹边框, 内退≈0.05-0.08m), 框内素平堂心; 板端入柱槽",
+    "透空层: 栏板顶面→寻杖底 0.35m, 内含 2 瓶式瘿项",
+    "寻杖(扶手): 圆断面 φ≈0.10m, 顶面距桥面 0.92m",
+    "望柱: 柱身方形 0.27m 见方, 柱头方块+垂饰矮块共 0.31m, 柱全高(桥面至头块顶)1.34m",
+    "石狮: 坐于头块顶, 高 0.36m(常规)/0.7-0.9m(桥端大狮)"
+  ],
+  "derived": {
+    "bay_center_to_center_m": 2.381,
+    "clear_span_between_posts_m": 2.11,
+    "rail_center_above_deck_m": 0.86,
+    "vase_zone_height_m": 0.35,
+    "vase_height_m": 0.31,
+    "vase_width_m": 0.17,
+    "vases_per_bay": 2,
+    "head_die_block_height_m": 0.20,
+    "head_lower_band_height_m": 0.11,
+    "shaft_height_below_head_m": 1.03,
+    "post_shaft_above_rail_m": 0.33,
+    "panel_frame_inset_m": 0.06,
+    "panel_frame_style": "双线合角矩形框(拐子纹角钩), 每开间一格, 框内素平",
+    "panel_top_shelf_exposed": true
+  },
+  "variants": {
+    "bridge_end_corner_posts": "桥端四角望柱雕大狮(带幼狮群), 狮高≈0.7-0.9m, 头块雕饰同常规",
+    "wing_abutment_railings": "八字燕翅翼栏望柱柱头为宝珠/莲苞形(无狮), 开间与主栏相近, 其余层级相同",
+    "lion_poses": "544 狮无一雷同: 母狮负幼、踩绣球、伏卧等; 建模按 2-3 种姿态变体+随机镜像即可"
+  },
+  "diff_vs_old_model": {
+    "old_post": "过粗过方、无柱头雕饰层级",
+    "fix_post": "柱身缩至 0.27m 见方(若旧模 0.4-0.5m 则减约 40%), 高 1.34m; 增加方头块(菱形锦纹)+垂饰矮块+角凹槽",
+    "old_panel": "两个矩形透空洞",
+    "fix_panel": "实心整板 + 双线合角雕框(内退0.06m); 透空只在上部 0.35m 瓶式层: 寻杖+2 瘿项+敞空, 寻杖端云纹卷叶收头",
+    "old_lion": "显小",
+    "fix_lion": "狮高 0.36m = 1.34×柱宽 = 0.27×柱全高; 桥端四角放大至 0.8m 级",
+    "old_missing": "地栿层/仰天石层级、栏板顶外露平台、柱头锦纹与垂饰"
+  },
+  "confidence": {
+    "post_width": "M-H (0.24-0.30m; 柱面投影 275px, 角部判读±10%)",
+    "post_height": "M (1.25-1.45m)",
+    "panel_height": "M-H (0.33-0.40m)",
+    "panel_width": "M (净跨=2.381-0.27≈2.11m; 照片框跨/净跨比 0.85 吻合)",
+    "rail_top_thickness": "M-H (0.09-0.12m)",
+    "lower_rail_thickness": "M (0.10-0.13m)",
+    "lion_height_vs_post": "H (同平面比值 1.34 柱宽 / 0.27 柱高)",
+    "opening_shape": "H (多照片互证: 2 瓶式瘿项/开间, 实心雕框栏板)",
+    "stone_course_lines": "M-H (地栿/仰天石/栏板顶平台直接可见)",
+    "bay_2.381": "按任务给定值采用; 与照片自洽(见 _calibration), 但注意若 124 柱对应栏身总长仅~50m/侧, 则该值偏大 — 下游如需绝对尺度复检, 建议以文物测绘档案核对柱距"
+  },
+  "_scale_variant_if_bay_doubled": {
+    "note": "若下游坚持更稀疏柱距(如 3.0m), 全部尺寸按 ×(new_bay/2.381) 线性缩放即可 — 比例表(shape_ratios)不变",
+    "shape_ratios_of_post_width": {
+      "post_height": 4.95,
+      "head_stack": 1.16,
+      "lion_height": 1.34,
+      "rail_tube": 0.35,
+      "rail_top_above_deck": 3.39,
+      "vase_height": 1.16,
+      "vase_width": 0.64,
+      "vase_zone_height": 1.28,
+      "panel_height": 1.33,
+      "digeng": 0.42,
+      "panel_frame_span_of_clear": 0.85
+    }
+  }
+}

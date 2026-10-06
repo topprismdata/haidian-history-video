@@ -85,12 +85,16 @@ def test_symmetric_scale_break():
     sd = [x * 1.05 for x in facts.SPAN_DISTINCT]
     _fails_on("MET_CLOSURE", SPAN_DISTINCT=sd)
 
-# ── 全局Z平移(G2 G类: 相对判据全过, datum判据须抓) ──
-# 数值校准(实测): 基线 MET_RING_FIT 最小余量为孔1/17 的 +0.173m; deck_z 是
-# TOP/END 的线性族, 整体下移 Δ 等量吃掉余量: Δ=0.1m 仍绿(余 0.073m),
-# Δ=0.5m 即红(余 -0.327m)。故破坏量取 1.0m, 远离判定边界。
+# ── 全局Z平移(G2 G类) ──
+# [2026-10-06 M19 期望更新] 期望判据 MET_RING_FIT -> MET_SPRINGER(水上硬下限):
+# M19 后 deck 相对判据(RING_FIT=拱背vs桥面、ARCH_FAMILY=拱线自洽、CLOSURE=纵向闭合)
+# 按构造全部平移不变, RING_FIT 语义(券圈穿出桥面 ⇔ spandrel<RING_T)对整体 Z 漂移
+# 无判别力; 冬照重标定后 z=0=常水位是唯一绝对基准, 全局 Z 漂移(M12 枯湖基准事故
+# 的重演)由 M19 新增的 facts.SPRINGER_WATER_MIN 绝对判据抓。
+# 数值校准(实测): 基线端孔起拱线 0.649, 余量 +0.499m; Δ=-0.1 仍绿(余 0.399),
+# Δ=-1.0 即红(端孔起拱 -0.351 没水)。破坏量取 1.0m, 远离判定边界。
 def test_global_z_shift_break():
-    _fails_on("MET_RING_FIT",
+    _fails_on("MET_SPRINGER",
               DECK_Z_TOP=facts.DECK_Z_TOP - 1.0, DECK_Z_END=facts.DECK_Z_END - 1.0)
 
 
@@ -166,14 +170,25 @@ def test_met_deck_dir_break():
     _fails_on("MET_DECK_DIR", DECK_Z_TOP=4.0, DECK_Z_END=6.0)
 
 
-# ── MET_ARCH_RATIO: f/l 偏离半圆设计意图必须被抓 ──
-def test_met_arch_ratio_break():
-    _fails_on("MET_ARCH_RATIO", ARCH_RATIO=0.65)
+# ── MET_ARCH_RATIO: f/l 偏离设计意图必须被抓 ──
+# [2026-10-06 期望更新] 打击面 ARCH_RATIO -> RISE_C: M14 起判据比对 rise_ratio 剖面
+# 中心, 旧观测标量 ARCH_RATIO 已不进任何判据/生成器数据通路(扰动无消费者, 负控
+# 恒空转)。rise_ratio/spandrel 是 facts 模块函数(读模块全局), 命名空间突变不可达
+# (deck_z 才是 derive 内闭包)—— 故与 test_inv_spans_sym_detector 同用 monkeypatch
+# 打模块全局; SPRINGER 同步换算, 使破坏只命中被测判据(M19"声明=导出"恒等不误报)。
+def test_met_arch_ratio_break(monkeypatch):
+    rc = 0.65
+    monkeypatch.setattr(facts, "RISE_C", rc)
+    monkeypatch.setattr(facts, "SPRINGER",
+                        facts.DECK_Z_TOP - facts.SPANDREL_C - rc * facts.SPAN_DISTINCT[8])
+    _fails_on("MET_ARCH_RATIO")
 
 
-# ── MET_SPRINGER: 起拱线高于桥面必须被抓 ──
+# ── MET_SPRINGER: 起拱线判据必须被抓 ──
+# [2026-10-06] SPRINGER=8.0 由 M19 新增的"声明=导出"恒等判据抓(M19 前 SPRINGER 已
+# 退出判据数据通路, 该负控曾静默空转); 8.0 也远超中央桥面 7.30 的水上语义。
 def test_met_springer_break():
-    _fails_on("MET_SPRINGER", SPRINGER=8.0)   # 高于中央桥面 7.75
+    _fails_on("MET_SPRINGER", SPRINGER=8.0)   # 声明恒等破坏(M19 导出值=1.14)
 
 
 # ── IMP_DIM: 墩/台尺寸非法必须被抓 ──
@@ -193,8 +208,14 @@ def test_met_closure_baseline_is_exactly_closed():
 
 
 def test_met_closure_catches_real_gap():
-    """真负控: 打破闭合必须被抓。基线 150.0 精确闭合, 桥台改 1.35->2.60 会多出 2.5m。"""
+    """真负控: 打破闭合必须被抓。基线 150.0 精确闭合, 桥台改 1.35->2.60 会多出 2.5m。
+    [2026-10-06 期望更新] 六审四刀#2 后闭合按 PIER_W_INT 剖面表逐墩求和(与 derive
+    同一规则), PIER_W 退为剖面均值/旧引用锚 —— 单改 PIER_W 不再进闭合通路(均值
+    恒等 C+E=2*PIER_W 由 facts 导入断言锁), 故第二负控改打活通路: 内墩表整表压到
+    2.40 造成 -1.6m 闭合差。"""
     assert "MET_CLOSURE" in _fail_codes(BRIDGE_ABUT=2.60), \
         "桥台改 2.60 会造成 +2.5m 闭合差, 判据必须抓到"
-    assert "MET_CLOSURE" in _fail_codes(PIER_W=2.40), \
-        "墩宽改 2.40 会造成 -2.4m 闭合差, 判据必须抓到"
+    assert "MET_CLOSURE" in _fail_codes(PIER_W_INT=[2.40] * 16), \
+        "内墩表整表 2.40 会造成 -1.6m 闭合差, 判据必须抓到"
+    # 均值锚单动不进任何通路(表未动则几何不变) —— 特异性正判据, 锁 PIER_W 锚语义
+    assert not _fail_codes(PIER_W=2.40), "单改均值锚 PIER_W 不应触发任何判据"

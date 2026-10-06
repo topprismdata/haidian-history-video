@@ -107,7 +107,9 @@ def test_span_distinct_shape_and_symmetric_closure():
     (简报的 sum(SPANS)+15*PIER_W+2*BRIDGE_ABUT 全桥闭合判据属 T2b, 不在本测试。)"""
     sd = facts.SPAN_DISTINCT
     assert len(sd) == 9, "SPAN_DISTINCT 须为 9 个完整净跨, 实为 %d" % len(sd)
-    assert len(facts.DECK_Z_AT_PIER) == 9, "DECK_Z_AT_PIER 须为 9 个纵坡控制点"
+    # [M19] DECK_Z_AT_PIER 9 点表已随枯湖基准废除(零消费方死数据); 纵剖由
+    # DECK_Z_TOP/DECK_Z_END + bridge_geom2.deck_z 抛物线单一来源表达。
+    assert facts.DECK_Z_TOP > facts.DECK_Z_END > 0, "桥面纵剖锚点须中央高两端低且为正"
     # 对称展开: 9 值 + 前 8 值镜像(中央孔 8.50 只计一次) = 17 跨
     expanded = list(sd) + list(reversed(sd[:-1]))
     assert len(expanded) == facts.N_SPAN
@@ -274,7 +276,7 @@ def test_check_body_reports_instead_of_crashing():
     assert "IMP_TYPES" in {x[1] for x in r3 if x[0] == "fail"}, "非整型 N_SPAN 应报 IMP_TYPES"
 
 
-def test_criteria_consume_fact_thresholds():
+def test_criteria_consume_fact_thresholds(monkeypatch):
     """终审 I12: MET_CLOSURE/MET_ARCH_RATIO 必须消费 facts 阈值而非判据源码硬编码。
     证明: 收紧 facts 容差, 同一扰动由"放行"变"红"; 删除阈值 → skip(未执行不算通过)。"""
     import qa_bridge
@@ -285,9 +287,19 @@ def test_criteria_consume_fact_thresholds():
     # 收紧 CLOSURE_TOL=0.1: 同一扰动必须转红 → 判据消费的确实是 facts 值
     assert "MET_CLOSURE" in codes(_mutate_facts(BRIDGE_ABUT=facts.BRIDGE_ABUT + 0.2,
                                                 CLOSURE_TOL=0.1))
-    # ARCH_RATIO=0.53: 默认 ±0.05 放行; 收紧 TOL=0.01 转红
-    assert "MET_ARCH_RATIO" not in codes(_mutate_facts(ARCH_RATIO=0.53))
-    assert "MET_ARCH_RATIO" in codes(_mutate_facts(ARCH_RATIO=0.53, ARCH_RATIO_TOL=0.01))
+    # [2026-10-06 期望更新] M14 起判据比对 rise_ratio 剖面中心, 旧观测标量
+    # ARCH_RATIO 不再进判据数据通路 —— 负控改打活通路 RISE_C。rise_ratio 是 facts
+    # 模块函数(读模块全局), 命名空间突变不可达 → monkeypatch 打模块全局(与
+    # test_l1_body.test_inv_spans_sym_detector 同机制), 并把 SPRINGER 同步换算为
+    # 一致导出值(M19 起 MET_SPRINGER 校验"声明=导出"恒等), 使扰动只命中被测判据:
+    # RISE_C=0.545(剖面中心 |Δ|=0.015) 默认 TOL=0.02 放行, 收紧 TOL=0.01 转红。
+    rc = 0.545
+    monkeypatch.setattr(facts, "RISE_C", rc)
+    monkeypatch.setattr(facts, "SPRINGER",
+                        facts.DECK_Z_TOP - facts.SPANDREL_C - rc * facts.SPAN_DISTINCT[8])
+    assert "MET_ARCH_RATIO" not in codes(_mutate_facts())
+    monkeypatch.setattr(facts, "ARCH_RATIO_TOL", 0.01)
+    assert "MET_ARCH_RATIO" in codes(_mutate_facts())
     # 阈值缺位 → skip(不得静默放行, 也不得崩)
     m = _mutate_facts()
     delattr(m, "CLOSURE_TOL")

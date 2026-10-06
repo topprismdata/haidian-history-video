@@ -1,0 +1,283 @@
+闭包扩展报告 v3（miner=v3 / rule_profile=rp-v3）
+  种子词条: 高梁水、高粱河、西城闸、高梁闸、长河、高梁河、圆明园、长春园、绮春园、圆明三园、遗址公园、镶黄旗营房、树村西、萧家河北、树村汛、北安河桥、圆明园八旗驻防、树村、大有庄、穷八家、西三旗、青龙桥、七里泊、碾庄、七十二府、东四墓、觉生寺、大钟寺、华严钟、永乐大钟、万寿寺、汉经厂、铸钟厂、高梁桥、高梁闸、西城闸、高梁河闸、高粱闸、高亮桥、倚虹堂、安河桥、安和桥、罗锅桥、安河桥村、安河新桥、丰益仓、高梁河之战、一亩园、前湖、扇面湖、一亩园娘娘庙、泰山圣母庙、蓝靛厂、靛园厂、外火器营、火器营、火器营站、西顶娘娘庙、护国洪蕊宫、广仁宫、立马关帝庙、蓝靛厂清真寺、万寿街、苏州街、同乐园买卖街、后溪河买卖街、颐和园苏州街、中官村、中关、中关村
+  遍历词条: 70
+  挖过的篇卷: 76 个（div_sjz_v13_luoshui、div_sjz_v14_baqiushui、div_yuanshi_hequ_3、div_liaoshi_84、div_songshi_taizong、div_ymy_yuan_yange、div_ymy_yuan_1949、div_ymy_sj、div_bqtz116_yingjian、div_bqtz34_zhuoshu、div_rxjwkc72_baqi、div_rxjwkc99_jiaojiong、div_rizhi46_yu、div_rizhi76_yu、div_zyztj1、div_rxjwkc100_xijiaojing、div_mingshi_bingzhi、div_mingyitongzhi、div_diquminglu_xisanqi、div_2024_minglu_qinglongqiao、div_beiwen_quanbei、div_djjwl_hjc、div_djjwl_liugeng、div_cakh_wanshousi、div_zzz_dazhong、div_cmmyl_zhuzhongchang、div_yjsj_jueshengsi、div_wlyhb_wanshousi、div_lgdjj_yunshi、div_yhd_wanshousi、div_rxjwkc100_wanshousi、div_qgz_1743_shi、div_qgz_1746_ge、div_dzs_yange、div_dzs_bell、div_dzs_qiyu、div_jinshi_zhaguan、div_yuanshi_hequ_gl、div_yhd_ylqj、div_djjwl_glb、div_rxjwkc_gl、div_liaoshi_84_gl、div_songshi_tz_gl、div_zhiguan_v8、div_dajinjili_daihe、div_minglu2_gl、div_minglu2_ahc、div_wjbz_gl、div_hd_yht、div_hd_zhuanhe、div_hd_anhe1965、div_bma_anhe、div_anhe_xiaoshi、div_sxwj_muzhuang、div_bx_tu、div_hd_yimuyuan、div_hd_shanmianhu、div_hd_niangniangmiao、div_qsg_zhiguanzhi、div_dmhnd_zhiran、div_rxjwkc_waiying、div_zzz_xiding、div_xdb_huixiang、div_wjbz_waiying、div_hd_xiding、div_hd_ldc、div_hd_fusi、div_tz_ju9、div_rxjwkc77_changhe、div_xtzl10_suzhoujie、div_tzow9_jiaodiong、div_zyztj1_tongleyuan、div_qsg214_houfei、div_hdgov_yiheyuan、div_hanshu_gaohouji、div_jingxitu_1913）
+  发现候选假说: 128 个
+    - 永定河      [mid] 书证 1 处《src_shuijingzhu》
+        · 「永定河」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「水自永定河」
+    - 戾陵堰      [mid] 书证 1 处《src_shuijingzhu》
+        · 「戾陵堰」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「筑戾陵堰」
+    - 车箱渠      [mid] 书证 1 处《src_shuijingzhu》
+        · 「车箱渠」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「开车箱渠」
+    - 通惠河      [mid] 书证 2 处《src_yuanshi》
+        · 「通惠河」 suffix_scan @div_yuanshi_hequ_3（引文 tf_yuanshi_wood）后缀扫描「奏开通惠河」
+        · 「通惠河」 suffix_scan @div_yuanshi_hequ_gl（引文 tf_yuanshi_1292_tonghui）后缀扫描「奏開通惠河」
+    - 绮春三园     [mid] 书证 1 处《src_ymy_yuan》
+        · 「绮春三园」 suffix_scan @div_ymy_yuan_yange（引文 tf_ymy_1770）后缀扫描「绮春三园」
+    - 水礳       [mid] 书证 1 处《src_bqtz》
+        · 「水礳」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词「坐落」窗口「水礳」
+    - 保福寺      [high] 书证 1 处《src_bqtz》
+        · 「保福寺」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「保福寺」
+    - 萧家河      [high] 书证 2 处《src_bqtz、src_rxjwkc》
+        · 「蕭家河」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「蕭家河」
+        · 「蕭家河」 suffix_scan @div_rxjwkc72_baqi（引文 tf_bq72_zhenghuang）后缀扫描「蕭家河」
+    - 五圣庵      [high] 书证 1 处《src_rxjwkc》
+        · 「五聖菴」 cue:有 @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）提示词回溯「五聖菴」
+    - 观音寺      [mid] 书证 1 处《src_rxjwkc》
+        · 「觀音寺」 suffix_scan @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）后缀扫描「觀音寺」
+    - 观音庵      [high] 书证 2 处《src_rxjwkc》
+        · 「觀音菴」 cue:有 @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）提示词回溯「觀音菴」
+        · 「觀音菴」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「村中觀音菴」
+    - 达官村      [mid] 书证 1 处《src_rxjwkc》
+        · 「達官村」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「達官村」
+    - 关帝庙      [mid] 书证 2 处《src_rxjwkc》
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「關帝廟」
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「關帝廟」
+    - 金山       [mid] 书证 1 处《src_rxjwkc》
+        · 「金山」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dsm_jinshan）后缀扫描「金山」
+    - 清河       [mid] 书证 4 处《src_bma_1929、src_hd_diqumingzhi、src_hd_gov_open、src_minglu_2》
+        · 「清河」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「旗因清河」
+        · 「清河」 suffix_scan @div_minglu2_ahc（引文 tf_minglu_anhecun）后缀扫描「南至清河」
+        · 「清河」 suffix_scan @div_hd_anhe1965（引文 tf_anhe_1965）后缀扫描「桥跨清河」
+        · 「清河」 suffix_scan @div_bma_anhe（引文 tf_anhe_qinghe）后缀扫描「桥跨清河」
+    - 西二旗      [mid] 书证 1 处《src_hd_diqumingzhi》
+        · 「西二旗」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「西二旗」
+    - 名覺生寺     [mid] 书证 1 处《src_jueshengsi_beiwen》
+        · 「名覺生寺」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_ciming）后缀扫描「爰賜名覺生寺」
+    - 左繞山      [mid] 书证 1 处《src_jueshengsi_beiwen》
+        · 「左繞山」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_xingxing）后缀扫描「左繞山」
+    - 向藏漢經厂    [mid] 书证 1 处《src_dijingjingwulue》
+        · 「向藏漢經廠」 suffix_scan @div_djjwl_hjc（引文 tf_djjwl_hjc）后缀扫描「向藏漢經廠」
+    - 方钟樓      [mid] 书证 1 处《src_changankehua》
+        · 「方鐘樓」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_zhonglou）提示词「有」窗口「方鐘樓」
+    - 異他钟      [mid] 书证 1 处《src_changankehua》
+        · 「異他鐘」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_shengwen）提示词「有」窗口「異他鐘」
+    - 懸大钟一口    [mid] 书证 1 处《src_zuozhongzhi》
+        · 「懸大鐘一口」 suffix_scan @div_zzz_dazhong（引文 tf_zzz_zhonglou）后缀扫描「懸大鐘一口」
+    - 十数仆地上    [mid] 书证 1 处《src_chunmengmengyulu》
+        · 「十數仆地上」 cue:有 @div_cmmyl_zhuzhongchang（引文 tf_cmmyl_pudi）提示词「有」窗口「十數仆地上」
+    - 旋梯       [mid] 书证 1 处《src_yanjingsuishiji》
+        · 「旋梯」 cue:有 @div_yjsj_jueshengsi（引文 tf_yjsj_zhongdian）提示词「有」窗口「旋梯」
+    - 道傍观      [mid] 书证 1 处《src_yuanzhonglang》
+        · 「道傍觀」 suffix_scan @div_yhd_wanshousi（引文 tf_yhd_guanyuan）后缀扫描「道傍觀」
+    - 六月十六日    [mid] 书证 1 处《src_rxjwkc》
+        · 「六月十六日」 cue:為 @div_rxjwkc100_wanshousi（引文 tf_yandijian_1607）提示词「為」窗口「六月十六日」
+    - 觉生寺大钟殿   [mid] 书证 1 处《src_dzs_history》
+        · 「觉生寺大钟殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）后缀扫描「移入觉生寺大钟殿」
+    - 华严觉海     [mid] 书证 1 处《src_dzs_history》
+        · 「华严觉海」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）后缀扫描「华严觉海」
+    - 天王殿      [mid] 书证 1 处《src_dzs_history》
+        · 「天王殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）后缀扫描「天王殿」
+    - 大雄宝殿     [mid] 书证 1 处《src_dzs_history》
+        · 「大雄宝殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）后缀扫描「大雄宝殿」
+    - 命勿毀高梁河   [mid] 书证 1 处《src_jinshi》
+        · 「命勿毀高梁河」 suffix_scan @div_jinshi_zhaguan（引文 tf_jinshi_1198）后缀扫描「命勿毀高梁河」
+    - 長源       [mid] 书证 1 处《src_rxjwkc》
+        · 「長源」 cue:曰 @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）提示词「曰」窗口「長源」
+    - 永澤       [mid] 书证 1 处《src_rxjwkc》
+        · 「永澤」 cue:曰 @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）提示词「曰」窗口「永澤」
+    - 資安       [mid] 书证 1 处《src_rxjwkc》
+        · 「資安」 cue:曰 @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）提示词「曰」窗口「資安」
+    - 广潤       [mid] 书证 1 处《src_rxjwkc》
+        · 「廣潤」 cue:曰 @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）提示词「曰」窗口「廣潤」
+    - 南牌坊      [mid] 书证 1 处《src_rxjwkc》
+        · 「南牌坊」 suffix_scan @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）后缀扫描「南牌坊」
+    - 北牌坊      [mid] 书证 1 处《src_rxjwkc》
+        · 「北牌坊」 suffix_scan @div_rxjwkc_gl（引文 tf_rxjwkc_paifang）后缀扫描「北牌坊」
+    - 德胜门外安河   [mid] 书证 1 处《src_lidaizhiguangbiao》
+        · 「德胜门外安河」 suffix_scan @div_zhiguan_v8（引文 tf_zhiguan_fengyicang）后缀扫描「仓在德胜门外安河」
+    - 供守卫圆明园   [mid] 书证 1 处《src_lidaizhiguangbiao》
+        · 「供守卫圆明园」 suffix_scan @div_zhiguan_v8（引文 tf_zhiguan_fengyicang）后缀扫描「供守卫圆明园」
+    - 《三山五园    [mid] 书证 2 处《src_minglu_2、src_sxwj》
+        · 「《三山五园」 suffix_scan @div_minglu2_ahc（引文 tf_minglu_anhecun）后缀扫描「《三山五园」
+        · 「《三山五园」 suffix_scan @div_sxwj_muzhuang（引文 tf_muzhuang_2009）后缀扫描「《三山五园」
+    - 水渠       [mid] 书证 4 处《src_anheqiao_xiaoshi、src_baxun_wanshou、src_hd_gov_open、src_minglu_2》
+        · 「水渠」 suffix_scan @div_minglu2_ahc（引文 tf_minglu_anhecun）后缀扫描「密引水渠」
+        · 「水渠」 suffix_scan @div_hd_anhe1965（引文 tf_anhe_1965）后缀扫描「密引水渠」
+        · 「水渠」 suffix_scan @div_anhe_xiaoshi（引文 tf_village_fade）后缀扫描「密引水渠」
+        · 「水渠」 suffix_scan @div_bx_tu（引文 tf_bx_tu）后缀扫描「水渠」
+    - 重要重修     [mid] 书证 1 处《src_wjbz_open》
+        · 「重要重修」 cue:有 @div_wjbz_gl（引文 tf_wjbz_1980）提示词「有」窗口「重要重修」
+    - 古桥       [mid] 书证 1 处《src_wjbz_open》
+        · 「古桥」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_2003）后缀扫描「古桥」
+    - 建公路桥     [mid] 书证 1 处《src_wjbz_open》
+        · 「建公路桥」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_2003）后缀扫描「北各建公路桥」
+    - 桥北归海淀    [mid] 书证 1 处《src_wjbz_open》
+        · 「桥北归海淀」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_2003）后缀扫描「桥北归海淀」
+    - 界桥       [mid] 书证 1 处《src_wjbz_open》
+        · 「界桥」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_2003）后缀扫描「界桥」
+    - 大运河      [mid] 书证 1 处《src_wjbz_open》
+        · 「大运河」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_gjb_2013）后缀扫描「作为大运河」
+    - 桥上置闸     [mid] 书证 1 处《src_wjbz_open》
+        · 「桥上置闸」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_gate_destroyed）后缀扫描「桥上置闸」
+    - 该闸       [mid] 书证 1 处《src_wjbz_open》
+        · 「该闸」 suffix_scan @div_wjbz_gl（引文 tf_wjbz_gate_destroyed）后缀扫描「该闸」
+    - 船坞       [mid] 书证 1 处《src_hd_gov_open》
+        · 「船坞」 cue:有 @div_hd_yht（引文 tf_yihongtang_1751）提示词「有」窗口「船坞」
+    - 高梁桥是长河   [mid] 书证 1 处《src_hd_gov_open》
+        · 「高梁桥是长河」 suffix_scan @div_hd_zhuanhe（引文 tf_hd_changhe_zhuanhe）后缀扫描「高梁桥是长河」
+    - 转河       [mid] 书证 1 处《src_hd_gov_open》
+        · 「转河」 suffix_scan @div_hd_zhuanhe（引文 tf_hd_changhe_zhuanhe）后缀扫描「河与转河」
+    - 大河       [mid] 书证 1 处《src_hd_gov_open》
+        · 「大河」 suffix_scan @div_hd_zhuanhe（引文 tf_hd_changhe_zhuanhe）后缀扫描「河两大河」
+    - 白石桥      [mid] 书证 1 处《src_hd_gov_open》
+        · 「白石桥」 suffix_scan @div_hd_zhuanhe（引文 tf_hd_changhe_zhuanhe）后缀扫描「西至白石桥」
+    - 历史旧安河桥   [mid] 书证 2 处《src_bma_1929、src_hd_gov_open》
+        · 「历史旧安河桥」 suffix_scan @div_hd_anhe1965（引文 tf_anhe_1965）后缀扫描「历史旧安河桥」
+        · 「历史旧安河桥」 suffix_scan @div_bma_anhe（引文 tf_anhe_qinghe）后缀扫描「历史旧安河桥」
+    - 新桥       [mid] 书证 1 处《src_hd_gov_open》
+        · 「新桥」 suffix_scan @div_hd_anhe1965（引文 tf_anhe_1965）后缀扫描「新桥」
+    - 建木桥      [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「建木桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_wenshi_1724）后缀扫描「)始建木桥」
+    - 旧料       [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「旧料」 cue:有 @div_anhe_xiaoshi（引文 tf_anhe_shie）提示词「有」窗口「旧料」
+    - 旧桥       [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「旧桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_anhe_shie）后缀扫描「旧桥」
+    - 控水闸      [high] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「控水闸」 cue:有 @div_anhe_xiaoshi（引文 tf_anhe_zhaba）提示词回溯「控水闸」
+    - 常水输瓮山泊   [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「常水输瓮山泊」 suffix_scan @div_anhe_xiaoshi（引文 tf_anhe_zhaba）后缀扫描「常水输瓮山泊」
+    - 洪水泄清河    [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「洪水泄清河」 suffix_scan @div_anhe_xiaoshi（引文 tf_anhe_zhaba）后缀扫描「洪水泄清河」
+    - 不说桥      [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「不说桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_anhe_zhaba）后缀扫描「不说桥」
+    - 消失       [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「消失」 cue:有 @div_anhe_xiaoshi（引文 tf_village_fade）提示词「有」窗口「消失」
+    - 公交安河桥    [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「公交安河桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_village_fade）后缀扫描「公交安河桥」
+    - 地铁安河桥    [mid] 书证 2 处《src_anheqiao_xiaoshi》
+        · 「地铁安河桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_village_fade）后缀扫描「地铁安河桥」
+        · 「地铁安河桥」 suffix_scan @div_anhe_xiaoshi（引文 tf_metro_anhebei）后缀扫描「地铁安河桥」
+    - 龙背村      [mid] 书证 1 处《src_anheqiao_xiaoshi》
+        · 「龙背村」 suffix_scan @div_anhe_xiaoshi（引文 tf_metro_anhebei）后缀扫描「龙背村」
+    - 建筑院落     [mid] 书证 1 处《src_baxun_wanshou》
+        · 「建筑院落」 cue:有 @div_bx_tu（引文 tf_bx_tu）提示词「有」窗口「建筑院落」
+    - 土山       [mid] 书证 1 处《src_baxun_wanshou》
+        · 「土山」 suffix_scan @div_bx_tu（引文 tf_bx_tu）后缀扫描「土山」
+    - 垦形成的村    [mid] 书证 1 处《src_hd_gov_open》
+        · 「垦形成的村」 suffix_scan @div_hd_yimuyuan（引文 tf_hd_minguo）后缀扫描「地开垦形成的村」
+    - 疏浚成湖     [mid] 书证 1 处《src_hd_gov_open》
+        · 「疏浚成湖」 suffix_scan @div_hd_shanmianhu（引文 tf_smh_1763）后缀扫描「疏浚成湖」
+    - 故名扇面湖    [mid] 书证 1 处《src_hd_gov_open》
+        · 「故名扇面湖」 suffix_scan @div_hd_shanmianhu（引文 tf_smh_1763）后缀扫描「故名扇面湖」
+    - 扇面湖一带园   [mid] 书证 1 处《src_hd_gov_open》
+        · 「扇面湖一带园」 suffix_scan @div_hd_shanmianhu（引文 tf_smh_1860）后缀扫描「扇面湖一带园」
+    - 建农贸市场    [mid] 书证 1 处《src_hd_gov_open》
+        · 「建农贸市场」 suffix_scan @div_hd_shanmianhu（引文 tf_smh_2000）后缀扫描「建农贸市场」
+    - 菜园       [mid] 书证 1 处《src_hd_gov_open》
+        · 「菜园」 suffix_scan @div_hd_niangniangmiao（引文 tf_nm_guangxu）后缀扫描「院与菜园」
+    - 海淀       [mid] 书证 2 处《src_hd_gov_open》
+        · 「海淀」 suffix_scan @div_hd_niangniangmiao（引文 tf_nm_2014）后缀扫描「布为海淀」
+        · 「海淀」 suffix_scan @div_hd_xiding（引文 tf_hd_wuding）后缀扫描「一在海淀」
+    - 前殿关      [mid] 书证 1 处《src_hd_gov_open》
+        · 「前殿关」 suffix_scan @div_hd_niangniangmiao（引文 tf_nm_2014）后缀扫描「前殿关」
+    - 后殿       [mid] 书证 1 处《src_hd_gov_open》
+        · 「后殿」 suffix_scan @div_hd_niangniangmiao（引文 tf_nm_2014）后缀扫描「后殿」
+    - 專缺       [mid] 书证 1 处《src_qingshigao》
+        · 「專缺」 cue:為 @div_qsg_zhiguanzhi（引文 tf_qsg_guanzhi）提示词「為」窗口「專缺」
+    - 本营       [mid] 书证 1 处《src_qingshigao》
+        · 「本營」 suffix_scan @div_qsg_zhiguanzhi（引文 tf_qsg_guanzhi）后缀扫描「改入本營」
+    - 置营       [mid] 书证 1 处《src_qingshigao》
+        · 「置營」 suffix_scan @div_qsg_zhiguanzhi（引文 tf_qsg_guanzhi）后缀扫描「年改置營」
+    - 建西頂娘娘庙   [mid] 书证 1 处《src_zuozhongzhi》
+        · 「建西頂娘娘廟」 suffix_scan @div_zzz_xiding（引文 tf_zzz_xiding）后缀扫描「廠始建西頂娘娘廟」
+    - 载四月进香庙   [mid] 书证 1 处《src_xiding_miao_bei》
+        · 「载四月进香庙」 suffix_scan @div_xdb_huixiang（引文 tf_xdb_hui）后缀扫描「载四月进香庙」
+    - 请迁建城西营   [mid] 书证 1 处《src_wjbz_open》
+        · 「请迁建城西营」 suffix_scan @div_wjbz_waiying（引文 tf_wjbz_qianjian）后缀扫描「尔奏请迁建城西营」
+    - 部分建筑遗存   [mid] 书证 1 处《src_wjbz_open》
+        · 「部分建筑遗存」 cue:有 @div_wjbz_waiying（引文 tf_wjbz_zongji）提示词「有」窗口「部分建筑遗存」
+    - 火器营相关    [high] 书证 1 处《src_wjbz_open》
+        · 「火器营相关」 cue:有 @div_wjbz_waiying（引文 tf_wjbz_zongji）提示词回溯「多与火器营相关」
+    - 火器营营     [mid] 书证 1 处《src_wjbz_open》
+        · 「火器营营」 suffix_scan @div_wjbz_waiying（引文 tf_wjbz_zongji）后缀扫描「火器营营」
+    - 永山       [mid] 书证 2 处《src_hd_gov_open、src_wjbz_open》
+        · 「永山」 suffix_scan @div_wjbz_waiying（引文 tf_wjbz_zongji）后缀扫描「永山」
+        · 「永山」 suffix_scan @div_hd_ldc（引文 tf_hd_metro）后缀扫描「永山」
+    - 老营       [mid] 书证 2 处《src_hd_gov_open、src_wjbz_open》
+        · 「老营」 suffix_scan @div_wjbz_waiying（引文 tf_wjbz_zongji）后缀扫描「老营」
+        · 「老营」 suffix_scan @div_hd_ldc（引文 tf_hd_metro）后缀扫描「老营」
+    - 火器营桥     [mid] 书证 2 处《src_hd_gov_open、src_wjbz_open》
+        · 「火器营桥」 suffix_scan @div_wjbz_waiying（引文 tf_wjbz_zongji）后缀扫描「火器营桥」
+        · 「火器营桥」 suffix_scan @div_hd_ldc（引文 tf_hd_metro）后缀扫描「火器营桥」
+    - 西顶庙      [mid] 书证 1 处《src_hd_gov_open》
+        · 「西顶庙」 suffix_scan @div_hd_xiding（引文 tf_hd_xiding_yange）后缀扫描「西顶庙」
+    - 戏楼       [mid] 书证 1 处《src_hd_gov_open》
+        · 「戏楼」 cue:有 @div_hd_xiding（引文 tf_hd_miaohui）提示词「有」窗口「戏楼」
+    - 进香       [mid] 书证 1 处《src_hd_gov_open》
+        · 「进香」 cue:有 @div_hd_xiding（引文 tf_hd_miaohui）提示词「有」窗口「进香」
+    - 顶村       [mid] 书证 1 处《src_hd_gov_open》
+        · 「顶村」 suffix_scan @div_hd_xiding（引文 tf_hd_wuding）后缀扫描「台中顶村」
+    - 内火器营     [mid] 书证 1 处《src_hd_gov_open》
+        · 「内火器营」 suffix_scan @div_hd_ldc（引文 tf_hd_neiwai）后缀扫描「内火器营」
+    - 枪营       [mid] 书证 1 处《src_hd_gov_open》
+        · 「枪营」 suffix_scan @div_hd_ldc（引文 tf_hd_neiwai）后缀扫描「设枪营」
+    - 炮营       [mid] 书证 1 处《src_hd_gov_open》
+        · 「炮营」 suffix_scan @div_hd_ldc（引文 tf_hd_neiwai）后缀扫描「炮营」
+    - 西郊蓝靛厂    [mid] 书证 1 处《src_hd_gov_open》
+        · 「西郊蓝靛厂」 suffix_scan @div_hd_ldc（引文 tf_hd_neiwai）后缀扫描「建于西郊蓝靛厂」
+    - 京旗       [mid] 书证 1 处《src_hd_gov_open》
+        · 「京旗」 suffix_scan @div_hd_ldc（引文 tf_hd_jingqi）后缀扫描「京旗」
+    - 外三营      [mid] 书证 1 处《src_hd_gov_open》
+        · 「外三营」 suffix_scan @div_hd_ldc（引文 tf_hd_jingqi）后缀扫描「京旗外三营」
+    - 清代营      [mid] 书证 1 处《src_hd_gov_open》
+        · 「清代营」 suffix_scan @div_hd_ldc（引文 tf_hd_metro）后缀扫描「来自清代营」
+    - 蓝靛生产相关   [mid] 书证 1 处《src_hd_gov_open》
+        · 「蓝靛生产相关」 suffix_scan @div_hd_ldc（引文 tf_hd_ldc_yongle）后缀扫描「始与蓝靛生产相关」
+    - 作坊       [mid] 书证 1 处《src_hd_gov_open》
+        · 「作坊」 suffix_scan @div_hd_ldc（引文 tf_hd_dingyuanchang）后缀扫描「地设作坊」
+    - 隶属内府     [mid] 书证 1 处《src_hd_gov_open》
+        · 「隶属内府」 suffix_scan @div_hd_ldc（引文 tf_hd_dingyuanchang）后缀扫描「隶属内府」
+    - 临长河      [mid] 书证 1 处《src_hd_gov_open》
+        · 「临长河」 suffix_scan @div_hd_fusi（引文 tf_hd_lima）后缀扫描「临长河」
+    - 山门内塑关    [mid] 书证 1 处《src_hd_gov_open》
+        · 「山门内塑关」 suffix_scan @div_hd_fusi（引文 tf_hd_lima）后缀扫描「山门内塑关」
+    - 正殿       [mid] 书证 1 处《src_hd_gov_open》
+        · 「正殿」 suffix_scan @div_hd_fusi（引文 tf_hd_lima）后缀扫描「正殿」
+    - 是海淀      [mid] 书证 1 处《src_hd_gov_open》
+        · 「是海淀」 suffix_scan @div_hd_fusi（引文 tf_hd_qingzhensi）后缀扫描「是海淀」
+    - 清真寺      [mid] 书证 1 处《src_hd_gov_open》
+        · 「清真寺」 suffix_scan @div_hd_fusi（引文 tf_hd_qingzhensi）后缀扫描「现存清真寺」
+    - 广仁宮      [mid] 书证 1 处《src_tianzhi_ouwen》
+        · 「廣仁宮」 cue:為 @div_tz_ju9（引文 tf_tz_guangren）提示词「為」窗口「廣仁宮」
+    - 地名蓝靛厂    [mid] 书证 1 处《src_tianzhi_ouwen》
+        · 「地名藍靛廠」 suffix_scan @div_tz_ju9（引文 tf_tz_guangren）后缀扫描「地名藍靛廠」
+    - 庚申秋御园    [mid] 书证 2 处《src_tianzhi_ouwen》
+        · 「庚申秋御園」 suffix_scan @div_tz_ju9（引文 tf_tz_gengshen）后缀扫描「自庚申秋御園」
+        · 「庚申秋御園」 suffix_scan @div_tzow9_jiaodiong（引文 tf_tzow_lingluo）后缀扫描「自庚申秋御園」
+    - 蘇州街      [mid] 书证 1 处《src_rxjwkc》
+        · 「蘇州街」 cue:為 @div_rxjwkc77_changhe（引文 tf_rxjwkc77_wanshoujie）提示词「為」窗口「蘇州街」
+    - 長衢列肆     [mid] 书证 1 处《src_rxjwkc》
+        · 「長衢列肆」 cue:有 @div_rxjwkc77_changhe（引文 tf_rxjwkc77_wanshoujie）提示词「有」窗口「長衢列肆」
+    - 又按万寿寺    [mid] 书证 1 处《src_rxjwkc》
+        · 「又按萬壽寺」 suffix_scan @div_rxjwkc77_changhe（引文 tf_rxjwkc77_wanshoujie）后缀扫描「又按萬壽寺」
+    - 北达畅春园    [mid] 书证 1 处《src_rxjwkc》
+        · 「北達暢春園」 suffix_scan @div_rxjwkc77_changhe（引文 tf_rxjwkc77_wanshoujie）后缀扫描「北達暢春園」
+    - 長河       [mid] 书证 1 处《src_rxjwkc》
+        · 「長河」 suffix_scan @div_rxjwkc77_changhe（引文 tf_rxjwkc77_yihongtang）后缀扫描「自長河」
+    - 爰敕内府     [mid] 书证 1 处《src_rxjwkc》
+        · 「爰敕內府」 suffix_scan @div_rxjwkc77_changhe（引文 tf_rxjwkc77_zaixiu）后缀扫描「爰敕內府」
+    - 蘇州街云     [mid] 书证 1 处《src_xiaoting_zalu》
+        · 「蘇州街云」 cue:曰 @div_xtzl10_suzhoujie（引文 tf_xtzl_1761）提示词「曰」窗口「蘇州街云」
+    - 市廛坊      [mid] 书证 1 处《src_xiaoting_zalu》
+        · 「市廛坊」 suffix_scan @div_xtzl10_suzhoujie（引文 tf_xtzl_1761）后缀扫描「市廛坊」
+    - 寺西城关     [mid] 书证 1 处《src_tianzhi_ouwen》
+        · 「寺西城關」 suffix_scan @div_tzow9_jiaodiong（引文 tf_tzow_wanshoujie）后缀扫描「寺西城關」
+    - 后溪河      [mid] 书证 1 处《src_hd_gov_open》
+        · 「后溪河」 suffix_scan @div_hdgov_yiheyuan（引文 tf_hdgov_shisi）后缀扫描「后溪河」
+    - 十月五日占海   [mid] 书证 1 处《src_hd_gov_open》
+        · 「十月五日占海」 suffix_scan @div_hdgov_yiheyuan（引文 tf_hdgov_1860）后缀扫描「十月五日占海」
+    - 六日占圆明园   [mid] 书证 1 处《src_hd_gov_open》
+        · 「六日占圆明园」 suffix_scan @div_hdgov_yiheyuan（引文 tf_hdgov_1860）后缀扫描「六日占圆明园」
+    - 列侯       [mid] 书证 1 处《src_hanshu》
+        · 「列侯」 cue:為 @div_hanshu_gaohouji（引文 tf_hanshu_zhongguan）提示词「為」窗口「列侯」
+    - 爵关       [mid] 书证 1 处《src_hanshu》
+        · 「爵關」 suffix_scan @div_hanshu_gaohouji（引文 tf_hanshu_zhongguan）后缀扫描「皆賜爵關」
+    - 北洋政府     [mid] 书证 1 处《src_1913_jingxitu》
+        · 「北洋政府」 suffix_scan @div_jingxitu_1913（引文 tf_jingxitu_1913）后缀扫描「北洋政府」
+    - 关村       [mid] 书证 1 处《src_1913_jingxitu》
+        · 「关村」 suffix_scan @div_jingxitu_1913（引文 tf_jingxitu_1913）后缀扫描「中关村」
+  重访篇卷（VisitKey 已登记）: 0
+  命中已建词条字形（跳过）: 70
+  重复候选观察（并入假说）: 0
+  收录: 0 / 拒绝: 0

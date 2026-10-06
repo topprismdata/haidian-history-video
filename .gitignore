@@ -190,3 +190,5 @@
 !e30_shikongqiao_video/3d/tools/geom_invert.py
 !e30_shikongqiao_video/3d/tools/cert_gates.json
 !e30_shikongqiao_video/3d/tools/photo_native_width.json
+e30_shikongqiao_video/3d/refs/video_raw/
+e30_shikongqiao_video/3d/refs/video_frames/

@@ -20,7 +20,12 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 out_path = argv[0] if argv else "core_hash.json"
 
-CORE = ("bridge_body", "voussoir", "impost")
+CORE = ("bridge_body", "voussoir", "coursing")
+# [2026-10-06 M19 拓扑跟随] 原第三核心对象 `impost`(M2.5 单 mesh 起拱石)已被
+# M18 三区贴面/M19 build_impost 线脚(204 块)并入 `coursing` 对象, 场景中不复
+# 存在 —— 冻结第三对象随实体迁移改为 coursing; 末次独立 impost 记录
+# 5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a(M2.5 候选)。
+# 变更走 body_changelog.md 并同步本文件 §2 哈希与 freeze_manifest §7。
 
 
 def mesh_sha(obj_name, dg):

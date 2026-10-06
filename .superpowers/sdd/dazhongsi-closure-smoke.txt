@@ -1,0 +1,137 @@
+大钟寺词条闭包冒烟（E9 · 闭包方法 v3 第一次真实 admission）
+================================================================
+基线：四模块(G/Y/B/S)    挖过篇卷 20    候选假说 18    已知名命中 14
+加入大钟寺：五模块(G/Y/B/S/D) 挖过篇卷 36    候选假说 32    已知名命中 23
+
+[1] 新进入 frontier 的篇卷 16 个（应含帝京景物略等新 sources）：
+    + div_beiwen_quanbei
+    + div_djjwl_hjc
+    + div_djjwl_liugeng
+    + div_cakh_wanshousi
+    + div_zzz_dazhong
+    + div_cmmyl_zhuzhongchang
+    + div_yjsj_jueshengsi
+    + div_wlyhb_wanshousi
+    + div_lgdjj_yunshi
+    + div_yhd_wanshousi
+    + div_rxjwkc100_wanshousi
+    + div_qgz_1743_shi
+    + div_qgz_1746_ge
+    + div_dzs_yange
+    + div_dzs_bell
+    + div_dzs_qiyu
+
+[2] 新候选假说 14 个（归一形为基线所无）：
+    - 名覺生寺           [mid] 书证 1 处《src_jueshengsi_beiwen》
+    - 左繞山            [mid] 书证 1 处《src_jueshengsi_beiwen》
+    - 向藏漢經厂          [mid] 书证 1 处《src_dijingjingwulue》
+    - 方钟樓            [mid] 书证 1 处《src_changankehua》
+    - 異他钟            [mid] 书证 1 处《src_changankehua》
+    - 懸大钟一口          [mid] 书证 1 处《src_zuozhongzhi》
+    - 十数仆地上          [mid] 书证 1 处《src_chunmengmengyulu》
+    - 旋梯             [mid] 书证 1 处《src_yanjingsuishiji》
+    - 道傍观            [mid] 书证 1 处《src_yuanzhonglang》
+    - 六月十六日          [mid] 书证 1 处《src_rxjwkc》
+    - 觉生寺大钟殿         [mid] 书证 1 处《src_dzs_history》
+    - 华严觉海           [mid] 书证 1 处《src_dzs_history》
+    - 天王殿            [mid] 书证 1 处《src_dzs_history》
+    - 大雄宝殿           [mid] 书证 1 处《src_dzs_history》
+
+[3] 新书源挖出新 occurrence 14 处：
+    · 「名覺生寺」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_ciming）
+    · 「左繞山」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_xingxing）
+    · 「向藏漢經廠」 suffix_scan @div_djjwl_hjc（引文 tf_djjwl_hjc）
+    · 「方鐘樓」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_zhonglou）
+    · 「異他鐘」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_shengwen）
+    · 「懸大鐘一口」 suffix_scan @div_zzz_dazhong（引文 tf_zzz_zhonglou）
+    · 「十數仆地上」 cue:有 @div_cmmyl_zhuzhongchang（引文 tf_cmmyl_pudi）
+    · 「旋梯」 cue:有 @div_yjsj_jueshengsi（引文 tf_yjsj_zhongdian）
+    · 「道傍觀」 suffix_scan @div_yhd_wanshousi（引文 tf_yhd_guanyuan）
+    · 「六月十六日」 cue:為 @div_rxjwkc100_wanshousi（引文 tf_yandijian_1607）
+    · 「觉生寺大钟殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）
+    · 「华严觉海」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）
+    · 「天王殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）
+    · 「大雄宝殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）
+
+[4] 已建词条字形命中 23（基线 14，增量即大钟寺词条字形被既有书反命中）
+
+[5] 纪律确认：引擎只发现不收录 admitted=[] 重访=0 重复候选=0
+
+闭包扩展报告 v3（miner=v3 / rule_profile=rp-v3）
+  种子词条: 高梁水、高粱河、西城闸、高梁闸、长河、高梁河、圆明园、长春园、绮春园、圆明三园、遗址公园、镶黄旗营房、树村西、萧家河北、树村汛、北安河桥、圆明园八旗驻防、树村、大有庄、穷八家、西三旗、青龙桥、七里泊、碾庄、七十二府、东四墓、觉生寺、大钟寺、华严钟、永乐大钟、万寿寺、汉经厂、铸钟厂
+  遍历词条: 33
+  挖过的篇卷: 36 个（div_sjz_v13_luoshui、div_sjz_v14_baqiushui、div_yuanshi_hequ_3、div_liaoshi_84、div_songshi_taizong、div_ymy_yuan_yange、div_ymy_yuan_1949、div_ymy_sj、div_bqtz116_yingjian、div_bqtz34_zhuoshu、div_rxjwkc72_baqi、div_rxjwkc99_jiaojiong、div_rizhi46_yu、div_rizhi76_yu、div_zyztj1、div_rxjwkc100_xijiaojing、div_mingshi_bingzhi、div_mingyitongzhi、div_diquminglu_xisanqi、div_2024_minglu_qinglongqiao、div_beiwen_quanbei、div_djjwl_hjc、div_djjwl_liugeng、div_cakh_wanshousi、div_zzz_dazhong、div_cmmyl_zhuzhongchang、div_yjsj_jueshengsi、div_wlyhb_wanshousi、div_lgdjj_yunshi、div_yhd_wanshousi、div_rxjwkc100_wanshousi、div_qgz_1743_shi、div_qgz_1746_ge、div_dzs_yange、div_dzs_bell、div_dzs_qiyu）
+  发现候选假说: 32 个
+    - 永定河      [mid] 书证 1 处《src_shuijingzhu》
+        · 「永定河」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「水自永定河」
+    - 戾陵堰      [mid] 书证 1 处《src_shuijingzhu》
+        · 「戾陵堰」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「筑戾陵堰」
+    - 车箱渠      [mid] 书证 1 处《src_shuijingzhu》
+        · 「车箱渠」 suffix_scan @div_sjz_v14_baqiushui（引文 tf_sjz_liujing）后缀扫描「开车箱渠」
+    - 通惠河      [mid] 书证 1 处《src_yuanshi》
+        · 「通惠河」 suffix_scan @div_yuanshi_hequ_3（引文 tf_yuanshi_wood）后缀扫描「奏开通惠河」
+    - 绮春三园     [mid] 书证 1 处《src_ymy_yuan》
+        · 「绮春三园」 suffix_scan @div_ymy_yuan_yange（引文 tf_ymy_1770）后缀扫描「绮春三园」
+    - 水礳       [mid] 书证 1 处《src_bqtz》
+        · 「水礳」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词「坐落」窗口「水礳」
+    - 保福寺      [high] 书证 1 处《src_bqtz》
+        · 「保福寺」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「保福寺」
+    - 萧家河      [high] 书证 2 处《src_bqtz、src_rxjwkc》
+        · 「蕭家河」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「蕭家河」
+        · 「蕭家河」 suffix_scan @div_rxjwkc72_baqi（引文 tf_bq72_zhenghuang）后缀扫描「蕭家河」
+    - 安河桥      [high] 书证 1 处《src_bqtz》
+        · 「安河橋」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「安河橋」
+    - 蓝靛厂      [high] 书证 1 处《src_bqtz》
+        · 「藍靛廠」 cue:坐落 @div_bqtz116_yingjian（引文 tf_bqtz116_fangwei）提示词回溯「藍靛廠」
+    - 五圣庵      [high] 书证 1 处《src_rxjwkc》
+        · 「五聖菴」 cue:有 @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）提示词回溯「五聖菴」
+    - 观音寺      [mid] 书证 1 处《src_rxjwkc》
+        · 「觀音寺」 suffix_scan @div_rxjwkc99_jiaojiong（引文 tf_rx99_wushengan）后缀扫描「觀音寺」
+    - 观音庵      [high] 书证 2 处《src_rxjwkc》
+        · 「觀音菴」 cue:有 @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）提示词回溯「觀音菴」
+        · 「觀音菴」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「村中觀音菴」
+    - 达官村      [mid] 书证 1 处《src_rxjwkc》
+        · 「達官村」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「達官村」
+    - 关帝庙      [mid] 书证 2 处《src_rxjwkc》
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_100）后缀扫描「關帝廟」
+        · 「關帝廟」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dyz_ming_objects）后缀扫描「關帝廟」
+    - 金山       [mid] 书证 1 处《src_rxjwkc》
+        · 「金山」 suffix_scan @div_rxjwkc100_xijiaojing（引文 tf_dsm_jinshan）后缀扫描「金山」
+    - 清河       [mid] 书证 1 处《src_hd_diqumingzhi》
+        · 「清河」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「旗因清河」
+    - 西二旗      [mid] 书证 1 处《src_hd_diqumingzhi》
+        · 「西二旗」 suffix_scan @div_diquminglu_xisanqi（引文 tf_xsq_diquzhi）后缀扫描「西二旗」
+    - 名覺生寺     [mid] 书证 1 处《src_jueshengsi_beiwen》
+        · 「名覺生寺」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_ciming）后缀扫描「爰賜名覺生寺」
+    - 左繞山      [mid] 书证 1 处《src_jueshengsi_beiwen》
+        · 「左繞山」 suffix_scan @div_beiwen_quanbei（引文 tf_beiwen_xingxing）后缀扫描「左繞山」
+    - 向藏漢經厂    [mid] 书证 1 处《src_dijingjingwulue》
+        · 「向藏漢經廠」 suffix_scan @div_djjwl_hjc（引文 tf_djjwl_hjc）后缀扫描「向藏漢經廠」
+    - 方钟樓      [mid] 书证 1 处《src_changankehua》
+        · 「方鐘樓」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_zhonglou）提示词「有」窗口「方鐘樓」
+    - 異他钟      [mid] 书证 1 处《src_changankehua》
+        · 「異他鐘」 cue:有 @div_cakh_wanshousi（引文 tf_cakh_shengwen）提示词「有」窗口「異他鐘」
+    - 懸大钟一口    [mid] 书证 1 处《src_zuozhongzhi》
+        · 「懸大鐘一口」 suffix_scan @div_zzz_dazhong（引文 tf_zzz_zhonglou）后缀扫描「懸大鐘一口」
+    - 十数仆地上    [mid] 书证 1 处《src_chunmengmengyulu》
+        · 「十數仆地上」 cue:有 @div_cmmyl_zhuzhongchang（引文 tf_cmmyl_pudi）提示词「有」窗口「十數仆地上」
+    - 旋梯       [mid] 书证 1 处《src_yanjingsuishiji》
+        · 「旋梯」 cue:有 @div_yjsj_jueshengsi（引文 tf_yjsj_zhongdian）提示词「有」窗口「旋梯」
+    - 道傍观      [mid] 书证 1 处《src_yuanzhonglang》
+        · 「道傍觀」 suffix_scan @div_yhd_wanshousi（引文 tf_yhd_guanyuan）后缀扫描「道傍觀」
+    - 六月十六日    [mid] 书证 1 处《src_rxjwkc》
+        · 「六月十六日」 cue:為 @div_rxjwkc100_wanshousi（引文 tf_yandijian_1607）提示词「為」窗口「六月十六日」
+    - 觉生寺大钟殿   [mid] 书证 1 处《src_dzs_history》
+        · 「觉生寺大钟殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）后缀扫描「移入觉生寺大钟殿」
+    - 华严觉海     [mid] 书证 1 处《src_dzs_history》
+        · 「华严觉海」 suffix_scan @div_dzs_yange（引文 tf_dzs_1743）后缀扫描「华严觉海」
+    - 天王殿      [mid] 书证 1 处《src_dzs_history》
+        · 「天王殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）后缀扫描「天王殿」
+    - 大雄宝殿     [mid] 书证 1 处《src_dzs_history》
+        · 「大雄宝殿」 suffix_scan @div_dzs_yange（引文 tf_dzs_1985）后缀扫描「大雄宝殿」
+  重访篇卷（VisitKey 已登记）: 0
+  命中已建词条字形（跳过）: 23
+  重复候选观察（并入假说）: 0
+  收录: 0 / 拒绝: 0
+================================================================
+结论：PASS——新 sources 进入 frontier 且挖出新 occurrence

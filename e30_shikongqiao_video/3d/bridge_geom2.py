@@ -27,7 +27,7 @@ PIER_FOUND_W_C = _F.PIER_FOUND_W_C
 BRIDGE_ABUT = _F.BRIDGE_ABUT   # 尺寸决策只在 facts 一处做(T2b 归因后改); 生成器纯消费
 SPAN_DISTINCT = list(_F.SPAN_DISTINCT)   # G1 更名: '半跨'语义数学上不可能(9值×2-1=17孔)
 DECK_Z_END, DECK_Z_TOP = _F.DECK_Z_END, _F.DECK_Z_TOP
-from assumptions import BODY_BOTTOM, MESH_TOL, VOID_CUT_MARGIN   # G1 分家: 建模假定/判据参数不属 facts
+from assumptions import BODY_BOTTOM, MESH_TOL, VOID_CUT_MARGIN, VOID_CUT_WIDTH_K   # G1 分家: 建模假定/判据参数不属 facts
 SEG = 40
 NSEG_X = 240            # 桥体纵向分段(高密度 -> 光滑)
 NSEG_ARC = 40           # 券洞圆弧分段
@@ -178,7 +178,7 @@ def build_void_bm():
         a = span / 2.0
         b = arch_rise(i)   # M12 P0-2: 矢高剖面(中央高/端矮)
         springer = arch_springer_z(i)
-        w = DECK_DOWN_W * 1.40
+        w = DECK_DOWN_W * VOID_CUT_WIDTH_K   # 贯通系数外置 assumptions(与 SPANDREL_C 数值巧合, no_literals 锁)
         # 截面 = 下部竖直边墙(矩形基座) + 上部半圆券。半圆严格从 SPRINGER 起,
         # 不允许在券圈内部多出一段直边(GPT v4 扣分点)。
         # 闭合轮廓: 逆时针封闭无自相交
