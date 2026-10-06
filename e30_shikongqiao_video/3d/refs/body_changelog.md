@@ -352,3 +352,9 @@
   依据, 判据阈值与精度零放松。
 - 验收(隔离副本实测): tests 64 passed / tests/bridge3d 312 passed / blender 重建零错
   SAVED v2 / QA_L2_OK / NEG_CAUGHT 10/10 / ABUTMENT_CHECK ALL PASS。
+
+## 2026-10-06 P1-T7 场景三模式(emit-lib/layout GN 实例/proxy 回归) —— 本体零几何
+
+**改动文件**: `build_scene2.py`(头部导入守护化 + 尾部纯逻辑段/三模式; 默认 proxy 路径零改动)、`masonry2.py`(新增 materialize/anchor_offset/_euler_xyz_matrix, U2 全局唯一放置算子)、`export_print.py`(export_ledger mesh_fn=None 默认走 materialize 回床; 显式路径逐位不变)、新增 `tests/test_p1_scene.py`(15 条 blender-free 单测)。
+
+**冻结影响**: 本体 bridge_body/voussoir/coursing freeze_hash 三对象 sha_sorted/sha_order 逐位一致(隔离树实测 CORE_HASH_IDENTICAL: True); qa_l2 正检 QA_L2_OK(fail/warn/skip 0/0/0)、负控 NEG_CAUGHT 10/10、_check_abutment ALL PASS。`--emit-lib` 出 out/families.blend(FAMILIES_EMIT 与纯 python 族清点互证相等)、`--layout` 出 out/e30_layout.blend(场景 Object 20 < 60; GN 点云 5250 石 × Pick Instance)。layout vs proxy 结构砌体正交侧视剪影(1200px/24spp) SILHOUETTE_IOU=0.9326(>0.9) 且像素非全等(对照口径与残差见 .superpowers/sdd/p1-task-7-report.md)。

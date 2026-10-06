@@ -30,6 +30,7 @@ import random
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import ledger as L
+import families as FAM
 
 STRETCHER_D = 1.2
 HEADER_D = 2.4
@@ -225,3 +226,87 @@ def build_face_layer(stones_dir, hw_fn, arches, course_h=None):
         for side in (1, -1):
             out.extend(face_stones(spec, ai, side, hw_fn, course_h=course_h))
     return out
+
+
+# ── P1-T7 (U2 裁决): 全局唯一放置算子 ─────────────────────────────────
+# 导出(export_print 默认 mesh_fn)与场景(GN 实例装配)共用同一定义:
+#   world_v = 块中心 + R(rx,ry,rz) @ (local_v - 块中心), 其中
+#   块中心 = anchor + off, off = anchor_offset(family, transform)。
+# 无旋转时退化为 world_v = local_v + off(逐位, 不经矩阵)。
+# 锚点语义按族分派(与 masonry2 账目书写一致, 两族各一种):
+#   wedge-std: transform 的 x/z 是块中心, y 是前脸位置(面石前脸 = hw+proud,
+#              故 y 向偏移 = ty - proud 使前脸落在 ty)
+#              -> off = [tx - w/2, ty - proud, tz - h/2];
+#   slab:      transform 是块最小角(core cells 与 params.bbox 同式直写)
+#              -> off = [tx, ty, tz]。
+# 块中心取完整族网格(非传入 verts)的 bbox 中点 —— 裁剪 unique 网格的放置
+# 中心仍按整块语义, 与 GN 实例点(build_scene2.placement_point)严格同源。
+
+_ANCHOR_MIN_CORNER = ("slab",)
+
+
+def anchor_offset(family, params, transform):
+    # type: (str, Dict[str, Any], List[float]) -> Tuple[float, float, float]
+    """族锚点 -> 平移偏移(块最小角-系语义; 见节注释)。未知族 raise。"""
+    if family in _ANCHOR_MIN_CORNER:
+        return (float(transform[0]), float(transform[1]), float(transform[2]))
+    if family == "wedge-std":
+        w = float(params["w"])
+        h = float(params["h"])
+        proud = float(params.get("proud", 0.0))
+        return (float(transform[0]) - w / 2.0,
+                float(transform[1]) - proud,
+                float(transform[2]) - h / 2.0)
+    raise ValueError("anchor_offset: unknown family %r" % (family,))
+
+
+def _euler_xyz_matrix(rx, ry, rz):
+    # type: (float, float, float) -> Tuple[Tuple[float, ...], ...]
+    """Blender XYZ 欧拉序的 3x3 旋转(R = Rz @ Ry @ Rx, 列向量右乘)。"""
+    cx, sx = math.cos(rx), math.sin(rx)
+    cy, sy = math.cos(ry), math.sin(ry)
+    cz, sz = math.cos(rz), math.sin(rz)
+    # Rx
+    rx_m = ((1.0, 0.0, 0.0), (0.0, cx, -sx), (0.0, sx, cx))
+    # Ry
+    ry_m = ((cy, 0.0, sy), (0.0, 1.0, 0.0), (-sy, 0.0, cy))
+    # Rz
+    rz_m = ((cz, -sz, 0.0), (sz, cz, 0.0), (0.0, 0.0, 1.0))
+
+    def _mul(a, b):
+        # type: (Tuple[Tuple[float, ...], ...], Tuple[Tuple[float, ...], ...]) -> Tuple[Tuple[float, ...], ...]
+        return tuple(tuple(sum(a[i][k] * b[k][j] for k in range(3))
+                           for j in range(3)) for i in range(3))
+
+    return _mul(rz_m, _mul(ry_m, rx_m))
+
+
+def materialize(stone, verts=None, faces=None):
+    # type: (Dict[str, Any], Optional[List[Tuple[float, float, float]]], Optional[List[Tuple[int, ...]]]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """把石的局部族网格放置到世界系(U2: 导出与场景共用的唯一放置算子)。
+
+    verts/faces 缺省用 families.family_mesh(family, params) 生成; 传入裁剪
+    unique 网格时, 放置中心仍取完整族网格 bbox 中点(整块语义, 见节注释)。
+    不改写 stone 与传入网格。返回 (world_verts, faces)。
+    """
+    if verts is None:
+        verts, faces = FAM.family_mesh(stone["family"], stone["params"])
+    off = anchor_offset(stone["family"], stone["params"], stone["transform"])
+    rx, ry, rz = (float(stone["transform"][3]), float(stone["transform"][4]),
+                  float(stone["transform"][5]))
+    if abs(rx) < 1e-12 and abs(ry) < 1e-12 and abs(rz) < 1e-12:
+        return [(v[0] + off[0], v[1] + off[1], v[2] + off[2]) for v in verts], \
+            list(faces)
+    full_v, _ = FAM.family_mesh(stone["family"], stone["params"])
+    center = tuple((min(c[i] for c in full_v) + max(c[i] for c in full_v)) / 2.0
+                   for i in range(3))
+    ctr = (center[0] + off[0], center[1] + off[1], center[2] + off[2])
+    rm = _euler_xyz_matrix(rx, ry, rz)
+    out = []
+    for v in verts:
+        d = (v[0] - center[0], v[1] - center[1], v[2] - center[2])
+        r = (rm[0][0] * d[0] + rm[0][1] * d[1] + rm[0][2] * d[2],
+             rm[1][0] * d[0] + rm[1][1] * d[1] + rm[1][2] * d[2],
+             rm[2][0] * d[0] + rm[2][1] * d[1] + rm[2][2] * d[2])
+        out.append((ctr[0] + r[0], ctr[1] + r[1], ctr[2] + r[2]))
+    return out, list(faces)

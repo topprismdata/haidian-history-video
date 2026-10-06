@@ -1,12 +1,26 @@
-"""v2 场景: 整体桥体 + 布尔挖券洞 + 券脸楔石 + 栏杆 + 异兽。"""
-import bpy, bmesh, os, sys, math
+"""v2 场景: 整体桥体 + 布尔挖券洞 + 券脸楔石 + 栏杆 + 异兽。
+
+P1-T7 三模式(2026-10-06): 默认 = proxy(现行合并网格路径, 行为逐位不变);
+`--emit-lib` 出族库 out/families.blend; `--layout` 出 GN 实例装配 out/e30_layout.blend。
+纯逻辑段(blender-free)见文件尾 P1-T7 节: pytest 可直接 import 本模块。
+"""
+import os
+import sys
+import math
 _c=math.cos; _s=math.sin; _pi=math.pi
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import bridge_geom2 as G
-import materials as MAT
-import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
-import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
-from mathutils import Vector, Matrix
+# blender 依赖一律守护导入: 无 bpy 环境(pytest/纯链复用)下置 None,
+# blender 模式逐位不变; 纯逻辑段只用 facts/masonry2/families/ledger/export_print。
+try:
+    import bpy, bmesh
+    import bridge_geom2 as G
+    import materials as MAT
+    import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
+    import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
+    from mathutils import Vector, Matrix
+except ImportError:   # pragma: no cover - blender-free 环境
+    bpy = bmesh = G = MAT = LIONS = BEASTS = None
+    Vector = Matrix = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRIDGE_AXIS_AZ = 112.0     # 北京建筑大学口径(东端略南/西端略北), 供后续光影用
@@ -937,7 +951,715 @@ def build():
     return sc
 
 
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# P1-T7 纯逻辑段(blender-free)
+# 全桥砌体账目链(masonry2 三层 × 17 孔 × 东西) + 券洞 void 裁剪 + 族清点 +
+# GN 实例放置数学。只依赖 facts/assumptions/masonry2/families/ledger/
+# export_print —— pytest 无 bpy 直测; 上面的三模式复用同一实现(单一真相)。
+# 桥面/墩位从 facts 常量独立推导(与 bridge_geom2 同式; P1 惯例 hw_fn 注入,
+# 先例 tests/test_p1_masonry2.py hw_p8), blender 模式跑 _check_geom_parity
+# 断言两套推导零漂移。
+# ═══════════════════════════════════════════════════════════════════════
+import json as _json
+import hashlib as _hashlib
+import facts as _F
+import assumptions as _ASSUM
+from assumptions import BODY_BOTTOM as _BODY_BOTTOM
+import masonry2 as _M2
+import families as _FAM
+import ledger as _LED
+import export_print as _EP
+
+COL_FAMILIES = "COL_FAMILIES"
+LAYOUT_MAX_OBJECTS = 60          # --layout 场景 Object 硬门(主场景不持有 5000 Object)
+ARC_STEP = 0.04                  # void 弧段折线采样步长(m); 折线内接矢高 ~1e-4m 亚像素
+CLIP_EPS = 1e-9
+VOID_Z_MIN = _BODY_BOTTOM - 2.0  # void 矩形部下界(低于一切砌体; 只为 SH 裁剪有限化)
+
+
+def piers_and_spans():
+    # type: () -> Tuple[List[float], List[float]]
+    """墩位中心/孔跨(facts 累加式, 与 bridge_geom2.PIER_X 同式)。"""
+    spans = list(_F.SPAN_DISTINCT) + list(reversed(list(_F.SPAN_DISTINCT)[:-1]))
+    px = []
+    acc = -_F.BRIDGE_LEN / 2.0
+    for i in range(_F.N_SPAN + 1):
+        w = _F.BRIDGE_ABUT if i in (0, _F.N_SPAN) else _F.PIER_W_INT[i - 1]
+        px.append(acc + w / 2.0)
+        acc += w
+        if i < _F.N_SPAN:
+            acc += spans[i]
+    return px, spans
+
+
+def deck_z_at(x):
+    # type: (float) -> float
+    """桥面抛物线(facts 常量版; bridge_geom2.deck_z 同式)。"""
+    half = _F.BRIDGE_LEN / 2.0
+    ax = min(abs(x), half)
+    k = (_F.DECK_Z_TOP - _F.DECK_Z_END) / (half * half)
+    return _F.DECK_Z_TOP - k * ax * ax
+
+
+def hw_wall(x, z):
+    # type: (float, float) -> float
+    """墙面半宽收分参考(全宽线性内插, 半宽): 生成器 hw_fn 注入口。"""
+    zt = deck_z_at(x)
+    f = (z - _BODY_BOTTOM) / (zt - _BODY_BOTTOM)
+    f = max(0.0, min(1.0, f))
+    return (_F.DECK_DOWN_W + (_F.DECK_UP_W - _F.DECK_DOWN_W) * f) / 2.0
+
+
+def arch_band(i):
+    # type: (int) -> Dict[str, float]
+    """第 i 孔(0 基)的 void 判定带: 拱心 x/半跨/矢高/起拱线/带界/顶界。"""
+    px, spans = piers_and_spans()
+    xc = (px[i] + px[i + 1]) / 2.0
+    a = spans[i] / 2.0
+    b = _F.rise_ratio(i) * spans[i]
+    springer = deck_z_at(xc) - _F.spandrel(i) - b
+    return {"xc": xc, "a": a, "b": b, "springer": springer,
+            "x_lo": px[i], "x_hi": px[i + 1], "z_hi": deck_z_at(xc)}
+
+
+def point_in_void(x, z, band):
+    # type: (float, float, Dict[str, float]) -> bool
+    """点是否落在第 i 孔券洞净空内(矩形部 |x-xc|<a + 两圆心尖拱 intrados 下方;
+    内弧高度走 facts.arch_z 单一来源, 与 build_void_bm 同式)。"""
+    if z > band["springer"]:
+        if z > band["springer"] + band["b"] + CLIP_EPS:
+            return False
+        if abs(x - band["xc"]) > band["a"]:
+            return False
+        return _F.arch_signed_r(x, z, band["xc"], band["springer"],
+                                band["a"], band["b"]) < 0.0
+    return abs(x - band["xc"]) < band["a"]
+
+
+def _poly_area(poly):
+    # type: (List[Tuple[float, float]]) -> float
+    return 0.5 * sum(poly[j][0] * poly[(j + 1) % len(poly)][1]
+                     - poly[(j + 1) % len(poly)][0] * poly[j][1]
+                     for j in range(len(poly)))
+
+
+def _cross3(o, a, b):
+    # type: (Tuple[float, float], Tuple[float, float], Tuple[float, float]) -> float
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+
+def _sh_clip(subject, clip):
+    # type: (List[Tuple[float, float]], List[Tuple[float, float]]) -> List[Tuple[float, float]]
+    """Sutherland-Hodgman: subject ∩ 凸 clip。clip 方向自洽(负面积先反转)。"""
+    if _poly_area(clip) < 0.0:
+        clip = list(reversed(clip))
+    out = list(subject)
+    src = clip
+    for i in range(len(src)):
+        a = src[i]
+        b = src[(i + 1) % len(src)]
+        inp = out
+        out = []
+        if not inp:
+            break
+        s = inp[-1]
+        sin = _cross3(a, b, s) >= -CLIP_EPS
+        for e in inp:
+            ein = _cross3(a, b, e) >= -CLIP_EPS
+            if ein != sin:
+                dc = (s[0] - e[0], s[1] - e[1])
+                dab = (b[0] - a[0], b[1] - a[1])
+                denom = dc[0] * dab[1] - dc[1] * dab[0]
+                if abs(denom) > 1e-15:
+                    t = ((a[0] - e[0]) * dab[1] - (a[1] - e[1]) * dab[0]) / denom
+                    out.append((e[0] + t * dc[0], e[1] + t * dc[1]))
+            if ein:
+                out.append(e)
+            s = e
+            sin = ein
+    return out
+
+
+_ARC_POLY_CACHE = {}     # type: Dict[Tuple[int, int], List[Tuple[float, float]]]
+
+
+def _void_piece_polys(band, key):
+    # type: (Dict[str, float], int) -> List[List[Tuple[float, float]]]
+    """void 净空凸分解: [拱下矩形部, 左弧弓形, 右弧弓形](CCW, 有限多边形)。
+    弧高走 facts.arch_z(与 build_void_bm 同源); b<a 平拱时两弓形同圆心自然
+    拼合。key=(id(band), ) 不做 —— 调用方按 arch 序号缓存。"""
+    xc, a, spz = band["xc"], band["a"], band["springer"]
+    box = [(xc - a, VOID_Z_MIN), (xc + a, VOID_Z_MIN),
+           (xc + a, spz), (xc - a, spz)]
+    halves = []
+    for sign in (-1, 1):
+        x0 = xc + sign * a
+        x1 = xc
+        n = max(2, int(math.ceil(abs(x1 - x0) / ARC_STEP)))
+        poly = [(x0, spz), (x1, spz)]
+        for k in range(n, -1, -1):     # 拱顶侧: 从 x1 回扫到 x0(保 CCW)
+            xx = x0 + (x1 - x0) * k / n
+            poly.append((xx, _F.arch_z(xx, xc, spz, a, band["b"])))
+        halves.append(poly)
+    if key not in _ARC_POLY_CACHE:
+        _ARC_POLY_CACHE[key] = [box] + halves
+    return _ARC_POLY_CACHE[key]
+
+
+def _dedupe_ring(poly, eps=1e-9):
+    # type: (List[Tuple[float, float]], float) -> List[Tuple[float, float]]
+    """去掉相邻重复点(SH 在裁剪边恰过矩形角点时会双发同一交点 -> 棱柱
+    出重边不水密), 含首尾闭合点。"""
+    out = []
+    for p in poly:
+        if not out or abs(p[0] - out[-1][0]) > eps or abs(p[1] - out[-1][1]) > eps:
+            out.append(p)
+    while len(out) >= 2 and abs(out[0][0] - out[-1][0]) <= eps \
+            and abs(out[0][1] - out[-1][1]) <= eps:
+        out.pop()
+    return out
+
+
+def _kept_pieces(x0, x1, z0, z1, band):
+    # type: (float, float, float, float, Dict[str, float]) -> List[List[Tuple[float, float]]]
+    """石块足印减去券洞净空后的【保留片】(墙侧, 世界 x-z, 逐片凸多边形)。
+    x 按 [xc-a, xc, xc+a] 断成竖条: 洞外竖条整条保留; 洞内竖条按 ARC_STEP
+    细分, 每子条保留拱腹线以上部分(梯形; 冠尖单独断点保证子条底边单调 ->
+    凸)。拱线折线近似矢高 ~1e-4m 亚像素。"""
+    xc, a, spz, b = band["xc"], band["a"], band["springer"], band["b"]
+    vx0, vx1 = xc - a, xc + a
+    kept = []      # type: List[List[Tuple[float, float]]]
+    cuts = [x0, x1] + [v for v in (vx0, xc, vx1) if x0 < v < x1]
+    cuts = sorted(set(cuts))
+    for sa, sb in zip(cuts[:-1], cuts[1:]):
+        if sb <= vx0 + CLIP_EPS or sa >= vx1 - CLIP_EPS:
+            kept.append([(sa, z0), (sb, z0), (sb, z1), (sa, z1)])
+            continue
+        # 拱腹线按【弧长】步进采样(起拱段斜率 ~9, 按 x 等分弦误差会吃进洞内)
+        # 拱腹线取券洞挖除体的同一折线(assumptions.NSEG_ARC 等 x 距 stations 的
+        # 弦), 石块边与 station 间的底边线性内插到同一弦上 —— layout 的离散
+        # 净空与 proxy 布尔切割逐弦一致, 不引入第二种离散化。
+        sta = [vx0 + (vx1 - vx0) * k / _ASSUM.NSEG_ARC
+               for k in range(_ASSUM.NSEG_ARC + 1)]
+        zav = {round(x, 9): _F.arch_z(x, xc, spz, a, b) for x in sta}
+
+        def _chord(x):
+            # cutter 折线在 x 处的高度(所在 station 区间线性内插)
+            if x <= sta[0]:
+                return zav[round(sta[0], 9)]
+            if x >= sta[-1]:
+                return zav[round(sta[-1], 9)]
+            for s0, s1 in zip(sta[:-1], sta[1:]):
+                if s0 <= x <= s1:
+                    t = (x - s0) / (s1 - s0)
+                    return zav[round(s0, 9)] + t * (zav[round(s1, 9)]
+                                                    - zav[round(s0, 9)])
+            return zav[round(sta[-1], 9)]
+        inner = [x for x in sta if sa < x < sb]
+        raw = ([(sa, _chord(sa))] + [(x, zav[round(x, 9)]) for x in inner]
+               + [(sb, _chord(sb))])
+        if not (min(z for _, z in raw) <= z1 and max(z for _, z in raw) >= z0):
+            continue   # 整条弦线在 z 带外(全保留或全切除)
+        pts = []
+        started = False
+        exited = False
+        for k, (xx, zr) in enumerate(raw):
+            if z0 <= zr <= z1:
+                if not started:
+                    if k > 0:
+                        zt = z1 if raw[k - 1][1] > z1 else z0
+                        t = (zt - raw[k - 1][1]) / (zr - raw[k - 1][1])
+                        pts.append((raw[k - 1][0] + t * (xx - raw[k - 1][0]), zt))
+                    started = True
+                pts.append((xx, zr))
+            elif started:
+                zt = z1 if zr > z1 else z0
+                t = (zt - raw[k - 1][1]) / (zr - raw[k - 1][1])
+                pts.append((raw[k - 1][0] + t * (xx - raw[k - 1][0]), zt))
+                exited = True
+                break
+        if not started or len(pts) < 2:
+            continue
+        if not exited:
+            pts = pts + [(sb, z1), (sa, z1)]
+        elif pts[-1][1] == z0:
+            # 出界到块底以下: 底边沿 z0 延到 sb, 右边上行, 顶边回, 左边闭合
+            pts = pts + [(sb, z0), (sb, z1), (sa, z1)]
+        # 出界到 z1: pts 已止于 (x*, z1), 顶边沿 z1 回 sa 即闭合
+        if len(pts) >= 3 and abs(_poly_area(pts)) > 1e-12:
+            kept.append(pts)
+    return kept
+
+
+def clip_footprint(x0, x1, z0, z1, band, band_key=0):
+    # type: (float, float, float, float, Dict[str, float], int) -> Tuple[str, List[List[Tuple[float, float]]]]
+    """石块世界 x-z 足印对券洞净空分类:
+    ("out", [])     全在净空外 -> 参数化族实例;
+    ("inside", [])  全在净空内 -> 保留账目点, GN 按 in_void 剔除实例;
+    ("clip", polys) 跨净空边界 -> 烘焙 unique 裁剪网格(polys = 净空以外的
+                    【保留片】, 世界 x-z 凸多边形; 洞内部分被切除)。
+    """
+    if (x1 <= band["xc"] - band["a"] - CLIP_EPS
+            or x0 >= band["xc"] + band["a"] + CLIP_EPS
+            or z0 >= band["springer"] + band["b"] + CLIP_EPS
+            or z1 <= VOID_Z_MIN):
+        return "out", []
+    rect = [(x0, z0), (x1, z0), (x1, z1), (x0, z1)]
+    void_area = 0.0
+    for piece in _void_piece_polys(band, band_key):
+        got = _dedupe_ring(_sh_clip(rect, piece))
+        if len(got) >= 3:
+            void_area += abs(_poly_area(got))
+    ra = (x1 - x0) * (z1 - z0)
+    if void_area <= 1e-12:
+        return "out", []
+    if void_area >= ra * (1.0 - 1e-9):
+        return "inside", []
+    kept = [p for p in _kept_pieces(x0, x1, z0, z1, band)
+            if len(p) >= 3 and abs(_poly_area(p)) > 1e-12]
+    if not kept:
+        return "inside", []
+    return "clip", kept
+
+
+def _family_y_profiles(stone):
+    # type: (Dict[str, Any]) -> Tuple[Any, Any]
+    """族局部 y 剖面 (y_front(z), y_back(z)) —— 与 families.py 逐式同源。
+    wedge-std: 前脸随收分线性内收; slab: 直盒 [0, d]。"""
+    fam = stone["family"]
+    p = stone["params"]
+    if fam == "slab":
+        d = float(p["d"])
+        return (lambda z: d), (lambda z: 0.0)
+    if fam == "wedge-std":
+        f0 = float(p.get("proud", 0.0))
+        f1 = f0 - (float(p["hw_b"]) - float(p["hw_t"]))
+        h = float(p["h"])
+        d = float(p.get("d", p.get("back", 0.3) + f0))
+
+        def _yf(z):
+            return f0 + (f1 - f0) * (z / h)
+        return _yf, (lambda z: _yf(z) - d)
+    raise ValueError("family_y_profiles: unknown family %r" % (fam,))
+
+
+def _prism(poly, y_front, y_back):
+    # type: (List[Tuple[float, float]], Any, Any) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """x-z 凸多边形 -> 沿 y 双剖面(y=y_front(z)/y_back(z))的棱柱网格。
+    侧面绕向与前/背盖反向(每条环边一正一反, 水密); 整体体积朝向交给
+    export_print.flip_outward 单一归一。"""
+    n = len(poly)
+    vf = [(x, y_front(z), z) for (x, z) in poly]
+    vb = [(x, y_back(z), z) for (x, z) in poly]
+    verts = vf + vb
+    faces = [tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))]
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((j, i, n + i, n + j))
+    return verts, faces
+
+
+def stone_world_bbox(stone):
+    # type: (Dict[str, Any]) -> Tuple[float, float, float, float]
+    """石块世界 x-z 足印(无旋转前提; 带旋转的裁剪不支持, 显式 raise)。"""
+    if any(abs(r) > 1e-12 for r in stone["transform"][3:]):
+        raise ValueError("stone_world_bbox: rotated stone %r not supported"
+                         % (stone["id"],))
+    verts, _ = _FAM.family_mesh(stone["family"], stone["params"])
+    off = _M2.anchor_offset(stone["family"], stone["params"],
+                            stone["transform"])
+    xs = [v[0] + off[0] for v in verts]
+    zs = [v[2] + off[2] for v in verts]
+    return min(xs), max(xs), min(zs), max(zs)
+
+
+def classify_stones(stones, bands=None):
+    # type: (List[Dict[str, Any]], Optional[List[Dict[str, float]]]) -> Dict[str, Tuple[str, List[List[Tuple[float, float]]]]]
+    """逐石 void 分类(各石只对自己孔带判定; 孔带互不重叠, 块不会跨带)。"""
+    if bands is None:
+        bands = [arch_band(i) for i in range(_F.N_SPAN)]
+    zone_idx = {"ARCH%02d" % (i + 1): i for i in range(_F.N_SPAN)}
+    out = {}
+    for s in stones:
+        i = zone_idx.get(s["id"].split(".")[0])
+        if i is None:
+            out[s["id"]] = ("out", [])
+            continue
+        x0, x1, z0, z1 = stone_world_bbox(s)
+        out[s["id"]] = clip_footprint(x0, x1, z0, z1, bands[i], band_key=i)
+    return out
+
+
+def stone_local_mesh(stone, status="out", polys=None):
+    # type: (Dict[str, Any], str, Optional[List[List[Tuple[float, float]]]]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """石的材料化前局部网格: 未裁剪走参数化族; clip 片 -> 双剖面棱柱
+    (局部系, 世界 x/z 减锚点偏移; 体积朝向由 flip_outward 单一归一)。"""
+    if status != "clip":
+        return _FAM.family_mesh(stone["family"], stone["params"])
+    off = _M2.anchor_offset(stone["family"], stone["params"],
+                            stone["transform"])
+    yf, yb = _family_y_profiles(stone)
+    verts = []     # type: List[Tuple[float, float, float]]
+    faces = []     # type: List[Tuple[int, ...]]
+    for poly in polys:
+        lp = [(x - off[0], z - off[2]) for (x, z) in poly]
+        pv, pf = _prism(lp, yf, yb)
+        faces.extend(tuple(i + len(verts) for i in fc) for fc in pf)
+        verts.extend(pv)
+    return _EP.flip_outward(verts, faces)
+
+
+def family_center(stone):
+    # type: (Dict[str, Any]) -> Tuple[float, float, float]
+    """整块(完整族网格)bbox 中点(局部系) —— materialize/GN 实例的旋转中心。"""
+    verts, _ = _FAM.family_mesh(stone["family"], stone["params"])
+    return tuple((min(v[i] for v in verts) + max(v[i] for v in verts)) / 2.0
+                 for i in range(3))
+
+
+def placement_point(stone):
+    # type: (Dict[str, Any]) -> Tuple[float, float, float]
+    """GN 实例点 = materialize 旋转中心(块中心世界位) = family_center + 偏移。
+    实例几何 = family_center 平移到原点的局部网格(centered_verts), 实例
+    旋转属性 = transform 后三位 —— 组合恒等于 masonry2.materialize(测试钉)。"""
+    c = family_center(stone)
+    off = _M2.anchor_offset(stone["family"], stone["params"],
+                            stone["transform"])
+    return (c[0] + off[0], c[1] + off[1], c[2] + off[2])
+
+
+def centered_verts(stone, verts=None):
+    # type: (Dict[str, Any], Optional[List[Tuple[float, float, float]]]) -> List[Tuple[float, float, float]]
+    c = family_center(stone)
+    if verts is None:
+        verts, _ = _FAM.family_mesh(stone["family"], stone["params"])
+    return [(v[0] - c[0], v[1] - c[1], v[2] - c[2]) for v in verts]
+
+
+def family_identity(stone, status="out"):
+    # type: (Dict[str, Any], str) -> str
+    """族身份: 跨洞裁剪石逐石唯一(uniq:<sid>), 其余按 (family, params) 去重。"""
+    if status == "clip":
+        return "uniq:" + stone["id"]
+    return stone["family"] + "|" + _json.dumps(stone["params"], sort_keys=True,
+                                               separators=(",", ":"))
+
+
+def family_obj_name(identity, index=None):
+    # type: (str, Optional[int]) -> str
+    """COL_FAMILIES 对象名: 排序稳定 + <63 字节不截断。
+    index 给定时前缀序号使 sorted(名) == census 排序序(Pick Instance 序双保险)。"""
+    slug = _hashlib.sha1(identity.encode("utf-8")).hexdigest()[:12]
+    base = ("fam_" + identity.split("|")[0].replace(":", "_") + "_" + slug)
+    if index is None:
+        return base[:63]
+    return ("fam_%04d_" % index + base)[:63]
+
+
+def census(stones, statuses):
+    # type: (List[Dict[str, Any]], Dict[str, Tuple[str, List[List[Tuple[float, float]]]]]) -> Dict[str, Dict[str, Any]]
+    """族清点: identity -> 首见石(key 排序序 = emit 的对象创建序)。"""
+    fams = {}      # type: Dict[str, Dict[str, Any]]
+    for s in stones:
+        fams.setdefault(family_identity(s, statuses[s["id"]][0]), s)
+    return {k: fams[k] for k in sorted(fams)}
+
+
+def mirror_spec(spec):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
+    """砖谱 x->-x 镜像(9..16 孔复用 8..0 谱; 与 masonry._mirror_spec 同式;
+    该模块 import bmesh 不可 headless 复用, 故此处独立实现)。"""
+    out = {}       # type: Dict[str, Any]
+    cs = []
+    for c in spec.get("courses", []):
+        c2 = dict(c)
+        bl = c2.get("blocks")
+        if isinstance(bl, list) and bl and isinstance(bl[0], dict):
+            c2["blocks"] = [{"x0": -b["x1"], "x1": -b["x0"]} for b in reversed(bl)]
+        elif isinstance(bl, list):
+            c2["blocks"] = [-v for v in reversed(bl)]
+        cs.append(c2)
+    if cs:
+        out["courses"] = cs
+    return out
+
+
+def load_spec(stones_dir, arch_idx):
+    # type: (str, int) -> Dict[str, Any]
+    """第 arch_idx 孔(0..16)砖谱: 前半直读, 后半镜像复用。"""
+    half = _F.N_SPAN // 2
+    src = arch_idx if arch_idx <= half else (_F.N_SPAN - 1 - arch_idx)
+    with open(os.path.join(stones_dir, "stones_p%d.json" % src),
+              "r", encoding="utf-8") as f:
+        spec = _json.load(f)
+    return mirror_spec(spec) if arch_idx > half else spec
+
+
+def cap_to_deck(stones, min_h=0.025):
+    # type: (List[Dict[str, Any]], float) -> List[Dict[str, Any]]
+    """场景链收口: 砌体顶截到桥面弧线。
+
+    砖谱末层 z0 是照片描摹的平线; 桥面是抛物线(端孔一孔内落差可达 0.5m),
+    平线末层按谱层高直砌会在桥面上方露出条带。规则: 每块按块心桥面标高
+    截顶(h 缩、zm 随实高、wedge hw_t / slab bbox 同步重算); 整块底已高于
+    桥面(截后 h <= min_h)的场景侧不留 —— 那里的墙不存在。只改本链自建
+    stone dict, 不触碰 masonry2 生成器与其冻结测试语义。"""
+    out = []
+    for s in stones:
+        p = s["params"]
+        h = float(p["h"])
+        z0 = float(s["transform"][2]) - h / 2.0
+        cap = deck_z_at(float(s["transform"][0]))
+        h2 = min(h, cap - z0)
+        if h2 <= min_h:
+            continue
+        if h2 < h - 1e-12:
+            p["h"] = h2
+            s["transform"][2] = z0 + h2 / 2.0
+            if s["family"] == "wedge-std" and "hw_t" in p:
+                p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
+            if "bbox" in p:
+                p["bbox"]["z1"] = z0 + h2
+        out.append(s)
+    return out
+
+
+def bridge_ledger(stones_dir=None):
+    # type: (Optional[str]) -> Dict[str, Any]
+    """全桥砌体账目: 面石(谱)+背衬+core × 17 孔 × 东西两面。
+    末层高兜底 = 拱心线桥面标高 - 谱末层 z0(砌体顶随桥面弧线封口);
+    core 带界 = 孔带(首末孔外扩到桥端, 补桥台条带); z 带 = 水下底..桥面。"""
+    if stones_dir is None:
+        stones_dir = os.path.join(HERE, "stones")
+    px, _spans = piers_and_spans()
+    stones = []    # type: List[Dict[str, Any]]
+    for i in range(_F.N_SPAN):
+        spec = load_spec(stones_dir, i)
+        band = arch_band(i)
+        ch = max(0.05, band["z_hi"] - spec["courses"][-1]["z0"])
+        for side in (1, -1):
+            faces = _M2.face_stones(spec, i, side, hw_wall, course_h=ch)
+            faces = cap_to_deck(faces)
+            stones.extend(faces)
+            stones.extend(cap_to_deck(
+                _M2.backing_stones(faces, hw_wall, seed=i)))
+        x_lo = -_F.BRIDGE_LEN / 2.0 if i == 0 else band["x_lo"]
+        x_hi = _F.BRIDGE_LEN / 2.0 if i == _F.N_SPAN - 1 else band["x_hi"]
+        stones.extend(cap_to_deck(
+            _M2.core_cells(i, hw_wall, _BODY_BOTTOM, band["z_hi"],
+                           x_lo, x_hi, seed=i)))
+    return {"meta": {"schema": _LED.SCHEMA, "curve_hash": "e30-p1t7-bridge",
+                     "seed": 0},
+            "stones": stones}
+
+
+def layout_group(stone):
+    # type: (Dict[str, Any]) -> str
+    """GN 分区 collection: CORE 石按块心 x 落 ABUT_W/ABUT_E/CORE, 其余按孔。"""
+    if stone.get("role_struct") == "CORE":
+        c = family_center(stone)
+        off = _M2.anchor_offset(stone["family"], stone["params"],
+                                stone["transform"])
+        wx = c[0] + off[0]
+        px, _spans = piers_and_spans()
+        if wx < px[0]:
+            return "ABUT_W"
+        if wx > px[-1]:
+            return "ABUT_E"
+        return "CORE"
+    return "SPAN" + stone["id"].split(".")[0][4:]
+
+
+def layout_groups():
+    # type: () -> List[str]
+    return (["SPAN%02d" % (i + 1) for i in range(_F.N_SPAN)]
+            + ["ABUT_E", "ABUT_W", "CORE"])
+
+
+def _check_geom_parity():
+    # type: () -> None
+    """blender 模式硬门: facts 独立推导与 bridge_geom2 生成器零漂移。"""
+    if G is None:
+        return
+    px, spans = piers_and_spans()
+    for i in range(_F.N_SPAN + 1):
+        assert abs(px[i] - G.PIER_X[i]) < 1e-9, "PIER_X 漂移 @%d" % i
+    for i in range(_F.N_SPAN):
+        assert abs(spans[i] - G.SPANS[i]) < 1e-9, "SPANS 漂移 @%d" % i
+        band = arch_band(i)
+        assert abs(band["springer"] - G.arch_springer_z(i)) < 1e-9, \
+            "起拱线漂移 @%d" % i
+        assert abs(deck_z_at(0.5 * (band["x_lo"] + band["x_hi"]))
+                   - G.deck_z(0.5 * (band["x_lo"] + band["x_hi"]))) < 1e-9
+
+
+def emit_lib():
+    # type: () -> None
+    """--emit-lib: 全桥账目 -> 每族一个局部网格对象入 COL_FAMILIES ->
+    out/families.blend; 账目副本落 out/ledger_bridge.json 备审计。"""
+    _check_geom_parity()
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    led = bridge_ledger()
+    errs = _LED.validate_ledger(led)
+    if errs:
+        raise ValueError("bridge ledger invalid: %s" % errs[:5])
+    statuses = classify_stones(led["stones"])
+    fams = census(led["stones"], statuses)
+    col = bpy.data.collections.new(COL_FAMILIES)
+    for idx, key in enumerate(sorted(fams)):
+        st = fams[key]
+        status, polys = statuses[st["id"]]
+        verts, faces = stone_local_mesh(st, status, polys)
+        c = family_center(st)
+        cv = [(v[0] - c[0], v[1] - c[1], v[2] - c[2]) for v in verts]
+        me = bpy.data.meshes.new(family_obj_name(key, idx))
+        me.from_pydata(cv, [], [tuple(fc) for fc in faces])
+        me.validate()
+        ob = bpy.data.objects.new(me.name, me)
+        col.objects.link(ob)
+    bpy.context.scene.collection.children.link(col)
+    out = os.path.join(HERE, "out")
+    os.makedirs(out, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, "families.blend"))
+    with open(os.path.join(out, "ledger_bridge.json"), "w",
+              encoding="utf-8") as fp:
+        _json.dump(led, fp, ensure_ascii=False)
+    print("FAMILIES_EMIT n=%d" % len(fams))
+
+
+def _gn_layout_node_group(fam_col):
+    # type: (Any) -> Any
+    """共享 GN 树: 点云 -> (in_void 剔点) -> Instance on Points
+    (Collection Info separate+Pick Instance, 实例序号=fam_idx, 朝向=rot)。"""
+    ng = bpy.data.node_groups.new("P1_LAYOUT_INSTANCES", 'GeometryNodeTree')
+    ng.interface.new_socket("Geometry", in_out='INPUT',
+                            socket_type='NodeSocketGeometry')
+    ng.interface.new_socket("Instances", in_out='OUTPUT',
+                            socket_type='NodeSocketGeometry')
+    nin = ng.nodes.new('NodeGroupInput')
+    ndel = ng.nodes.new('GeometryNodeDeleteGeometry')
+    ndel.domain = 'POINT'
+    ndel.mode = 'ALL'
+    nvoid = ng.nodes.new('GeometryNodeInputNamedAttribute')
+    nvoid.data_type = 'BOOLEAN'
+    nvoid.inputs['Name'].default_value = "in_void"
+    niop = ng.nodes.new('GeometryNodeInstanceOnPoints')
+    niop.inputs['Pick Instance'].default_value = True
+    ncoll = ng.nodes.new('GeometryNodeCollectionInfo')
+    ncoll.inputs['Collection'].default_value = fam_col
+    ncoll.transform_space = 'ORIGINAL'
+    ncoll.inputs['Separate Children'].default_value = True
+    ncoll.inputs['Reset Children'].default_value = False
+    nidx = ng.nodes.new('GeometryNodeInputNamedAttribute')
+    nidx.data_type = 'INT'
+    nidx.inputs['Name'].default_value = "fam_idx"
+    nrot = ng.nodes.new('GeometryNodeInputNamedAttribute')
+    nrot.data_type = 'FLOAT_VECTOR'
+    nrot.inputs['Name'].default_value = "rot"
+    nout = ng.nodes.new('NodeGroupOutput')
+    lk = ng.links.new
+    lk(nin.outputs[0], ndel.inputs['Geometry'])
+    lk(nvoid.outputs[0], ndel.inputs['Selection'])
+    lk(ndel.outputs[0], niop.inputs['Points'])
+    lk(ncoll.outputs['Instances'], niop.inputs['Instance'])
+    lk(nidx.outputs[0], niop.inputs['Instance Index'])
+    lk(nrot.outputs[0], niop.inputs['Rotation'])
+    lk(niop.outputs['Instances'], nout.inputs[0])
+    return ng
+
+
+def layout_scene():
+    # type: () -> None
+    """--layout: 空场景 link families.blend 的 COL_FAMILIES -> 每分区一片
+    点云(顶点=块中心; sid/fam/fam_idx/stage/mat/xyz/rot/in_void) -> 共享
+    GN 树实例化; 场景 Object 数硬门 < LAYOUT_MAX_OBJECTS。"""
+    _check_geom_parity()
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    lib = os.path.join(HERE, "out", "families.blend")
+    if not os.path.isfile(lib):
+        raise RuntimeError("layout 需先 --emit-lib 生成 out/families.blend")
+    bpy.ops.wm.link(directory=os.path.join(lib, "Collection"),
+                    filename=COL_FAMILIES)
+    # wm.link 会自动放一个 collection-instance empty; 摘掉只留数据引用,
+    # COL_FAMILIES 不进 view layer -> 家族对象不计入场景 Object 数。
+    for ob in list(bpy.data.objects):
+        if ob.instance_type == 'COLLECTION':
+            bpy.data.objects.remove(ob, do_unlink=True)
+    fam_col = bpy.data.collections.get(COL_FAMILIES)
+    if fam_col is None:
+        raise RuntimeError("families.blend 缺 %s" % COL_FAMILIES)
+    led = bridge_ledger()
+    statuses = classify_stones(led["stones"])
+    fams = census(led["stones"], statuses)
+    key_order = sorted(fams)
+    expect_names = [family_obj_name(k, i) for i, k in enumerate(key_order)]
+    got_names = [ob.name for ob in fam_col.objects]
+    if sorted(got_names) != sorted(expect_names):
+        raise RuntimeError("族库对象与清点不一致: %d vs %d"
+                           % (len(got_names), len(expect_names)))
+    key_idx = {k: i for i, k in enumerate(key_order)}
+    ng = _gn_layout_node_group(fam_col)
+    cols = {}
+    for g in layout_groups():
+        c = bpy.data.collections.new(g)
+        bpy.context.scene.collection.children.link(c)
+        cols[g] = c
+    by_group = {}     # type: Dict[str, List[Dict[str, Any]]]
+    for s in led["stones"]:
+        by_group.setdefault(layout_group(s), []).append(s)
+    total = 0
+    for g in layout_groups():
+        stones_g = by_group.get(g, [])
+        me = bpy.data.meshes.new("pts_" + g)
+        me.from_pydata([placement_point(s) for s in stones_g], [], [])
+        me.validate()
+        n = len(stones_g)
+        a_sid = me.attributes.new("sid", 'STRING', 'POINT')
+        a_fam = me.attributes.new("fam", 'STRING', 'POINT')
+        a_fi = me.attributes.new("fam_idx", 'INT', 'POINT')
+        a_st = me.attributes.new("stage", 'STRING', 'POINT')
+        a_mat = me.attributes.new("mat", 'STRING', 'POINT')
+        a_xyz = me.attributes.new("xyz", 'FLOAT_VECTOR', 'POINT')
+        a_rot = me.attributes.new("rot", 'FLOAT_VECTOR', 'POINT')
+        a_iv = me.attributes.new("in_void", 'BOOLEAN', 'POINT')
+        for k, s in enumerate(stones_g):
+            status, _polys = statuses[s["id"]]
+            # Blender 5.x STRING 属性值是 bytes
+            a_sid.data[k].value = s["id"].encode("utf-8")
+            a_fam.data[k].value = s["family"].encode("utf-8")
+            a_fi.data[k].value = key_idx[family_identity(s, status)]
+            a_st.data[k].value = (s.get("stage_hint") or "").encode("utf-8")
+            a_mat.data[k].value = (s.get("material") or "").encode("utf-8")
+            a_xyz.data[k].vector = tuple(s["transform"][:3])
+            a_rot.data[k].vector = tuple(s["transform"][3:6])
+            a_iv.data[k].value = (status == "inside")
+        ob = bpy.data.objects.new("points_" + g, me)
+        m = ob.modifiers.new("gn", 'NODES')
+        m.node_group = ng
+        cols[g].objects.link(ob)
+        total += n
+        print("LAYOUT_GROUP %s stones=%d" % (g, n))
+    nobj = len(bpy.context.scene.objects)
+    print("LAYOUT_STONES n=%d" % total)
+    print("LAYOUT_OBJECTS n=%d" % nobj)
+    if nobj >= LAYOUT_MAX_OBJECTS:
+        raise RuntimeError("LAYOUT_OBJECTS %d >= %d" % (nobj, LAYOUT_MAX_OBJECTS))
+    out = os.path.join(HERE, "out")
+    os.makedirs(out, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out, "e30_layout.blend"))
+
+
 if __name__ == "__main__":
-    build()
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, "e30_bridge.blend"))
-    print("SAVED v2")
+    _argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    _flags = {a for a in _argv if a.startswith("--")}
+    if "--emit-lib" in _flags:
+        emit_lib()
+    elif "--layout" in _flags:
+        layout_scene()
+    else:
+        # proxy(默认): 现行合并网格路径, 行为逐位不变
+        build()
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(HERE, "e30_bridge.blend"))
+        print("SAVED v2")

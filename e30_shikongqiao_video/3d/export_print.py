@@ -32,6 +32,7 @@ import numpy as np
 import ledger as L
 import printcheck as PC
 from families import family_mesh
+from masonry2 import materialize
 
 PRINT_BED_MM = (220.0, 220.0)
 FIT_PRINT_MM = {"TIGHT": 0.15, "NORMAL": 0.3, "LOOSE": 0.5}   # 打印件毫米(打印件上的真实配合缝)
@@ -252,9 +253,20 @@ def _pack_beds(items, bed_mm=PRINT_BED_MM):
     return assign, batches
 
 
-def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
-    # type: (Dict[str, Any], Callable[[Dict[str, Any]], Tuple[list, list]], str, Optional[Sequence[str]], float) -> Dict[str, Any]
-    """整账导出。基础校验(过不了即 raise) -> 角色白名单(默认 MASONRY_ROLES,
+def _materialize_to_bed(stone):
+    # type: (Dict[str, Any]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+    """U2 默认 mesh_fn: masonry2.materialize(全局唯一放置算子)取世界网格,
+    再平移到床原点(三轴 min 归零, 打印件坐标系惯例)。旋转 0 的石块与
+    family_mesh 局部网格逐点平移等价(同一砖, 同一几何)。"""
+    verts, faces = materialize(stone)
+    mn = tuple(min(v[i] for v in verts) for i in range(3))
+    return [(v[0] - mn[0], v[1] - mn[1], v[2] - mn[2]) for v in verts], faces
+
+
+def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0):
+    # type: (Dict[str, Any], Optional[Callable[[Dict[str, Any]], Tuple[list, list]]], str, Optional[Sequence[str]], float) -> Dict[str, Any]
+    """整账导出。mesh_fn=None(默认)走 _materialize_to_bed(U2: 材料化唯一
+    放置算子, 平移回床原点) -> 基础校验(过不了即 raise) -> 角色白名单(默认 MASONRY_ROLES,
     雕件归 P4, 过滤件记 manifest.skipped 不静默消失) -> 逐石 fit 自动分档 +
     clearance 双值置值(账本记模型侧 inset, manifest 记打印/模型双值; 只置在
     导出账本 ledger_print.json 上, 原账目不改写) -> STL/3MF(材质分组目录) ->
@@ -266,6 +278,10 @@ def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
     if roles is None:
         roles = MASONRY_ROLES
     roles = tuple(roles)
+    if out_dir is None:
+        raise ValueError("export_ledger: out_dir required")
+    if mesh_fn is None:
+        mesh_fn = _materialize_to_bed
     os.makedirs(out_dir, exist_ok=True)
     led_print = json.loads(json.dumps(led))     # 深拷贝, 输入不被改写
     stones_out = []     # type: List[Dict[str, Any]]
