@@ -46,8 +46,11 @@ def new_stone(zone, face, role, course, block, family, params, transform,
         "print": {"batch": None, "faces_up": "+Z", "min_feature_ok": None},
     }
 
-def validate_ledger(led):
-    # type: (Dict[str, Any]) -> List[str]
+def validate_ledger(led, allow_clearance=False):
+    # type: (Dict[str, Any], bool) -> List[str]
+    """账目校验。allow_clearance=False(默认): clearance_manufacturing_mm 已置值
+    报 CLEARANCE_PREMATURE(置值只许发生在 T6 导出时序内); True: 放行已置值记录,
+    其余判据不豁免。"""
     errs = []  # type: List[str]
     meta = led.get("meta", {})
     if meta.get("schema") != SCHEMA:
@@ -75,7 +78,8 @@ def validate_ledger(led):
         seen_uuids.add(uid)
         if s.get("evidence") not in EVIDENCE:
             errs.append("EVIDENCE bad: %s" % s.get("evidence"))
-        if s.get("clearance_manufacturing_mm") is not None:
+        if s.get("clearance_manufacturing_mm") is not None \
+                and not allow_clearance:
             errs.append("CLEARANCE_PREMATURE " + sid)
         for e in s.get("support_edges", []):
             if not isinstance(e, dict):
