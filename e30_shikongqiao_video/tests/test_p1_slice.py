@@ -8,6 +8,7 @@ Blender 内部分(数量/顶点互证)在 p1a_slice --g2 自 assert, 不在此�
 """
 import copy
 import json
+import math
 import os
 import sys
 
@@ -231,8 +232,10 @@ def _good_report():
         "meta": {"schema": 2, "gate": "G2", "scale": 0.02, "scale_denom": 50,
                  "volume_caliber": {"statement": "x"},
                  "counts": {"stones": 3, "print_units": 2,
+                            "print_stones": 2, "run_units": 0,
                             "ring_total": 193, "impost_total": 492},
-                 "scope": {"print_units": 2, "excluded": [
+                 "scope": {"print_units": 2, "print_stones": 2,
+                           "run_units": [], "excluded": [
                      {"bucket": "in_void", "n": 1},
                      {"bucket": "void_cut_fragment", "n": 0},
                      {"bucket": "ring_band_overlap", "n": 0},
@@ -320,6 +323,57 @@ def test_validate_g2_report_negative_controls():
     assert any("fail_matrix" in q for q in P.validate_g2_report(r9))
     r9["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
     assert P.validate_g2_report(r9) == []
+    # ── T9 W1: subsume 材料闸严格 AND(镜像 trim 侧) —— 面积桶账
+    # subsumed_by_area_bucket 是另一口径, 不可替代 volume 宇宙的
+    # removed_model_cm3.subsumed(篡改=把 subsume 材料流记成 0 仍过闸) ──
+    r10 = copy.deepcopy(base)                    # 合法 FAIL 变体打底
+    r10["verdict"] = "FAIL"
+    r10["check_stone"]["n_fail"] = 1
+    r10["check_stone"]["fails"] = [{"id": "X", "issues": []}]
+    r10["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
+    r10["ring_dedup"]["final_scope_check"]["n_colliding"] = 1
+    r10["ring_dedup"]["final_scope_check"]["pairs"] = [{"chain": "X"}]
+    r10["ring_dedup"]["summary"]["n_subsumed"] = 2
+    r10["ring_dedup"]["subsumed_ids"] = ["A", "B"]
+    r10["ring_dedup"]["summary"]["removed_model_cm3"]["subsumed"] = 0.0
+    r10["ring_dedup"]["summary"]["removed_model_cm3"][
+        "subsumed_by_area_bucket"] = 5.8e7       # 面积桶账在, 也必须红
+    qs = P.validate_g2_report(r10)
+    assert any("removed_model_cm3.subsumed" in q for q in qs), qs
+    r10["ring_dedup"]["summary"]["removed_model_cm3"]["subsumed"] = 33.0
+    assert P.validate_g2_report(r10) == []       # 材料账到手即绿
+    # ── T9 run 升格谱系闸: 守恒以石计 + run_units 必须带 parent_ids ──
+    r11 = copy.deepcopy(base)                    # 合法 run 升格变体(对照)
+    r11["meta"]["counts"]["stones"] = 4
+    r11["meta"]["counts"]["print_units"] = 3
+    r11["meta"]["counts"]["print_stones"] = 2
+    r11["meta"]["counts"]["run_units"] = 1
+    r11["check_stone"]["n"] = 3
+    r11["meta"]["scope"]["print_units"] = 3
+    r11["meta"]["scope"]["print_stones"] = 2
+    r11["meta"]["scope"]["run_units"] = [{"unit_id": "S#R0",
+                                          "parent_ids": ["S"]}]
+    r11["meta"]["scope"]["excluded"][0]["n"] = 2
+    assert P.validate_g2_report(r11) == []
+    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = []   # 谱系被抹
+    assert any("parent_ids" in q
+               for q in P.validate_g2_report(r11))
+    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = ["S"]
+    r11["meta"]["counts"]["print_units"] = 4                  # 差值互证破坏
+    assert any("print_units != print_stones" in q
+               for q in P.validate_g2_report(r11))
+
+
+def test_real_population_ledger_gate_fails_loud_when_missing(monkeypatch):
+    """T9 W2 负控: ledger_full.json 缺失时真总体钉数据闸必须 raise
+    (fail-on-skip), 而不是 pytest.skip 制造干净克隆假绿。"""
+    import sys
+    this_mod = sys.modules[__name__]
+    monkeypatch.setattr(this_mod, "_LEDGER_FULL",
+                        os.path.join(os.path.dirname(__file__),
+                                     "fixtures", "no_such_ledger.json"))
+    with pytest.raises(RuntimeError, match="fail-on-skip"):
+        this_mod._load_real_ledger_or_fail()
 
 
 def test_g2_gate_constants():
@@ -724,6 +778,130 @@ def test_ring_trim_clears_partner_and_ring_solids():
 
 
 # ---------------------------------------------------------------------------
+# T9: 带裁片 post-inset 自交回归(真失败件 fixture, P1 处方: 合成非凸件抓
+# 不到)。fixture 由 3d/dump_check_fixtures.py 从真账重放生成并入库
+# (tests/fixtures/check_106/): 同带全绿负控 1 件 + 真失败件(极值带顶点数
+# 降序, 跨角色)。判据: 任意档位 clr 下 post-inset 无 SELF_INTERSECT;
+# 含 T8c 单调性反转钉(15mm 曾 106/106 全红, 现 0)。
+
+_FIXTURE_DIR_106 = os.path.join(os.path.dirname(__file__), "fixtures",
+                                "check_106")
+
+
+def _check106_fixtures():
+    # type: () -> list
+    return sorted(f for f in os.listdir(_FIXTURE_DIR_106)
+                  if f.endswith(".json"))
+
+
+@pytest.mark.parametrize("fname", _check106_fixtures())
+def test_check106_fixture_post_inset_no_self_intersect(fname):
+    import export_print as EP
+    with open(os.path.join(_FIXTURE_DIR_106, fname),
+              encoding="utf-8") as fh:
+        meta = json.load(fh)
+    faces = [tuple(f) for f in meta["faces"]]
+    # 该件入库时的现况必须与 post_ok 字段一致(防止 fixture 与实现漂移后
+    # 判据恒真: 负控件必须仍绿、失败件在修复前实现下必须红 —— 由
+    # test_check106_monotonicity_inverted 的 15mm 档共同钉住)
+    for clr in (meta["clr_model_mm"], 7.5, 15.0, 25.0):
+        v2, f2 = EP.flip_outward(EP.inset(meta["verts_pre"], clr), faces)
+        rep = P.PC.check_stone(v2, f2, scale=P.G2_SCALE,
+                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
+        codes = sorted({i["code"] for i in rep["issues"]})
+        assert "SELF_INTERSECT" not in codes, \
+            "%s clr=%.1fmm post-inset 自交: %r" % (meta["id"], clr,
+                                                   rep["issues"][:3])
+
+
+def test_check106_fixture_population_and_control():
+    """fixture 总体自证: 失败件 >=3 且跨角色, 负控件(post_ok=True)在列,
+    防止 fixture 目录被清空后判据恒真(没有失败件的回归钉是摆设)。"""
+    ids = _check106_fixtures()
+    assert len(ids) >= 4, "fixture 缺失: %r" % ids
+    metas = []
+    for fn in ids:
+        with open(os.path.join(_FIXTURE_DIR_106, fn),
+                  encoding="utf-8") as fh:
+            metas.append(json.load(fh))
+    fails = [m for m in metas if not m["post_ok"]]
+    controls = [m for m in metas if m["post_ok"]]
+    assert len(fails) >= 3 and len(controls) >= 1
+    assert {m["role"] for m in fails} >= {"SPANDREL", "BACK", "CORE"}
+
+
+def test_lift_coverage_pads_and_edge_is_strip_boundary():
+    """T9 85 钉(两类根因): ①lift 覆盖含外弧角点越出段(pad = sin·(ring_t+
+    lift) 与 JOINT_GAP_BACK 的代数和, 钳回 [x0,x1]; 角度缺失 -> 覆盖==
+    stations, 旧口径逐位); ②覆盖边界必须成为条带边界 —— 台阶落在条带内部
+    时单段线性 bound 把台阶抹成斜坡, 覆盖边界邻域欠割至多一整个 lift
+    (ARCH07.CORE.C14.B01 实测: hit z[6.29,6.33] vs 真界 6.336, 36400cm3)。"""
+    # ① pad 口径
+    cov = P._ring_lift_coverage({"stations": [-1.0, 1.0],
+                                 "angles": [-6.650228459881308,
+                                            6.650228459879352],
+                                 "ring_t": 0.54, "lift": 0.07})
+    proj = 0.54 + 0.07
+    ext = math.sin(math.radians(6.650228459881308)) * proj
+    assert cov[0] == pytest.approx(-1.0 - (ext - 0.004), abs=1e-12)
+    assert cov[1] == pytest.approx(1.0 + (ext - 0.004), abs=1e-12)
+    assert P._ring_lift_coverage({"stations": [-1.0, 1.0],
+                                  "ring_t": 0.54, "lift": 0.07}) == \
+        (-1.0, 1.0, 0.07)              # 无角度 -> 旧 stations 口径
+    assert P._ring_lift_coverage({"stations": [-1.0, 1.0], "lift": 0.0}) \
+        is None                        # 无 lift 无覆盖
+    # ② 覆盖边界成条带边界 + 台阶点不被抽稀: 用真 keystone 的浅法向角
+    # (±6.65°, ARCH06 实测) —— 台阶点恰落在来向平滑曲线上, 旧抽稀会把它
+    # 当共线点丢掉(右缘弦下切 13mm -> 环端面掠穿), 所以钉"poly 恰在覆盖
+    # 边界处有顶点"而不是只钉条带边界。
+    stone = _core_slab(-2.0, 2.0, 0.1, 0.9, 6.0, 7.5)
+    ring_p = {"stations": [-0.5, 0.5],
+              "angles": [-6.650228459881308, 6.650228459879352],
+              "ring_t": 0.54, "lift": 0.07}
+    cov = P._ring_lift_coverage(ring_p)
+    kept, _removed = P._band_trim_polys(stone, 8, [{"params": ring_p}])
+    assert kept, "跨拱顶石必须产生带裁保留片"
+    edge_xs = {p[0] for poly in kept for p in poly}
+    for target in cov[:2]:
+        assert any(abs(ex - target) < 1e-9 for ex in edge_xs), \
+            ("覆盖边界 %r 不在条带边界上(台阶被抹成斜坡): %r"
+             % (target, sorted(edge_xs)[:8]))
+
+
+def test_run_units_split_lineage_and_each_shell_clean():
+    """T9 run 升格钉(审查裁决: MULTI_SHELL 不豁免): 多 run 带裁石必须拆成
+    独立打印单元(id '<石id>#R<i>', 谱系 parent_ids=[石id]), 每个单元单独
+    过 check 无 MULTI_SHELL。负控: 不拆的整石单 mesh(旧行为)必须红
+    MULTI_SHELL —— 升格是真拆分, 不是豁免重命名。单 run 石恒等返回自身。"""
+    stone = _core_slab(0.0, 3.0, 0.1, 0.9, 4.0, 5.0)
+    sid = stone["id"]
+    run_a = [(0.0, 4.0), (0.8, 4.0), (0.8, 5.0), (0.0, 5.0)]
+    run_b = [(2.2, 4.0), (3.0, 4.0), (3.0, 5.0), (2.2, 5.0)]
+    statuses = {sid: ("ring_trim", [run_a, run_b])}
+    # 负控: 整石单 mesh = 两个互断闭合壳 -> MULTI_SHELL 必红
+    v_all, f_all = P.world_mesh(stone, statuses)
+    rep_all = P.PC.check_stone(v_all, f_all, scale=P.G2_SCALE,
+                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
+    assert any(i["code"] == "MULTI_SHELL" for i in rep_all["issues"]), \
+        rep_all["issues"]
+    # 升格: 拆成两个独立单元, 谱系 + 各自单壳干净
+    units = P._print_units(stone, statuses)
+    assert [u[0] for u in units] == [sid + "#R0", sid + "#R1"]
+    for (uid, polys_view) in units:
+        verts, faces = P._ring_trim_mesh(polys_view, stone)
+        fit, clr_model = P.EP.fit_for_block(P.EP._extents_m(verts), P.G2_SCALE)
+        v2, f2 = P.EP.flip_outward(P.EP.inset(verts, clr_model), faces)
+        rep = P.PC.check_stone(v2, f2, scale=P.G2_SCALE,
+                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
+        assert not any(i["code"] == "MULTI_SHELL" for i in rep["issues"]), \
+            (uid, rep["issues"])
+    # 单 run / 非带裁石恒等
+    assert P._print_units(stone, {sid: ("ring_trim", [run_a])}) == \
+        [(sid, None)]
+    assert P._print_units(stone, {sid: ("out", [])}) == [(sid, None)]
+
+
+# ---------------------------------------------------------------------------
 # T8c 真总体落位回归(C-T8b-1 防再犯): 现有判据全 x-z 口径, y 向错位不可
 # 见 —— 上面两条钉死测试是合成迷你账, 这里对【真账本全量 489 裁石】钉
 # y 区间与符号。管线一次 ~140s(纯 python, 无 blender), module 级 fixture
@@ -732,11 +910,24 @@ _LEDGER_FULL = os.path.join(os.path.dirname(__file__), "..", "3d",
                             "out", "ledger_full.json")
 
 
+def _load_real_ledger_or_fail():
+    # type: () -> dict
+    """T9 W2: 真总体钉(③④⑤+材料恒等)的数据闸 —— ledger_full.json 缺失时
+    【fail-on-skip】, 不再静默 skip。skip 会让"229 passed"掩盖 3 条未执行
+    的钉子(干净克隆假绿); 真钉必须要么真跑、要么响亮失败。数据由
+    `blender -b --python 3d/p1a_slice.py -- --g2` 一次性产出(需要 blender
+    建 RING/IMPOST 账, 纯 pytest 环境无法自建), 故允许有意跳过者显式
+    --deselect 本组钉子, 而不是被动绿灯。"""
+    if not os.path.exists(_LEDGER_FULL):
+        raise RuntimeError(
+            "out/ledger_full.json 不在盘上 —— 真总体钉 fail-on-skip(T9 W2,"
+            " 干净克隆不许假绿): 先跑 blender -b --python 3d/p1a_slice.py "
+            "-- --g2 产出账本; 或显式 --deselect 真总体钉(不许静默跳过)")
+
+
 @pytest.fixture(scope="module")
 def real_ring_trim_state():
-    if not os.path.exists(_LEDGER_FULL):
-        pytest.skip("out/ledger_full.json 不在盘上: 先跑 blender -b "
-                    "--python 3d/p1a_slice.py -- --g2")
+    _load_real_ledger_or_fail()
     led = copy.deepcopy(json.load(open(_LEDGER_FULL)))
     statuses = P.classify_full(led["stones"])
     sc = P.print_scope(led, statuses)

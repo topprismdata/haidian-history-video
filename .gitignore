@@ -119,6 +119,16 @@
 
 !e30_shikongqiao_video/tests/
 !e30_shikongqiao_video/tests/*.py
+
+# ── 放行：T9 真失败件 fixture(带裁片 post-inset 自交回归钉) ────────────
+# 由 3d/dump_check_fixtures.py 从真账重放入库; 干净克隆必须带 fixture
+# (回归钉不许依赖盘上运行时产物), 故逐条开洞。
+!e30_shikongqiao_video/tests/fixtures/
+!e30_shikongqiao_video/tests/fixtures/check_106/
+!e30_shikongqiao_video/tests/fixtures/check_106/*.json
+
+!e30_shikongqiao_video/tests/
+!e30_shikongqiao_video/tests/*.py
 !e30_shikongqiao_video/research/
 !e30_shikongqiao_video/3d/
 !e30_shikongqiao_video/3d/*.py

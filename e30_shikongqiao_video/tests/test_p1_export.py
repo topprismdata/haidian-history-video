@@ -209,11 +209,17 @@ def test_stl_volume_matches_print_scale_and_outward():
         for r in rows:
             a, b, c = (r[i].astype(float) for i in (1, 2, 3))  # [0]=法线
             sv += float(a @ np.cross(b, c)) / 6.0
-        # 解析: 楔形 post-inset 体积 = (w-2c)(h-2c)(d-c)(inset 只动界顶点);
-        # c 为 W3 新口径的模型侧量: NORMAL 0.3 打印毫米 / (1/50) = 15 模型毫米。
+        # 解析(T9 仿射内缩定律): V1 = |V0| * Π s_ax, s_ax=(ext_ax-2c)/ext_ax
+        # —— 单射仿射映射体积恰乘三轴缩放系数(对任意形状成立); 旧"极值顶点
+        # 平移"的 (d-c) 闭式随分段映射一并作废(该映射不单射, 真失败件
+        # fixture 实证 106 带裁片自交)。c 为 W3 口径模型侧量:
+        # NORMAL 0.3 打印毫米 / (1/50) = 15 模型毫米。
         cm = (0.3 / S50) / 1000.0
-        expect_mm3 = (2.0 - 2 * cm) * (0.5 - 2 * cm) * (1.0 - cm) \
-            * S50 ** 3 * 1e9
+        ext = [max(p[ax] for p in v) - min(p[ax] for p in v) for ax in range(3)]
+        expect_mm3 = (abs(E.signed_volume(v, f))
+                      * (ext[0] - 2 * cm) / ext[0]
+                      * (ext[1] - 2 * cm) / ext[1]
+                      * (ext[2] - 2 * cm) / ext[2]) * S50 ** 3 * 1e9
         assert sv == pytest.approx(expect_mm3, rel=1e-5)
         assert sv > 0                        # 外翻(右手序朝外)
 
@@ -297,10 +303,15 @@ def test_manifest_family_batches(tmp_path):
     fam = man["families"]["wedge-std"]
     assert fam["count"] == 2
     assert fam["stl"].endswith(".stl")
-    # 楔形平行六面体体积 = w*h*d; inset 只动 bbox 界顶点 -> 底面缩 2c 顶面不动,
-    # 平均深 d-c, 体积 = (w-2c)(h-2c)(d-c)
+    # T9 仿射内缩定律: V1 = |V0| * Π (ext_ax-2c)/ext_ax(对任意形状成立;
+    # 旧"极值顶点平移"的 d-c 闭式随分段映射一并作废)
     c = (0.3 / S50) / 1000.0   # NORMAL: 打印 0.3mm -> 模型侧 15mm
-    one = (1.0 - 2 * c) * (0.4 - 2 * c) * (1.0 - c) * S50 ** 3 * 1e6
+    wv, wf = family_mesh("wedge-std", _wedge())
+    ext = [max(p[ax] for p in wv) - min(p[ax] for p in wv) for ax in range(3)]
+    one = (abs(E.signed_volume(wv, wf))
+           * (ext[0] - 2 * c) / ext[0]
+           * (ext[1] - 2 * c) / ext[1]
+           * (ext[2] - 2 * c) / ext[2]) * S50 ** 3 * 1e6
     assert fam["volume_cm3"] == pytest.approx(2 * one, rel=1e-9)
     assert [s["batch"] for s in man["stones"]] == [0, 0]
     assert man == json.loads(json.dumps(man))    # 纯 JSON 可回读

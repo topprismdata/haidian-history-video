@@ -76,9 +76,23 @@ def fit_for_block(dims_m, scale=1 / 50.0):
 
 def inset(verts, clearance_model_mm):
     # type: (List[Tuple[float, float, float]], float) -> List[Tuple[float, float, float]]
-    """三轴各面内缩 clearance_model_mm/1000 模型米: 顶点逐轴按是否落在 bbox
-    界分类(下界->+c, 上界->-c, 内部->0); 扁轴(extent~0)不动。只缩不涨;
-    clearance 0 恒等返回。"""
+    """逐轴仿射内缩 clearance_model_mm/1000 模型米: 每轴关于 bbox 中心把
+    [lo,hi] 线性映射到 [lo+c,hi-c](s_ax=(ext-2c)/ext); ext<=2c 的扁/薄轴
+    不动(2c 都打不出的轴没有配合语义, 该石由 thin_merge 口径收走)。
+    clearance 0 恒等返回。
+
+    T9 机制收口(真失败件 fixture 实证, tests/fixtures/check_106/): 旧实现
+    只位移 bbox 极值顶点、域内顶点不动 —— 该分段映射不单射, 极值面以整步
+    c 扫过距极值面 <c 的近极值顶点时翻越未动的邻边, 端帽面穿过侧壁四边形
+    (实测 ARCH05.EAST.BACK.C07.B00: x-min 帽面 -42.1960+15mm=-42.1810 越
+    过侧壁近边 -42.1812), 106/106 带裁片 SELF_INTERSECT 且随 clr 单调。
+    仿射映射是 [单射 + 极值面精确退让 c + 逐轴保持] 的最小封闭族: 内嵌网
+    格经可逆仿射不可能自交(定理, 非 Plug&Pray), 平面性/绕向/多壳拓扑逐
+    项保持, post-inset 包围盒逐轴恰好缩 2c(thin_merge/fit 分档判定不变)。
+    语义口径: bbox 装配贴合面(与其他打印单元的配合面)精确退让 clr —— 配
+    合公差吃在配合面; 切割缝面(非轴对齐装饰面)退让量 ≤c 且沿轴单调, 缝
+    配合由名义 GAP_W 承担(历史缝 0.2mm 打印当量本就不作精密配合)。
+    只缩不涨: s_ax<=1 且像含于 [lo+c,hi-c] 包围盒。"""
     cm = float(clearance_model_mm) / 1000.0
     if cm == 0.0:
         return [(float(p[0]), float(p[1]), float(p[2])) for p in verts]
@@ -86,14 +100,12 @@ def inset(verts, clearance_model_mm):
     lo = V.min(axis=0)
     hi = V.max(axis=0)
     ext = hi - lo
-    tol = np.maximum(1e-12, ext * 1e-9)
-    off = np.zeros_like(V)
+    scale = np.ones(3)
     for ax in range(3):
-        if ext[ax] <= tol[ax]:
+        if ext[ax] <= 2.0 * cm:
             continue
-        off[:, ax] = (np.where(V[:, ax] <= lo[ax] + tol[ax], cm, 0.0)
-                      + np.where(V[:, ax] >= hi[ax] - tol[ax], -cm, 0.0))
-    V2 = V + off
+        scale[ax] = (ext[ax] - 2.0 * cm) / ext[ax]
+    V2 = (lo + hi) / 2.0 + (V - (lo + hi) / 2.0) * scale
     return [(float(p[0]), float(p[1]), float(p[2])) for p in V2]
 
 

@@ -857,6 +857,29 @@ def _ring_trim_mesh(polys, stone):
     return M2.materialize(stone, verts, faces)
 
 
+def _ring_lift_coverage(p):
+    # type: (dict) -> tuple
+    """环 lift 覆盖区间(单一真相 = 环 params; T9 85-残留根修)。
+    _voussoir 的 lift 是【沿法向】外弧外推(外弧 = 拱曲线法向偏移
+    ring_t+lift), 端站 x0/x1 是【内弧】放射缝站 —— 外弧角点 x = 端站 +
+    sin(angle)*(ring_t+lift), 在拱顶两侧各越出 stations 数十mm(实测
+    ARCH06 53/46mm)。前后脸 JOINT_GAP 收进(前 12.5/后 4.0)取更外者(后
+    脸), pad 按 min/max 钳回不越过 [x0,x1] —— 角度缺失的合成条目 s=0 时
+    垫 0, 覆盖与旧 [x0,x1] 逐位一致。lift<=0 或 stations 缺失 -> None。
+    返回 (lo, hi, lift)。"""
+    lift = float(p.get("lift", 0.0))
+    st = p.get("stations")
+    if lift <= 0.0 or not st:
+        return None
+    proj = float(p.get("ring_t", _MAS.RING_T)) + lift
+    angs = p.get("angles") or (0.0, 0.0)
+    s0 = math.sin(math.radians(float(angs[0])))
+    s1 = math.sin(math.radians(float(angs[1])))
+    pad_lo = min(0.0, _MAS.JOINT_GAP_BACK + s0 * proj)
+    pad_hi = max(0.0, s1 * proj - _MAS.JOINT_GAP_BACK)
+    return (float(st[0]) + pad_lo, float(st[1]) + pad_hi, lift)
+
+
 def _band_trim_polys(stone, arch_idx, rings):
     # type: (dict, int, list) -> tuple
     """case_B print-view 裁剪: 石足印减『洞∪券环带』。减除区间按 x 竖条:
@@ -907,15 +930,17 @@ def _band_trim_polys(stone, arch_idx, rings):
         return pz[lo] + f * (pz[hi] - pz[lo])
 
     def lift_at(x):
-        # 环 lift 包络: 仅计 station 覆盖 x 的环(账目 params, 单一真相;
-        # stations/lift 缺失的合成条目按 0 计 —— 真 ledger 由 make_ring_entry
-        # 恒写这两键)
+        # 环 lift 包络(单一真相 = 环 params, 见 _ring_lift_coverage):
+        # 覆盖区间必须含外弧角点越出段 —— T9 85-残留两类根修: ①旧覆盖只用
+        # 内弧站 [x0,x1], 角点外条带 bound 缺 lift, 环真剪影高出切割线
+        # ~60mm(=lift-GAP); ②覆盖边界台阶落在条带内部时, 单段线性 bound
+        # 把台阶抹成斜坡, 台阶附近欠割至多一整个 lift(实测 ARCH07 hit
+        # z[6.29,6.33] vs 真界 6.336)。②由 xs 强制覆盖边界成条带边界解决。
         best = 0.0
         for r in rings:
-            p = r["params"]
-            st = p.get("stations")
-            if st and st[0] - 1e-9 <= x <= st[1] + 1e-9:
-                best = max(best, float(p.get("lift", 0.0)))
+            cov = _ring_lift_coverage(r["params"])
+            if cov and cov[0] - 1e-9 <= x <= cov[1] + 1e-9:
+                best = max(best, cov[2])
         return best
 
     def seat(x):
@@ -925,10 +950,16 @@ def _band_trim_polys(stone, arch_idx, rings):
             return spz - gap
         return None
 
+    lift_edges = set()
+    for r in rings:
+        cov = _ring_lift_coverage(r["params"])
+        if cov:
+            lift_edges.update(cov[:2])
     xs = sorted({x0, x1}
                 | {px_ for (px_, _pz) in pts if x0 < px_ < x1}
                 | {b for b in (xc - jamb, xc + jamb, xc - t_out, xc + t_out)
-                   if x0 < b < x1})
+                   if x0 < b < x1}
+                | {b for b in lift_edges if x0 < b < x1})
     upper = []       # (sa, sb, bound0, bound1) bound 已钳 [z0, z1]
     seats = []       # (sa, sb, seat_z)
     removed = 0.0
@@ -992,14 +1023,20 @@ def _band_trim_polys(stone, arch_idx, rings):
         # 大量近共线点 -> 耳切出薄片三角, printcheck eps=1e-9 边界假交叉;
         # 1.5mm << GAP_W=10mm, 不越缝口径)。共线点【跳过】, 不得拖动端点
         # (拖动会让边界穿过保留域, 首版实测自交根因)。
+        # T9 例外: lift 覆盖台阶点【永不抽稀】—— 台阶点落在来向平滑曲线
+        # 上, 共线判据会把它当曲线中间点丢掉, 台阶被单段弦切角: 右缘实
+        # 测弦下切 13mm, 环端面外缘高出弦 2mm 掠穿(A#27xB#4, v_hit=0 的
+        # 最后 2 条 final_scope 残留根因)。
         simp = [poly[0], poly[1]]
         for p in poly[2:-1]:
-            a, b = simp[-2], simp[-1]
-            area2 = abs((b[0] - a[0]) * (p[1] - a[1])
-                        - (b[1] - a[1]) * (p[0] - a[0]))
-            seg = math.hypot(b[0] - a[0], b[1] - a[1])
-            if seg > 1e-9 and area2 / seg > 1.5e-3:
-                simp.append(p)
+            if not any(abs(p[0] - e) < 1e-12 for e in lift_edges):
+                a, b = simp[-2], simp[-1]
+                area2 = abs((b[0] - a[0]) * (p[1] - a[1])
+                            - (b[1] - a[1]) * (p[0] - a[0]))
+                seg = math.hypot(b[0] - a[0], b[1] - a[1])
+                if seg > 1e-9 and area2 / seg <= 1.5e-3:
+                    continue
+            simp.append(p)
         simp.append(poly[-1])
         dedup = []
         for p in simp:
@@ -1398,6 +1435,23 @@ def write_excluded_ids(sc, led, path):
     return path
 
 
+def _print_units(stone, statuses):
+    # type: (dict, dict) -> list
+    """石 -> 打印单元列表(T9 run 升格, 审查裁决: MULTI_SHELL 不豁免)。
+    带裁石 kept 折线含多个互断 run 时, 单一 mesh 是多壳体, check_stone 必
+    红 MULTI_SHELL —— 每个 run 升格为独立打印单元: unit_id = '<石id>#R<i>'
+    (i 按 kept 多边形构造序, 确定性), 谱系 parent_ids=[石id] 记入报告与
+    manifest; 单 run 石恒等返回自身(零行为变化; 现行真总体 475 石全单
+    run, 本机制为断料场景的结构保证)。返回 [(unit_id, kept_polys_or_None)]:
+    None = 走 world_mesh 常规路径, list = 只用该 run 折线构建棱柱。"""
+    status, polys = statuses[stone["id"]]
+    if status == "ring_trim" and len(polys) > 1:
+        return [("%s#R%d" % (stone["id"], i),
+                 [[list(p) for p in poly]])
+                for i, poly in enumerate(polys)]
+    return [(stone["id"], None)]
+
+
 def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     # type: (dict, dict, int) -> dict
     """G2 全桥 printcheck(T8b 版): 打印单元划分(print_scope 面积判据) ->
@@ -1429,20 +1483,33 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     role_counts = {}
     fit_tiers = {}
     fails = []
+    run_units = []       # T9 run 升格谱系(unit_id -> parent 石)
     by_zone = {}
     for s in scope:
         role_counts[s["role_struct"]] = role_counts.get(s["role_struct"], 0) + 1
         by_zone.setdefault(s["id"].split(".")[0], []).append(s)
-        verts, faces = world_mesh(s, statuses)
-        fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
-        fit_tiers[fit] = fit_tiers.get(fit, 0) + 1
-        v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
-        rep = PC.check_stone(v2, f2, scale=G2_SCALE,
-                             min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
-        if not rep["ok"]:
-            fails.append({"id": s["id"], "role": s["role_struct"],
-                          "trim": s["params"].get("clipped_by") == "ring_band",
-                          "issues": rep["issues"]})
+        units = _print_units(s, statuses)
+        for (uid, polys_view) in units:
+            if polys_view is None:
+                verts, faces = world_mesh(s, statuses)
+            else:
+                # run 升格单元: 只用该 run 折线构建(单壳), 谱系记石 id
+                verts, faces = _ring_trim_mesh(polys_view, s)
+            fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
+            fit_tiers[fit] = fit_tiers.get(fit, 0) + 1
+            v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
+            rep = PC.check_stone(v2, f2, scale=G2_SCALE,
+                                 min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
+            if not rep["ok"]:
+                fails.append({"id": uid, "role": s["role_struct"],
+                              "trim": s["params"].get("clipped_by") == "ring_band",
+                              "parent_ids": [s["id"]] if uid != s["id"] else [],
+                              "issues": rep["issues"]})
+        if len(units) > 1:
+            run_units.extend({"unit_id": uid, "parent_ids": [s["id"]],
+                              "role": s["role_struct"]}
+                             for (uid, _pv) in units)
+    n_print_units = sum(len(_print_units(s, statuses)) for s in scope)
     # fail 矩阵(code x role, 新裁/存量归因 —— 主控 2A: T9 范围输入)
     matrix = {}
     for f in fails:
@@ -1454,7 +1521,14 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     # —— 它们已按 RING 为准排除, 但其几何质量是 T5/T7 追偿的范围输入)
     by_id = {s["id"]: s for s in led["stones"]}
     legacy = {"n": len(buckets["void_cut_fragment"]), "n_fail": 0,
-              "matrix": {}}
+              "matrix": {},
+              # T9 主控 4: 存量几何质量本轮不修 —— 债务归口 T5/T7 追偿单,
+              # 普查数字即追偿范围输入; 覆盖率审计的 void_cut_fragment 洞
+              # 面积(coverage_audit)是该桶"以 RING 为准排除"留下的第二笔
+              # 待追偿账(材料是否需要碎片回填由 T5/T7 裁决)
+              "disposition": "excluded(以 RING 为准); 几何质量债务记 "
+                             "T5/T7 追偿单, 本轮不修",
+              "debt_ticket": "T5/T7"}
     for sid in buckets["void_cut_fragment"]:
         s = by_id[sid]
         verts, faces = _postinset_world(s, statuses)
@@ -1594,17 +1668,22 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                                      "叠(牺牲芯建模语义), 不是可加和的净"
                                      "打印料"},
                  "counts": {"stones": len(led["stones"]),
-                            "print_units": len(scope),
+                            "print_units": n_print_units,
+                            "print_stones": len(scope),
+                            "run_units": len(run_units),
                             "roles": dict(sorted(role_counts.items())),
                             "ring_total": sum(1 for s in led["stones"]
                                               if s["role_struct"] == "RING"),
                             "impost_total": sum(1 for s in led["stones"]
                                                 if s["role_struct"] == "IMPOST")},
                  "scope": {
-                     "print_units": len(scope),
+                     "print_units": n_print_units,
                      "excluded": excluded,
-                     "identities": "print_units + sum(excluded.n) == "
-                                   "meta.counts.stones",
+                     "identities": "print_stones + sum(excluded.n) == "
+                                   "meta.counts.stones; print_units = "
+                                   "print_stones + meta.scope.run_units 数"
+                                   "(带裁多 run 石升格独立单元, 谱系见 "
+                                   "run_units.parent_ids)",
                      "excluded_standing": [
                          {"bucket": "carve_p4",
                           "reason": "CARVE/RAIL/POST/PAVING 等雕件与附属"
@@ -1617,8 +1696,9 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                          "场景链条石/背衬/芯与 RING 全深筒券为表现层理想化"
                          "重叠; 打印单元按 print_scope 去重, 缝抽样只取"
                          "打印单元间同工艺缝对; 环↔链真撞由 volume 宇宙"
-                         "处置(subsume/带裁剪)"}},
-        "check_stone": {"n": len(scope), "n_fail": len(fails),
+                         "处置(subsume/带裁剪)",
+                     "run_units": run_units}},
+        "check_stone": {"n": n_print_units, "n_fail": len(fails),
                         "fails": fails,
                         "fail_matrix": matrix,
                         "legacy_clip_survey": legacy,
@@ -1685,8 +1765,20 @@ def validate_g2_report(rep):
         p.append("counts.impost_total != 492")
     sc = meta.get("scope", {})
     ex_n = sum(e.get("n", 0) for e in sc.get("excluded", []))
-    if sc.get("print_units", -1) + ex_n != counts.get("stones"):
-        p.append("scope 守恒失败: print_units+excluded != stones")
+    # T9 run 升格: 守恒以【石】计(print_stones), print_units 可大于它
+    # (带裁多 run 石升格独立单元); run_units 明细与差值互证
+    if sc.get("print_stones", sc.get("print_units", -1)) + ex_n \
+            != counts.get("stones"):
+        p.append("scope 守恒失败: print_stones+excluded != stones")
+    if counts.get("print_units", -1) \
+            != counts.get("print_stones", -1) + len(sc.get("run_units", [])
+                                                    or []):
+        p.append("print_units != print_stones + len(run_units)")
+    for ru in sc.get("run_units") or []:
+        if not ru.get("parent_ids"):
+            p.append("run_units %s 缺 parent_ids 谱系"
+                     % ru.get("unit_id", "?"))
+            break
     names = [e.get("bucket") for e in sc.get("excluded", [])]
     for need in ("in_void", "void_cut_fragment", "ring_band_overlap",
                  "thin_merge"):
@@ -1767,10 +1859,11 @@ def validate_g2_report(rep):
     if sm.get("n_trimmed", 0) > 0 and not rm.get("trimmed", 0) > 0:
         p.append("n_trimmed>0 但 removed_model_cm3.trimmed==0 (trim 材料"
                  "账被抹)")
-    if (sm.get("n_subsumed", 0) > 0
-            and not (rm.get("subsumed", 0) > 0
-                     or rm.get("subsumed_by_area_bucket", 0) > 0)):
-        p.append("n_subsumed>0 但 subsume 材料账全零")
+    if sm.get("n_subsumed", 0) > 0 and not rm.get("subsumed", 0) > 0:
+        p.append("n_subsumed>0 但 removed_model_cm3.subsumed==0 (subsume "
+                 "材料账被抹; T9 W1 严格 AND 镜像 trim 侧 —— "
+                 "subsumed_by_area_bucket 是另一口径的账, 不可替代 "
+                 "volume 宇宙的 subsume 材料流)")
     if "pairs" not in fsc:
         p.append("final_scope_check.pairs missing")
     elif isinstance(fsc.get("pairs"), list) \
@@ -1823,6 +1916,15 @@ def export_slice(led, statuses, out_dir=SLICE_DIR, arch_idx=SLICE_ZONE_IDX,
     """中央孔试印包(纯): STL+3MF+ledger_print+manifest(FIT 双值/分批/family
     x count x volume)。返回增强后的 manifest dict。"""
     led_s = slice_ledger(led, arch_idx, scope_ids=scope_ids)
+    # T9 run 升格边界: check 侧多 run 石已按独立单元判(见 _print_units);
+    # 打包层(export_ledger)以石为键出单 STL, 多 run 石若到达此处会被打成
+    # MULTI_SHELL 单件 —— 响亮拒绝, 不静默打包(升格包机归 T5/T7 打包轮)。
+    multi = [s["id"] for s in led_s["stones"]
+             if statuses.get(s["id"], (None, None))[0] == "ring_trim"
+             and len(statuses[s["id"]][1]) > 1]
+    if multi:
+        raise RuntimeError("run 升格石到达试印包导出(check 侧已按独立单元,"
+                           "打包层逐 run STL 未支持): %r" % multi[:3])
     os.makedirs(out_dir, exist_ok=True)
     manifest = EP.export_ledger(led_s, mesh_fn=_to_bed_mesh_fn(statuses),
                                 out_dir=out_dir, scale=scale)
@@ -2253,9 +2355,29 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
         "- 装配制造间隙 FIT(TIGHT/NORMAL/LOOSE)= 0.15/0.30/0.50 (打印件",
         "  直接尺寸, 非 1:50 换算; 1:50 下历史缝仅 0.04-0.25mm, 打不出,",
         "  故配合靠 clearance 不靠历史缝)。",
-        "- 带裁片的环-墙切割缝: 切割面与 RING 相贴(表征界面)但同样吃 FIT",
-        "  余量, 打印当量 = GAP_W 0.20 + 2×clr ≈ 0.5-0.8mm —— 试印见此量",
-        "  级宽缝属口径预期, 不是模型错误(T8c 口径披露, 复审实测)。",
+        "- 带裁片的环-墙切割缝: 切割面退让 ≤clr(仿射内缩, 见 T9 口径节),"
+        " 缝配合由名义 GAP_W 承担, 打印当量 ≈ GAP_W 0.20 + 切割面退让 "
+        "0~0.5mm —— 试印见此量级宽缝属口径预期, 不是模型错误(T8c 披露, "
+        "T9 仿射口径修订)。",
+        "",
+        "## T9 口径(装配余量来源 + run 升格 + 存量债务)",
+        "- inset = 逐轴仿射内缩(关于 bbox 中心, [lo,hi]->[lo+c,hi-c]): "
+        "bbox 装配贴合面(打印单元间配合面)精确退让 clr —— 配合公差吃在配"
+        "合面; 切割缝面(非轴对齐装饰面)退让 ≤c 且沿轴单调。切割面装配余",
+        "量来源 = 名义 GAP_W 缝语义不缩(1:50 历史缝 0.2mm 本打不出, 环-墙",
+        "切割界面是表征缝非精密配合) —— 旧实现只位移 bbox 极值顶点, 分段",
+        "映射不单射, 真失败件 fixture 实证 106 带裁片 post-inset 自交",
+        "(tests/fixtures/check_106/), 仿射映射单射故折叠类自交不可能。",
+        "- run 升格(审查裁决 MULTI_SHELL 不豁免): 带裁多 run 石拆独立打印",
+        "单元, 谱系 meta.scope.run_units.parent_ids; 现行真总体 475 石全",
+        "单 run, 机制为断料场景结构保证。试印包打包层遇多 run 石响亮拒绝",
+        "(逐 run STL 归 T5/T7 打包轮)。",
+        "- legacy clip 存量(check_stone.legacy_clip_survey, n=%d, n_fail="
+        "%d): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, "
+        "本轮不修。" % (report.get("check_stone", {})
+                           .get("legacy_clip_survey", {}).get("n", 0),
+                       report.get("check_stone", {})
+                           .get("legacy_clip_survey", {}).get("n_fail", 0)),
         "",
         "## 构成",
         "| 族 | 数量 | 体积 cm3(打印件) |",
