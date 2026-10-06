@@ -1,7 +1,7 @@
 {
  "_meta": {
-  "arch": 8,
-  "provenance": "stones_p8 v2 (M20): 课程=M18 照片描摹经 M19 重基准换算(z-0.85, 精确由 SPRINGER 1.99->1.14 构造) + M20 冠顶带三道重读(m20_ortho_A08, 仿射 1.69px/94 样本, sx=34.10 与 M18 独立一致); 水线两行为程序值(水下不可读)",
+  "arch": 9,
+  "provenance": "stones_p9 v2 (M20): 文档性记录(拱9 实体谱, +x 框架)。加载器对拱9 消费 stones_p7.json 的镜像, 本文件不进加载链; 内容=p8 谱(中央三孔同制, 拱9 侧仿射验证 1.21px)",
   "datum": "M19 冬照重标定 (水面 z=0, 桥面顶 7.30)",
   "m20_verify": {
    "affine_arch8_rms_px": 1.69,
@@ -255,7 +255,7 @@
   "_trace": "cols=M18 实测经 M19 墩心微调(+0.025); courses=M18 描摹行换算(>=0.85 行)"
  },
  "ring": {
-  "counts": 17,
+  "counts": 15,
   "phase": 0.0
  }
 }
