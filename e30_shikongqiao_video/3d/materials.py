@@ -237,7 +237,42 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     mix_stk.inputs["Color1"].default_value = (1.0, 1.0, 1.0, 1.0)
     mix_stk.inputs["Color2"].default_value = (0.88, 0.87, 0.85, 1.0)
     nt.links.new(mix_edg.outputs["Color"], mix_stk.inputs["Color1"])
-    nt.links.new(mix_stk.outputs["Color"], bsdf.inputs["Base Color"])
+    # ── [M21-L1] 剁斧条纹: 真石面=沿块长向密集平行斧纹(文物局规范按每100mm
+    # 道数考核), 各向异性锯齿波沿块局部 UV u 向, 低频噪声抖动相位破机械感。
+    # 仅 uv_joints 路径(贴面砧石有块UV)生效; 密度 6 道/cm=每米600。──
+    stripe_h = None
+    if uv_joints:
+        st_map = nt.nodes.new("ShaderNodeMapping")
+        st_map.inputs["Scale"].default_value = (60.0, 6.0, 1.0)  # u向60/m*10=每cm6道
+        nt.links.new(attr.outputs["Vector"], st_map.inputs["Vector"])
+        st_jit = nt.nodes.new("ShaderNodeTexNoise")
+        nt.links.new(st_map.outputs["Vector"], st_jit.inputs["Vector"])
+        st_jit.inputs["Scale"].default_value = 2.2
+        st_jit.inputs["Detail"].default_value = 1.0
+        st_w = nt.nodes.new("ShaderNodeTexWave")
+        st_w.wave_type = 'BANDS'
+        st_w.inputs["Scale"].default_value = 1.0
+        st_w.inputs["Distortion"].default_value = 3.5
+        st_w.inputs["Detail"].default_value = 0.0
+        nt.links.new(st_jit.outputs["Color"], st_w.inputs["Vector"])
+        stripe_h = st_w.outputs["Color"]
+    # [M21-L2] AO 积垢: 缝/腔隙环境光遮蔽 -> 乘暗, 不依赖手工 jmin
+    ao = nt.nodes.new("ShaderNodeAmbientOcclusion")
+    ao.inputs["Distance"].default_value = 0.18
+    ao.only_local = True
+    ao_r = nt.nodes.new("ShaderNodeValToRGB")
+    nt.links.new(ao.outputs["AO"], ao_r.inputs["Fac"])
+    # AO: 开放面=1 遮蔽面=0 -> 遮蔽端出白(Fac=1 乘暗), 开放端出黑(不暗化)
+    ao_r.color_ramp.elements[0].position = 0.25
+    ao_r.color_ramp.elements[1].position = 0.85
+    ao_r.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
+    ao_r.color_ramp.elements[1].color = (0.0, 0.0, 0.0, 1.0)
+    mix_ao = nt.nodes.new("ShaderNodeMixRGB"); mix_ao.blend_type = 'MULTIPLY'
+    nt.links.new(ao_r.outputs["Color"], mix_ao.inputs["Fac"])
+    mix_ao.inputs["Color1"].default_value = (1, 1, 1, 1)
+    mix_ao.inputs["Color2"].default_value = (0.62, 0.60, 0.57, 1.0)
+    nt.links.new(mix_stk.outputs["Color"], mix_ao.inputs["Color1"])
+    nt.links.new(mix_ao.outputs["Color"], bsdf.inputs["Base Color"])
     # ── bump: 缝为凹槽(jmin: 缝0/面1) + 细颗粒 + 块间微错台 ──
     grain = nt.nodes.new("ShaderNodeTexNoise")
     nt.links.new(geo.outputs["Position"], grain.inputs["Vector"])
@@ -258,7 +293,34 @@ def stone_material(name, base_rgb, joint=0.020, course_h=0.42, weather=0.55,
     bump.inputs["Strength"].default_value = bump_strength
     bump.inputs["Distance"].default_value = 0.03
     nt.links.new(b_c.outputs[0], bump.inputs["Height"])
-    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    # [M21-L1] 二级 micro bump: 剁斧条纹 + 石孔(scale 200/m), 链在宏观 bump 之后
+    pore = nt.nodes.new("ShaderNodeTexNoise")
+    nt.links.new(geo.outputs["Position"], pore.inputs["Vector"])
+    pore.inputs["Scale"].default_value = 200.0
+    pore.inputs["Detail"].default_value = 0.8
+    h_mix = nt.nodes.new("ShaderNodeMath"); h_mix.operation = 'MULTIPLY_ADD'
+    nt.links.new(pore.outputs["Fac"], h_mix.inputs[0])
+    h_mix.inputs[1].default_value = 1.0
+    if stripe_h is not None:
+        h_mix.inputs[2].default_value = 0.0
+        hm2 = nt.nodes.new("ShaderNodeMath"); hm2.operation = 'MULTIPLY_ADD'
+        nt.links.new(stripe_h.outputs[0] if not hasattr(stripe_h,'outputs') else stripe_h, hm2.inputs[0]) if False else None
+        # stripe_h 是 Color 输出: 分离取 R 再叠加
+        srep = nt.nodes.new("ShaderNodeSeparateColor")
+        nt.links.new(stripe_h.outputs[0] if isinstance(stripe_h, list) else stripe_h, srep.inputs["Color"])
+        ma = nt.nodes.new("ShaderNodeMath"); ma.operation = 'MULTIPLY_ADD'
+        nt.links.new(srep.outputs["Red"], ma.inputs[0])
+        ma.inputs[1].default_value = 0.5
+        nt.links.new(h_mix.outputs[0], ma.inputs[2])
+        h_final = ma
+    else:
+        h_final = h_mix
+    bump2 = nt.nodes.new("ShaderNodeBump")
+    bump2.inputs["Strength"].default_value = 0.25
+    bump2.inputs["Distance"].default_value = 0.004
+    nt.links.new(h_final.outputs[0], bump2.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bump2.inputs["Normal"])
+    nt.links.new(bump2.outputs["Normal"], bsdf.inputs["Normal"])
 
     # 粗糙度: 缝更粗糙 + 风化斑块微差
     rg = nt.nodes.new("ShaderNodeMath"); rg.operation = 'MULTIPLY_ADD'

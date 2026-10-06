@@ -161,15 +161,43 @@ def build_coursing(bm, hw_front, half_depth):
             _m = COURSE_H / 2.0 + 0.02  # [M17b] 0.08->0.02: 真照拱肩砧石直接切进券环线, 露体带=一条缝宽
             if in_body and cz < deck_here - 0.05 and not _in_arch(cx, cz, m=_m):
                 for side in (1, -1):
-                    hw = _hw(cx, cz)
-                    yb = side * hw - (half_depth if side > 0 else 0.0)
-                    _box(bm, cx, min(yb, yb + half_depth), cz, COURSE_W, half_depth, COURSE_H,
-                         uv_face=(cx - COURSE_W / 2.0, cz - COURSE_H / 2.0))
+                    # [M17f修百叶窗] 本体收分 22度(上6.56/下14.6)每层墙面 y 移动
+                    # ~16cm >> 块深 6mm -> 竖直面块下半被斜面埋掉, 露出部分读成
+                    # 横百叶。真砧石=面石随收分倾斜的楔形: 前脸上下沿各自
+                    # hw(z_edge)+PROUD。M18 同步此规则。
+                    hw_b = _hw(cx, cz - COURSE_H / 2.0)
+                    hw_t = _hw(cx, cz + COURSE_H / 2.0)
+                    _wedge(bm, cx, hw_b, hw_t, cz, COURSE_W, COURSE_H, side)
                     n += 1
             x += COURSE_W
         z += COURSE_H
         row += 1
     return n
+
+
+def _wedge(bm, cx, hw_b, hw_t, cz, dx, dz, side, proud=0.006, back=0.30):
+    """收分楔形砧石: 前脸随墙面 hw(z)+proud 倾斜, 背向墙内 10cm 咬住。"""
+    x0, x1 = cx - dx / 2.0, cx + dx / 2.0
+    z0, z1 = cz - dz / 2.0, cz + dz / 2.0
+    if side > 0:
+        f0, f1 = hw_b + proud, hw_t + proud
+        b0, b1 = f0 - back, f1 - back
+    else:
+        f0, f1 = -(hw_b + proud), -(hw_t + proud)
+        b0, b1 = f0 + back, f1 + back
+    vs = [bm.verts.new(v) for v in (
+        (x0, b0, z0), (x1, b0, z0), (x1, f0, z0), (x0, f0, z0),
+        (x0, b1, z1), (x1, b1, z1), (x1, f1, z1), (x0, f1, z1))]
+    uv = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
+    for fi, f in enumerate(((0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2),
+                            (2, 6, 7, 3), (3, 7, 4, 0))):
+        try:
+            fc = bm.faces.new([vs[k] for k in f])
+        except ValueError:
+            continue
+        if fi in (0, 1):  # 前后脸: 块局部米 UV(缝沿块界)
+            for lp in fc.loops:
+                lp[uv].uv = (lp.vert.co.x - x0, lp.vert.co.z - z0)
 
 
 def _box(bm, xc, yc, zc, dx, dy, dz, uv_face=None):
