@@ -359,8 +359,10 @@ def build():
     m_body = MAT.qingshi_material("stone_body", block_var=0.08)
     m_ring = MAT.qingshi_material("stone_ring", (0.455, 0.450, 0.430),
                                   joint=0.0005, block_var=0.10, bump_strength=0.65)
+    # [M18] 砧石间是真实几何缝(GAP_W=0.010, 露本体成暗线) -> 程序缝关(joint 0.0005)。
+    # uv_joints 保留无害(缝宽≈0 时线不可见)。
     m_course = MAT.qingshi_material("stone_course", (0.440, 0.436, 0.416),
-                                    joint=0.014, block_var=0.04, bump_strength=0.22,
+                                    joint=0.0005, block_var=0.04, bump_strength=0.22,
                                     uv_joints=True)
     m_rail = MAT.marble_material("marble")
     m_water = MAT.water_material()
