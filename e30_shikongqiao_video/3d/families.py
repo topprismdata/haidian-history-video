@@ -8,11 +8,14 @@ from typing import Any, Dict, List, Tuple
 def _wedge_std(params):
     # type: (Dict[str, Any]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
     """收分楔形砧石(局部坐标: 原点在块左下前角, x=宽, y=深(向墙内为负), z=高)。
-    前脸上下沿 y 随 hw_b/hw_t 倾斜(proud 出挑), 背向 -back。"""
-    w = params["w"]; h = params["h"]; proud = params["proud"]; back = params["back"]
+    d=从前脸向墙内起算的整石深度(权威); d 缺失时兜底 d=back+proud。
+    前脸下沿 y=proud, 上沿随收分内收 f1=proud-(hw_b-hw_t); 背沿 y=前沿 y-d(上下各自)。"""
+    w = params["w"]; h = params["h"]; proud = params["proud"]
     hw_b = params["hw_b"]; hw_t = params["hw_t"]
-    f0, f1 = proud, proud + (hw_b - hw_t)   # 前脸下/上沿 y(局部, 上沿内收)
-    b0, b1 = f0 - back, f1 - back
+    d = params.get("d", params.get("back", 0.3) + proud)
+    f0 = proud
+    f1 = proud - (hw_b - hw_t)   # 前脸下/上沿 y(局部, 上沿内收)
+    b0, b1 = f0 - d, f1 - d
     v = [(0.0, b0, 0.0), (w, b0, 0.0), (w, f0, 0.0), (0.0, f0, 0.0),
          (0.0, b1, h), (w, b1, h), (w, f1, h), (0.0, f1, h)]
     f = [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1),
