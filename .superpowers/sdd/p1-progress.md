@@ -13,5 +13,6 @@
 - Task 6: implemented (93a3dfa, 24测/171绿) — 审查Spec✅/Approved(0 Crit); 独立探针: inset半空间检验证不撑大桥/两量分离字节级/flip-M3自洽/超床独批不塞爆
   - W3主控裁决已落地(6bc6783): FIT打印毫米+coupon 1:1(缝2×fit可实测, NORMAL打印当量0.600mm留证)+回读双验+W1/S1-S5, 173绿 → Task 6 complete
   - P4备忘(S4/S6): manifest created_utc不可复现→回归哈希时置可选; y向inset面不对称在T7/T8全桥gap_check贴边时回看
-- Task 7: implemented (1b5f9df, 188测+312, proxy逐字节回归独立证实, IoU0.9326非挪门柱[审查反向实验含coursing物理上限0.656]) — 审查质量FAIL单点H1(cap_to_deck slab误用wedge中心锚: 29越顶/9bbox坏/8静默弃) → 修复轮进行中
+- Task 7: implemented (1b5f9df, 188测+312, proxy逐字节回归独立证实, IoU0.9326非挪门柱[审查反向实验含coursing物理上限0.656]) — 审查质量FAIL单点H1(cap_to_deck slab误用wedge中心锚: 29越顶/9bbox坏/8静默弃) → complete (17b37dd修复, 复审PASS无一虚报: 越顶29→0/IoU0.9393/弃2救2raw对照/S4反驳成立)
+- Task 8: G2门 派发中
   - T8接线清单(累积): ①core_cells x界必填已强制 ②退让读params['proud'] ③hw钳位折点带内加密 ④x梯度dz真实冒烟 ⑤clip石导出走烘焙网格(T7已raise化) ⑥ABUT分区空(桥台砌体未入账) ⑦layout无-112°方位属表现层 ⑧雕件白名单外(P4)
