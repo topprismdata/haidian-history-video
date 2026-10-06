@@ -77,6 +77,12 @@ MIN_KEEP_H = 0.22          # 残块高 < 此值弃(冠顶环带薄层除外)
 COLLAR_H = 0.20            # 冠顶环带上方薄层高(照片 ~0.20m)
 END_ZONE = 72.0            # |x|>72 端区走旧逻辑(桥头 massing 冻结)
 ARC_STEP = 0.10            # 贴拱切块沿弧采样步长 m
+# ── [M19] 起拱线出挑 impost 线脚(冬照+2017-05-20 特写: 每孔拱脚、墩顶之上阶梯
+#    出挑承托层 2-3 阶, 出挑共 ~0.3m, 券环落于其上; M19 brief 拟合目标 高≈0.35) ──
+IMPOST_H = 0.35            # 线脚总高(3 阶, 每阶 ~0.117)
+IMPOST_PROJ = 0.30         # 底阶总出挑(自墙面), 向上每阶递减 0.10
+IMPOST_STEPS = 3
+IMPOST_MIN_Z = 0.02        # 没水阶不建(端孔起拱 0.26 近水, 阶没入水下部分省略)
 
 
 def _arch_of(i):
@@ -470,7 +476,12 @@ def _place_stone(bm, x0, x1, z0, z1, cuts,
     if dk_l < z1 - 1e-4 or dk_r < z1 - 1e-4:
         z_hi = min(z1, dk_l, dk_r)
         if z_hi - z_lo < min_h:
-            return 0
+            # [M19] 桥面斜坡(冬照 camber 加陡 4.15->5.10)把坡缘块削成薄片: 整块弃
+            # 会在桥面线下留 0.1~0.3m 露体带(_m18_verify 实测 109899 格), 改为
+            # >=0.02 的找平薄片照落(贴坡曲线顶, 真桥檐下找平石同款); <0.02 弃。
+            if z_hi - z_lo < 0.02:
+                return 0
+            min_h = z_hi - z_lo
         n = max(2, int((x1 - x0) / 0.15) + 1)
         top = []
         for k in range(n + 1):
@@ -518,7 +529,10 @@ def _layout_spans(rng, span, short_p=0.18):
 
 
 def _coursing_endzones(bm, hw_front, half_depth):
-    """[冻结] 端区 |cx|>72 桥头贴面: M17f 均匀错缝逻辑原样。"""
+    """端区 |cx|>72 桥头贴面: M17f 均匀错缝布局原样(层高/错缝量冻结)。
+    [M19 缺陷②修复] 落块由 _wedge(块内恒 y 平面脸, 块间 hw 台阶=百叶横纹残留)
+    换 _stone(逐顶点贴 hw(x,z)+proud, 22° 收分随桥面曲线连续); 顶沿裁到
+    deck-0.05(旧版整块跨过桥面线下, 端区 camber 加陡后露块顶入仰天石底)。"""
     n = 0
     z = 0.15
     row = 0
@@ -533,11 +547,11 @@ def _coursing_endzones(bm, hw_front, half_depth):
             _m = COURSE_H / 2.0 + 0.02
             if in_body and abs(cx) > END_ZONE and cz < deck_here - 0.05 \
                     and not _in_arch(cx, cz, m=_m):
+                z1 = min(z + COURSE_H, deck_here - 0.05)
                 for side in (1, -1):
-                    hw_b = _hw(cx, cz - COURSE_H / 2.0)
-                    hw_t = _hw(cx, cz + COURSE_H / 2.0)
-                    _wedge(bm, cx, hw_b, hw_t, cz, COURSE_W, COURSE_H, side)
-                    n += 1
+                    if _stone(bm, x, x + COURSE_W, z, z1, side,
+                              uv_x0=x, uv_z0=z):
+                        n += 1
             x += COURSE_W
         z += COURSE_H
         row += 1
@@ -715,6 +729,53 @@ def _coursing_bays(bm, specs):
     return n
 
 
+def build_impost(bm):
+    """[M19] 起拱线出挑 impost 线脚: 每孔两券脚下、墩/桥台前脸之上的阶梯出挑
+    承托层(3 阶, 总高 IMPOST_H, 底阶出挑 IMPOST_PROJ 向上递减), 券环落于其上
+    (顶面 = spz-GAP 床缝, 与承压座石同一承压面)。逐孔随 arch_springer_z,
+    x 覆盖 [券脚内缘-咬合, 墩外面](桥台侧到本体端 |x|=75); 没水阶不建
+    (端孔起拱近水)。前脸逐顶点贴 hw(x,z)(22° 收分跟随), 背咬 STONE_BACK。
+    返回块数(前后墙合计)。"""
+    n = 0
+    for i in range(G.N_SPAN):
+        xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
+        a = G.SPANS[i] / 2.0
+        hl = G.arch_springer_z(i) - GAP_W
+        for sgn in (-1, 1):
+            # 开孔侧界 = 券脚内缘 fx(起拱线处 intrados 切线近竖直, 越界即悬进洞口
+            # 空气 -> 必须齐平); 墩侧界 = 墩外面(桥台侧 = 本体端 |x|=75)。
+            fx = xc + sgn * a
+            if sgn > 0:
+                k = i + 1
+                w_out = G.BRIDGE_ABUT if k == G.N_SPAN else G.pier_w(k)
+                px_out = G.PIER_X[k] + w_out / 2.0
+            else:
+                k = i
+                w_out = G.BRIDGE_ABUT if k == 0 else G.pier_w(k)
+                px_out = G.PIER_X[k] - w_out / 2.0
+            x0, x1 = min(fx, px_out), max(fx, px_out)
+            x0 = max(x0, -G.BRIDGE_LEN / 2.0)
+            x1 = min(x1, G.BRIDGE_LEN / 2.0)
+            if x1 - x0 < 0.10:
+                continue
+            for st in range(IMPOST_STEPS):
+                z1 = hl - IMPOST_H * st / IMPOST_STEPS
+                z0 = hl - IMPOST_H * (st + 1) / IMPOST_STEPS
+                if z1 <= IMPOST_MIN_Z:
+                    break
+                proj = IMPOST_PROJ * (st + 1) / IMPOST_STEPS
+                zb0 = max(z0, IMPOST_MIN_Z)
+                if z1 - zb0 < 0.02:
+                    continue
+                for side in (1, -1):
+                    if _stone(bm, x0, x1, zb0, z1, side,
+                              proud=STONE_PROUD + proj,
+                              back=STONE_BACK + proj,
+                              uv_x0=x0, uv_z0=zb0):
+                        n += 1
+    return n
+
+
 def build_coursing(bm, hw_front, half_depth):
     """桥墩/桥台/拱肩贴面砧石(M18 三区: 端区冻结旧逻辑 + 墩对直列 + 拱肩大块
     错缝贴拱切块; stones_pX.json 数据路优先, 程序兜底)。返回块数(前后墙合计)。"""
@@ -727,9 +788,11 @@ def build_coursing(bm, hw_front, half_depth):
     n_end = _coursing_endzones(bm, hw_front, half_depth)
     n_pier = _coursing_piers(bm, specs)
     n_bay = _coursing_bays(bm, specs)
-    build_coursing.region_counts = {"endzone": n_end, "pier": n_pier, "bay": n_bay}
-    print("M18_COURSING endzone=%d pier=%d bay=%d" % (n_end, n_pier, n_bay))
-    return n_end + n_pier + n_bay
+    n_imp = build_impost(bm)
+    build_coursing.region_counts = {"endzone": n_end, "pier": n_pier, "bay": n_bay,
+                                    "impost": n_imp}
+    print("M18_COURSING endzone=%d pier=%d bay=%d impost=%d" % (n_end, n_pier, n_bay, n_imp))
+    return n_end + n_pier + n_bay + n_imp
 
 
 def _arc_cum_tables(xc, spz, a, b, M=400):

@@ -26,20 +26,20 @@ PIER_MAIN_W_C = _F.PIER_MAIN_W_C
 PIER_FOUND_W_C = _F.PIER_FOUND_W_C
 BRIDGE_ABUT = _F.BRIDGE_ABUT   # 尺寸决策只在 facts 一处做(T2b 归因后改); 生成器纯消费
 SPAN_DISTINCT = list(_F.SPAN_DISTINCT)   # G1 更名: '半跨'语义数学上不可能(9值×2-1=17孔)
-DECK_Z_AT_PIER = list(_F.DECK_Z_AT_PIER)
 DECK_Z_END, DECK_Z_TOP = _F.DECK_Z_END, _F.DECK_Z_TOP
 from assumptions import BODY_BOTTOM, MESH_TOL, VOID_CUT_MARGIN   # G1 分家: 建模假定/判据参数不属 facts
 SEG = 40
 NSEG_X = 240            # 桥体纵向分段(高密度 -> 光滑)
 NSEG_ARC = 40           # 券洞圆弧分段
-SPRING_BASE = SPRINGER  # 起拱线(中央孔)
-SPANDREL = _F.SPANDREL   # M12: 冠顶到桥面恒定拱肩, 拱冠线随桥面 camber
+SPRING_BASE = SPRINGER  # 起拱线(中央孔) [M19] 仅存兼容锚, 逐孔真值走 arch_springer_z(i)
+spandrel = _F.spandrel   # [M19] 逐孔拱肩厚剖面(单一数据源 facts.spandrel)
 
 
 def arch_crown_z(i):
-    """M12: 第 i 孔拱冠标高 = 该孔中心处桥面标高 - 拱肩厚(冠线跟随桥面弧线)。"""
+    """M12/M19: 第 i 孔拱冠标高 = 该孔中心处桥面标高 - 该孔拱肩厚(冠线跟随桥面
+    camber; 拱肩 M19 起为逐孔剖面 facts.spandrel, 中央 1.4 → 端 0.5)。"""
     xc = (PIER_X[i] + PIER_X[i + 1]) / 2.0
-    return deck_z(xc) - SPANDREL
+    return deck_z(xc) - spandrel(i)
 
 
 def arch_rise_ratio(i):

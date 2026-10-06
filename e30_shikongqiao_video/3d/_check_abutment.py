@@ -8,16 +8,16 @@ TOL = 1e-6
 HALF = 75.0
 ABUT_U0, ABUT_L = -0.8, 5.2
 HW_ROOT, HW_FRONT = 6.50, 4.55
-ABUT_TOP = 3.56
+ABUT_TOP = 2.16                 # [M19 -1.4] = 桥面端 2.20 - 0.04
 RAMP_U0, RAMP_L = 5.14, 42.0
 RAMP_U1 = RAMP_U0 + RAMP_L
-RAMP_Z0, Z_TIP = 3.55, 2.45
+RAMP_Z0, Z_TIP = 2.15, 1.05     # [M19 -1.4]
 HW0, HW1 = 3.28, 5.00          # 铺装边线(九轮外展 4.40 -> 5.00)
 HW_SOLID_END = 5.15            # 侧墙顶棱@坡端(九轮新增)
 REVEAL_HEAD, REVEAL_END = 1.35, 0.75   # 石颊露出高(九轮: 恒0.75 -> 渐退)
 BATTER = 0.85
-PAD_Z = 2.42
-BANK_Z = 2.1
+PAD_Z = 1.02                    # [M19 -1.4]
+BANK_Z = 0.70                   # [M19 -1.4]
 BED_BOTTOM = -2.8
 RAIL_END_U = RAMP_U1 - 2.0
 
@@ -83,16 +83,16 @@ check(74.0 <= min(abs(v.co.x) for v in agr.data.vertices) <= 74.5,
       % min(abs(v.co.x) for v in agr.data.vertices))
 thick = (HALF + ABUT_L) - (HALF - 1.35)
 check(5.5 <= thick <= 7.5, "C1 末孔券脸->前脸实腹总厚=%.2fm (要求 5.5~7.5)" % thick)
-check(3.50 <= az1 <= 3.58, "C1 台帽顶 z=%.3f (桥面端 3.60 沉 4cm 帽石缝)" % az1)
+check(2.10 <= az1 <= 2.18, "C1 台帽顶 z=%.3f (桥面端 2.20 沉 4cm 帽石缝; M19 -1.4)" % az1)
 check(bx1 <= HALF + 1e-6, "C1 本体端面未被布尔改动 |x|max=%.3f (应 75.0)" % bx1)
 
-# C2 实腹坡道: 42m 缓坡, 端头顶 2.45
+# C2 实腹坡道: 42m 缓坡, 端头顶 1.05
 check(abs(ax1 - (HALF + RAMP_U1)) < 0.01,
       "C2 坡端 |x|max=%.3f (应 %.2f=75+5.14+42)" % (ax1, HALF + RAMP_U1))
 grade = (RAMP_Z0 - Z_TIP) / RAMP_L * 100.0
-check(2.0 <= grade <= 3.2, "C2 坡度 %.2f%% (3.55->2.45m/42m, 缓坡)" % grade)
+check(2.0 <= grade <= 3.2, "C2 坡度 %.2f%% (2.15->1.05m/42m, 缓坡; M19 坡度不变)" % grade)
 tipz = max(v.co.z for v in agr.data.vertices if abs(v.co.x) > HALF + RAMP_U1 - 0.3)
-check(2.40 <= tipz <= 2.50, "C2 坡端顶实测 z=%.3f (应≈2.45)" % tipz)
+check(1.00 <= tipz <= 1.10, "C2 坡端顶实测 z=%.3f (应≈1.05; M19 -1.4)" % tipz)
 
 # C3 埋深: 石作底低于岸坡最低点
 check(abs(az0 - BED_BOTTOM) < 1e-5, "C3 石作最低点 z=%.3f (应 -2.8)" % az0)
@@ -121,10 +121,10 @@ for v in bank.data.vertices:
         n_p += 1; padz.append(z)
     if 50.2 <= u <= 56.0 and abs(y) <= 4.2:
         n_t += 1; tipz2.append(z)
-check(n_p >= 30 and 2.38 <= min(padz) and max(padz) <= 2.46,
-      "C6 接岸地坪 z∈[%.3f,%.3f] (n=%d, 应≈%.2f 平整存在)" % (min(padz), max(padz), n_p, PAD_Z))
-check(n_t >= 24 and 2.38 <= min(tipz2) and max(tipz2) <= 2.46,
-      "C6 坡端区地坪 z∈[%.3f,%.3f] (n=%d, 端面没入: 坡端顶2.45-地坪%.2f 出露0.03)" % (
+check(n_p >= 30 and 0.98 <= min(padz) and max(padz) <= 1.06,
+      "C6 接岸地坪 z∈[%.3f,%.3f] (n=%d, 应≈%.2f 平整存在; M19 -1.4)" % (min(padz), max(padz), n_p, PAD_Z))
+check(n_t >= 24 and 0.98 <= min(tipz2) and max(tipz2) <= 1.06,
+      "C6 坡端区地坪 z∈[%.3f,%.3f] (n=%d, 端面没入: 坡端顶1.05-地坪%.2f 出露0.03)" % (
           min(tipz2), max(tipz2), n_t, PAD_Z))
 
 # C7 栏杆沿坡道连续 + 抱鼓石收头

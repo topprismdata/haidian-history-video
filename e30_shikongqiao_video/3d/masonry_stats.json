@@ -19,12 +19,13 @@
   7
  ],
  "voussoir_total": 193,
- "coursing_total": 2574,
- "grand_total": 2767,
+ "coursing_total": 2446,
+ "grand_total": 2639,
  "coursing_regions": {
-  "endzone": 92,
-  "pier": 998,
-  "bay": 1484
+  "endzone": 52,
+  "pier": 878,
+  "bay": 1312,
+  "impost": 204
  },
  "spec_arches": [
   8

@@ -141,7 +141,7 @@ def check_body(f):
         # 残差恒 0, 与真实拱线无关。M12 后拱为逐孔两圆心 ogee, 单圆前提作废。
         # 改测真实剖面 f.arch_z 的结构性不变量: 肩点归零/对称/单峰/冠高一致。
         b_i = f.rise_ratio(i) * d.SPANS[i]
-        sp_i = d.deck_z(xc) - f.SPANDREL - b_i
+        sp_i = d.deck_z(xc) - f.spandrel(i) - b_i
         zl = f.arch_z(xc - a, xc, sp_i, a, b_i)
         zr = f.arch_z(xc + a, xc, sp_i, a, b_i)
         if abs(zl - sp_i) > 1e-3 or abs(zr - sp_i) > 1e-3:
@@ -175,7 +175,7 @@ def check_body(f):
             add("fail", "MET_ARCH_RATIO", "中央矢跨=%.3f 偏离设计意图 %.2f±%.2f"
                 % (f.rise_ratio((f.N_SPAN - 1) // 2), ratio_target, ratio_tol))
         # MET 结构自洽(G2 修订; M14 随 M12 语义: 冠=桥面-拱肩, 起拱=冠-矢, 逐孔)
-        crown_i = d.deck_z(xc) - f.SPANDREL
+        crown_i = d.deck_z(xc) - f.spandrel(i)
         if crown_i + f.RING_T > d.deck_z(xc) + 1e-9:
             add("fail", "MET_RING_FIT", "孔%d 拱背%.2f 高于桥面%.2f(券圈穿出桥面)" % (i + 1, crown_i + f.RING_T, d.deck_z(xc)))
         if sp_i >= d.deck_z(xc):
