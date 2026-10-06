@@ -79,9 +79,15 @@ END_ZONE = 72.0            # |x|>72 端区走旧逻辑(桥头 massing 冻结)
 ARC_STEP = 0.10            # 贴拱切块沿弧采样步长 m
 # ── [M19] 起拱线出挑 impost 线脚(冬照+2017-05-20 特写: 每孔拱脚、墩顶之上阶梯
 #    出挑承托层 2-3 阶, 出挑共 ~0.3m, 券环落于其上; M19 brief 拟合目标 高≈0.35) ──
-IMPOST_H = 0.35            # 线脚总高(3 阶, 每阶 ~0.117)
-IMPOST_PROJ = 0.30         # 底阶总出挑(自墙面), 向上每阶递减 0.10
+# [十审E2] GPT: 原 3 阶 0.35/0.30 读成"独立承台牛腿"(出挑深/阶厚/间距大,
+# 远看横向白带)。改: 4 皮逐级微挑(总高 0.28, 底阶出挑 0.17), 且每皮沿墩列线
+# 分块(与墙石同一砌层语法), 不再整幅环带 extrusion。
+# [十审E2b] 0.17/4阶仍读"悬浮板"(踏步深>>踢面高, 底影=缝感)。真照判读:
+# 浅挑厚线脚, 总出挑<=0.10, 3 阶每阶 ~0.10 高 x ~0.033 挑(踢面主导)。
+IMPOST_H = 0.30
+IMPOST_PROJ = 0.10
 IMPOST_STEPS = 3
+IMPOST_BLOCK_W = 1.05      # 皮内分块名义宽(m)
 IMPOST_MIN_Z = 0.02        # 没水阶不建(端孔起拱 0.26 近水, 阶没入水下部分省略)
 
 
@@ -767,12 +773,25 @@ def build_impost(bm):
                 zb0 = max(z0, IMPOST_MIN_Z)
                 if z1 - zb0 < 0.02:
                     continue
-                for side in (1, -1):
-                    if _stone(bm, x0, x1, zb0, z1, side,
-                              proud=STONE_PROUD + proj,
-                              back=STONE_BACK + proj,
-                              uv_x0=x0, uv_z0=zb0):
-                        n += 1
+                # [十审E2] 皮内分块: 沿 x 按名义宽切段, 奇偶皮错半块(与墩身
+                # 砧石同一错缝语法), 块界=真缝 -> 线脚读成砌层不是环带
+                segs = []
+                off = (st % 2) * IMPOST_BLOCK_W * 0.5
+                xs = x0 + off
+                while xs < x1:
+                    xe = min(xs + IMPOST_BLOCK_W, x1)
+                    if xe - xs >= 0.25:
+                        segs.append((xs, xe))
+                    xs = xe
+                if not segs:
+                    segs = [(x0, x1)]
+                for (sx0, sx1) in segs:
+                    for side in (1, -1):
+                        if _stone(bm, sx0, sx1, zb0, z1, side,
+                                  proud=STONE_PROUD + proj,
+                                  back=STONE_BACK + proj,
+                                  uv_x0=sx0, uv_z0=zb0):
+                            n += 1
     return n
 
 
