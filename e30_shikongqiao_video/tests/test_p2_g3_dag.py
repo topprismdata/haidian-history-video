@@ -593,10 +593,12 @@ def test_real_ledger_g3_fullchain():
     # W1 双建模债清单: ≥99% 吞没的 rbo 石进报告, 不判红, 单自持边合规
     # (T6 裁决轮起 run_g3 的 gate_stress 用结构带口径; 真账 ARCH07
     #  acceptance 不可行 → 停车线 raise, 报告挂异常 .report ——
-    #  两门数据不受影响)
+    #  两门数据不受影响。[P2-T7] ④gate_imbalance 起真账卸架序排程冲突
+    #  亦 raise G3_DECENTER_ORDER_CONFLICT, 报告同样挂异常, 两门照旧)
     try:
         rep = G3.run_g3(events, led, in_void=in_void)
-    except G3.G3_FROZEN_GEOMETRY_CONFLICT as exc:
+    except (G3.G3_FROZEN_GEOMETRY_CONFLICT,
+            G3.G3_DECENTER_ORDER_CONFLICT) as exc:
         rep = exc.report
     ph = rep["double_model_placeholders"]
     print("double_model_placeholders: %d 块" % len(ph))

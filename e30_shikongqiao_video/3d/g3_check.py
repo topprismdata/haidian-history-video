@@ -1,9 +1,10 @@
 # e30_shikongqiao_video/3d/g3_check.py
 # -*- coding: utf-8 -*-
-"""P2-T5+T6 g3_check.py: G3 第一层(①支撑活跃)+ snapshot 状态机 + 第三层
-(③压力线刚块链, acceptance/robustness 双 case + 停车线)。
+"""P2-T5+T6+T7 g3_check.py: G3 第一层(①支撑活跃)+ snapshot 状态机 + 第三层
+(③压力线刚块链, acceptance/robustness 双 case + 停车线; ④墩推力包络
+不平衡, λ 卸架档+核距双指标+排程停车线)。
 
-定位(三层力学门: ①支撑活跃+③压力线在本文件; ④推力包络 T7 后续扩展):
+定位(三层力学门: ①支撑活跃+③压力线+④推力包络不平衡(T7)均在本文件):
   sequencer 构造序列并自带 check_sequence; 本文件**不 import sequencer**
   (含传递闭包, 测试钉死) —— 从裸事件流+支撑边账独立重建建造快照, 与
   sequencer 的 Σ≥1 不变量做**两实现互证**(同 T2 跨源钉哲学)。frontier
@@ -37,10 +38,18 @@
       复现口径在阈值敏感带(0.985-0.99)内有出入, 以本扫描落盘清单为准
       (幂等可复现, 报告附敏感带明细)。
   run_g3(events, ledger, ..., r5a=None) -> report dict
-      串 gate_dag(本文件)+double_model 清单(W1)+gate_stress(③压力线);
-      T7 追加 gate_thrust 节(report 键即扩展点; Snapshot.present/capacity/
-      by_hole/holes+copy() 即其所需快照面)。gate_stress.ok=False →
-      raise G3_FROZEN_GEOMETRY_CONFLICT(停车线, 停报主控)。
+      串 gate_dag(本文件)+double_model 清单(W1)+gate_stress(③压力线)
+      +gate_imbalance(④墩推力包络不平衡, T7)。gate_stress.ok=False →
+      raise G3_FROZEN_GEOMETRY_CONFLICT(停车线, 停报主控);
+      gate_imbalance.ok=False → raise G3_DECENTER_ORDER_CONFLICT
+      (排程冲突停车线, 报告挂 exc.report 含逐墩账+卸架顺序建议)。
+  pier_imbalance(snap, H_env_by_hole, lam, pier_dims=None) -> dict
+      brief 接口(T7④): 当前事件(snap.event 须 DECENTERING 类)下该孔
+      两侧内墩 {pier_id: {H_L,H_R,dH,M_unb,M_res,ratio,e_kernel,verdict,
+      verdict_ratio,verdict_kernel,...}}; λ 态由调用方按事件推进。
+  imbalance_gate(events, H_env_by_hole, ledger, in_void, pier_dims) -> dict
+      ④门: 逐 DECENTERING 事件全墩双指标(λ 卸架档+核距), H 区间取
+      ③acceptance 可行区间(同报告单源); 同形节+piers 汇总+advice。
 
 T6 ③压力线(Heyman 刚块链; 见该节头注):
   pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
@@ -71,6 +80,8 @@ T6 ③压力线(Heyman 刚块链; 见该节头注):
   DAG_R6_JUMP_DECENTER     落架孔某邻孔未达合龙持荷(跳孔落架, 前视 1)
   DAG_R6_ADJ_DECENTERING   相邻孔同落架
   STRESS_ACCEPTANCE_INFEASIBLE  ③压力线 acceptance 无可行 H(停车线)
+  IMB_RATIO_RED            ④墩倾覆裕度 ratio<1.5(卸架序排程冲突)
+  IMB_KERNEL_RED           ④墩基底核距 e>B/6(中三分律超核, 排程冲突)
 
 语义纪律: capacity=荷载分担份额(P2-T4 修复轮裁2, ledger.py 定稿);
 石重(体积单源)①层无需, T6 按 sequencer.stone_weight 同一单源
@@ -91,6 +102,7 @@ import ledger as L
 import events as E
 import facts as F
 import geom_math as GM
+from assumptions import BODY_BOTTOM as _BODY_BOTTOM
 
 TOL = 1e-9                 # Σcapacity 判定容差(同 sequencer)
 RING_ROLE = "RING"
@@ -1399,17 +1411,413 @@ def plot_hole_pressure(hole, ledger, zone, path, title=None):
 
 
 # ---------------------------------------------------------------------------
-# run_g3(报告串接; T7 在此追加 gate_thrust 节)
+# T7 ④墩推力包络不平衡(λ 卸架档 + 核距双指标)
+# ---------------------------------------------------------------------------
+# 物理口径(冻结, 判据先行数字后置; G3 三层力学门的第三检):
+#   落一孔的架 → 该孔以水平推力外推其两侧墩顶; 邻孔仍驻架/未合龙 → 不回馈
+#   反向推力 → 墩身承受不平衡水平力+弯矩。sequencer 把 DECENTERING 建模为
+#   渐进(λ=环已承载份额∈[0,1], 架吸收 1−λ), 该孔对墩有效推力 H_eff=λ×H:
+#     事件孔(正在卸架): H_eff = λ × Hmax(H 区间上界, 保守最大推力)
+#     其余孔(含已清账): H_eff = λ × Hmin(区间下界, 保守最小反推力;
+#                       未落架 λ=0 → 0, 已清账 λ=1 → Hmin)
+#   经典砌体墩验算双指标(独立输出, 阈值互不派生 —— 一个红一个绿要能表达):
+#     1) 倾覆裕度 ratio = M_res/M_unb ≥ 1.5 [现代裕度·敏感性, 非史料常数]:
+#        M_unb = |dH|×h_ref(h_ref=两侧作用高较大者, 保守单臂),
+#        M_res = V×B/2(竖向合力 V 作用于基底形心, 抗倾臂 B/2)。
+#     2) 核距(中三分律) e_kernel = |H_L·h_L − H_R·h_R|/V ≤ B/6(矩形基底
+#        核半宽): 绕基底中线精确合力矩/竖向合力; 超核 → 基底出现拉应力区
+#        (砌体抗拉≈0)即失稳。
+#   等作用高时核距严于 1.5 裕度(e≤B/6 ⟺ ratio≥3), 两判定差异的表达域 =
+#   B/6<e≤B/3 带 + 两侧作用高异高(deck camber, 真账相邻孔即异高) ——
+#   独立输出即为此(逐事件逐墩双 verdict, 互不掩盖)。
+#   墩重(保守最小): 基底(BODY_BOTTOM)至两邻孔起拱线较低者 —— 立架前必须
+#   在位的墩身(拱座支承体); 拱肩填充(上构)在位性随排程, 保守不计。
+#   纵深=2×geom_math.width_at(收分单源) Simpson 积分; 墩宽 facts.pier_w;
+#   基底宽: ledger PIER 石 params.found_w 优先(真账无 PIER 石, 2026-10-07
+#   实查 5935 石仅 SPANDREL/BACK/CORE/RING/IMPOST)→ facts.PIER_FOUND_W
+#   (_C 中央对 k∈{8,9}) 回退, 不硬编码。
+#   λ 档: WEDGE_RELEASE.load_lambda(events 1/4 栅格单源),
+#   DECENTER_START=0, CENTERING_CLEAR=1; 越界/缺值 ValueError
+#   fail-closed(禁静默钳位)。
+#   停车线(排程侧): run_g3 真账 gate_imbalance 红 → raise
+#   G3_DECENTER_ORDER_CONFLICT(点名墩/事件 + λ 临界 + 卸架顺序建议);
+#   修正走 sequencer 排程(对称孔同 stage 逐档同步落架/邻孔先落架),
+#   禁调 λ/裕度/核宽自救凑绿。红绿都是结论: 绿 = 史实卸架顺序力学可行。
+#
+# 独立性: 本节不 import sequencer(传递闭包测试钉死); λ 栅格语义与
+# sequencer.LAMBDA_LADDER/events.LAMBDA_GRID 同一裁决值各自声明(互证纪律)。
+
+RATIO_MIN = 1.5            # [现代裕度·敏感性] 倾覆裕度下限(brief 指定)
+KERNEL_FRAC = 6.0          # 矩形基底核半宽 = B/6(中三分律, 几何事实非阈值)
+LAMBDA_GRID_STEP = 0.25    # λ 档步长(events.LAMBDA_GRID=4 同一裁决值各自声明)
+CODE_IMB_RATIO = "IMB_RATIO_RED"
+CODE_IMB_KERNEL = "IMB_KERNEL_RED"
+_PIER_W_NODES = 32         # 墩纵深 Simpson 结点数(width_at 线性 → 精确)
+_PIER_STATICS_CACHE = {}   # (k, z_top) -> (B, V) facts 路径缓存
+
+
+class G3_DECENTER_ORDER_CONFLICT(Exception):
+    """P2 停车线(排程侧): ④墩推力不平衡超阈 —— 卸架顺序不可行, 停报主控。
+    修正走 sequencer 排程(对称孔同 stage 逐档同步落架/邻孔先落架);
+    禁调 λ/裕度/核宽自救(判据先行, 数字后置)。报告挂 exc.report
+    (gate_dag/gate_stress/gate_imbalance 三节 + 逐墩账 + 顺序建议)。"""
+
+
+def _hole_idx(zh):
+    # type: (str) -> int
+    """孔名 "ARCH08" → 0-based 拱索引 7(词表形制, 非法名 ValueError)。"""
+    if not isinstance(zh, str) or not zh.startswith("ARCH") \
+            or not zh[4:].isdigit():
+        raise ValueError("pier_imbalance: 非法孔名 %r" % (zh,))
+    return int(zh[4:]) - 1
+
+
+def _pier_base_w(k):
+    # type: (int) -> float
+    """墩 k(1..16) 基底宽(facts 单源回退路径): 基础宽登记值, 中央对
+    k∈{8,9}(与 PIER_W_C 同一"中央"定义 i=8,9)取 _C 变体。"""
+    return F.PIER_FOUND_W_C if k in (8, 9) else F.PIER_FOUND_W
+
+
+def _pier_weight(k, z_top):
+    # type: (int, float) -> float
+    """墩身自重(保守最小): 宽 facts.pier_w(k) × 纵深 2×GM.width_at(收分
+    单源, [BODY_BOTTOM, z_top] Simpson; width_at 对 z 线性 → 积分精确)
+    × 密度 1.0(STONE_DENSITY 同 sequencer 约定, 不发明常数[三红线])。"""
+    x = GM.PIER_X[k]
+    w = F.pier_w(k)
+    n = _PIER_W_NODES
+    h = (z_top - _BODY_BOTTOM) / n
+    acc = 0.0
+    for i in range(n + 1):
+        z = _BODY_BOTTOM + i * h
+        c = 1 if i in (0, n) else (4 if i % 2 else 2)
+        acc += c * 2.0 * GM.width_at(x, z)
+    return w * (h / 3.0) * acc
+
+
+def _pier_dims_from_ledger(ledger):
+    # type: (Dict[str, Any]) -> Dict[str, Dict[str, float]]
+    """ledger PIER 石 → {pier_id: {"base_w": 基底宽}}(brief"墩基底尺寸从
+    ledger PIER 石 params 取"; 约定: params.found_w=基底宽, transform[0]
+    ≈墩心 x 归最近 PIER_X; 同墩多石取最宽)。真账无 PIER 石 → 空表(调用方
+    走 facts 回退)。"""
+    out = {}  # type: Dict[str, Dict[str, float]]
+    for s in (ledger or {}).get("stones", []):
+        if stone_role(s.get("id")) != "PIER":
+            continue
+        p = s.get("params") or {}
+        fw = p.get("found_w")
+        tr = s.get("transform") or []
+        if not isinstance(fw, (int, float)) or isinstance(fw, bool) \
+                or not tr or not isinstance(tr[0], (int, float)) \
+                or isinstance(tr[0], bool) or fw <= 0.0:
+            raise ValueError(
+                "pier_dims_from_ledger: PIER 石 %s params.found_w/transform "
+                "非法(%r, %r) —— fail-closed" % (s.get("id"), fw, tr))
+        k = min(range(1, F.N_SPAN),
+                key=lambda j: abs(GM.PIER_X[j] - float(tr[0])))
+        pid = "PIER%02d" % k
+        if pid not in out or fw > out[pid]["base_w"]:
+            out[pid] = {"base_w": float(fw)}
+    return out
+
+
+def _pier_statics(k, dims):
+    # type: (int, Optional[Dict[str, Dict[str, float]]]) -> Tuple[float, float, str]
+    """墩 k 静力量 (基底宽 B, 竖向合力 V, 来源)。优先级:
+    dims 条目(base_w 必填; 无 weight → V 走 facts 积分, 来源
+    ledger_pier_stones; 有 weight → 全 override) > facts 回退(缓存)。"""
+    pid = "PIER%02d" % k
+    z_top = min(GM.arch_springer_z(k - 1), GM.arch_springer_z(k))
+    key = (k, round(z_top, 9))
+    hit = _PIER_STATICS_CACHE.get(key)
+    if hit is None:
+        hit = (_pier_base_w(k), _pier_weight(k, z_top))
+        _PIER_STATICS_CACHE[key] = hit
+    b_facts, v = hit
+    if dims and pid in dims:
+        d = dims[pid]
+        b, w = d.get("base_w"), d.get("weight")
+        if not isinstance(b, (int, float)) or isinstance(b, bool) \
+                or b <= 0.0:
+            raise ValueError("pier_statics: %s.base_w=%r 非法(须正数) "
+                             "—— fail-closed" % (pid, b))
+        if w is None:
+            return float(b), v, "ledger_pier_stones"
+        if not isinstance(w, (int, float)) or isinstance(w, bool) \
+                or w <= 0.0:
+            raise ValueError("pier_statics: %s.weight=%r 非法(须正数) "
+                             "—— fail-closed" % (pid, w))
+        return float(b), float(w), "override"
+    return b_facts, v, "facts_fallback"
+
+
+def _h_app(zh):
+    # type: (str) -> float
+    """孔推力作用高 = 起拱线标高 − 基底(GM.arch_springer_z 单源)。"""
+    return GM.arch_springer_z(_hole_idx(zh)) - _BODY_BOTTOM
+
+
+def _lam_of(lam, zh):
+    # type: (Dict[str, float], str) -> float
+    """孔当前 λ(缺省 0=架上满承载); 在册值域防御。"""
+    v = lam.get(zh, 0.0)
+    if not isinstance(v, (int, float)) or isinstance(v, bool) \
+            or not (0.0 <= float(v) <= 1.0):
+        raise ValueError("pier_imbalance: %s λ=%r 非法(须∈[0,1])" % (zh, v))
+    return float(v)
+
+
+def _env_of(H_env_by_hole, zh):
+    # type: (Dict[str, Any], str) -> Optional[Tuple[float, float]]
+    """孔 H 可行区间 (Hmin, Hmax); 缺 → None(贡献 0 并在 entry 落注记)。"""
+    env = H_env_by_hole.get(zh)
+    if env is None:
+        return None
+    lo, hi = (float(env[0]), float(env[1]))
+    if not (0.0 <= lo <= hi):
+        raise ValueError("pier_imbalance: %s H 区间 %r 非法(须 0≤min≤max)"
+                         % (zh, env))
+    return lo, hi
+
+
+def _pier_calc(k, ev_hole, lam, H_env_by_hole, dims, ev_etype="?"):
+    # type: (int, str, Dict[str, float], Dict[str, Any], Optional[Dict[str, Dict[str, float]]], str) -> Dict[str, Any]
+    """墩 k(1..16, PIER_X[k] 中心, 两邻孔 ARCH0k/ARCH0k+1) 在当前 λ 态下
+    的双指标账(pure; pier_imbalance 与建议扫描共用)。"""
+    zh_l, zh_r = "ARCH%02d" % k, "ARCH%02d" % (k + 1)
+    env_l, env_r = _env_of(H_env_by_hole, zh_l), _env_of(H_env_by_hole, zh_r)
+    lo_l, hi_l = env_l if env_l else (0.0, 0.0)
+    lo_r, hi_r = env_r if env_r else (0.0, 0.0)
+    lam_l, lam_r = _lam_of(lam, zh_l), _lam_of(lam, zh_r)
+    # 事件孔取区间上界(保守最大推力), 其余孔取下界(保守最小反推力)
+    h_l = lam_l * (hi_l if ev_hole == zh_l else lo_l)
+    h_r = lam_r * (hi_r if ev_hole == zh_r else lo_r)
+    dh = h_l - h_r                       # 净水平推力(+x 为正)
+    ha_l, ha_r = _h_app(zh_l), _h_app(zh_r)
+    h_ref = max(ha_l, ha_r)              # 保守单臂
+    m_unb = abs(dh) * h_ref
+    m_center = abs(h_l * ha_l - h_r * ha_r)   # 绕基底中线精确合力矩
+    b, v, src = _pier_statics(k, dims)
+    m_res = v * b / 2.0
+    half_w = b / KERNEL_FRAC
+    ratio = (m_res / m_unb) if m_unb > TOL else None
+    e_kernel = m_center / v
+    v_r = "ok" if (ratio is None or ratio >= RATIO_MIN - TOL) else "RED"
+    v_k = "ok" if e_kernel <= half_w + TOL else "RED"
+    if v_r == "ok" and v_k == "ok":
+        verdict = "ok"
+    else:
+        verdict = "+".join(
+            t for t, v_ in (("RATIO_RED", v_r), ("KERNEL_RED", v_k))
+            if v_ == "RED")
+    return {"pier_id": "PIER%02d" % k, "hole": ev_hole, "etype": ev_etype,
+            "H_L": h_l, "H_R": h_r, "dH": dh,
+            "M_unb": m_unb, "M_center": m_center, "M_res": m_res,
+            "ratio": ratio, "e_kernel": e_kernel, "kernel_half_w": half_w,
+            "h_L": ha_l, "h_R": ha_r, "h_ref": h_ref,
+            "V": v, "base_w": b, "dims_source": src,
+            "lam_L": lam_l, "lam_R": lam_r,
+            "verdict_ratio": v_r, "verdict_kernel": v_k, "verdict": verdict,
+            "env_missing": [z for z, e in ((zh_l, env_l), (zh_r, env_r))
+                            if e is None]}
+
+
+def pier_imbalance(snap, H_env_by_hole, lam, pier_dims=None):
+    # type: (Snapshot, Dict[str, Any], Dict[str, float], Optional[Dict[str, Dict[str, float]]]) -> Dict[str, Dict[str, Any]]
+    """brief 接口: 对 snap 当前事件(须为 DECENTERING 类)算该孔两侧内墩的
+    {pier_id: {H_L,H_R,dH,M_unb,M_res,ratio,e_kernel,verdict,...}}。
+    λ 态由调用方按事件推进(WEDGE_RELEASE=load_lambda, DECENTER_START=0,
+    CENTERING_CLEAR=1); 非 DECENTERING 事件返回 {}。桥台侧(k=0/17)不评。"""
+    ev = snap.event
+    if ev is None or ev.get("etype") not in E.DECENTERING_TYPES:
+        return {}
+    zh = ev.get("hole") or ""
+    idx = _hole_idx(zh)
+    out = {}  # type: Dict[str, Dict[str, Any]]
+    for k in (idx, idx + 1):             # 西墩 PIER_X[idx], 东墩 PIER_X[idx+1]
+        if k < 1 or k > F.N_SPAN - 1:    # 0/17 = 桥台, 不在本门域
+            continue
+        out["PIER%02d" % k] = _pier_calc(k, zh, lam, H_env_by_hole,
+                                         pier_dims, ev_etype=ev.get("etype"))
+    return out
+
+
+def _lam_advance(lam, ev):
+    # type: (Dict[str, float], Dict[str, Any]) -> None
+    """按事件推进 λ 态(in place): WEDGE_RELEASE=load_lambda(缺值/越界
+    ValueError fail-closed), CENTERING_CLEAR=1.0, DECENTER_START=0。"""
+    zh = ev.get("hole") or ""
+    et = ev.get("etype")
+    if et == "WEDGE_RELEASE":
+        v = ev.get("load_lambda")
+        if not isinstance(v, (int, float)) or isinstance(v, bool) \
+                or not (0.0 <= float(v) <= 1.0):
+            raise ValueError(
+                "imbalance_gate: %s WEDGE_RELEASE seq=%s load_lambda=%r "
+                "缺值/越界[0,1] —— fail-closed" % (zh, ev.get("seq"), v))
+        lam[zh] = float(v)
+    elif et == "CENTERING_CLEAR":
+        lam[zh] = 1.0
+    elif et == "DECENTER_START":
+        lam.setdefault(zh, 0.0)
+
+
+def _pier_advice(entry, H_env_by_hole, dims):
+    # type: (Dict[str, Any], Dict[str, Any], Optional[Dict[str, Dict[str, float]]]) -> List[str]
+    """超阈墩的可执行顺序建议(用 entry 内冻结的事件时刻邻孔 λ 态):
+    ① λ 临界扫描(邻孔态不动, 事件孔 λ∈[0,1] 0.05 步); ② 同 stage 逐档
+    同步落架(档差≤一档)的末档残余核算 —— 同步后仍红则点名"须两孔同档
+    同时释放或走冻结几何变更流程(加宽基底, 非本门可放)"。"""
+    pid, zh = entry["pier_id"], entry["hole"]
+    idx = _hole_idx(zh)
+    k = int(pid[4:])                     # "PIER08" → 8(1..16)
+    zh_l, zh_r = "ARCH%02d" % k, "ARCH%02d" % (k + 1)
+    zh_o = zh_r if zh == zh_l else zh_l  # 共享本墩的另一邻孔
+    if entry["verdict_ratio"] == "RED":
+        worst = "ratio=%.2f<%.2f" % (entry["ratio"], RATIO_MIN)
+    else:
+        worst = "e_kernel=%.3f>B/6=%.3f" % (entry["e_kernel"],
+                                            entry["kernel_half_w"])
+    base = {zh_l: entry["lam_L"], zh_r: entry["lam_R"]}
+    lam_a = entry["lam_active"]
+    passing = []
+    for i in range(21):
+        trial = dict(base)
+        trial[zh] = 0.05 * i
+        if _pier_calc(k, zh, trial, H_env_by_hole, dims)["verdict"] == "ok":
+            passing.append(0.05 * i)
+    if passing and max(passing) >= 1.0 - 1e-9:
+        crit = "λ 全域可过(与现账态矛盾, 请复核)"
+    elif passing:
+        hi_p = max(passing)
+        if hi_p < lam_a:
+            crit = "邻孔当前态(%s λ=%.2f)下本孔 λ≤%.2f 可过(现 %.2f)" \
+                % (zh_o, base[zh_o], hi_p, lam_a)
+        else:
+            crit = "本孔 λ≥%.2f 才可过 —— 对侧孔 %s(λ=%.2f)已主导推本墩" \
+                % (min(passing), zh_o, base[zh_o])
+    else:
+        crit = "邻孔当前态(%s λ=%.2f)下本孔任何 λ 均超阈" % (zh_o, base[zh_o])
+    if base[zh_o] >= 1.0 - 1e-9:
+        first = ("邻孔 %s 已全落架(回馈已取保守下界 Hmin) —— 本墩残余不平衡"
+                 "为本孔推力包络固有, 排程侧无可再让" % zh_o)
+    else:
+        first = ("卸架顺序建议: 与邻孔 %s 同 stage 逐档同步落架(档差≤%.2f) / "
+                 "先落架邻孔 %s 至 λ=1 再落本孔"
+                 % (zh_o, LAMBDA_GRID_STEP, zh_o))
+    # 同 stage 逐档同步(档差≤一档)末档残余: 本孔 λ_a, 邻孔 λ_a−一档
+    trial = dict(base)
+    trial[zh] = lam_a
+    trial[zh_o] = max(0.0, lam_a - LAMBDA_GRID_STEP)
+    e3 = _pier_calc(k, zh, trial, H_env_by_hole, dims)
+    resid = ("同 stage 逐档同步(档差≤%.2f)末档残余核算: %s"
+             % (LAMBDA_GRID_STEP,
+                "可过(dH=%.2f)" % e3["dH"] if e3["verdict"] == "ok"
+                else "仍超阈(%s) —— 须两孔同档同时释放或走冻结几何变更"
+                     "流程(加宽基底, 非本门可放)" % e3["verdict"]))
+    return ["%s(seq=%d %s %s λ=%.2f %s): %s; %s; %s"
+            % (pid, entry["seq"], zh, entry["etype"], lam_a, worst, crit,
+               first, resid)]
+
+
+def imbalance_gate(events, H_env_by_hole, ledger=None, in_void=None,
+                   pier_dims=None):
+    # type: (List[Dict[str, Any]], Dict[str, Any], Optional[Dict[str, Any]], Optional[Set[str]], Optional[Dict[str, Dict[str, float]]]) -> Dict[str, Any]
+    """G3④ 门: 逐 DECENTERING 事件在 snapshot 上算两侧内墩双指标(同形节:
+    violations/violation_counts/ok/elapsed_s + events 逐墩账 + piers 汇总
+    + advice 顺序建议)。事件孔缺 H 区间 → 跳过并落 skipped 注记(fail-closed
+    可见); 邻孔缺 → 贡献 0 并逐 entry 落 env_missing。判据先行的红绿都是
+    结论 —— ok=False 时 run_g3 raise G3_DECENTER_ORDER_CONFLICT。"""
+    t0 = time.perf_counter()
+    dims = dict(_pier_dims_from_ledger(ledger or {}))
+    if pier_dims:
+        dims.update(pier_dims)
+    lam = {}  # type: Dict[str, float]
+    viols = []  # type: List[str]
+    entries = []  # type: List[Dict[str, Any]]
+    n_skip = 0
+    for snap in snapshots(events, ledger if ledger is not None
+                          else {"stones": []}, in_void=in_void):
+        ev = snap.event
+        if ev is None or ev.get("etype") not in E.DECENTERING_TYPES:
+            continue
+        _lam_advance(lam, ev)
+        zh = ev.get("hole") or ""
+        if zh not in H_env_by_hole:
+            n_skip += 1        # 事件孔无包络: 无法出数, 落注记不静默
+            continue
+        seq = ev.get("seq")
+        for pid, e in pier_imbalance(snap, H_env_by_hole, lam,
+                                     pier_dims=dims).items():
+            e["seq"] = seq
+            e["lam_active"] = _lam_of(lam, zh)
+            entries.append(e)
+            if e["verdict_ratio"] == "RED":
+                viols.append(
+                    "%s pier=%s seq=%d hole=%s %s λ=%.2f dH=%.3f "
+                    "ratio=%.3f<%.2f (M_res=%.2f M_unb=%.2f V=%.2f B=%.2f)"
+                    % (CODE_IMB_RATIO, pid, seq, zh, e["etype"],
+                       e["lam_active"], e["dH"], e["ratio"], RATIO_MIN,
+                       e["M_res"], e["M_unb"], e["V"], e["base_w"]))
+            if e["verdict_kernel"] == "RED":
+                viols.append(
+                    "%s pier=%s seq=%d hole=%s %s λ=%.2f e_kernel=%.3f>"
+                    "B/6=%.3f (M_center=%.2f V=%.2f B=%.2f)"
+                    % (CODE_IMB_KERNEL, pid, seq, zh, e["etype"],
+                       e["lam_active"], e["e_kernel"], e["kernel_half_w"],
+                       e["M_center"], e["V"], e["base_w"]))
+    counts = {}  # type: Dict[str, int]
+    for v in viols:
+        code = v.split(" ", 1)[0]
+        counts[code] = counts.get(code, 0) + 1
+    piers = {}  # type: Dict[str, Dict[str, Any]]
+    for e in entries:
+        rec = piers.setdefault(e["pier_id"], {
+            "base_w": e["base_w"], "V": e["V"],
+            "dims_source": e["dims_source"], "n_evals": 0,
+            "worst_ratio": None, "worst_kernel": None})
+        rec["n_evals"] += 1
+        wr, wk = rec["worst_ratio"], rec["worst_kernel"]
+        if e["ratio"] is not None and (wr is None or e["ratio"] < wr["ratio"]):
+            rec["worst_ratio"] = e
+        if wk is None or e["e_kernel"] > wk["e_kernel"]:
+            rec["worst_kernel"] = e
+    advice = []  # type: List[str]
+    if viols:
+        for pid in sorted(piers):
+            rec = piers[pid]
+            worst = rec["worst_ratio"] if (
+                rec["worst_ratio"] is not None
+                and rec["worst_ratio"]["verdict_ratio"] == "RED") \
+                else rec["worst_kernel"]
+            if worst is not None:
+                advice.extend(_pier_advice(worst, H_env_by_hole, dims))
+    return {"ok": not viols, "violations": viols, "violation_counts": counts,
+            "elapsed_s": time.perf_counter() - t0,
+            "n_evals": len(entries), "n_skipped_events": n_skip,
+            "skipped_note": ("事件孔缺 acceptance H 区间(③门未出/不可行), "
+                             "本门跳过该事件 — fail-closed 注记" if n_skip
+                             else ""),
+            "piers": piers, "events": entries, "advice": advice}
+
+
+# ---------------------------------------------------------------------------
+# run_g3(报告串接: gate_dag(①)+gate_stress(③)+gate_imbalance(④, T7))
 # ---------------------------------------------------------------------------
 
 def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
            threshold=SWALLOW_THRESHOLD, r5a=None):
     # type: (List[Dict[str, Any]], Dict[str, Any], Optional[List[Dict[str, Any]]], Optional[Set[str]], Optional[List[str]], float, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
-    """G3 报告: gate_dag(①)+double_model 清单(W1)+gate_stress(③压力线,
-    T6)。扩展点: T7④ 加同形 gate_thrust 节。③ acceptance(结构带=环+
+    """G3 报告: gate_dag(①)+double_model 清单(W1)+gate_stress(③压力线)
+    +gate_imbalance(④墩推力包络不平衡, T7)。③ acceptance(结构带=环+
     胶结锁固带; P2-T6 裁决)不可行 → raise G3_FROZEN_GEOMETRY_CONFLICT
-    停报主控(停车线; 禁调封卷几何参数自救)。快照面用 snapshots(...)/
-    Snapshot.copy()。"""
+    停报主控(停车线; 禁调封卷几何参数自救)。④ λ 卸架档+核距双指标逐
+    DECENTERING 事件全墩: H 区间取③ acceptance 可行区间(同报告单源);
+    红 → raise G3_DECENTER_ORDER_CONFLICT(排程冲突, 停报主控, 报告挂
+    exc.report 含逐墩账+卸架顺序建议; 修正走 sequencer, 禁调 λ/裕度/
+    核宽自救)。快照面用 snapshots(...)/Snapshot.copy()。"""
     viols, stats = check_dag_all(events, ledger, in_void=in_void)
     counts = {}  # type: Dict[str, int]
     for v in viols:
@@ -1429,7 +1837,7 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
             "n_events": len(events),
             "n_stones_ledger": len(ledger.get("stones", [])),
             "n_scheduled": len(stats["final_present"]),
-            "generated_by": "g3_check.py P2-T5+T6",
+            "generated_by": "g3_check.py P2-T5+T6+T7",
         },
         "gate_dag": {
             "violations": viols,
@@ -1451,5 +1859,20 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
             "几何参数自救, 阈值不为绿而调): " + "; ".join(
                 report["gate_stress"]["violations"]))
         exc.report = report          # 停报主控: 异常携带完整报告(gate_dag/W1/gate_stress)
+        raise exc
+    # T7④: H 区间单源 = ③ acceptance 可行区间(同报告, 不重算不造第二套)
+    H_env = {zh: h["acceptance"]["H"]
+             for zh, h in report["gate_stress"]["holes"].items()
+             if h["acceptance"].get("feasible")}
+    report["gate_imbalance"] = imbalance_gate(events, H_env, ledger=ledger,
+                                              in_void=in_void)
+    if not report["gate_imbalance"]["ok"]:
+        exc = G3_DECENTER_ORDER_CONFLICT(
+            "G3④墩推力不平衡超阈(卸架顺序排程冲突, 停报主控; 修正走 "
+            "sequencer 排程, 禁调 λ/裕度/核宽自救): " + "; ".join(
+                report["gate_imbalance"]["violations"][:6])
+            + (" ...共 %d 条" % len(report["gate_imbalance"]["violations"])
+               if len(report["gate_imbalance"]["violations"]) > 6 else ""))
+        exc.report = report          # 停报主控: 三节齐 + 逐墩账 + 顺序建议
         raise exc
     return report
