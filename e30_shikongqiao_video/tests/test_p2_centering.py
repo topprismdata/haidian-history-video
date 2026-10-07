@@ -288,6 +288,15 @@ def test_wedge_travel_is_six_centimeters():
     assert abs(C.WEDGE_LEN / C.WEDGE_SLOPE - 0.06) < 1e-12
 
 
+def test_family_constants_literal_pinned():
+    """M11 真钉(P2-T2 补丁轮): 旧带界/堆叠测试的期望带全部用 C.RIB_T/C.RIB_GAP/
+    C.WEDGE_H 复算 —— 翻常量本身带跟着翻, 三变异全存活(假完成盲区)。族常量
+    字面值直钉, 不经任何派生: RIB_T=0.03 / RIB_GAP=0.005 / WEDGE_H=0.12。"""
+    assert C.RIB_T == 0.03
+    assert C.RIB_GAP == 0.005
+    assert C.WEDGE_H == 0.12
+
+
 # ---------------------------------------------------------------- D5 夹持
 
 def test_deck_clash_raises_with_position_and_margin():
@@ -307,6 +316,26 @@ def test_deck_clash_raises_with_position_and_margin():
     assert "余量" in msg, "DECK_CLASH 必须附余量"
     # 冠点余量应为 -0.01(压低量), 不许吞成静默夹持
     assert "-0.01" in msg
+
+
+def test_clamp_reads_pointwise_deck_not_constant():
+    """D5/wrapper 桥面主张补牙(补丁轮建议级): 夹持判真桥面(geom_math.deck_z
+    抛物线逐点), 不是常数近似 —— 端孔 crown 工作面 2.2206: 传常数桥面 λx→2.20
+    (DECK_Z_END 口径)必在 crown 区误判 DECK_CLASH; 传孔心全局平移的真 deck_z
+    λx→GM.deck_z(xc+x)(crown 处 2.7256)正常建成。常数近似会双向出错(此处误伤,
+    取跨中高值则漏判), 本钉锁"逐点消费"语义。"""
+    xc = GM.arch_center_x(END_IDX)
+    spr = C.arch_springer_z(END_IDX)
+    real = C.build_centering(END_IDX, END_SPAN, RING_T, 0.0, spr,
+                             lambda x: GM.deck_z(xc + x))
+    assert real["id"] == "CEN-ARCH01"
+    with pytest.raises(ValueError) as ei:
+        C.build_centering(END_IDX, END_SPAN, RING_T, 0.0, spr,
+                          lambda x: GM.DECK_Z_END)
+    msg = str(ei.value)
+    assert "DECK_CLASH" in msg
+    xhit = float(msg.split("x=")[1].split(" ")[0])
+    assert abs(xhit) < 0.5, "夹持应在端孔 crown 区触发, 实报 x=%r" % xhit
 
 
 def test_normal_deck_never_clashes_all_arches():
@@ -331,8 +360,12 @@ def test_centering_does_not_consume_facts_ring_t():
     consumed = [n for n in ast.walk(tree)
                 if isinstance(n, ast.Attribute) and n.attr == "RING_T"
                 and isinstance(n.value, ast.Name) and n.value.id in ("_F", "facts")]
-    assert not consumed, \
-        "centering 代码仍消费 facts.RING_T(STALE) —— 解耦被回退(docstring 提及不算消费)"
+    imported = [n for n in ast.walk(tree)
+                if isinstance(n, ast.ImportFrom) and n.module == "facts"
+                and any(al.name == "RING_T" or al.name == "*" for al in n.names)]
+    assert not consumed and not imported, \
+        ("centering 代码仍消费 facts.RING_T(STALE) —— 解耦被回退"
+         "(Attribute 形态或 import-from/wildcard 形态均算消费; docstring 提及不算)")
     assert F.RING_T == 0.40, "facts.RING_T 应回退 0.40(主控停车线裁决)"
     ledger = os.path.join(os.path.dirname(__file__), "..", "3d", "out",
                           "ledger_full.json")
@@ -348,6 +381,25 @@ def test_centering_does_not_consume_facts_ring_t():
             with pytest.raises(RuntimeError):
                 C.stone_ring_t(8)
     finally:
+        C._RING_T_BY_ARCH.clear()
+
+
+def test_stone_ledger_missing_arch_valueerror(tmp_path):
+    """石账无孔 ValueError 分支(复审点3 次要项): 账本在盘但不含该孔 RING 条目
+    → 响亮 ValueError(不许 KeyError 裸奔/静默兜底 facts.RING_T), 消息含 1 基孔号。
+    tmp_path 假账本走查, 不碰真账本; finally 还原路径与缓存。"""
+    led = {"stones": [{"id": "ARCH01.RING.004", "params": {"ring_t": 0.54}}]}
+    p = tmp_path / "ledger_nohole.json"
+    p.write_text(json.dumps(led), encoding="utf-8")
+    old_path = C._LEDGER_PATH
+    C._LEDGER_PATH = str(p)
+    try:
+        C._RING_T_BY_ARCH.clear()
+        assert C.stone_ring_t(0) == 0.54, "账内有孔应正常现算"
+        with pytest.raises(ValueError, match="石账无孔6"):
+            C.stone_ring_t(5)
+    finally:
+        C._LEDGER_PATH = old_path
         C._RING_T_BY_ARCH.clear()
 
 

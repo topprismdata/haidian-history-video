@@ -134,7 +134,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | `impost` sha_sorted（末次独立记录, 对象已废除） | `5154f49e49d7af1e52ba3b5cb710b9ada7c8a437295b86c99397e850e6aa0c0a`（M2.5 候选） |
 | `bridge_body` 顶点/面数 | 2648 / 1520 |
 | `voussoir` 顶点/面数 | 2316 / 1544 |
-| `coursing` 顶点/面数 | 59716 / 34878 |
+| `coursing` 顶点/面数 | 66964 / 39466（2026-10-07 以 `freeze_hash.py` 对现行 blend 实测重录；同行 `sha_sorted` `f2968f4c…` 未动 = 几何未变，原行 59716/34878 是 `f5d2dcc` impost→coursing 拓扑跟随重锚时**漏更的计数行**（该 commit 新增此行即带旧数），M20b/T2 复审发现） |
 | `bridge_body` 世界 bbox | x[−34.864,34.864] y[−72.273,72.273] z[−2.2,**7.3**]（M19 DECK_Z_TOP 同步） |
 | L1 fail 数 | 0（qa_bridge M19 判据重整后基线绿） |
 | L2 正检 / 负控 | ok=true, warn=0 / 翻 10 面 → NEG_CAUGHT 10/10 |
