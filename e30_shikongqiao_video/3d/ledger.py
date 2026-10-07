@@ -1,6 +1,12 @@
 # e30_shikongqiao_video/3d/ledger.py
 # -*- coding: utf-8 -*-
-"""P1 砌体账目: 每石一条记录。id=纯拓扑语义键(坐标永不入 id), uuid 主键+谱系。"""
+"""P1 砌体账目: 每石一条记录。id=纯拓扑语义键(坐标永不入 id), uuid 主键+谱系。
+
+P2-T1 schema v2(兼容扩展): EVIDENCE 增 inferred_construction; support_edge 以
+capacity_curve=[[event_seq,capacity],...] 表达随事件序列衰减的支撑能力, 旧形
+{active_from,active_to} 须先过 migrate_v1_to_v2。meta.schema 判别值保持 1——
+既有负控钉死 schema==2 报错、正控钉死 schema==1 零错, 且迁移后须 validate==[],
+三条联立唯一解是 v2 形态由边形状+枚举表达, 不动判别值。"""
 import json
 import os
 import re
@@ -8,8 +14,8 @@ import tempfile
 import uuid as _uuid
 from typing import Any, Dict, List, Optional
 
-SCHEMA = 1
-EVIDENCE = ("ashlar_truth", "core_reconstruction", "measured")
+SCHEMA = 1  # v2 不 bump 判别值(见模块 docstring); 升级语义由 capacity_curve 形制承载
+EVIDENCE = ("ashlar_truth", "core_reconstruction", "measured", "inferred_construction")
 SUPPORT_TYPES = ("stone", "centering", "fill", "foundation", "temporary")
 _ID_RE = re.compile(r"(ARCH\d\d|F\d\d|T[01])\.(EAST|WEST)\."
                     r"(RING|SPANDREL|PIER|IMPOST|BACK|PAVING|RAIL|POST|CARVE|CORE)\."
@@ -21,6 +27,66 @@ def _is_uuid4(s):
         return _uuid.UUID(s).version == 4
     except (ValueError, TypeError, AttributeError):
         return False
+
+def _curve_points(curve):
+    # type: (Any) -> Optional[List[List[float]]]
+    """capacity_curve=[[event_seq,capacity],...] 形态检查: 非空、每点二元数值组。
+    形态不合法返回 None, 合法返回 float 化点位表。"""
+    if not isinstance(curve, (list, tuple)) or not curve:
+        return None
+    pts = []  # type: List[List[float]]
+    for p in curve:
+        if not isinstance(p, (list, tuple)) or len(p) != 2:
+            return None
+        x, y = p[0], p[1]
+        if isinstance(x, bool) or isinstance(y, bool):
+            return None
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            return None
+        pts.append([float(x), float(y)])
+    return pts
+
+def edge_capacity(edge, event_seq):
+    # type: (Dict[str, Any], float) -> float
+    """支撑边在事件序号 event_seq 处的剩余承载能力: 按 curve 线性插值,
+    curve 外钳制为端点值。无 curve/形态非法(如未迁移的 v1 边)=0.0, 不抛异常。"""
+    pts = _curve_points(edge.get("capacity_curve") if isinstance(edge, dict) else None)
+    if not pts:
+        return 0.0
+    x = float(event_seq)
+    if x <= pts[0][0]:
+        return pts[0][1]
+    if x >= pts[-1][0]:
+        return pts[-1][1]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if x0 <= x <= x1:
+            if x1 == x0:
+                return y1
+            return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
+    return pts[-1][1]
+
+def migrate_v1_to_v2(led):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
+    """v1→v2 原地迁移(幂等, 二次调用零变化): 旧形 support_edge
+    {active_from,active_to} → capacity_curve=[[active_from,1.0],[active_to,0.0]];
+    单侧键缺失迁成单点恒值边(如仅 active_from=2 → [[2,1.0]])。已有
+    capacity_curve 的边原样保留; 非 dict 边不动(留给 validate 报 SUPPORT_EDGE_SHAPE)。
+    meta.schema 保持 1。返回同一 led 便于链式调用。"""
+    for s in led.get("stones", []):
+        for e in s.get("support_edges", []):
+            if not isinstance(e, dict) or e.get("capacity_curve") is not None:
+                continue
+            a = e.pop("active_from", None)
+            b = e.pop("active_to", None)
+            if a is None and b is None:
+                continue
+            curve = []  # type: List[List[Any]]
+            if a is not None:
+                curve.append([a, 1.0])
+            if b is not None:
+                curve.append([b, 0.0])
+            e["capacity_curve"] = curve
+    return led
 
 def family_key(zone, face, role, course, block):
     # type: (str, str, str, int, int) -> str
@@ -87,6 +153,22 @@ def validate_ledger(led, allow_clearance=False):
                 continue
             if e.get("type") not in SUPPORT_TYPES:
                 errs.append("SUPPORT_TYPE " + sid)
+            curve = e.get("capacity_curve")
+            if curve is None:
+                if "active_from" in e or "active_to" in e:
+                    errs.append("SUPPORT_SHAPE %s 旧形 active_from/active_to, "
+                                "先过 migrate_v1_to_v2" % sid)
+                else:
+                    errs.append("SUPPORT_SHAPE %s 缺 capacity_curve" % sid)
+                continue
+            pts = _curve_points(curve)
+            if pts is None:
+                errs.append("SUPPORT_SHAPE %s capacity_curve 形态非法" % sid)
+                continue
+            for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+                if x1 <= x0 or y1 > y0:
+                    errs.append("CURVE_MONOTONIC %s event 序号须递增且 capacity "
+                                "单调不增: %s→%s" % (sid, [x0, y0], [x1, y1]))
     return errs
 
 def load_ledger(path):
