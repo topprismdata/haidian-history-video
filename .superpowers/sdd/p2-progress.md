@@ -8,3 +8,6 @@
   - T4硬约束(复审M4裁决): 交付校验必须 validate_event_ledger(..., require_evidence=True)+专门测试钉死; T4后翻转默认True+废占位符
   - T4/T5接线: M7覆盖类7项归T4生成侧+T5 frontier; HOLD挂石引用时T5补zone交叉; M6真账曲线待T5落账后known_event_seqs交叉才有牙
 - 主控brief错误记录: T2工作面extrados说(结构不成立)+端孔柱高歧义+T1插值算术错 → 审查链对主控同样有效
+- Task 4: complete (93a9be1→0e3fe56, 392绿; 复审PASS零阻塞: Σ≥1独立复扫7.9M点0违例, 五变异恰红, 原账sha不变, 工件可复现cmp逐位)
+  - W1裁决: 28块≥99%被环石实体吞没的rbo石=P1双建模债显形, 记T5交接+P3视觉隐藏处置, 不扩幻影定义(in_void语义已100%执行, 扩=全链返工)
+  - W2: 报告§6.6补superseded注(T5代理顺手)
