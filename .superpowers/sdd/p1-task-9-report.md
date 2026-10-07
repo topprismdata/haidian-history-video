@@ -28,7 +28,7 @@ EP.inset 旧实现只位移 bbox 极值顶点（域内顶点不动）。该**分
 
 ## 3. 85（ring↔链残留互穿）：几何解剖 → 三层根因全修
 
-逐对解剖 ARCH06.EAST.CORE.C13.B01 vs RING.C00.B07（60.012mm/86456cm³）与 ARCH07.EAST.CORE.C14.B01 vs B07（36424cm³，depth=0），定位三个独立根因，全部修在 `_band_trim_polys` 折线带构造内（单一真相仍是环 params `_ring_lift_coverage`，零栅格反推）：
+逐对解剖 ARCH06.EAST.CORE.C13.B01 vs RING.C00.B07（60.012mm/86456cm³）与 ARCH07.EAST.CORE.C14.B01 vs B07（36400cm³，depth=0；T8c 明细同族对 ARCH11.EAST.CORE.C14.B01=36424cm³ —— 初稿两块串行，T9b 订正），定位三个独立根因，全部修在 `_band_trim_polys` 折线带构造内（单一真相仍是环 params `_ring_lift_coverage`，零栅格反推）：
 
 1. **lift 覆盖未含外弧角点越出段（24 条 depth>0 的根因）**：`_voussoir` 的 lift 是沿法向外弧外推（外弧=拱曲线法向偏移 ring_t+lift），端站 x0/x1 是【内弧】放射缝站；外弧角点 x = 端站 + sin(angle)·(ring_t+lift)，在拱顶两侧各越出 stations 约 50mm（ARCH06 实测 53/46mm）。旧覆盖只用 [x0,x1]：角点外条带 bound 缺 lift，环真剪影高出切割线 ~60mm（=lift−GAP），恰为 60.012mm 主碰对。修：`_ring_lift_coverage` 按 stations/angles/ring_t/lift 计算真实覆盖（pad 与 JOINT_GAP_BACK 取代数和、钳回 [x0,x1]；角度缺失退化=旧 [x0,x1] 逐位）。
 2. **覆盖台阶落在条带内部被抹成斜坡（59 条 depth=0 的根因）**：bound 的 lift 台阶若不落在条带边界，单段线性插值把台阶抹平，覆盖边界邻域欠割至多一整个 lift（ARCH07 实测 hit z[6.29,6.33] vs 真界 6.336）。修：lift 覆盖边界强制加入 strip 端点集 xs。
@@ -68,5 +68,81 @@ fit_tiers: TIGHT 1152 / NORMAL 947 / LOOSE 14（与 T8c 一致）
 
 - 试印包打包层逐 run STL 未实现（现总体无多 run 石，遇多 run 石响亮拒绝）——归 T5/T7 打包轮。
 - legacy clip 存量 842/1520 fail 与 void_cut_fragment 覆盖洞面积（coverage_audit）＝T5/T7 追偿范围输入，本轮未修。
+- **覆盖率回潮披露（T9b 补记，审查 M4）**：ring_band_overlap 桶未覆盖 cells 6776（T8c, 27104cm²）→ 7007（本轮, 28028cm²），**+231 cells = +924cm²** —— 带裁割得更深（lift 包络收敛的副产）使该桶被剔材料足印变大；无阈值判据、不入 verdict，同批记 **T5/T7 债务输入**（与 legacy clip/void_cut_fragment 同单追偿）。
 - `out/ledger_full.json` 含 uuid4/时间戳，字节级不可复现（既有行为）；结构级重建确定性由真总体钉（475/y 氏 0/材料恒等）钉住。
 - 工作树：/tmp/e30_t9（分支 p1-t9）；out/_t9_replay_cache.json、e30_bridge.blend 为未跟踪工作副本，不入库。
+
+## T9b 护栏收口轮（2026-10-07，出口审查 B1/B2/M1-M4 全项落地；本体零触碰）
+
+执行者：P1T9bFix（隔离树 /tmp/e30_t9b，git archive d5fcbd2 前驱 237d470 + 盘上 ledger_full.json）。改动面：`3d/p1a_slice.py`（validate 三闸 + scope.print_stones + fit_tiers 口径注记 + lift 台阶点 0.1mm 去重 + 打印单元单次遍历）、`3d/dump_check_fixtures.py`（防自毁 + band_verts 入册）、`tests/test_p1_slice.py`（真总体/入库工件双钉 + 四组负控 + 薄轴×FIT 耦合钉）、`tests/fixtures/check_106/*.json`（+band_verts 元数据）、`out/print/*`（重导出）、本报告（§3/§7 订正）。判据/桶/阈值/抽样数零放宽。
+
+### B1 中央孔试印包重导（审查放行前置）
+
+`blender -b --python 3d/p1a_slice.py -- --g2` 全链重跑 2m1s：`G2_VERDICT PASS stones=5935 ring=193 impost=492 gap_pairs=340`。盘上 245 STL + 245 3MF 与 manifest 声明集**完全相等（490=490，孤儿 0、缺失 0）**；逐件体积复算（散度定理，STL float32 / 3MF 网格文本解析）：STL 最大相对差 9.441e-08、3MF 最大相对差 3.391e-07（均 ≤ 各自格式精度上限，无超差件），总体积 1814.2420 cm³ 与 manifest 族账一致。`ledger_print.json`、`assembly_ortho.png`（3200x1709）同批新写；入库 manifest/g2_report/excluded_ids diff 仅 created_utc + ledger uuid（既有字节级不可复现行为）+ 本轮新增键。报告 §5「按 PASS 重生成」自本轮起为事实陈述。
+
+### B2 静默绿转可判（lift_at→0 恒零消融自证，前后实测原文）
+
+消融方法：`_band_trim_polys.lift_at` 改恒 `return 0.0`（唯一改动），纯 python 重放 run_g2 重写 `out/print/g2_report.json`（与 run_gate 同函数同序列化），随后跑钉子测试：
+
+```
+消融侧重放:  ABLATED REPORT verdict=FAIL fsc n_pairs=903 n_colliding=107
+（与审查方独立重放 107 一致；头号对 ARCH09.EAST.CORE.C14.B01×RING.C00.B09
+  depth 173.298mm / collide_vol 405560cm3）
+
+消融后 pytest（真账 fixture 一起跑，144.94s）:
+FAILED tests/test_p1_slice.py::test_g2_report_shipped_artifact_pins - AssertionError: assert 'FAIL' == 'PASS'
+ERROR tests/test_p1_slice.py::test_ring_trim_world_y_within_family_band_real_population
+      - AssertionError: 真总体 ring↔链复测回潮: 107 条 (前3: [{'chain': 'ARCH09.EAST.CORE.C14.B01', ...}])
+      assert 107 == 0
+ERROR tests/test_p1_slice.py::test_ring_trim_east_west_centroid_y_sign_real_population - (同上 107 == 0)
+1 failed, 2 passed, 37 deselected, 2 errors
+```
+
+恢复实现与报告后复验：`restored report verdict PASS fsc 0`，钉子组 `5 passed`。即审查方 SILENT(决定性) 项（lift_at 恒零 → 全套件 40 passed 一声不响）**转响亮红**：B2(a) 真总体 fixture 断言红、B2(b) 入库工件钉红。
+
+结构闸门负控实测（validate 层，原报告对照 GREEN，四类篡改全红）：
+
+```
+原报告(对照)            -> GREEN(静默)
+fsc.n_pairs=0           -> ['final_scope_check.n_pairs=0 < 复测地板 ring_total=193 (独立复测对数被抽走)']
+fsc.n_pairs=1           -> ['final_scope_check.n_pairs=1 < 复测地板 ring_total=193 (独立复测对数被抽走)']
+面积桶账抹零             -> ['n_area_bucket_measured=182>0 但 removed_model_cm3.subsumed_by_area_bucket==0 (面积桶材料账被静默抹; ...)']
+legacy 追偿单删除        -> ['legacy_clip_survey.n=1520>0 但缺 disposition/debt_ticket (T5/T7 追偿单被静默蒸发)']
+```
+
+### M1 producer/gate 形状对齐（含一处审查未列的必然连锁修复）
+
+- `run_g2` meta.scope 补 `"print_stones": len(scope)`（生产者键，validate 不再回退 print_units）。
+- **run_units 守恒恒等式订正**：生产者对多 run 石记其【全部】run 单元（含 R0），旧闸 `print_units == print_stones + len(run_units)` 只对手写的"仅记增量"形状成立——第一份真实多 run 报告端到端必假红（正是审查 M1 指认的"机制从未端到端走通"的深层形状）。订正为 `print_units == print_stones − 多run石数 + len(run_units)`（多run石数 = run_units.parent_ids 去重数），identities 字符串同步。
+- r11 负控升格 `test_run_g2_multirun_real_shape_scope_key_and_lineage_gate`：合成账 + 注入双 run 带裁 status 走**完整 run_g2 路径**，生产形状直接过 validate（端到端首次走通），篡改谱系/差值互证必红。
+
+### M3 fixture 防自毁 + 元数据
+
+- `dump_check_fixtures.py` main() 在清目录前加 `if not fails: raise`。实测（现实现重放 fails=0）：`RuntimeError: 当前实现重放无失败件(fails=0): 现行 fixtures 是 T8c/T9 历史失败证据...`，4 件 fixture 完好。
+- fixture 元数据补 `band_verts`（生成器入册 + 存量 4 件按同公式补齐：16/10/11/11），几何漂移重生成时可见；测试补 post_ok↔post_fail_codes 互斥一致性断言（原注释声称钉 post_ok 一致性实际无断言，已修）。
+
+### M4 nits
+
+- §3 数字串位订正：ARCH07.EAST.CORE.C14.B01=**36400**cm³（36424 属 ARCH11.EAST.CORE.C14.B01，T8c 明细对账）。
+- 覆盖率回潮披露记 §7：ring_band_overlap 未覆盖 6776→7007 cells（**+924cm²**，割得更深的副产），记 T5/T7 债务输入。
+- 薄轴×FIT 耦合显式钉：`test_g2_gate_constants` 增 `2*max(FIT_PRINT_MM) < G2_MIN_WALL_PRINT_MM`（0.5*2=1.0 < 1.2；将来加宽 FIT 档破坏此前提必响亮）。
+- lift 台阶点入 xs 前 0.1mm 去重（近重合丢重复端点不丢覆盖语义；现网真总体 0 例，纯防御，fsc/材料账钉未动即证）。
+- `n_print_units` 单次遍历（主循环顺手计数，删二次 `_print_units` 求和）；`fit_tiers_caliber` 注记入 check_stone（按打印单元计数，多 run 石语义变化显式）；`_load_real_ledger_or_fail` type 注释 `-> dict` → `-> None`。
+
+### 全门回归（本轮实测）
+
+| 门 | 结果 |
+|---|---|
+| e30 tests | **239 passed**（237 基线 + 新 2：入库工件钉、多 run 端到端钉；消融往返后复跑同值） |
+| bridge3d | **312 passed** |
+| qa_l2 正检 | **QA_L2 ok=True / 0 fail / 0 warn / 0 skip / sampled=604** |
+| qa_l2 负控 | **NEG_CAUGHT 10/10** |
+| _check_abutment | **ABUTMENT_CHECK ALL PASS**（33 断言） |
+| freeze | 三对象 sha 与 freeze_manifest §2（2026-10-06 重采）**逐位一致**：bridge_body cdba9709…/64428393…、voussoir ba2e0951…/bb2defc9…、coursing f2968f4c…；bridge_body 2648/1520、bbox z7.3 同表。本体路径零触碰（diff 文件清单不含 masonry*/bridge_geom*/build_scene2/facts/freeze） |
+| 结构闸门 | validate_g2_report(新报告)=[]；excluded_ids↔report 桶计数互证过（run_gate 内建） |
+
+### 备注（诚实边界）
+
+- freeze_manifest §2 的 coursing 顶点/面数行（59716/34878）与 freeze_hash 现输出（66964/39466）不同，但 sha_sorted f2968f4c… 逐位一致——计数字面系信息项且口径先于现版工具，sha 为判据，本轮不改 §2（非本轮范围，留主控裁决）。
+- 试印包 STL/3MF 为 gitignore 工作树产物（不入库），"与 manifest 逐位等"指盘上包与 manifest 声明集逐件一致；入库事实 = g2_report/manifest/excluded_ids/SLICE_NOTES。
+- 消融与恢复往返仅动 `p1a_slice.py` 与 `out/print/g2_report.json` 两个文件，恢复以字节拷贝回滚（sha256 复核 CLEAN）。

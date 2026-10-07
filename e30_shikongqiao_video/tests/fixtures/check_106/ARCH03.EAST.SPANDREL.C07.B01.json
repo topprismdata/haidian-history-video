@@ -6,6 +6,7 @@
  "clr_model_mm": 7.5,
  "post_ok": true,
  "post_fail_codes": [],
+ "band_verts": 10,
  "verts_pre": [
   [
    -57.884,

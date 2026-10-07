@@ -8,6 +8,7 @@
  "post_fail_codes": [
   "SELF_INTERSECT"
  ],
+ "band_verts": 16,
  "verts_pre": [
   [
    -75.0,

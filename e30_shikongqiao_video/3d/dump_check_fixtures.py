@@ -123,6 +123,17 @@ def main():
                      _band_vertex_count(f["verts_pre"], f["clr_model_mm"]),
                      "OK" if f["post_ok"] else ",".join(f["codes"])))
         return
+    # T9b(M3) 防自毁证据: fixtures 是【旧实现失败态】的历史证据(3 件
+    # post_ok=False + 失败码)。现实现(仿射 inset)重放必然 fails=0 —— 若
+    # 此时照写, 会清空目录只落 1 件绿控, 失败证据被静默覆盖(CI 随后会因
+    # 总体钉响亮失败, 但证据已没了)。真要重生成必须人工删旧证据后显式
+    # 重跑, 不许脚本顺手自毁。
+    if not fails:
+        raise RuntimeError(
+            "当前实现重放无失败件(fails=0): 现行 fixtures 是 T8c/T9 历史"
+            "失败证据(post_ok=False 3 件), 重生成会自毁证据。若几何/判据"
+            "确已变更需重钉, 先人工确认并清空 %s 再显式重跑本生成器"
+            % FIXTURE_DIR)
     by_id = {f["id"]: f for f in trim_all}
     anchor = by_id.get(ANCHOR_ID)
     if anchor is not None and not anchor["post_ok"]:
@@ -166,6 +177,11 @@ def main():
             "fit": f["fit"], "clr_model_mm": f["clr_model_mm"],
             "post_ok": f["post_ok"],
             "post_fail_codes": f["codes"],
+            # T9b(M3): 极值带顶点数入册 —— 距任一极值面 < clr 的顶点数是
+            # 该机制暴露度的量化口径, 几何漂移重生成时肉眼可见(防静默
+            # 换件); 复算公式 = dump_check_fixtures._band_vertex_count。
+            "band_verts": _band_vertex_count(f["verts_pre"],
+                                             f["clr_model_mm"]),
             "verts_pre": [[round(v[0], 9), round(v[1], 9), round(v[2], 9)]
                           for v in f["verts_pre"]],
             "faces": [list(fc) for fc in f["faces"]],

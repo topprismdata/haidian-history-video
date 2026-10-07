@@ -256,7 +256,9 @@ def _good_report():
                                                     {"subsumed": 0.0,
                                                      "trimmed": 0.0}},
                        "trimmed_ids": [], "subsumed_ids": [],
-                       "final_scope_check": {"n_pairs": 0,
+                       # n_pairs=903: T9b(B2c) 起结构闸门有复测对数地板
+                       # (>= counts.ring_total), 合成底座同吃真总体口径。
+                       "final_scope_check": {"n_pairs": 903,
                                              "n_colliding": 0,
                                              "pairs": []}},
         "coverage_audit": [{"bucket": "in_void", "cells": 0,
@@ -342,26 +344,79 @@ def test_validate_g2_report_negative_controls():
     assert any("removed_model_cm3.subsumed" in q for q in qs), qs
     r10["ring_dedup"]["summary"]["removed_model_cm3"]["subsumed"] = 33.0
     assert P.validate_g2_report(r10) == []       # 材料账到手即绿
-    # ── T9 run 升格谱系闸: 守恒以石计 + run_units 必须带 parent_ids ──
-    r11 = copy.deepcopy(base)                    # 合法 run 升格变体(对照)
-    r11["meta"]["counts"]["stones"] = 4
-    r11["meta"]["counts"]["print_units"] = 3
-    r11["meta"]["counts"]["print_stones"] = 2
-    r11["meta"]["counts"]["run_units"] = 1
-    r11["check_stone"]["n"] = 3
-    r11["meta"]["scope"]["print_units"] = 3
-    r11["meta"]["scope"]["print_stones"] = 2
-    r11["meta"]["scope"]["run_units"] = [{"unit_id": "S#R0",
-                                          "parent_ids": ["S"]}]
-    r11["meta"]["scope"]["excluded"][0]["n"] = 2
-    assert P.validate_g2_report(r11) == []
-    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = []   # 谱系被抹
-    assert any("parent_ids" in q
-               for q in P.validate_g2_report(r11))
-    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = ["S"]
-    r11["meta"]["counts"]["print_units"] = 4                  # 差值互证破坏
+    # ── T9b(B2c): 复测对数地板 —— n_pairs=0/1 的"只测零对全绿"谎报必红
+    # (审查 tamper: SILENT n_pairs=0/1 曾 GREEN), 地板=counts.ring_total ──
+    rc = copy.deepcopy(base)
+    for bad_pairs in (0, 1, 192):                # 192 == ring_total-1 也红
+        rc["ring_dedup"]["final_scope_check"]["n_pairs"] = bad_pairs
+        assert any("n_pairs" in q for q in P.validate_g2_report(rc)), bad_pairs
+    rc["ring_dedup"]["final_scope_check"]["n_pairs"] = 193    # 地板上恢复绿
+    assert P.validate_g2_report(rc) == []
+    # ── T9b(M2): 面积桶材料账不可静默抹(n_area_bucket_measured>0 ⇒
+    # subsumed_by_area_bucket>0; 真总体 182 块/5.83e7 cm3) ──
+    rm2 = copy.deepcopy(base)                    # 合法变体: 账在
+    rm2["ring_dedup"]["summary"]["n_area_bucket_measured"] = 182
+    rm2["ring_dedup"]["summary"]["removed_model_cm3"][
+        "subsumed_by_area_bucket"] = 5.8e7
+    assert P.validate_g2_report(rm2) == []
+    rm2["ring_dedup"]["summary"]["removed_model_cm3"][
+        "subsumed_by_area_bucket"] = 0.0         # 账被抹
+    assert any("subsumed_by_area_bucket" in q
+               for q in P.validate_g2_report(rm2))
+    # ── T9b(M2): legacy 存量追偿单不可静默蒸发(n>0 ⇒ disposition+
+    # debt_ticket 必在; 真总体 1520/842 记 T5/T7) ──
+    lg = copy.deepcopy(base)                     # 合法变体: 追偿单在
+    lg["check_stone"]["legacy_clip_survey"] = {
+        "n": 1520, "n_fail": 842, "matrix": {"SELF_INTERSECT": 842},
+        "disposition": "excluded(以 RING 为准)", "debt_ticket": "T5/T7"}
+    assert P.validate_g2_report(lg) == []
+    lg["check_stone"]["legacy_clip_survey"].pop("debt_ticket")
+    assert any("debt_ticket" in q for q in P.validate_g2_report(lg))
+    lg["check_stone"]["legacy_clip_survey"] = {"n": 1520, "n_fail": 842,
+                                               "matrix": {}}
+    assert any("disposition" in q for q in P.validate_g2_report(lg))
+    # ── T9 run 升格谱系闸: 形状必须由 run_g2 真实生成(T9b M1: 不再手写
+    # 生产者不产的键) —— 端到端走 run_g2 见
+    # test_run_g2_multirun_real_shape_scope_key_and_lineage_gate ──
+
+
+def test_run_g2_multirun_real_shape_scope_key_and_lineage_gate():
+    """T9b(M1): 合法多 run 报告由 run_g2 真实形状生成(参数化注入点: 合成
+    账 + 注入 ring_trim 双 run status, 走完整 run_g2 路径), 生产者必须自
+    带 meta.scope.print_stones 键(M1 补; 旧形状回退 print_units 曾把第一
+    份合法多 run 报告假报守恒失败); 生产形状过结构闸门, 篡改谱系/差值
+    互证必红 —— 多 run 机制(分桶->处置->升格->报告->闸门)端到端被走过。"""
+    stone = _core_slab(0.0, 3.0, 0.1, 0.9, 4.0, 5.0)
+    sid = stone["id"]
+    run_a = [(0.0, 4.0), (0.8, 4.0), (0.8, 5.0), (0.0, 5.0)]
+    run_b = [(2.2, 4.0), (3.0, 4.0), (3.0, 5.0), (2.2, 5.0)]
+    led = {"meta": {"schema": LED.SCHEMA, "curve_hash": "syn", "seed": 0},
+           "stones": [stone]}
+    statuses = {sid: ("ring_trim", [run_a, run_b])}   # 注入点: 双 run 带裁
+    rep = P.run_g2(led, statuses, pairs_per_arch=20)
+    # 生产者形状: scope 以石计, run_units 记【全部】run 单元(含 R0),
+    # print_units = print_stones - 多run石数 + len(run_units) = 2
+    assert rep["meta"]["scope"]["print_stones"] == 1
+    assert rep["meta"]["counts"]["print_stones"] == 1
+    assert rep["meta"]["counts"]["run_units"] == 2
+    assert rep["meta"]["counts"]["print_units"] == 2
+    assert rep["check_stone"]["n"] == 2
+    assert rep["meta"]["scope"]["run_units"] == [
+        {"unit_id": sid + "#R0", "parent_ids": [sid], "role": "CORE"},
+        {"unit_id": sid + "#R1", "parent_ids": [sid], "role": "CORE"}]
+    # 生产者真实多 run 形状过结构闸门(第一份合法多 run 报告不许假红)
+    graft = _good_report()
+    graft["meta"]["counts"].update({"stones": 1, "print_units": 2,
+                                    "print_stones": 1, "run_units": 2})
+    graft["meta"]["scope"] = rep["meta"]["scope"]
+    graft["check_stone"]["n"] = 2
+    assert P.validate_g2_report(graft) == []
+    graft["meta"]["scope"]["run_units"][0]["parent_ids"] = []   # 谱系被抹
+    assert any("parent_ids" in q for q in P.validate_g2_report(graft))
+    graft["meta"]["scope"]["run_units"][0]["parent_ids"] = [sid]
+    graft["meta"]["counts"]["print_units"] = 3                  # 差值互证破坏
     assert any("print_units != print_stones" in q
-               for q in P.validate_g2_report(r11))
+               for q in P.validate_g2_report(graft))
 
 
 def test_real_population_ledger_gate_fails_loud_when_missing(monkeypatch):
@@ -376,12 +431,48 @@ def test_real_population_ledger_gate_fails_loud_when_missing(monkeypatch):
         this_mod._load_real_ledger_or_fail()
 
 
+_G2_REPORT_ARTIFACT = os.path.join(os.path.dirname(__file__), "..", "3d",
+                                   "out", "print", "g2_report.json")
+
+
+def test_g2_report_shipped_artifact_pins():
+    """T9b(B2b): 入库工件钉 —— out/print/g2_report.json 是 G2 门的唯一交
+    付事实, CI 必须直接读它; 不许 verdict/counts/fsc 只活在 blender 那一
+    次运行和报告文字里(审查 tamper: lift_at 恒零后重导, 此钉必须红)。
+    纯读文件亚秒级; 缺失 = fail-loud(W2 同纪律, 不静默 skip)。"""
+    if not os.path.exists(_G2_REPORT_ARTIFACT):
+        raise RuntimeError(
+            "out/print/g2_report.json 不在盘上 —— 入库工件钉 fail-loud"
+            "(T9b B2b): 先跑 blender -b --python 3d/p1a_slice.py -- --g2; "
+            "或显式 --deselect 本钉(不许静默跳过)")
+    with open(_G2_REPORT_ARTIFACT, encoding="utf-8") as fh:
+        rep = json.load(fh)
+    assert P.validate_g2_report(rep) == []
+    assert rep["verdict"] == "PASS"
+    counts = rep["meta"]["counts"]
+    assert counts["print_stones"] == 2113
+    assert counts["print_units"] == 2113
+    assert counts["run_units"] == 0
+    # M1 后生产者必须自带 scope.print_stones 真键(盘上工件同步钉)
+    assert rep["meta"]["scope"]["print_stones"] == 2113
+    assert rep["meta"]["scope"]["run_units"] == []
+    fsc = rep["ring_dedup"]["final_scope_check"]
+    assert fsc["n_pairs"] == FINAL_SCOPE_N_PAIRS
+    assert fsc["n_colliding"] == 0
+
+
 def test_g2_gate_constants():
     assert P.G2_SCALE == 1.0 / 50.0
     assert P.G2_MIN_WALL_PRINT_MM == 1.2
     assert P.G2_GAP_TOL_MODEL_MM == 0.5
     assert P.G2_GAP_PAIRS_PER_ARCH == 20
     assert P.G2_N_ARCH == 17
+    # T9b(M4): 薄轴分支与 FIT 档的隐式耦合显式钉 —— EP.inset 的
+    # ext<=2c 不动轴分支结构安全的前提是最宽 FIT 档 2*clr=1.0mm < 最小
+    # 打印壁 1.2mm(越界石必被 thin_merge 收走, 不存在"薄轴不退让还能
+    # 打"的件); 将来加更宽 FIT 档破坏此不变式必须在此响亮, 不许静默
+    # 失去配合面退让。
+    assert 2.0 * max(P.EP.FIT_PRINT_MM.values()) < P.G2_MIN_WALL_PRINT_MM
 
 
 # ── run_g2 合成小账(范围分桶 + 判据行为) ──────────────────────────────
@@ -801,9 +892,15 @@ def test_check106_fixture_post_inset_no_self_intersect(fname):
               encoding="utf-8") as fh:
         meta = json.load(fh)
     faces = [tuple(f) for f in meta["faces"]]
-    # 该件入库时的现况必须与 post_ok 字段一致(防止 fixture 与实现漂移后
-    # 判据恒真: 负控件必须仍绿、失败件在修复前实现下必须红 —— 由
-    # test_check106_monotonicity_inverted 的 15mm 档共同钉住)
+    # fixture 元数据自证(T9b M3): post_ok 与历史失败码互斥一致 —— post_ok
+    # False 的件必须带着旧实现下的失败码入库(证据可审计), 负控件必须无
+    # 码; band 顶点数在册且 >0(几何漂移重生成时可见, 防静默换件)。
+    assert (not meta["post_ok"]) == bool(meta["post_fail_codes"])
+    assert meta.get("band_verts", 0) > 0, \
+        "%s 缺 band_verts 元数据(T9b M3)" % meta["id"]
+    # T8c 单调性反转钉: 旧实现 15mm 档 106/106 全 SELF_INTERSECT; 现仿射
+    # inset 实现下入库 clr 与 7.5/15/25mm 四档必须全部 0 自交(负控件同判,
+    # 防"别改坏好件")。
     for clr in (meta["clr_model_mm"], 7.5, 15.0, 25.0):
         v2, f2 = EP.flip_outward(EP.inset(meta["verts_pre"], clr), faces)
         rep = P.PC.check_stone(v2, f2, scale=P.G2_SCALE,
@@ -911,7 +1008,7 @@ _LEDGER_FULL = os.path.join(os.path.dirname(__file__), "..", "3d",
 
 
 def _load_real_ledger_or_fail():
-    # type: () -> dict
+    # type: () -> None
     """T9 W2: 真总体钉(③④⑤+材料恒等)的数据闸 —— ledger_full.json 缺失时
     【fail-on-skip】, 不再静默 skip。skip 会让"229 passed"掩盖 3 条未执行
     的钉子(干净克隆假绿); 真钉必须要么真跑、要么响亮失败。数据由
@@ -934,6 +1031,17 @@ def real_ring_trim_state():
     arch_idx_of = {"ARCH%02d" % (i + 1): i for i in range(P.G2_N_ARCH)}
     rd = P._ring_dedup_dispositions(led, statuses, sc["scope"],
                                     sc["buckets"], arch_idx_of)
+    # T9b(B2a): 真总体复测钉(审查 tamper 矩阵的决定性 SILENT 项) ——
+    # lift_at 恒零消融时这里必须红(实测回潮 n_colliding=107), 不许
+    # "85->0"只活在 blender 那一次运行与报告文字里。rd 已算好, 零额外
+    # 成本; 漂移即总体变, 与 RING_TRIM_POPULATION 同族口径。
+    fsc = rd["final_scope_check"]
+    assert fsc["n_pairs"] == FINAL_SCOPE_N_PAIRS, \
+        "真总体复测对数漂移: %d (期望 %d)" % (fsc["n_pairs"],
+                                             FINAL_SCOPE_N_PAIRS)
+    assert fsc["n_colliding"] == 0, \
+        "真总体 ring↔链复测回潮: %d 条 (前3: %r)" % (
+            fsc["n_colliding"], fsc["pairs"][:3])
     by_id = {s["id"]: s for s in led["stones"]}
     trim_ids = sorted(sid for sid, st in statuses.items()
                       if st[0] == "ring_trim")
@@ -941,6 +1049,8 @@ def real_ring_trim_state():
 
 
 RING_TRIM_POPULATION = 475   # T8c 复测钉死: 传播守卫后真总体(漂移=总体变)
+FINAL_SCOPE_N_PAIRS = 903    # T9b(B2a/b): ring↔链 bbox 预筛宇宙全量对数
+                             # (漂移=总体变; 入库报告与真重放同源钉)
 
 
 def test_ring_trim_world_y_within_family_band_real_population(

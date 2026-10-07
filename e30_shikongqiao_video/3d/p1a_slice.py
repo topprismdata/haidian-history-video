@@ -958,8 +958,15 @@ def _band_trim_polys(stone, arch_idx, rings):
     xs = sorted({x0, x1}
                 | {px_ for (px_, _pz) in pts if x0 < px_ < x1}
                 | {b for b in (xc - jamb, xc + jamb, xc - t_out, xc + t_out)
-                   if x0 < b < x1}
-                | {b for b in lift_edges if x0 < b < x1})
+                   if x0 < b < x1})
+    # T9b(M4): lift 台阶点与既有端点近重合(实测 1e-6 量级)会切出极窄条带
+    # -> 耳切薄片三角(printcheck eps 边界假交叉同族)。按 0.1mm 去重后再入
+    # xs: 近重合时丢的是重复端点不是覆盖语义(条带 bound 仍由 lift_at 逐端
+    # 点求值, 覆盖区间判定容差 1e-9 不受影响); 现网真总体 0 例, 纯防御。
+    for b in sorted(lift_edges):
+        if x0 < b < x1 and all(abs(b - e) >= 1e-4 for e in xs):
+            xs.append(b)
+    xs.sort()
     upper = []       # (sa, sb, bound0, bound1) bound 已钳 [z0, z1]
     seats = []       # (sa, sb, seat_z)
     removed = 0.0
@@ -1484,11 +1491,13 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
     fit_tiers = {}
     fails = []
     run_units = []       # T9 run 升格谱系(unit_id -> parent 石)
+    n_print_units = 0    # T9b(M4): 主循环顺手计数, 不再二次遍历 _print_units
     by_zone = {}
     for s in scope:
         role_counts[s["role_struct"]] = role_counts.get(s["role_struct"], 0) + 1
         by_zone.setdefault(s["id"].split(".")[0], []).append(s)
         units = _print_units(s, statuses)
+        n_print_units += len(units)
         for (uid, polys_view) in units:
             if polys_view is None:
                 verts, faces = world_mesh(s, statuses)
@@ -1509,7 +1518,6 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
             run_units.extend({"unit_id": uid, "parent_ids": [s["id"]],
                               "role": s["role_struct"]}
                              for (uid, _pv) in units)
-    n_print_units = sum(len(_print_units(s, statuses)) for s in scope)
     # fail 矩阵(code x role, 新裁/存量归因 —— 主控 2A: T9 范围输入)
     matrix = {}
     for f in fails:
@@ -1678,11 +1686,13 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                                                 if s["role_struct"] == "IMPOST")},
                  "scope": {
                      "print_units": n_print_units,
+                     "print_stones": len(scope),
                      "excluded": excluded,
                      "identities": "print_stones + sum(excluded.n) == "
                                    "meta.counts.stones; print_units = "
-                                   "print_stones + meta.scope.run_units 数"
-                                   "(带裁多 run 石升格独立单元, 谱系见 "
+                                   "print_stones - 带裁多run石数 + "
+                                   "meta.scope.run_units 数(run_units 记"
+                                   "多 run 石全部 run 单元含 R0, 谱系见 "
                                    "run_units.parent_ids)",
                      "excluded_standing": [
                          {"bucket": "carve_p4",
@@ -1702,7 +1712,13 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
                         "fails": fails,
                         "fail_matrix": matrix,
                         "legacy_clip_survey": legacy,
-                        "fit_tiers": dict(sorted(fit_tiers.items()))},
+                        "fit_tiers": dict(sorted(fit_tiers.items())),
+                        # T9b(M4): 口径注记 —— fit_tiers 按【打印单元】计数,
+                        # 单 run 石单元==石 两口径同值; 多 run 石拆单元后
+                        # 逐单元分档, 计数会大于石数(语义变化在此显式)。
+                        "fit_tiers_caliber":
+                            "按打印单元计数(多 run 石拆单元后逐单元分档; "
+                            "单 run 石单元==石)"},
         "gap_check": {"n_pairs": sum(v["sampled"] for v in per_arch.values()),
                       "n_fail": len(gap_fails), "fails": gap_fails,
                       "n_aabb_phantom": n_phantom,
@@ -1765,15 +1781,21 @@ def validate_g2_report(rep):
         p.append("counts.impost_total != 492")
     sc = meta.get("scope", {})
     ex_n = sum(e.get("n", 0) for e in sc.get("excluded", []))
-    # T9 run 升格: 守恒以【石】计(print_stones), print_units 可大于它
-    # (带裁多 run 石升格独立单元); run_units 明细与差值互证
     if sc.get("print_stones", sc.get("print_units", -1)) + ex_n \
             != counts.get("stones"):
         p.append("scope 守恒失败: print_stones+excluded != stones")
-    if counts.get("print_units", -1) \
-            != counts.get("print_stones", -1) + len(sc.get("run_units", [])
-                                                    or []):
-        p.append("print_units != print_stones + len(run_units)")
+    # T9 run 升格: 守恒以【石】计(print_stones), print_units 可大于它
+    # (带裁多 run 石升格独立单元); run_units 明细与差值互证。
+    # T9b(M1) 口径对齐生产者: run_units 记多 run 石的【全部】run 单元
+    # (含 R0), 故 print_units = print_stones - 多run石数 + len(run_units)
+    # (旧式 print_stones+len(run_units) 只对手写的"仅记增量单元"形状
+    # 成立, 生产者真形状端到端必假红 —— 审查 M1 实证)。
+    ru_list = sc.get("run_units") or []
+    multi_parents = {q["parent_ids"][0] for q in ru_list
+                     if q.get("parent_ids")}
+    if counts.get("print_units", -1) != counts.get("print_stones", -1) \
+            - len(multi_parents) + len(ru_list):
+        p.append("print_units != print_stones - 多run石数 + len(run_units)")
     for ru in sc.get("run_units") or []:
         if not ru.get("parent_ids"):
             p.append("run_units %s 缺 parent_ids 谱系"
@@ -1810,6 +1832,14 @@ def validate_g2_report(rep):
         p.append("ring_dedup.final_scope_check.n_colliding missing")
     elif v == "PASS" and fsc.get("n_colliding", -1) != 0:
         p.append("PASS with final_scope_check.n_colliding > 0")
+    # T9b(B2c): 独立复测对数地板 —— final_scope_check 是对最终 scope 的
+    # 全量 ring↔链复测(bbox 预筛宇宙), n_pairs 掉到 0/1 = "只测零对全绿"
+    # 的谎报(审查 tamper 实证静默绿)。地板 = counts.ring_total(与上方
+    # ring_total==193 硬钉同族口径; 真总体实测 903 对, 903>>193)。
+    if fsc.get("n_pairs", -1) < max(1, counts.get("ring_total", 0)):
+        p.append("final_scope_check.n_pairs=%r < 复测地板 ring_total=%s "
+                 "(独立复测对数被抽走)"
+                 % (fsc.get("n_pairs"), counts.get("ring_total")))
     af = gp.get("assembly_fit", {})
     if "n" not in af or "pairs" not in af:
         p.append("gap_check.assembly_fit missing n/pairs")
@@ -1864,6 +1894,19 @@ def validate_g2_report(rep):
                  "材料账被抹; T9 W1 严格 AND 镜像 trim 侧 —— "
                  "subsumed_by_area_bucket 是另一口径的账, 不可替代 "
                  "volume 宇宙的 subsume 材料流)")
+    # T9b(M2): 两笔不可静默蒸发的账(与 W1 同族, 各配负控)
+    if sm.get("n_area_bucket_measured", 0) > 0 \
+            and not rm.get("subsumed_by_area_bucket", 0) > 0:
+        p.append("n_area_bucket_measured=%s>0 但 removed_model_cm3."
+                 "subsumed_by_area_bucket==0 (面积桶材料账被静默抹; 真总体 "
+                 "5.83e7 cm3 级最大未入 verdict 材料流)"
+                 % sm.get("n_area_bucket_measured"))
+    legacy_sv = cs.get("legacy_clip_survey") or {}
+    if legacy_sv.get("n", 0) > 0 and (
+            not legacy_sv.get("disposition")
+            or not legacy_sv.get("debt_ticket")):
+        p.append("legacy_clip_survey.n=%s>0 但缺 disposition/debt_ticket "
+                 "(T5/T7 追偿单被静默蒸发)" % legacy_sv.get("n"))
     if "pairs" not in fsc:
         p.append("final_scope_check.pairs missing")
     elif isinstance(fsc.get("pairs"), list) \

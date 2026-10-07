@@ -7,6 +7,7 @@
    "NORMAL": 947,
    "TIGHT": 1152
   },
+  "fit_tiers_caliber": "按打印单元计数(多 run 石拆单元后逐单元分档; 单 run 石单元==石)",
   "legacy_clip_survey": {
    "debt_ticket": "T5/T7",
    "disposition": "excluded(以 RING 为准); 几何质量债务记 T5/T7 追偿单, 本轮不修",
@@ -192,7 +193,7 @@
    "run_units": 0,
    "stones": 5935
   },
-  "created_utc": "2026-10-06T23:40:26Z",
+  "created_utc": "2026-10-07T00:42:58Z",
   "gap_pairs_per_arch": 20,
   "gap_tol_model_mm": 0.5,
   "gate": "G2",
@@ -291,7 +292,8 @@
      "reason": "ABUT 桥台砌体(八字墙/引道)本轮不入账(接线清单⑤)"
     }
    ],
-   "identities": "print_stones + sum(excluded.n) == meta.counts.stones; print_units = print_stones + meta.scope.run_units 数(带裁多 run 石升格独立单元, 谱系见 run_units.parent_ids)",
+   "identities": "print_stones + sum(excluded.n) == meta.counts.stones; print_units = print_stones - 带裁多run石数 + meta.scope.run_units 数(run_units 记多 run 石全部 run 单元含 R0, 谱系见 run_units.parent_ids)",
+   "print_stones": 2113,
    "print_units": 2113,
    "run_units": []
   },
