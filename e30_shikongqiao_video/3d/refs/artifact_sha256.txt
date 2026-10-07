@@ -1,0 +1,33 @@
+# e30_shikongqiao_video 重锚工件 sha256 sidecar（tracked；P2-T6 审查 W5）
+#
+# 背景: 重锚工件(账目/序列/冻结哈希)本身不入库(untracked), 冻结门此前
+# 只能本机自证 —— clean clone 无从核对。本 sidecar 把 6 个重锚工件的
+# sha256 记进 git; tests/test_p2_g3_thrust.py::
+# test_artifact_sha256_sidecar_matches_disk 钉"记录值 == 盘上实算"
+# (单文件缺失跳过该条, 全缺 skip, 不符 fail)。
+#
+# 记录时点: 2026-10-07, HEAD 17a7dc1a696850568c0ee0eeed75ed6512a369bf
+# (本文件随 fix commit 入库; 工件由下方命令链在该工作树生成)
+#
+# 生成命令链(顺序执行, 全部零错; 相对 e30_shikongqiao_video/ 根):
+#   1. blender -b --python 3d/p1a_slice.py -- --g2
+#        → 3d/out/ledger_full.json + 3d/out/print/excluded_ids.json
+#          (+ 3d/out/print/g2_report.json, G2_VERDICT PASS)
+#   2. python3 3d/sequencer.py
+#        → 3d/out/sequence.json + 3d/out/ledger_sequenced.json
+#          (幂等: 两连跑逐字节相同; meta.dm_excluded 含 dm id+吞没率清单)
+#   3. blender -b --python 3d/build_scene2.py
+#        → 3d/e30_bridge.blend 重建(SAVED v2)
+#   4. blender -b 3d/e30_bridge.blend --python 3d/freeze_hash.py -- 3d/core_hash.json
+#        → 3d/core_hash.json (CORE_HASH_WRITTEN)
+#   5. blender -b --python 3d/p1a_slice.py -- (export_slice 中切)
+#        → 3d/out/print/central_slice/manifest.json
+#   真相源=脚本+数据, blend 字节非判据; 判据细节见 3d/refs/freeze_manifest.md。
+#
+# 格式: <sha256>  <e30 项目相对路径>
+80de7a45ff329c22bd907dacde0ec72b22df5aa6fab8f1371cb79523b113e9ce  3d/out/ledger_full.json
+55d9bdaae779401f528a4122eff973392955eb06ca0fad0b7417303c52fcb0c3  3d/out/sequence.json
+c3406d28d95e536fe7e3efb240c3a7782b39e5bd60438a30ce262b7f4aa7239e  3d/out/ledger_sequenced.json
+513dfd9333e81df9702e675be720e69492fcf30a85540c0b2c27d75a5b48f377  3d/core_hash.json
+45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d  3d/out/print/central_slice/manifest.json
+fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/excluded_ids.json

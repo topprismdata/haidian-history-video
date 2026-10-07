@@ -45,3 +45,24 @@
 - [ ] Step1 失败测试：半圆均载解析解对照（H≈qL²/8f ±5%）；环带加厚（内外距×1.5）可行区间变宽；把某楔块重心外移 0.3m → feasible 翻假（负控）；中央孔真账 acceptance feasible=True 且 robustness 记录不判红。
 - [ ] Step2 红 → Step3 实现 → Step4 绿 → Step5 commit `feat(e30): P2-T6 G3③压力线刚块链(acceptance/robustness双case)`
 - [ ] **红线**：中央孔 acceptance 不过 → `raise G3_FROZEN_GEOMETRY_CONFLICT`（不许调封卷参数自救）
+
+### Task 6 当前口径（审查 INFO 回写; T6 裁决二/T6c/T6d 三次改写后的真实定义, 以本段为准）
+
+正文"acceptance=RING+pre-strike 石重加于对应块顶"的原定义已被后续裁决改写到不可辨认, 现行出货口径:
+
+- **acceptance 荷载集**: RING 石账 + **R5a 胶结锁固带**(非全部 pre-strike 石):
+  R5a = 足印距 extrados **径向 ≤0.35m**(`facts.arch_signed_r` 单源) ∧ 非双建模
+  占位(`sequencer._double_model_ratios` 吞没率 ≥0.985 剔除, 29 石落 R5b),
+  由 `out/sequence.json` `.SHOULDER.` 阶段 PLACE_STONE 派生, 真账 1342 石;
+  肩载 x=石质心(bbox 中点/中心锚分派表), 超出 [xc−a,xc+a] 直接入墩并计数。
+- **缝检验截面**: 有带孔 = `ring_t + 0.35`(结构协同假设: 锁固带与券脸石餬灰
+  胶结并入截面, 带石自重仍计入块链 W_k —— 非外荷载); robustness 恒裸环
+  s∈[0,ring_t], 只记录不判红(永久对照)。
+- **冠载分摊**(T6d 定口径): 质心落在**冠楔接触带**(跨冠缝环块两缝 st0/st1
+  =简支两支点, 短半宽 crown_hw=min(xc−st0, st1−xc) 几何推导全孔统一)内的
+  肩荷按**字面连续杠杆** fr=(x−st0)/(st1−st0) 分派右半环, 左=1−fr, 跨带
+  边界连续; 带外整列归所属半环。
+- **H 扫描**: 0.1–1.2×H_ref(H_ref=qL²/8f 仅标尺), 步长 0.01H_ref, 边界二分
+  细化, 端点触及自动外扩(删失防护); acceptance 不可行 → run_g3 raise
+  `G3_FROZEN_GEOMETRY_CONFLICT` 停车线(判据参数 LOCK_BAND_M=0.35 唯一声明
+  带宽, 不为绿而调)。

@@ -1100,6 +1100,18 @@ def test_real_ledger_fullchain():
     # 4: A13+2 A15+2)。带闸(径向 0.35m)在真账零额外剔除 —— 实体墙肩全部
     # 径向贴环。逐轮演化: 3187(含幻影)→1307→1290(收缩)→1342(重账)。
     assert res["meta"]["n_dm_excluded"] == 29
+    # [审查 INFO 卫生] dm 剔除钉 id 清单(非仅计数): 盘上 sequence.json
+    # meta.dm_excluded 须与本扫描逐位一致(id 字典序; 各条吞没率 ∈ 界内)
+    # —— 归因可核对, 不再依赖报告正文全表。
+    _seqp = os.path.join(os.path.dirname(__file__), "..", "3d", "out",
+                         "sequence.json")
+    if os.path.exists(_seqp):
+        with open(_seqp, encoding="utf-8") as fh:
+            dm_meta = json.load(fh)["meta"]["dm_excluded"]
+        assert [d["id"] for d in dm_meta] == sorted(dm), \
+            (len(dm_meta), sorted(dm)[:4])
+        assert all(0.985 <= d["ratio"] <= 1.0 for d in dm_meta), \
+            [d for d in dm_meta if not 0.985 <= d["ratio"] <= 1.0]
     r5a = 0
     for e in res["events"]:
         if e["etype"] != "PLACE_STONE" or not e.get("stone_id"):

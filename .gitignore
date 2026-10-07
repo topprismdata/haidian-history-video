@@ -97,6 +97,8 @@
 !e30_shikongqiao_video/3d/refs/
 !e30_shikongqiao_video/3d/refs/*.md
 !e30_shikongqiao_video/3d/refs/*.json
+# W5 重锚工件 sha sidecar(2026-10-07): tracked 哈希清单, 冻结门 clean-clone 可核对
+!e30_shikongqiao_video/3d/refs/artifact_sha256.txt
 # 回归基线与固化机位(2026-10-05): 狮重做前后的对照基准, 丢了回归就无从归因
 !e30_shikongqiao_video/3d/refs/regression/
 !e30_shikongqiao_video/3d/refs/regression/*.json

@@ -244,6 +244,12 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | `3d/core_hash.json` | `513dfd93…377` | `513dfd93…377`（**不变**） | 核心三对象(bridge_body/voussoir/coursing)走 M13 参数化路径, **不消费账目相位** —— 相位变更只影响账目/print 链; 逐位不变即本体零漂移的直接证据 |
 | `3d/e30_bridge.blend` | 11:01 旧账构建 | 19:17 重建（字节非判据） | 真相源=脚本+数据; 重跑 SAVED v2 零错 |
 
-**证据闸门（替代撤回的 M22 假门, 三条全过）**: ①`stones/stones_p0..9.json` 合计 sha256 `ddc4a820…` 重出账前后逐字节不变（砖谱=照片钉死证据, 未碰）; ②重出账面石 x/z 范围与旧账逐位相同（4580 块逐块核对, 移动 0）; ③ARCH07/ARCH11 面石 x 足印镜像协变 36/36（跨孔 bi↔n−1−bi）。ARCH04-06 各 4 块 C04.B00 类跨缘石由误判 in_void 翻为 clip（保留片上穿出界支补闭合）—— 该 4 石 98.3% 在净空内、保留片为跨缘真墙, 判 clip 属账目修复非几何变更。
+**证据闸门（替代撤回的 M22 假门, 三条全过）**: ①`stones/stones_p0..9.json` 合计 sha256 `ddc4a820…` 重出账前后逐字节不变（砖谱=照片钉死证据, 未碰）; ②重出账面石 x/z 范围与旧账逐位相同（4580 块逐块核对, 移动 0）; ③**镜像位顺/丁深度奇偶配平**（桥轴镜像对 A07/A11 面石 103 对中, 旧账 37 对深度反相 → 新账 0/103 全同相; 机器判据 tests/test_p1_masonry2.py test_face/backing_phase_bridge_mirror_covariant。〔审查 INFO 勘误〕原表述"面石 x 足印镜像协变 36/36"不具判别力——x 足印配对 103/103 修复前已成立, 因 load_spec 本就镜像复用砖谱; 真正被本轮修复的是 params.d 深度奇偶）。ARCH04-06 各 4 块 C04.B00 类跨缘石由误判 in_void 翻为 clip（保留片上穿出界支补闭合）—— 该 4 石 98.3% 在净空内、保留片为跨缘真墙, 判 clip 属账目修复非几何变更。
 
-**〔T6c 追记, 同日〕**: 主控裁决冠缝共享带荷载按杠杆原理 50/50 分摊(质心 |u|≤冠楔半宽, 几何推导全孔统一) —— `g3_check.py` pressure_line 门计算变更, **不产/不改任何账目或 print 工件**(上表全部 sha256 保持); acceptance 17/17 全 feasible, 停车线解除; 反手性负控(冠载 100% 单侧 → A08 翻红)钉进 tests/test_p2_g3_thrust.py。
+**〔T6c 追记, 同日〕**: 主控裁决冠缝共享带荷载分摊 —— `g3_check.py` pressure_line 门计算变更, **不产/不改任何账目或 print 工件**(上表全部 sha256 保持); acceptance 17/17 全 feasible, 停车线解除。
+
+**〔T6d 出口审查修复轮追记, 同日〕**:
+- **冠载分摊口径定为字面连续杠杆**(审查 INFO-lever 采纳; 取代 T6c 的带内 50/50 平摊——其带边为 O(w/2) 阶跃, 与同函数跨冠环块 θ 连续分派口径不一致): 冠楔接触带(跨冠缝环块两缝 st0/st1=简支两支点)内肩荷 fr=(x−st0)/(st1−st0), 左=1−fr, 跨带边界连续; 带外整列归所属半环。lever_span/带界扰动/分摊比扫描全部 17/17(审查实测), 仍不产/不改任何账目或 print 工件。
+- 工件变动: `3d/out/sequence.json` `41419cb1…463` → `55d9bdaa…b0c3` —— **唯一**变更为 meta 增 `dm_excluded` 29 元 id+吞没率清单(审查 INFO: 只落计数无归因可核对性; 删除该键重序列化即逐位还原 41419cb1, 已验证), 其余五工件 sha 不变(`ledger_full` 80de7a45 / `ledger_sequenced` c3406d28 / `core_hash` 513dfd93 / `central_slice/manifest` 45fed1e8 / `excluded_ids` fa1a4ef3)。
+- 新增 tracked sidecar `3d/refs/artifact_sha256.txt`: 六重锚工件 sha256 + 生成命令链 + HEAD(审查 W5 —— 此前重锚工件全 untracked, 冻结门只能本机自证); 机器判据 test_artifact_sha256_sidecar_matches_disk。
+- 冠楔半宽派生(带界)钉进测试: 逐孔 `crown_hw == min(xc−st0, st1−xc)` + 带界 ±0.1m 下 gate ok 不变量(审查 W2)。

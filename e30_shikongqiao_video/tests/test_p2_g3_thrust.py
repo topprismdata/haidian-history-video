@@ -17,11 +17,11 @@
 - 双 case(P2-T6 裁决后): acceptance=结构带(RING+胶结锁固带: s 检验截面
   厚 ring_t+0.35, 带石自重仍计入块链 W_k)必须 feasible; robustness=裸环
   (s∈[0,ring_t])只记录不判红。
-  真账实况(裁决轮实测): 裸环 17/17 全 feasible; acceptance(结构带)
-  16/17 feasible, ARCH07 仍不可行 —— 主控裁决第三条: 维持 raise 停报,
-  历史结论 = "券架须驻留至拱肩近满才可落架"(排程跟物理走); 旧口径
-  (截面不加厚, 带石当裸环外荷载)对照 {ARCH07..11} 五孔不可行 ——
-  结构带假设 load-bearing 由 A/B 负控钉死。
+  真账实况(T6b 相位协变 + T6c/d 冠载字面杠杆分摊后): 裸环与 acceptance
+  均 **17/17 全 feasible**(历史停车线解除; "券架须驻留至拱肩近满才可
+  落架"结论存档于报告 §7.2 失效边界)。冠楔接触带(跨冠缝环块两缝
+  st0/st1)内的肩荷按字面连续杠杆 fr=(x−st0)/(st1−st0) 分派(与跨冠环块
+  θ 连续分派同构, 跨带边界连续); 带外整列归所属半环。
 - 停车线: acceptance 不可行 → run_g3 raise G3_FROZEN_GEOMETRY_CONFLICT
   (点名孔), 禁调封卷参数自救; 阈值不为绿而调(0.35 唯一声明带宽)。
 
@@ -29,14 +29,17 @@
 带加厚(t×1.5)区间变宽 ③裸环退化路径(R5a 清空 acceptance≡robustness,
 停车线不误触) ④H 越界出带(过小 H 压力线下穿 intrados / 过大 H 上穿
 extrados, 逐缝 exit 点名) ⑤R5a 清空退化 + 注入超重带石(自重入链) →
-停车线真触发; 另: 旧口径 A/B(LOCK_BAND_M→0 中央孔翻不可行) + 带界
-守恒(r5a 逐石径向 ≤0.35, 0.36m 外肩石不得混入)。
+停车线真触发; 另: 纯消融负控(冠楔分摊整体消融, 带界置 0, 位置/权重
+不动 → A08-11 恰 4 孔翻红) + 旧口径 A/B(LOCK_BAND_M→0 精确集钉值) +
+带界守恒(r5a 逐石径向 ≤0.35, 0.36m 外肩石不得混入) + 冠楔半宽派生
+钉值与带界 ±0.1m 不敏感不变量(审查 W2)。
 
 微账几何同 test_p2_g3_dag(全部 GM 现算); 真账 17 孔(存在性 skip)为
 acceptance 全 feasible + gate_stress 同形节 + H 区间表 + A01/A08 压力线
 图落盘(m20_ctrl/)的常驻断言。
 """
 import copy
+import hashlib
 import json
 import math
 import os
@@ -302,21 +305,27 @@ def _excl_in_void():
 def test_real_17_holes_acceptance_feasible_and_report():
     """真账 17 孔双 case + 停车线协议(P2-T6 裁决两层落地后)。
 
-    裁决链(T6 首核停车线 → 主控两层裁决 → 本轮落地):
+    裁决链(T6 首核停车线 → 主控两层裁决 → T6b 相位协变重账 → T6c/d 冠载
+    分摊):
     ① R5a 收缩真锁固带: 足印距 extrados ≤0.35m(径向, facts.arch_signed_r
       单源; 竖直读法探针证伪 —— 拆拱脚稳定配重致 ARCH05/13 翻假) ∧
-      剔除双建模占位(0.985 吞没 28 石 → R5b)。R5a: 1307 → 1290。
+      剔除双建模占位(0.985 吞没 29 石 → R5b)。R5a: 1307 → 1290 → 1342。
     ② 结构协同假设: 锁固带与券脸石餬灰胶结(C:A5 "餬灰璺"), 并入拱截面
       (s 检验带厚 ring_t+0.35; 带重计入块链 W_k)。
-    实测(T6c 冠缝杠杆分摊后): robustness(裸环) 17/17; acceptance **17/17
-    全 feasible** —— 治本链四层: ①相位协变 ②in_void 手性修复 ③CORE 肩载
-    质心锚 ④冠缝共享带杠杆分摊(质心落在冠楔接触带 |u|≤冠楔半宽 的竖向
-    荷载两半环各担一半, 简支两支点; 带外整列归所属半环; 几何推导全孔统一
-    镜像协变)。镜像对窗口对称至 ~1e-3(A07 [30.177,41.471] vs A11
-    [30.176,41.470])。run_g3 正常返回(停车线解除)。反手性负控: 冠列强行
-    100% 归单侧 → A08 feasible 翻假(n_feasible 33→19) —— 分摊 load-bearing。
-    旧口径 A/B(截面不加厚)对照: 不可行集为结构带模型的严格超集。
-    若砖谱/几何再冻结, 此处结论应被显式复核而非静默漂移。"""
+    ③④ 相位协变重账 + 冠载**字面连续杠杆**分摊: 冠楔接触带(跨冠缝环块
+      两缝 st0/st1=简支两支点)内肩荷 fr=(x−st0)/(st1−st0) 分派, 左=1−fr,
+      跨带边界连续(带边 0/1 精确衔接整列归侧, 无阶跃); 带外整列归所属
+      半环。镜像协变(镜像孔 fr 自动 1−fr, 构造性)。
+    实测(字面杠杆出货口径, 报告 §8.3 同源重打): robustness(裸环) 17/17;
+    acceptance **17/17 全 feasible**。镜像对窗口对称至 ~1.6e-3(A07
+    [31.256,41.518] vs A11 [31.257,41.519])。run_g3 正常返回(停车线解除)。
+    纯消融负控(审查 W3): 冠楔分摊整体消融(带界置 0, 荷载位置/权重/判据
+    完全不动)→ A08-11 恰 4 孔翻红 —— 分摊 load-bearing, 且红来自分摊
+    而非位置挪动(旧负控挪 x=xc+0.6 混入位置效应+0.5m 伪带宽, 已废)。
+    旧口径 A/B(截面不加厚 LOCK_BAND_M=0)对照: 精确集钉值 {07..11}
+    (50/50 前身模型下实测为 {06..12} 7 孔; 字面杠杆带更宽, A06/A12 在
+    连续分摊下得缓 —— 钉值随出货口径重测, 见报告 §9)。
+    若砖谱/几何/分摊模型再冻结, 此处结论应被显式复核而非静默漂移。"""
     led, seqdoc = _real_chain()
     r5a = G3.load_r5a_shoulders()
     # [P2-T6b 相位协变重账] R5a 1290→1342 (+52): in_void 手性修复释放 48 块
@@ -336,7 +345,7 @@ def test_real_17_holes_acceptance_feasible_and_report():
         assert h["robustness"]["band_t"] == 0.0
         assert h["band_bonded"] and h["n_r5a"] > 0
         assert h["acceptance"]["band_t"] == pytest.approx(G3.LOCK_BAND_M)
-    # acceptance(结构带)实况: 17/17 全 feasible(T6c 杠杆分摊后裁决基线;
+    # acceptance(结构带)实况: 17/17 全 feasible(T6d 字面杠杆裁决基线;
     # 几何/砖谱/荷载分摊再变更须显式复核本行)
     infeasible = sorted(zh for zh in gate["holes"]
                         if not gate["holes"][zh]["acceptance"]["feasible"])
@@ -373,13 +382,13 @@ def test_real_17_holes_acceptance_feasible_and_report():
         G3.LOCK_BAND_M = _saved
     old_infra = sorted(zh for zh in old_gate["holes"]
                        if not old_gate["holes"][zh]["acceptance"]["feasible"])
-    # [P2-T6b] 不变量: 截面不加厚(锁固带当裸环外荷载=修正前模型)的不可行
-    # 集合 ⊇ 结构带模型, 且严格更大 —— 结构带假设 load-bearing, 方向单调
-    # (T6b 重账后旧口径不可行集实测见 print, 含 A04-13 中央大部)。
+    # [审查 W3] 旧口径 A/B 负控恢复精确集钉值(原为 ⊇ 超集弱断言, 在
+    # infeasible=[] 下退化为"old_infra 非空"近恒真)。出货口径(字面杠杆)
+    # LOCK_BAND_M=0 下不可行集实测 = {07..11}; 50/50 前身模型下为 {06..12}
+    # 7 孔(出口审查实测) —— 差异来自杠杆带变宽, 随口径重测并在此钉死。
     print("旧口径(截面不加厚) infeasible:", old_infra)
-    assert set(infeasible) <= set(old_infra), (infeasible, old_infra)
-    assert len(old_infra) > len(infeasible), old_infra
-    assert "ARCH07" in old_infra and "ARCH07" not in infeasible
+    assert old_infra == ["ARCH07", "ARCH08", "ARCH09", "ARCH10",
+                         "ARCH11"], old_infra
 
     # 带界守恒(0.36m 外肩石不得混入): r5a 集合逐石足印径向距 ≤ 0.35
     import sequencer as SQ
@@ -406,38 +415,26 @@ def test_real_17_holes_acceptance_feasible_and_report():
     v_mc, _cx, _cz = G3._mesh_centroid(*G3._ring_mesh(ring08[0]))
     assert v_mc == pytest.approx(v_sv, rel=1e-9)
 
-    # 停车线解除: run_g3 正常返回(T6c 杠杆分摊后 17/17), 报告节齐
+    # 停车线解除: run_g3 正常返回(字面杠杆出货口径 17/17), 报告节齐
     rep = G3.run_g3(seqdoc["events"], led, in_void=_excl_in_void(),
                     rbo_ids=[], r5a=r5a)
     assert rep["gate_stress"]["ok"] and rep["gate_dag"]["ok"]
 
-    # 反手性负控: 冠列荷载强行 100% 归单侧(挪出共享带) → A08 feasible
-    # 翻假(n_feasible 33→19) —— 杠杆分摊 load-bearing, 非碰巧绿
-    ai = 7
-    xc8 = GM.arch_center_x(ai)
-    by_id = {s["id"]: s for s in led["stones"]}
-    shove = []
-    for sid in r5a["ARCH08"]:
-        st = by_id[sid]
-        p = st["params"]; bb = p.get("bbox")
-        x = 0.5*(float(bb["x0"])+float(bb["x1"])) if isinstance(bb, dict) \
-            else float(st["transform"][0])
-        if abs(x - xc8) <= 0.5:
-            x = xc8 + 0.6
-        shove.append({"x": x, "weight": G3._stone_weight(st)})
-    rt8 = gate["holes"]["ARCH08"]["acceptance"]["ring_t"]
-    bp8 = G3._hole_bands(ai, rt8)
-    w08 = sum(G3._stone_weight(s) for s in led["stones"]
-              if s["id"].startswith("ARCH08.") and G3.stone_role(s["id"]) == "RING") \
-        + sum(l["weight"] for l in shove)
-    h08 = w08 * 2*bp8["a"]/(8*bp8["b"])
-    r_shove = G3.pressure_line(
-        [s for s in led["stones"] if s["id"].startswith("ARCH08.")
-         and G3.stone_role(s["id"]) == "RING"],
-        shove, (bp8["z_in"], bp8["z_out"]), (0.1*h08, 1.2*h08),
-        dzdx_fn=bp8["dzdx"], ring_t=rt8 + G3.LOCK_BAND_M)
-    assert not r_shove["feasible"], r_shove["n_feasible"]
-    assert r_shove["n_feasible"] < gate["holes"]["ARCH08"]["acceptance"]["n_feasible"]
+    # 纯消融负控(审查 W3): 带界置 0(_crown_wedge→None, 冠楔分摊整体
+    # 消融) —— 荷载位置/权重/截面/判据完全不动, 只摘掉"带内分摊"这一
+    # 个语义 → A08-11 恰 4 孔翻红(=审查实测 crown_hw=0 的 E 态, 与
+    # 35e37cd commit 记录吻合) —— 分摊 load-bearing, 且红可归因于分摊
+    # 而非荷载位置(旧负控 x=xc+0.6 同时挪位置+0.5m 伪带宽, 已废)。
+    _saved_wedge = G3._crown_wedge
+    try:
+        G3._crown_wedge = lambda stones, xc: None
+        abl_gate = G3.stress_gate(led, r5a=r5a)
+    finally:
+        G3._crown_wedge = _saved_wedge
+    abl_infra = sorted(zh for zh, h in abl_gate["holes"].items()
+                       if not h["acceptance"]["feasible"])
+    assert abl_infra == ["ARCH08", "ARCH09", "ARCH10",
+                         "ARCH11"], abl_infra
 
     # 压力线图: 中央孔 A08(结构带内 FEASIBLE) + 端孔 A01(FEASIBLE)
     for zh, name in (("ARCH08", "g3_thrust_A08.png"),
@@ -513,3 +510,103 @@ def test_neg6_thin_ring_stop_line_and_band_widening_helps():
         G3.LOCK_BAND_M = _saved
     acc = gate["holes"]["ARCH01"]["acceptance"]
     assert acc["band_t"] == pytest.approx(2.0) and acc["feasible"], acc
+
+
+# ---------------------------------------------------------------------------
+# 审查修复轮(2026-10-07)钉值: 冠楔半宽派生(W2) + sha sidecar(W5)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
+                    reason="out/sequence.json+ledger_sequenced.json 不在盘上")
+def test_crown_wedge_derivation_pin_and_band_boundary_insensitivity():
+    """[审查 W2] 冠楔半宽(带界)派生钉值 + 带界不敏感不变量。
+
+    背景: H 窗口对带界敏感(审查实测 −0.1m 位移 max 2.68 / +0.1m 0.84 /
+    ×2 达 6.35≈18%·H_ref), 但派生式此前全仓零测试覆盖 —— 重构可静默
+    漂移 §8.3/T7 交接数值而不被拦下。两条钉:
+    (1) 逐孔 crown_hw == min(xc−st0, st1−xc)(跨 xc 唯一环块, 全 17 孔,
+        abs=1e-12) —— 派生取短半宽=最保守方向, 唯一跨冠块下 max 为空操作;
+    (2) 带界 ±0.1m(冠楔两缝外扩/内收, 荷载位置/权重/判据全不动)下
+        gate['ok'] is True 不变量 —— 把"结论对带界不敏感"钉成可执行
+        事实, 防日后判据漂移式找绿。"""
+    led, _seqdoc = _real_chain()
+    r5a = G3.load_r5a_shoulders()
+    gate = G3.stress_gate(led, r5a=r5a)
+    assert gate["ok"], gate["violations"][:3]
+    assert sorted(gate["holes"]) == ["ARCH%02d" % i for i in range(1, 18)]
+    for zh in sorted(gate["holes"]):
+        ring = [s for s in led["stones"]
+                if G3.stone_role(s["id"]) == "RING"
+                and s["id"].startswith(zh + ".")]
+        xc = GM.arch_center_x(int(zh[4:]) - 1)
+        straddle = []
+        for s in ring:
+            st = sorted(float(v) for v in (s["params"]["stations"][:2]))
+            if st[0] < xc < st[1]:
+                straddle.append((st[0], st[1]))
+        # 跨冠缝环块每孔恰 1 块(唯一性本身入钉; 审查实测同)
+        assert len(straddle) == 1, (zh, straddle)
+        st0, st1 = straddle[0]
+        hw = min(xc - st0, st1 - xc)
+        acc = gate["holes"][zh]["acceptance"]
+        assert acc["crown_wedge"] == [st0, st1], zh
+        assert abs(acc["crown_hw"] - hw) <= 1e-12, (zh, acc["crown_hw"], hw)
+        assert 0.0 < acc["crown_hw"] < 0.5, (zh, acc["crown_hw"])
+    # (2) 带界 ±0.1m: 冠楔两缝外扩/内收 0.1m(内收后跨冠块仍含 xc,
+    # crown_hw>0) —— 可行性结论与全门 ok 不变
+    orig = G3._crown_wedge
+    try:
+        for d in (-0.1, 0.1):
+            def _perturbed(stones, xc, _d=d):
+                w = orig(stones, xc)
+                if w is None:
+                    return None
+                return (w[0] - _d, w[1] + _d,
+                        min(xc - (w[0] - _d), (w[1] + _d) - xc))
+            G3._crown_wedge = _perturbed
+            g2 = G3.stress_gate(led, r5a=r5a)
+            assert g2["ok"] is True, (d, g2["violations"][:3])
+            assert sorted(zh for zh, h in g2["holes"].items()
+                          if not h["acceptance"]["feasible"]) == []
+    finally:
+        G3._crown_wedge = orig
+
+
+_SIDE = os.path.join(_HERE, "..", "3d", "refs", "artifact_sha256.txt")
+
+
+def test_artifact_sha256_sidecar_matches_disk():
+    """[审查 W5] tracked sha sidecar 逐条与盘上文件实算一致。
+
+    重锚工件(ledger/sequence/core_hash 等)全部 untracked → 冻结门此前
+    只能本机自证, clean clone 无从核对(同类历史事故: 未跟踪文件=隐形
+    依赖)。sidecar 把 6 个重锚工件 sha256 记进 git; 本测试钉"记录值 ==
+    盘上实算": 单文件缺失 → 跳过该条(大工件不入库的 clean clone 场景),
+    全部缺失 → skip, 任何一条不符 → fail。"""
+    assert os.path.exists(_SIDE), "sidecar 不在盘上(须随仓库交付)"
+    entries = []
+    with open(_SIDE, encoding="utf-8") as fh:
+        for ln in fh:
+            ln = ln.strip()
+            if not ln or ln.startswith("#"):
+                continue
+            parts = ln.split(None, 1)
+            assert len(parts) == 2, ln
+            entries.append((parts[0], parts[1].strip()))
+    assert len(entries) >= 6, entries
+    base = os.path.join(_HERE, "..")
+    checked = 0
+    for sha, rel in entries:
+        p = os.path.normpath(os.path.join(base, rel))
+        if not os.path.exists(p):
+            continue
+        h = hashlib.sha256()
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+        assert h.hexdigest() == sha, \
+            "%s: sidecar=%s 盘上=%s" % (rel, sha, h.hexdigest())
+        checked += 1
+    if checked == 0:
+        pytest.skip("sidecar 所列工件均不在盘上(clean clone); "
+                    "按 sidecar 生成命令链重出后可核")

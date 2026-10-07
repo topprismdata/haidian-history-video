@@ -771,6 +771,22 @@ def _stone_weight(stone, density=None):
     return vol * density
 
 
+def _crown_wedge(ring_stones, xc):
+    # type: (List[Dict[str, Any]], float) -> Optional[Tuple[float, float, float]]
+    """冠楔几何推导(全孔统一): 站点域跨冠缝 xc 的环块被 xc 截出的接触带
+    [st0, st1] 及其短半宽 crown_hw=min(xc−st0, st1−xc)(取短半宽=最保守
+    侧; 真账跨冠块每孔恰 1 块, max 语义在唯一块下为空操作)。st0/st1 即
+    字面杠杆(简支两支点)的支点缝。无跨冠块(合成单边 fixture)→ None。"""
+    best = None
+    for s in ring_stones:
+        st = sorted(float(v) for v in (s["params"]["stations"][:2]))
+        if st[0] < xc < st[1]:
+            hw = min(xc - st[0], st[1] - xc)
+            if best is None or hw > best[2]:
+                best = (st[0], st[1], hw)
+    return best
+
+
 def _theta_right_frac(stone):
     # type: (Dict[str, Any]) -> float
     """券石重量归于右半拱(x>x_c)的份额: 龙门石按 θ=0 分割(同
@@ -995,7 +1011,9 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
     ring_stones: 本孔 RING 石账条目(weight=体积单源×密度; 质心=烘焙网格
       散度质心, 冠跨块按 θ 分割 sequencer 同一口径, 分件质心用冠域垂直带
       积分); extra_loads: [{"x","weight"}](R5a 肩重/均布 q 等竖向荷载,
-      x≥xc 归右半环, 超出 [xc-a,xc+a] 不入半环直接入墩并计数);
+      x≥xc 归右半环, 超出 [xc-a,xc+a] 不入半环直接入墩并计数;
+      落在冠楔接触带 [st0,st1](跨冠缝环块两缝=简支两支点)内者按字面
+      连续杠杆 fr=(x−st0)/(st1−st0) 分派, 左=1−fr, 跨带边界连续);
     band_in_out_fns: (z_in, z_out); dzdx_fn: 缝法向斜率单源(缺省= z_in
       中心差分, 数值替代); H_range: 绝对扫描区间; H_detail: 额外细查 H。
     返回 {feasible, H:[min,max]|None, polyline, polyline_left, H_min/max/mid,
@@ -1019,14 +1037,12 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
     w_total = 0.0
     left = []           # type: List[Tuple[float, float]]
     right = []          # type: List[Tuple[float, float]]
-    # 冠缝共享带半宽(几何推导, 全孔统一): 跨冠缝环块被 xc 截出的较短半宽
-    # —— 冠楔两侧接触点即简支两支点, 带内竖向荷载按杠杆原理两半环各担一半。
+    # 冠楔(几何推导, 全孔统一): 跨冠缝环块被 xc 截出的接触带 [st0, st1],
+    # 两缝即简支两支点; crown_hw=短半宽(诊断暴露, 供测试钉值)。
     all_st = [sorted(float(v) for v in (s["params"]["stations"][:2]))
               for s in ring_stones]
-    crown_hw = 0.0
-    for st0, st1 in all_st:
-        if st0 < xc < st1:
-            crown_hw = max(crown_hw, min(xc - st0, st1 - xc))
+    wedge = _crown_wedge(ring_stones, xc)
+    crown_hw = wedge[2] if wedge else 0.0
     for s in ring_stones:
         w = _stone_weight(s)
         w_total += w
@@ -1058,14 +1074,22 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
         if not (xc - a - EPS_X <= x <= xc + a + EPS_X):
             dropped += 1
             continue
-        # [P2-T6b] 侧归属: 冠缝共享带(质心 |x−xc| ≤ 冠楔半宽)内的竖向荷载
-        # 按杠杆原理两半环各担一半(简支两支点, 冠缝为共享支点截面) ——
-        # 旧 tie-break 100% 归右与"相位全按西缘计数"同族(序号伪影), 且
-        # 质心恰在 xc±ulp 的冠列会 1ulp 翻侧(O(1) 手性)。几何推导、
-        # 全孔统一、镜像协变(同一函数喂任一孔)。带外整列归所属半环。
-        if crown_hw > 0.0 and abs(x - xc) <= crown_hw:
-            right.append((0.5 * w, x))
-            left.append((0.5 * w, x))
+        # [P2-T6c→d 字面连续杠杆] 质心落在冠楔接触带 st0≤x≤st1(两缝=简支
+        # 两支点)内的竖向荷载按**字面杠杆**分派: 右半环份额 fr=(x−st0)/
+        # (st1−st0), 左=1−fr —— 与同函数跨冠环块的 θ 连续分派
+        # (_theta_right_frac)同构, 跨带边界连续(带边 fr=0/1 精确衔接
+        # "整列归所属半环", 无阶跃)。带外整列归所属半环。演化链: 更旧
+        # tie-break 100% 归右(序号伪影, 与"相位全按西缘"同族) → 50/50
+        # 平摊(带边 O(w/2) 阶跃, 口径与环石连续分派不一致) → 本口径。
+        # 镜像协变: 镜像孔的 fr 自动取 1−fr(构造性)。出口审查实测
+        # (2026-10-07): lever_span acceptance/robustness 17/17, 窗口相对
+        # 50/50 态位移 ≤2.34, 跨带边界连续; 仅"整列归单侧"(fr=0/1)翻红。
+        if wedge and wedge[0] <= x <= wedge[1]:
+            fr = (x - wedge[0]) / (wedge[1] - wedge[0])
+            if fr > 0.0:
+                right.append((fr * w, x))
+            if fr < 1.0:
+                left.append(((1.0 - fr) * w, x))
         else:
             (right if x >= xc - EPS_X else left).append((w, x))
 
@@ -1151,6 +1175,8 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
         "gaps": max(r["gaps"] for r in sides),
         "W_total": w_total,
         "n_loads_dropped": dropped,
+        "crown_hw": crown_hw,
+        "crown_wedge": [wedge[0], wedge[1]] if wedge else None,
         "detail": detail,
     }
 
@@ -1227,7 +1253,9 @@ def stress_gate(ledger, r5a=None):
     if r5a is None:
         r5a = load_r5a_shoulders()
     by_zone = {}  # type: Dict[str, List[Dict[str, Any]]]
+    stones_by_id = {}  # type: Dict[Any, Dict[str, Any]]
     for s in ledger.get("stones", []):
+        stones_by_id[s.get("id")] = s      # 一次建索引: R5a 逐 id 查 O(1)
         if stone_role(s.get("id")) == RING_ROLE:
             by_zone.setdefault(hole_of_sid(s["id"]), []).append(s)
     holes = {}  # type: Dict[str, Any]
@@ -1253,8 +1281,7 @@ def stress_gate(ledger, r5a=None):
         shoulder_loads = []
         n_r5a = 0
         for sid in (r5a or {}).get(zh, []):
-            st = next((s for s in ledger.get("stones", [])
-                       if s.get("id") == sid), None)
+            st = stones_by_id.get(sid)
             if st is None:
                 continue
             n_r5a += 1

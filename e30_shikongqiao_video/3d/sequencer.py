@@ -316,10 +316,20 @@ def _hole_of(stone):
 
 def _double_model_ids(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
     # type: (Dict[str, Any], Optional[List[str]], float) -> set
-    """P2-T6 裁决·双建模占位剔除: rbo 桶(ring_band_overlap)中
-    V(stone∩RING∪)/V(stone) ≥ threshold(0.985 口径, 真账 28 石)者 ——
+    """P2-T6 裁决·双建模占位剔除 id 集(= _double_model_ratios 的键集;
+    实现说明见该函数 docstring)。"""
+    return set(_double_model_ratios(ledger, rbo_ids=rbo_ids,
+                                    threshold=threshold))
+
+
+def _double_model_ratios(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
+    # type: (Dict[str, Any], Optional[List[str]], float) -> Dict[str, float]
+    """P2-T6 裁决·双建模占位剔除(带吞没率版): rbo 桶(ring_band_overlap)中
+    V(stone∩RING∪)/V(stone) ≥ threshold(0.985 口径, 真账 29 石)者 ——
     它们 ≥98.5% 已被 RING 实体吞没, 重量在压力线模型里属 RING 已计部分,
-    R5a 再计即双算 → 剔出 R5a 落 R5b。
+    R5a 再计即双算 → 剔出 R5a 落 R5b。返回 {stone_id: 吞没率}(供
+    sequence.json meta 落盘 id+吞没率清单, 幂等可 diff —— 审查 INFO:
+    只落计数则归因可核对性缺口, §7.1 全表只能靠正文)。
 
     为何不 import g3_check 复用其 double_model_scan: g3 与本模块是两独立
     实现互证(测试钉死 g3 导入闭包无 sequencer), 反向依赖成环; 故按同一
@@ -358,7 +368,7 @@ def _double_model_ids(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
             mesh_cache[rid] = (rv, tris, rv.min(axis=0), rv.max(axis=0))
         return mesh_cache[rid]
 
-    out = set()
+    out = {}  # type: Dict[str, float]
     for sid in todo:
         st = by_id[sid]
         sv, sf = P.world_mesh(st, {sid: ("out", None)})
@@ -372,7 +382,7 @@ def _double_model_ids(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
         v_stone, _v_hit, v_unique, _inside = P._voxel_unique_vol(sv, sf, rms)
         ratio = (1.0 - v_unique / v_stone) if v_stone > 0 else 0.0
         if ratio >= threshold:
-            out.add(sid)
+            out[sid] = float(ratio)
     return out
 
 
@@ -1235,7 +1245,9 @@ def main():
     zones = sorted(set(s["id"].split(".")[0] for s in led["stones"]))
     centerings = [CEN.build_centering_for_arch(_arch_idx(z)) for z in zones
                   if z.startswith("ARCH")]
-    dm = _double_model_ids(led)
+    # 一次扫描同时出 id 集与吞没率(build/check 共用; 清单落盘 meta)
+    dm_detail = _double_model_ratios(led)
+    dm = set(dm_detail)
     res = build_sequence(led, centerings, dm_ids=dm)
     errs = check_sequence(res, led, centerings, dm_ids=dm)
     if errs:
@@ -1253,6 +1265,12 @@ def main():
         return 1
     if not os.path.isdir(_OUT_DIR):
         os.makedirs(_OUT_DIR)
+    # [审查 INFO 卫生] dm 剔除清单落盘(幂等可 diff): id(字典序)+吞没率
+    # (6 位舍入), 不再只有 n_dm_excluded 计数 —— 报告/测试钉该列表,
+    # 归因可核对不再依赖会话正文。
+    res["meta"]["dm_excluded"] = [
+        {"id": sid, "ratio": round(dm_detail[sid], 6)}
+        for sid in sorted(dm_detail)]
     L.save_ledger(led2, os.path.join(_OUT_DIR, "ledger_sequenced.json"))
     seq_out = {k: res[k] for k in ("events", "sequence", "frontier_trace",
                                    "meta")}

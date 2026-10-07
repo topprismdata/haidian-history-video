@@ -31,6 +31,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import ledger as L
 import families as FAM
+import geom_math as GM
 
 STRETCHER_D = 1.2
 HEADER_D = 2.4
@@ -84,7 +85,7 @@ def bridge_mirror_phase(arch_idx):
     东半孔(arch_idx > 桥心 N_SPAN//2)一律倒序消费相位; 桥心孔自镜像
     不动。只动相位锚, 不动砖谱 x/z 块界/石型多重集/尺寸/带界 ——
     块界是照片钉死的证据(photos-derived), 相位在立面上不可见。"""
-    import geom_math as GM
+    # GM 于模块级 import(原函数体内逐层逐石热路径重复 import, 审查 INFO)
     return arch_idx > GM.N_SPAN // 2
 
 
