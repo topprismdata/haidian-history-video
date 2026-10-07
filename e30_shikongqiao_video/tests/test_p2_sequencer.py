@@ -4,21 +4,37 @@
 
 判据(brief 接口节全量, 每规则≥1 测):
 - R0 每石恰一次/seq 连续/角色可分类/每孔 CLOSE·DECENTER·CLEAR 恰一次;
+  裁1: in_void 幻影石(classify_stones 单源, 与 excluded_ids.json 同源)
+  不入日程 —— 正控(无事件无边, 原账不被 clipped 标污染)+ 负控(混入事件流
+  必红 R0_IN_VOID_PHANTOM);
 - R1 墩肩 z 升序; R2 RING prereq ⊇ 立架锚且在立架→合龙窗;
 - R3 θ 镜像配对两侧交替, 偶数位前缀 |W_L−W_R|/(W_L+W_R)≤eps
   (负控: 手工把一侧三石前置 → 构造器 raise R3_IMBALANCE);
+  F7: 密度 ×2600 整体重建, 事件流与 eps 判定逐位不变(反恒真自证权重已放大);
+  F5: 体积=families.family_mesh+export_print.signed_volume 单源, 微账走真族;
 - R4 CLOSE→≥min_hold 本孔 HOLD→DECENTER→WEDGE λ 全阶{.25,.5,.75,1}→CLEAR;
+  F4: min_hold=0 构造器 raise(免持荷 fail-open 禁止);
 - R5a 环肩咬合/锁固肩(clipped_by==ring_band ∨ 石底 z≤extrados ∧ 不撞券架)
-  在合龙→拆架窗; R5b 其余 SPANDREL/BACK/CORE 在拆架后;
-- R6 frontier 状态严格前进 + 跨孔组合表(禁相邻孔同落架/禁跳孔落架);
+  在合龙→**落架窗**(修复轮收紧: 上界 CLEAR→DECENTER_START, 负控: 落架中途
+  砌肩必红); M2: 撞架石注入必被排除落 R5b; R5b 其余 SPANDREL/BACK/CORE 在拆架后;
+- 裁2 曲线(capacity=荷载分担份额): RING centering 1−λ 阶梯 + stone λ 阶梯
+  同点互补, 每事件点 Σ=1; 肩石仅 stone 自持边 [[place,1.0]](不坐木架) ——
+  两者形状钉死(改"肩石不卸载"/"环石全程 1.0"必红); Σ≥1 核有牙
+  (CAP_INVARIANT); M9: check_sequence 摘线(require_evidence 接线)必红;
+- R6 frontier 状态严格前进 + 跨孔组合表(禁相邻孔同落架/禁跳孔落架;
+  M7: 右邻 i+1 支路专属负控); F4: 无背胞孔不记 FILLED, at_seq=本孔末置放;
 - R7 PAVING→RAIL/POST→CARVE 全局最后;
 - 回写: 原账不动, 副本 support_edges capacity_curve x 全在事件集,
-  validate_ledger(known_event_seqs)=[]; 交付闸 validate_event_ledger
-  (require_evidence=True)==[] 硬约束(T3 复审 M4 裁决)。
+  validate_ledger(known_event_seqs)=[](ledger 侧单调律按边类型分型:
+  退化型 CURVE_MONOTONIC / stone 型 STONE_CURVE_REGRESSION, 负控在
+  test_p2_ledger_v2); 交付闸 validate_event_ledger(require_evidence=True)
+  ==[] 硬约束(T3 复审 M4 裁决)。
 负控五组: 悬空券石/邻孔稀释 HOLD/跳孔落架/单边领先超 ε/CLEAR 无 START 必红。
-blender-free; 真账 5935 石全链为存在性 skip 的尾测。
+blender-free; 真账 5935 石全链(裁1 后 3883 入日程)为存在性 skip 的尾测,
+含 in_void 滤除集与 excluded_ids.json 逐位交叉核。
 """
 import copy
+import json
 import os
 import sys
 
@@ -43,6 +59,14 @@ R7_Z = 5.0
 # 合成 3 孔微账(ARCH01..03; 几何全部由 GM 现算, 不硬编码几何值)
 # ---------------------------------------------------------------------------
 
+def _wstd(w, h, d):
+    # type: (float, float, float) -> Dict[str, Any]
+    """wedge-std 全参数(F5 修复轮: classify_stones/stone_weight 走
+    families.family_mesh 单源, proud/hw_b/hw_t 必填; 收分取确定性小值)。"""
+    return {"h": h, "w": w, "d": d, "proud": 0.05,
+            "hw_b": w / 2.0 - 0.02, "hw_t": w / 2.0 - 0.04}
+
+
 def _micro_ledger():
     led = {"meta": {"schema": L.SCHEMA, "curve_hash": "micro", "seed": 1},
            "stones": []}
@@ -52,47 +76,54 @@ def _micro_ledger():
         springer = GM.arch_springer_z(ai)
         crown = GM.arch_crown_z(ai)
         rt = MICRO_RING_T
-        # R1: 墩肩四 course(同孔 z 升序)
+        half_a = GM.SPANS[ai] / 2.0   # 跨半宽: 墩肩/锁固肩须在 |x-xc| ≥ 半跨
+        # R1: 墩肩四 course(同孔 z 升序); x 在跨缘外(拱座语义, 且 classify
+        # 不入 in_void 带 —— 真账 IMPOST 集在 in_void 桶为 0)
         for ci, dz in ((0, 0.60), (1, 0.45), (2, 0.30), (3, 0.15)):
             for fi, face in enumerate(("EAST", "WEST")):
                 led["stones"].append(L.new_stone(
                     zone, face, "IMPOST", ci, 0, "wedge-std",
-                    {"h": 0.1, "w": 1.05, "d": 0.42},
-                    [xc + 1.2 * (1 if face == "EAST" else -1), 4.8,
-                     springer - dz, 0.0, 0.0, 0.0], "qingshi"))
-        # R3: 券石 θ 镜像(9 石: 四对+龙门石)
+                    _wstd(1.05, 0.1, 0.42),
+                    [xc + (half_a + 0.60) * (1 if face == "EAST" else -1),
+                     4.8, springer - dz, 0.0, 0.0, 0.0], "qingshi"))
+        # R3: 券石 θ 镜像(9 石: 四对+龙门石); family 走真源 wedge-std
+        # (F5: 体积=families.family_mesh 散度积分, 微账不再有私有近似)
         angs = [(-88.0, -66.0), (-66.0, -44.0), (-44.0, -22.0),
                 (-22.0, -11.0), (-11.0, 11.0), (11.0, 22.0),
                 (22.0, 44.0), (44.0, 66.0), (66.0, 88.0)]
         for bi, (t0, t1) in enumerate(angs):
             x_off = 1.0 * (1 if t0 + t1 >= 0 else -1)
             led["stones"].append(L.new_stone(
-                zone, "EAST", "RING", 0, bi + 1, "voussoir",
-                {"angles": [t0, t1], "ring_t": rt, "xc": xc,
-                 "stations": [xc + x_off - 0.4, xc + x_off + 0.4],
-                 "n_ring": 9, "k": 0, "lift": 0.0, "through": "full_depth"},
+                zone, "EAST", "RING", 0, bi + 1, "wedge-std",
+                dict(_wstd(0.8, 0.5, 1.2),
+                     angles=[t0, t1], ring_t=rt, xc=xc,
+                     stations=[xc + x_off - 0.4, xc + x_off + 0.4],
+                     n_ring=9, k=0, lift=0.0, through="full_depth"),
                 [xc + x_off, 0.0,
                  F.arch_z(x_off, 0.0, springer, GM.SPANS[ai] / 2.0,
                           GM.arch_rise(ai)) + rt / 2.0,
                  0.0, 0.0, 0.0], "qingshi"))
-        # R5a: 锁固肩(底 z ≤ extrados; y 面上不撞券架)
+        # R5a: 锁固肩(底 z ≤ extrados; x 在跨缘外不撞券架且不入 in_void 带
+        #  —— 真账锁固肩分布在环带外侧墙体内)
         led["stones"].append(L.new_stone(
             zone, "EAST", "SPANDREL", 0, 0, "wedge-std",
-            {"h": 0.7, "w": 0.38, "d": 1.2},
-            [xc, 4.8, springer - 0.20, 0.0, 0.0, 0.0], "qingshi"))
+            _wstd(0.38, 0.7, 1.2),
+            [xc + half_a + 0.30, 4.8, springer - 0.20, 0.0, 0.0, 0.0],
+            "qingshi"))
         led["stones"].append(L.new_stone(
             zone, "WEST", "BACK", 1, 1, "wedge-std",
-            {"h": 0.7, "w": 0.38, "d": 1.2},
-            [xc, -4.8, springer - 0.20, 0.0, 0.0, 0.0], "qingshi"))
+            _wstd(0.38, 0.7, 1.2),
+            [xc - half_a - 0.30, -4.8, springer - 0.20, 0.0, 0.0, 0.0],
+            "qingshi"))
         # R5b: 其余肩背胞(底 z 高于 extrados 冠)
         hi = crown + rt + 0.5
         led["stones"].append(L.new_stone(
             zone, "EAST", "SPANDREL", 2, 0, "wedge-std",
-            {"h": 0.7, "w": 0.38, "d": 1.2},
+            _wstd(0.38, 0.7, 1.2),
             [xc, 4.8, hi + 0.35, 0.0, 0.0, 0.0], "qingshi"))
         led["stones"].append(L.new_stone(
             zone, "WEST", "BACK", 1, 0, "wedge-std",
-            {"h": 0.7, "w": 0.38, "d": 1.2},
+            _wstd(0.38, 0.7, 1.2),
             [xc, -4.8, hi + 0.35, 0.0, 0.0, 0.0], "qingshi"))
         led["stones"].append(L.new_stone(
             zone, "EAST", "CORE", 3, 0, "slab",
@@ -104,7 +135,7 @@ def _micro_ledger():
     for role in ("PAVING", "RAIL", "POST", "CARVE"):
         led["stones"].append(L.new_stone(
             "ARCH01", "EAST", role, 9, 0, "wedge-std",
-            {"h": 0.3, "w": 0.5, "d": 0.8},
+            _wstd(0.5, 0.3, 0.8),
             [GM.arch_center_x(0) - 1.0, 4.8, R7_Z, 0.0, 0.0, 0.0],
             "qingshi"))
     return led
@@ -178,6 +209,58 @@ def test_r0_unknown_role_fail_closed(micro):
     led2 = {"meta": micro["meta"], "stones": micro["stones"] + [bad]}
     with pytest.raises(SQ.SequencerError, match="R0_UNKNOWN_ROLE"):
         SQ.build_sequence(led2, _micro_centerings())
+
+
+# ---------------------------------------------------------------------------
+# 裁1: 幻影石过滤(in_void 不入日程; 与 excluded_ids.json 同源)
+# ---------------------------------------------------------------------------
+
+def _mid_void_stone(zone, ai):
+    # type: (str, int) -> Dict[str, Any]
+    """整块落在 ARCH(ai+1) 券洞净空中部的合成幻影石(跨缘内 x, 起拱线之上、
+    内弧之下)。"""
+    xc = GM.arch_center_x(ai)
+    springer = GM.arch_springer_z(ai)
+    crown = GM.arch_crown_z(ai)
+    z_mid = (springer + crown) / 2.0
+    return L.new_stone(zone, "EAST", "SPANDREL", 8, 8, "wedge-std",
+                       _wstd(0.1, 0.1, 0.1),
+                       [xc, 0.0, z_mid, 0.0, 0.0, 0.0], "qingshi")
+
+
+def test_phantom_in_void_not_scheduled(built, micro):
+    """裁1 正控: 洞内幻影石无 PLACE_STONE、无支撑边, checker 仍全绿;
+    基础微账自身零幻影(其余合成石全在墙内)。"""
+    assert SQ._in_void_ids(micro) == set(), "基础微账不应含 in_void 石"
+    led2 = {"meta": micro["meta"],
+            "stones": micro["stones"] + [_mid_void_stone("ARCH02", 1)]}
+    phantom = led2["stones"][-1]["id"]
+    res = SQ.build_sequence(led2, _micro_centerings(), eps=EPS,
+                            min_hold=MIN_HOLD)
+    assert res["meta"]["n_stones_in_void"] == 1
+    assert res["meta"]["n_stones"] == len(micro["stones"])
+    assert not any(e.get("stone_id") == phantom for e in res["events"])
+    assert phantom not in res["_edge_plan"]
+    led3 = SQ.apply_support_edges(led2, res)
+    ps = next(s for s in led3["stones"] if s["id"] == phantom)
+    assert ps["support_edges"] == []
+    # 原 ledger 不被 classify 污染(params.clipped 不落原始账)
+    assert all("clipped" not in s["params"] for s in micro["stones"])
+    assert _errs(res, led2, _micro_centerings()) == []
+
+
+def test_phantom_in_void_in_stream_red(built, micro):
+    """裁1 负控: 幻影石以任何形态混入事件流 → R0_IN_VOID_PHANTOM 必红。"""
+    led2 = {"meta": micro["meta"],
+            "stones": micro["stones"] + [_mid_void_stone("ARCH02", 1)]}
+    phantom = led2["stones"][-1]["id"]
+    res = SQ.build_sequence(led2, _micro_centerings(), eps=EPS,
+                            min_hold=MIN_HOLD)
+    evs = copy.deepcopy(res["events"])
+    evs.append(E.new_event(len(evs) + 1, "ARCH02", "PLACE_STONE",
+                           stone_id=phantom, prereq=[], evidence="C:A1"))
+    errs = _errs({"events": evs}, led2, _micro_centerings())
+    assert any(m.startswith("R0_IN_VOID_PHANTOM") for m in errs), errs[:8]
 
 
 # ---------------------------------------------------------------------------
@@ -270,11 +353,30 @@ def test_r3_negative_one_side_leads(micro, built):
 
 
 def test_r3_density_invariance(micro):
-    """R3 比值对共同密度因子不变(密度 1.0 不引入无出处常数的依据)。"""
+    """R3 真不变量(F7 替换旧恒真测): 密度整体 ×2600 重建, 事件流与 eps
+    判定逐位不变 —— R3 判的是比值; 管线任何位置消费绝对重量都在此显形。
+    末尾断言权重确已放大, 防不变量退化成恒真(密度根本没生效的假绿)。"""
     cens = _micro_centerings()
-    w1 = SQ.stone_weight(micro["stones"][8], density=1.0)
-    w3 = SQ.stone_weight(micro["stones"][8], density=2600.0)
-    assert w3 == pytest.approx(w1 * 2600.0)
+    base = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD)
+    assert SQ.check_sequence(base, micro, cens, eps=EPS,
+                             min_hold=MIN_HOLD) == []
+    old = SQ.STONE_DENSITY
+    try:
+        SQ.STONE_DENSITY = 2600.0
+        heavy = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD)
+        errs_heavy = SQ.check_sequence(heavy, micro, cens, eps=EPS,
+                                       min_hold=MIN_HOLD)
+    finally:
+        SQ.STONE_DENSITY = old
+    assert errs_heavy == [], "密度 2600 下 eps 判定漂移: %s" % errs_heavy[:8]
+    assert heavy["events"] == base["events"], "密度 2600 事件流逐位漂移"
+    assert heavy["frontier_trace"] == base["frontier_trace"]
+    assert heavy["sequence"] == base["sequence"]
+    # 反恒真自证: 权重确实随密度放大(体积单源缓存的是体积, 重量随之变)
+    s = micro["stones"][8]
+    w1 = SQ.stone_weight(s)
+    assert w1 > 0.0
+    assert SQ.stone_weight(s, density=2600.0) == pytest.approx(w1 * 2600.0)
 
 
 # ---------------------------------------------------------------------------
@@ -316,6 +418,8 @@ def test_r5a_shoulder_in_close_clear_window(built, micro):
     for zone in _zones(micro):
         close = _by_hole(built["events"], zone, "CLOSE_RING")[0]["seq"]
         clear = _by_hole(built["events"], zone, "CENTERING_CLEAR")[0]["seq"]
+        dstart = _by_hole(built["events"], zone, "DECENTER_START")[0]["seq"]
+        assert close < dstart < clear
         ai = int(zone[4:]) - 1
         for e in built["events"]:
             if e["hole"] != zone or e["etype"] != "PLACE_STONE":
@@ -332,11 +436,30 @@ def test_r5a_shoulder_in_close_clear_window(built, micro):
                 for cb in SQ._centering_boxes_global(cens[zone]))
             if locked:
                 n_shoulder += 1
-                assert close < e["seq"] < clear
+                # 修复轮收紧: 窗上界 CLEAR → DECENTER_START(落架中途不得砌肩)
+                assert close < e["seq"] < dstart
                 assert close in e["prereq"]
             else:
                 assert e["seq"] > clear
     assert n_shoulder == 6, "每孔恰 2 锁固肩(3 孔共 6), 实得 %d" % n_shoulder
+
+
+def test_r5a_negative_shoulder_during_decenter_red(built, micro):
+    """checker 收紧负控: 锁固肩挪入 DECENTER→CLEAR 窗(落架中途砌肩)必红。
+    旧上界(CLEAR)对此恒绿 —— 本测钉死上界已收到 DECENTER_START。"""
+    evs = copy.deepcopy(built["events"])
+    zone = "ARCH02"
+    close = _by_hole(evs, zone, "CLOSE_RING")[0]["seq"]
+    dstart = _by_hole(evs, zone, "DECENTER_START")[0]["seq"]
+    sh = next(e for e in evs if e["hole"] == zone
+              and e["etype"] == "PLACE_STONE" and close < e["seq"] < dstart)
+    evs.remove(sh)
+    clear_idx = next(i for i, e in enumerate(evs)
+                     if e["hole"] == zone and e["etype"] == "CENTERING_CLEAR")
+    evs.insert(clear_idx, sh)          # 落到最后一个 WEDGE 与 CLEAR 之间
+    _resequence(evs)
+    errs = _errs({"events": evs}, micro, _micro_centerings())
+    assert any(m.startswith("R5A_WINDOW") for m in errs), errs[:8]
 
 
 def test_r5b_fill_after_clear(built, micro):
@@ -542,8 +665,188 @@ def test_ring_capacity_ladder_via_edge_capacity(built, micro):
     assert L.edge_capacity(cen_edge, clear) == 0.0
     stone_edge = next(e for e in ring["support_edges"]
                       if e["type"] == "stone")
-    assert L.edge_capacity(stone_edge, wedges[-1]) == 1.0  # 自持接管
+    # 裁2: stone 自持边 = λ 阶梯(0→0.25→0.5→0.75→1.0 同点), 与 centering
+    # 1−λ 阶梯互补 —— 任意事件点 Σ=1(荷载完整分担)
+    assert L.edge_capacity(stone_edge, place) == 0.0
+    assert L.edge_capacity(stone_edge, dstart) == 0.0
+    assert [L.edge_capacity(stone_edge, w) for w in wedges] \
+        == [0.25, 0.5, 0.75, 1.0]
+    assert L.edge_capacity(stone_edge, clear) == 1.0
     assert L.edge_capacity(stone_edge, clear + 10) == 1.0
+    for x in [place, dstart] + wedges + [clear]:
+        assert L.edge_capacity(cen_edge, x) + L.edge_capacity(stone_edge, x) \
+            == pytest.approx(1.0), x
+
+
+# ---------------------------------------------------------------------------
+# 修复轮: 裁2 曲线形状 + Σ≥1 不变量 + F4/M2/M7/M9 负控
+# ---------------------------------------------------------------------------
+
+def _shoulder_ids(res, zone):
+    # type: (Dict[str, Any], str) -> List[str]
+    """该孔锁固肩 id 表(合龙→落架窗内的 FILL 角色置放)。"""
+    close = _by_hole(res["events"], zone, "CLOSE_RING")[0]["seq"]
+    dstart = _by_hole(res["events"], zone, "DECENTER_START")[0]["seq"]
+    return [e["stone_id"] for e in res["events"]
+            if e["hole"] == zone and e["etype"] == "PLACE_STONE"
+            and e.get("stone_id")
+            and e["stone_id"].split(".")[2] in SQ.FILL_ROLES
+            and close < e["seq"] < dstart]
+
+
+def test_curve_r5a_shoulder_self_supported_only(built, micro):
+    """裁2 肩石曲线: 仅 stone 自持边 [[place,1.0]] 全程, 无 centering 边
+    (肩石坐已成环砌体, 不坐木架)。M3 堵死: 改回"肩石坐架、CLEAR 才卸载"
+    (加回 centering 边)在本形状断言处必红。"""
+    led2 = SQ.apply_support_edges(micro, built)
+    for zone in _zones(micro):
+        for sid in _shoulder_ids(built, zone):
+            s = next(x for x in led2["stones"] if x["id"] == sid)
+            types = [e["type"] for e in s["support_edges"]]
+            assert types == ["stone"], (sid, types)
+            place = next(e["seq"] for e in built["events"]
+                         if e["etype"] == "PLACE_STONE"
+                         and e["stone_id"] == sid)
+            curve = s["support_edges"][0]["capacity_curve"]
+            assert curve == [[place, 1.0]], (sid, curve)
+            clear = _by_hole(built["events"], zone,
+                             "CENTERING_CLEAR")[0]["seq"]
+            assert L.edge_capacity(s["support_edges"][0], clear) == 1.0
+
+
+def test_curve_sum_invariant_all_events(built, micro):
+    """裁2 Σ≥1 不变量(全事件核): 每孔每个事件点上, 每块已置放石
+    Σ(各边 capacity) ≥ 1 ——荷载任一时刻被完整分担。"""
+    led2 = SQ.apply_support_edges(micro, built)
+    for zone in _zones(micro):
+        evs = sorted((e for e in built["events"] if e["hole"] == zone),
+                     key=lambda e: e["seq"])
+        for s in led2["stones"]:
+            if not s["id"].startswith(zone + "."):
+                continue
+            if not s["support_edges"]:
+                continue
+            first = min(pt[0] for ed in s["support_edges"]
+                        for pt in ed["capacity_curve"])
+            for e in evs:
+                if e["seq"] < first:
+                    continue
+                tot = sum(L.edge_capacity(ed, e["seq"])
+                          for ed in s["support_edges"])
+                assert tot >= 1.0 - 1e-9, (s["id"], e["seq"], tot)
+
+
+def test_cap_invariant_catches_unshared_load(built, micro):
+    """Σ≥1 核有牙: 篡改 edge_plan 让某券石在 W1 处自持份额缺失(0.25→0)
+    → CAP_INVARIANT 必红(该点 Σ=0.75 < 1)。"""
+    res = copy.deepcopy(built)
+    ring_sid = next(s["id"] for s in micro["stones"]
+                    if s["id"].startswith("ARCH02.") and ".RING." in s["id"])
+    stone_edge = next(ed for ed in res["_edge_plan"][ring_sid]
+                      if ed["type"] == "stone")
+    dstart = _by_hole(built["events"], "ARCH02", "DECENTER_START")[0]["seq"]
+    knot = next(pt for pt in stone_edge["capacity_curve"] if pt[0] > dstart)
+    assert knot[1] == 0.25
+    knot[1] = 0.0
+    errs = _errs(res, micro, _micro_centerings())
+    assert any(m.startswith("CAP_INVARIANT") for m in errs), errs[:8]
+
+
+def test_f4_min_hold_zero_rejected(micro):
+    """F4: min_hold=0 原为 fail-open(免持荷直接落架), 构造器现要求 ≥1。"""
+    with pytest.raises(SQ.SequencerError, match="R4_MIN_HOLD"):
+        SQ.build_sequence(micro, _micro_centerings(), eps=EPS, min_hold=0)
+
+
+def test_f4_filled_trace_hole_local_and_derivable(micro):
+    """F4 合成复现: ARCH03 无肩背胞可填 → 不发 FILL 阶段、不记 FILLED
+    (旧代码记 FILLED@全局 len(events), 与 derive_frontier 失同步);
+    有背胞孔 FILLED at_seq=本孔末个置放事件。"""
+    led = _micro_ledger()
+    rest_tokens = (".SPANDREL.C02.", ".BACK.C01.B00", ".CORE.C03.")
+    led["stones"] = [s for s in led["stones"]
+                     if not (s["id"].startswith("ARCH03.")
+                             and any(t in s["id"] for t in rest_tokens))]
+    res = SQ.build_sequence(led, _micro_centerings(), eps=EPS,
+                            min_hold=MIN_HOLD)
+    trace = res["frontier_trace"]
+    by_hole = {}
+    for t in trace:
+        by_hole.setdefault(t["hole"], []).append(t["state"])
+    assert "FILLED" not in by_hole.get("ARCH03", []), by_hole.get("ARCH03")
+    for zone in ("ARCH01", "ARCH02"):
+        fills = [e["seq"] for e in res["events"] if e["hole"] == zone
+                 and e["etype"] == "PLACE_STONE"
+                 and e["stone_id"].split(".")[2] in SQ.FILL_ROLES]
+        clear = _by_hole(res["events"], zone, "CENTERING_CLEAR")[0]["seq"]
+        post = [x for x in fills if x > clear]
+        got = next(t["at_seq"] for t in trace if t["hole"] == zone
+                   and t["state"] == "FILLED")
+        assert got == max(post), (zone, got, max(post))
+    # 构造轨迹与重建轨迹同形(空背胞孔两侧一致)
+    assert SQ.derive_frontier(res["events"]) == trace
+
+
+def test_m9_check_sequence_requires_evidence(built, micro):
+    """M9: check_sequence 内 require_evidence=True 接线有牙 —— 摘线
+    (证据换成占位符)必红 EVENTS EVIDENCE_PLACEHOLDER。"""
+    evs = copy.deepcopy(built["events"])
+    evs[7]["evidence"] = "R?:n"
+    errs = _errs({"events": evs}, micro, _micro_centerings())
+    assert any("EVIDENCE_PLACEHOLDER" in m for m in errs), errs[:8]
+
+
+def test_m2_frame_collision_excluded_from_r5a(built, micro):
+    """M2: _is_lock_shoulder 碰撞项专属负控 —— 注入底 z≤extrados 但 bbox
+    撞券架的石, 必被 R5a 排除(落 R5b, CLEAR 后置放), checker 全绿。"""
+    led = _micro_ledger()
+    cens = _micro_centerings()
+    cen = cens[0]
+    ai = 0
+    xc = GM.arch_center_x(ai)
+    part = min(cen["parts"], key=lambda p: p["bbox"][4])   # 最低的券架构件
+    bx = part["bbox"]
+    pw, pd, ph = bx[1] - bx[0], bx[3] - bx[2], bx[5] - bx[4]
+    cx = (bx[0] + bx[1]) / 2.0 + xc
+    cy = (bx[2] + bx[3]) / 2.0
+    cz = (bx[4] + bx[5]) / 2.0
+    collider = L.new_stone(
+        "ARCH01", "EAST", "SPANDREL", 5, 9, "wedge-std",
+        dict(_wstd(max(0.2, pw * 1.5), max(0.2, ph * 1.5), 0.0),
+             d=max(0.2, 4.0 * pd + 2.0 * abs(cy))),
+        [cx, cy, cz, 0.0, 0.0, 0.0], "qingshi")
+    led["stones"].append(collider)
+    # 前提自证(判据两支: 底 z ≤ extrados ∧ 撞架; d 拉通墙厚向保证 y 向相交)
+    global_box = (bx[0] + xc, bx[1] + xc, bx[2], bx[3], bx[4], bx[5])
+    assert SQ._boxes_collide(SQ._stone_box(collider), global_box)
+    a = GM.SPANS[ai] / 2.0
+    x_mid, z_bot, _ = SQ._stone_xz(collider)
+    extr = F.arch_z(x_mid - xc, 0.0, GM.arch_springer_z(ai), a,
+                    GM.arch_rise(ai)) + MICRO_RING_T
+    assert z_bot <= extr, "前提失效: 撞架石底 z 高于 extrados, 判据测不到碰撞项"
+    assert not SQ._is_lock_shoulder(
+        collider, lambda gx: F.arch_z(gx - xc, 0.0, GM.arch_springer_z(ai),
+                                      a, GM.arch_rise(ai)) + MICRO_RING_T,
+        [global_box]), "撞架石不得判锁固肩"
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
+    clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
+    place = next(e["seq"] for e in res["events"]
+                 if e.get("stone_id") == collider["id"])
+    assert place > clear, "撞架石必须落 R5b(CLEAR 后)"
+    assert _errs(res, led, cens) == []
+
+
+def test_m7_r6_right_neighbor_unbuilt_red(built, micro):
+    """M7 堵: R6 右邻支路(i+1) —— ARCH01 落架时右邻 ARCH02 仍 UNBUILT
+    必红 R6_JUMP_DECENTER(既有负控只打左邻 i-1 支路)。"""
+    evs = copy.deepcopy(built["events"])
+    blk = [e for e in evs if e["hole"] == "ARCH01"
+           and e["etype"] in ("DECENTER_START", "WEDGE_RELEASE",
+                              "CENTERING_CLEAR")]
+    rest = [e for e in evs if e not in blk]
+    evs2 = _resequence(blk + rest)     # ARCH01 落架块插到最前
+    errs = SQ.check_frontier(evs2, _zones(micro))
+    assert any(m.startswith("R6_JUMP_DECENTER") for m in errs), errs[:8]
 
 
 # ---------------------------------------------------------------------------
@@ -635,8 +938,33 @@ def test_real_ledger_fullchain():
     # 交付闸: require_evidence=True 硬约束
     errs = SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD)
     assert errs == [], "真账 check_sequence 违例(前 10): %s" % errs[:10]
-    # 事件量级 ~6000+
-    assert len(res["events"]) > 6000
+    # 裁1: 幻影石过滤 —— 事件量级 6122→4070(=5935-2052 砌置放+187 券架事件);
+    # in_void 滤除数与 excluded_ids.json 同源同值
+    assert res["meta"]["n_stones_in_void"] == 2052
+    assert 3900 <= len(res["events"]) <= 4250
+    # 真账 in_void 过滤交叉核: 被滤石集合 == excluded_ids.json["in_void"] 逐位
+    _excl = os.path.join(os.path.dirname(__file__), "..", "3d", "out",
+                         "print", "excluded_ids.json")
+    if os.path.exists(_excl):
+        with open(_excl, encoding="utf-8") as fh:
+            want = set(json.load(fh)["buckets"]["in_void"])
+        got = SQ._in_void_ids(led)
+        assert got == want, "in_void 滤除集与旁挂全表不一致: %d vs %d, 差集=%r" \
+            % (len(got), len(want), list(got ^ want)[:8])
+    # R5a 锁固肩量级(修复轮实测 1307 = 1042 环带裁片 + 265 实体墙肩;
+    # 修复轮前 3187 含 1880 幻影石 —— 主控预估 ~400-600 未计保留裁片)
+    r5a = 0
+    for e in res["events"]:
+        if e["etype"] != "PLACE_STONE" or not e.get("stone_id"):
+            continue
+        zh = e["hole"]
+        close = next(x["seq"] for x in res["events"]
+                     if x["hole"] == zh and x["etype"] == "CLOSE_RING")
+        dstart = next(x["seq"] for x in res["events"]
+                      if x["hole"] == zh and x["etype"] == "DECENTER_START")
+        if close < e["seq"] < dstart:
+            r5a += 1
+    assert 1100 <= r5a <= 1500, r5a
     # frontier 轨迹合法
     assert SQ.check_frontier(res["events"], zones) == []
     # stage 叙事分组目标 200-600
@@ -646,11 +974,18 @@ def test_real_ledger_fullchain():
     errs2 = L.validate_ledger(led2, allow_clearance=False,
                               known_event_seqs=E.event_seqs(res))
     assert errs2 == [], errs2[:10]
-    # 每石恰一 centering/stone 曲线族: RING 石中心ing 边在 CLEAR 后为 0
+    # RING 石 centering 边在 CLEAR 后为 0 且 λ 阶梯同点互补 Σ=1(裁2 真账抽查)
     ring = next(s for s in led2["stones"] if ".RING." in s["id"]
                 and s["id"].startswith("ARCH09."))
     zone = "ARCH09"
-    clear = _by_hole(res["events"], zone, "CENTERING_CLEAR")[0]["seq"]
+    evs9 = [e for e in res["events"] if e["hole"] == zone]
+    clear = next(e["seq"] for e in evs9 if e["etype"] == "CENTERING_CLEAR")
+    wedges = [e["seq"] for e in evs9 if e["etype"] == "WEDGE_RELEASE"]
     cen_edge = next(e for e in ring["support_edges"]
                     if e["type"] == "centering")
+    stone_edge = next(e for e in ring["support_edges"]
+                      if e["type"] == "stone")
     assert L.edge_capacity(cen_edge, clear) == 0.0
+    for w in wedges:
+        assert L.edge_capacity(cen_edge, w) + L.edge_capacity(stone_edge, w) \
+            == pytest.approx(1.0)

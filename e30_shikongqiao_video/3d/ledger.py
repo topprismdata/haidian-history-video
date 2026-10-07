@@ -3,13 +3,20 @@
 """P1 砌体账目: 每石一条记录。id=纯拓扑语义键(坐标永不入 id), uuid 主键+谱系。
 
 P2-T1 schema v2(兼容扩展): EVIDENCE 增 inferred_construction; support_edge 以
-capacity_curve=[[event_seq,capacity],...] 表达随事件序列衰减的支撑能力, 旧形
+capacity_curve=[[event_seq,capacity],...] 表达随事件序列演化的支撑能力, 旧形
 {active_from,active_to} 须先过 migrate_v1_to_v2。meta.schema 判别值保持 1——
 既有负控钉死 schema==2 报错、正控钉死 schema==1 零错, 且迁移后须 validate==[],
 三条联立唯一解是 v2 形态由边形状+枚举表达, 不动判别值。
 
 修复轮语义(spec 00959bf 裁决): curve x=数值 event_seq; 左钳=0.0(曲线首点前
-支撑不存在), 右钳=末点值; migrate 先判后写(不可插值的旧键不吞不写坏)。"""
+支撑不存在), 右钳=末点值; migrate 先判后写(不可插值的旧键不吞不写坏)。
+**P2-T4 修复轮语义定稿(主控裁决 2026-10-07): capacity=荷载分担份额
+(load share), 非"剩余能力"** —— curve 值回答"此时刻该支撑体分担这块石荷载
+的份额"。由此单调律按边类型分型: centering/foundation/fill/temporary 纯退化
+(单调不增, CURVE_MONOTONIC); stone 自持份额随砌体结固只增不减
+(STONE_CURVE_REGRESSION)。任意事件点 Σ(各边)≥1 的荷载完整分担不变量由
+**T5 g3_check 作验收断言** —— 本文件单条边无事件流全貌, 不做跨边求和
+(职责边界)。"""
 import json
 import math
 import os
@@ -63,7 +70,8 @@ def _curve_points(curve):
 
 def edge_capacity(edge, event_seq):
     # type: (Dict[str, Any], Any) -> float
-    """支撑边在事件序号 event_seq 处的剩余承载能力: 按 curve 线性插值。
+    """支撑边在事件序号 event_seq 处分担的荷载份额(荷载分担语义, P2-T4
+    修复轮定稿; 旧表述"剩余承载能力"已退役): 按 curve 线性插值。
     I1/spec 00959bf 裁决: 曲线首点之前(x < pts[0][0])=0.0 左钳——支撑在其
     曲线开始前不存在; 末点之后=末点值右钳(开放端/永久边保持末点值)。
     curve x 为数值 event_seq, 非字符串事件名。无 curve/形态非法(未迁移 v1
@@ -169,7 +177,9 @@ def _validate_support_edge(sid, e, errs, known_event_seqs=None):
     码表: SUPPORT_EDGE_SHAPE 非 dict / SUPPORT_TYPE / SUPPORT_SHAPE 形制类(缺
     curve、旧形待迁、旧形不可插值、curve+active_* 混形、curve 形态非法含非有限)/
     SUPPORT_WINDOW_ORDER 反转窗不可迁 / CURVE_ORDER x 非升(I5 拆码)/
-    CURVE_MONOTONIC y 回升(I5 拆码)/ CURVE_RANGE y 越出 [0,1] /
+    CURVE_MONOTONIC 退化型边(centering/foundation/fill/temporary)y 回升 /
+    STONE_CURVE_REGRESSION stone 边 y 回落(自持份额只增不减, P2-T4 修复轮) /
+    CURVE_RANGE y 越出 [0,1] /
     CURVE_EVENT_UNKNOWN known_event_seqs 给定时 x 不在事件账本集合内。"""
     if not isinstance(e, dict):
         errs.append("SUPPORT_EDGE_SHAPE " + sid)
@@ -211,7 +221,16 @@ def _validate_support_edge(sid, e, errs, known_event_seqs=None):
         if x1 <= x0:
             errs.append("CURVE_ORDER %s event 序号 x 须严格递增: %s→%s"
                         % (sid, [x0, y0], [x1, y1]))
-        if y1 > y0:
+        # P2-T4 修复轮(主控裁决): 单调律按边类型分型 —— capacity=荷载分担
+        # 份额(非剩余能力)。退化型边(centering/foundation/fill/temporary)
+        # 只减不增(CURVE_MONOTONIC); stone 自持份额随砌体结固只增不减
+        # (STONE_CURVE_REGRESSION) —— 自持边衰减=静默假绿通道, 必红。
+        if e.get("type") == "stone":
+            if y1 < y0:
+                errs.append(
+                    "STONE_CURVE_REGRESSION %s 自持份额只增不减(荷载分担语义): "
+                    "%s→%s" % (sid, [x0, y0], [x1, y1]))
+        elif y1 > y0:
             errs.append("CURVE_MONOTONIC %s capacity 须单调不增(此处回升): %s→%s"
                         % (sid, [x0, y0], [x1, y1]))
     if known_event_seqs is not None:

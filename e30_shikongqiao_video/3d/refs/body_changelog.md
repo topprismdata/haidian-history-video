@@ -423,3 +423,7 @@
 **裁决**: 债务票 "M20b 标定 ring_t(i) 后统一" 收口 —— 逐孔化否证后, 统一(→0.54)被端孔 deck ±0.05 裁决阻塞(非 ring 问题), 债务转型为 **端孔拱肩高分辨裁决**(候选源: w1222 12-22 冬照位姿拟合(端孔清晰可见)/实地测绘); 运行值维持 facts.RING_T=0.40(D2 先例, 0.40 绿灯=虚构几何性质不变)。
 
 **冻结影响**: blender 重建零错 SAVED v2; freeze_hash 三对象 sha_sorted(cdba97…/ba2e09…/f2968f…) 与冻结清单**逐位一致(零漂移)**; qa_l2 正检 ok=true + 负控 NEG_CAUGHT 10/10; L1 复跑 0 fail 0 skip。
+
+## 2026-10-07 P2-T4 修复轮(幻影石过滤+Σ≥1曲线语义+体积单源+窗口收紧) —— 本体零几何, ledger 曲线语义定稿
+
+**改动文件**: `3d/sequencer.py`/`tests/test_p2_sequencer.py`(围栏内) + `3d/ledger.py`/`tests/test_p2_ledger_v2.py`(主控授权扩围)。**教训一句**: T1 审查轮把「剩余能力」语义的单调律写成无 type 分型的普适闸, T4 换「荷载分担份额」语义时相撞(Σ≥1 数学强制 stone 自持边递增, 递减编码不存在) —— 验证器编码的语义前提必须与数据语义同生共死, 换语义先盘点以旧语义为真值条件的闸门; 单调律现按边类型分型: 退化型(centering/foundation/fill/temporary)单调不增(CURVE_MONOTONIC), stone 型只增不减(STONE_CURVE_REGRESSION), 正反闸成对。工件重生成: events 6122→4070(in_void 2052 幻影石不入日程, 滤除集与 excluded_ids.json 逐位相等), R5a 3187→1307(1880 幻影+余量全为真实环带裁片/墙肩), 支撑边 9315→4076, R3 偶数前缀最大失衡 0.0367→0.002147(F5 体积单源 families.family_mesh+export_print.signed_volume)。全量 pytest 392 绿(基线 379+13 负控/不变量钉)。

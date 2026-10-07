@@ -311,6 +311,37 @@ def test_curve_order_and_monotonic_are_separate_codes():
     assert not any(e.startswith("CURVE_ORDER") for e in errs2)
 
 
+# ---- P2-T4 修复轮: 单调律按边类型分型(主控裁决 2026-10-07) ----
+# capacity=荷载分担份额(非剩余能力): stone 自持份额随砌体结固只增不减;
+# 退化型边(centering 等)只减不增。两向负控各一。
+
+def test_stone_edge_regression_red_decreasing_allowed():
+    """stone 边 y 递增 = 自持接管(合法, sequencer λ 阶梯形状); centering 边
+    同形状仍必红 —— 分型闸两向各正一负。"""
+    s = _stone()
+    s["support_edges"] = [_v2_edge(type="stone",
+                                   curve=[[0, 0.0], [3, 0.25], [6, 1.0]])]
+    assert L.validate_ledger(_led([s])) == []
+    s2 = _stone(zone="ARCH10", block=1)
+    s2["support_edges"] = [_v2_edge(curve=[[0, 0.5], [5, 1.0]])]  # centering 回升
+    errs2 = L.validate_ledger(_led([s2]))
+    assert any(e.startswith("CURVE_MONOTONIC") for e in errs2)
+
+
+def test_stone_edge_regression_red_on_decreasing():
+    """stone 边 y 回落 = 自持份额衰减(静默假绿通道) → STONE_CURVE_REGRESSION
+    必红(不再报 CURVE_MONOTONIC); 同一递减曲线挂退化型(centering)合规零错。"""
+    s = _stone()
+    s["support_edges"] = [_v2_edge(type="stone",
+                                   curve=[[0, 1.0], [5, 0.75]])]
+    errs = L.validate_ledger(_led([s]))
+    assert any(e.startswith("STONE_CURVE_REGRESSION") for e in errs)
+    assert not any(e.startswith("CURVE_MONOTONIC") for e in errs)
+    s2 = _stone(zone="ARCH10", block=1)
+    s2["support_edges"] = [_v2_edge(curve=[[0, 1.0], [5, 0.75]])]  # 退化型合规
+    assert L.validate_ledger(_led([s2])) == []
+
+
 # ---- S: CURVE_RANGE 值域闸 ----
 
 def test_validate_curve_range():
