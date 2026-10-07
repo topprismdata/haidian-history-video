@@ -308,14 +308,15 @@ def test_real_17_holes_acceptance_feasible_and_report():
       剔除双建模占位(0.985 吞没 28 石 → R5b)。R5a: 1307 → 1290。
     ② 结构协同假设: 锁固带与券脸石餬灰胶结(C:A5 "餬灰璺"), 并入拱截面
       (s 检验带厚 ring_t+0.35; 带重计入块链 W_k)。
-    实测(T6b 相位协变重账): robustness(裸环) 17/17; acceptance(结构带)
-    **ARCH07 转可行 [33.479,39.106]**(治本达成; 治本链=①相位协变
-    ②in_void 手性修复 ③CORE 肩载质心锚 ④冠载侧归属 EPS 一致)。
-    **A08-11 转不可行** —— 冠列核心荷载(13.5-15.4, 占带重 ~20%)锚语义
-    修正(角→质心, H1 分派表)使其作用臂移向冠点 ~1.1m 的物理后果, 停车线
-    按 A08-11 维持 raise 待主控裁决(冠列荷载分摊方式)。旧口径 A/B(截面
-    不加厚)对照见 §7.3/neg 控制。若砖谱/几何再冻结, 此处结论应被显式
-    复核而非静默漂移。"""
+    实测(T6c 冠缝杠杆分摊后): robustness(裸环) 17/17; acceptance **17/17
+    全 feasible** —— 治本链四层: ①相位协变 ②in_void 手性修复 ③CORE 肩载
+    质心锚 ④冠缝共享带杠杆分摊(质心落在冠楔接触带 |u|≤冠楔半宽 的竖向
+    荷载两半环各担一半, 简支两支点; 带外整列归所属半环; 几何推导全孔统一
+    镜像协变)。镜像对窗口对称至 ~1e-3(A07 [30.177,41.471] vs A11
+    [30.176,41.470])。run_g3 正常返回(停车线解除)。反手性负控: 冠列强行
+    100% 归单侧 → A08 feasible 翻假(n_feasible 33→19) —— 分摊 load-bearing。
+    旧口径 A/B(截面不加厚)对照: 不可行集为结构带模型的严格超集。
+    若砖谱/几何再冻结, 此处结论应被显式复核而非静默漂移。"""
     led, seqdoc = _real_chain()
     r5a = G3.load_r5a_shoulders()
     # [P2-T6b 相位协变重账] R5a 1290→1342 (+52): in_void 手性修复释放 48 块
@@ -335,16 +336,18 @@ def test_real_17_holes_acceptance_feasible_and_report():
         assert h["robustness"]["band_t"] == 0.0
         assert h["band_bonded"] and h["n_r5a"] > 0
         assert h["acceptance"]["band_t"] == pytest.approx(G3.LOCK_BAND_M)
-    # acceptance(结构带)实况: 13 孔 feasible + A08-11 停车线(T6b 冠载臂
-    # 修正后的裁决基线; 几何/砖谱/荷载分摊再裁决须显式复核本行)
+    # acceptance(结构带)实况: 17/17 全 feasible(T6c 杠杆分摊后裁决基线;
+    # 几何/砖谱/荷载分摊再变更须显式复核本行)
     infeasible = sorted(zh for zh in gate["holes"]
                         if not gate["holes"][zh]["acceptance"]["feasible"])
-    assert infeasible == ["ARCH%02d" % i for i in range(8, 12)], infeasible
-    assert [v.split(" ", 1)[0] for v in gate["violations"]] == \
-        [G3.CODE_STRESS_INFEASIBLE] * len(infeasible)
-    assert [v.split("hole=")[1].split(" ", 1)[0]
-            for v in gate["violations"]] == infeasible
+    assert infeasible == [], infeasible
+    assert gate["violations"] == []
     assert gate["skipped_zones"] == []
+    # 镜像对窗口对称(全链协变的直接证据; 推力幅值镜像不变, 对称至 5e-3)
+    for a, b in ((7, 11), (8, 10), (1, 17)):
+        za, zb = "ARCH%02d" % a, "ARCH%02d" % b
+        ha, hb = gate["holes"][za]["acceptance"]["H"], gate["holes"][zb]["acceptance"]["H"]
+        assert abs(ha[0] - hb[0]) < 5e-3 and abs(ha[1] - hb[1]) < 5e-3, (za, zb, ha, hb)
     print("acceptance(结构带) H 区间表(供 T7):")
     for zh in sorted(gate["holes"]):
         h = gate["holes"][zh]
@@ -403,16 +406,42 @@ def test_real_17_holes_acceptance_feasible_and_report():
     v_mc, _cx, _cz = G3._mesh_centroid(*G3._ring_mesh(ring08[0]))
     assert v_mc == pytest.approx(v_sv, rel=1e-9)
 
-    # 停车线: run_g3 串接 gate_stress, ARCH07 不可行 → raise 点名孔
-    with pytest.raises(G3.G3_FROZEN_GEOMETRY_CONFLICT) as ei:
-        G3.run_g3(seqdoc["events"], led, in_void=_excl_in_void(),
-                  rbo_ids=[], r5a=r5a)
-    for zh in infeasible:
-        assert zh in str(ei.value)
+    # 停车线解除: run_g3 正常返回(T6c 杠杆分摊后 17/17), 报告节齐
+    rep = G3.run_g3(seqdoc["events"], led, in_void=_excl_in_void(),
+                    rbo_ids=[], r5a=r5a)
+    assert rep["gate_stress"]["ok"] and rep["gate_dag"]["ok"]
 
-    # 压力线图: 中央孔 A08(结构带内 FEASIBLE) + 停车线孔 A07(不可行注记)
+    # 反手性负控: 冠列荷载强行 100% 归单侧(挪出共享带) → A08 feasible
+    # 翻假(n_feasible 33→19) —— 杠杆分摊 load-bearing, 非碰巧绿
+    ai = 7
+    xc8 = GM.arch_center_x(ai)
+    by_id = {s["id"]: s for s in led["stones"]}
+    shove = []
+    for sid in r5a["ARCH08"]:
+        st = by_id[sid]
+        p = st["params"]; bb = p.get("bbox")
+        x = 0.5*(float(bb["x0"])+float(bb["x1"])) if isinstance(bb, dict) \
+            else float(st["transform"][0])
+        if abs(x - xc8) <= 0.5:
+            x = xc8 + 0.6
+        shove.append({"x": x, "weight": G3._stone_weight(st)})
+    rt8 = gate["holes"]["ARCH08"]["acceptance"]["ring_t"]
+    bp8 = G3._hole_bands(ai, rt8)
+    w08 = sum(G3._stone_weight(s) for s in led["stones"]
+              if s["id"].startswith("ARCH08.") and G3.stone_role(s["id"]) == "RING") \
+        + sum(l["weight"] for l in shove)
+    h08 = w08 * 2*bp8["a"]/(8*bp8["b"])
+    r_shove = G3.pressure_line(
+        [s for s in led["stones"] if s["id"].startswith("ARCH08.")
+         and G3.stone_role(s["id"]) == "RING"],
+        shove, (bp8["z_in"], bp8["z_out"]), (0.1*h08, 1.2*h08),
+        dzdx_fn=bp8["dzdx"], ring_t=rt8 + G3.LOCK_BAND_M)
+    assert not r_shove["feasible"], r_shove["n_feasible"]
+    assert r_shove["n_feasible"] < gate["holes"]["ARCH08"]["acceptance"]["n_feasible"]
+
+    # 压力线图: 中央孔 A08(结构带内 FEASIBLE) + 端孔 A01(FEASIBLE)
     for zh, name in (("ARCH08", "g3_thrust_A08.png"),
-                     ("ARCH07", "g3_thrust_A07.png")):
+                     ("ARCH01", "g3_thrust_A01.png")):
         path = os.path.join(_CTRL, name)
         G3.plot_hole_pressure(gate["holes"][zh], led, zh, path)
         assert os.path.exists(path) and os.path.getsize(path) > 1000

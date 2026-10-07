@@ -1019,6 +1019,14 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
     w_total = 0.0
     left = []           # type: List[Tuple[float, float]]
     right = []          # type: List[Tuple[float, float]]
+    # 冠缝共享带半宽(几何推导, 全孔统一): 跨冠缝环块被 xc 截出的较短半宽
+    # —— 冠楔两侧接触点即简支两支点, 带内竖向荷载按杠杆原理两半环各担一半。
+    all_st = [sorted(float(v) for v in (s["params"]["stations"][:2]))
+              for s in ring_stones]
+    crown_hw = 0.0
+    for st0, st1 in all_st:
+        if st0 < xc < st1:
+            crown_hw = max(crown_hw, min(xc - st0, st1 - xc))
     for s in ring_stones:
         w = _stone_weight(s)
         w_total += w
@@ -1050,13 +1058,17 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
         if not (xc - a - EPS_X <= x <= xc + a + EPS_X):
             dropped += 1
             continue
-        # [P2-T6b] 侧归属用 EPS_X: 冠顶跨块荷载(如核心冠列, 质心恰在 xc
-        # ±ulp)必须恒归右半环 —— 精确比较在镜像孔间因 1ulp 翻侧, 13.5 级
-        # 冠载左右横跳 = O(1) 手性(ARCH07/11 判定分裂根因之三)。
-        (right if x >= xc - EPS_X else left).append((w, x))
+        # [P2-T6b] 侧归属: 冠缝共享带(质心 |x−xc| ≤ 冠楔半宽)内的竖向荷载
+        # 按杠杆原理两半环各担一半(简支两支点, 冠缝为共享支点截面) ——
+        # 旧 tie-break 100% 归右与"相位全按西缘计数"同族(序号伪影), 且
+        # 质心恰在 xc±ulp 的冠列会 1ulp 翻侧(O(1) 手性)。几何推导、
+        # 全孔统一、镜像协变(同一函数喂任一孔)。带外整列归所属半环。
+        if crown_hw > 0.0 and abs(x - xc) <= crown_hw:
+            right.append((0.5 * w, x))
+            left.append((0.5 * w, x))
+        else:
+            (right if x >= xc - EPS_X else left).append((w, x))
 
-    all_st = [sorted(float(v) for v in (s["params"]["stations"][:2]))
-              for s in ring_stones]
     joints_r = sorted({xc, xc + a}
                       | {x for st in all_st for x in st
                          if xc + EPS_X < x < xc + a - EPS_X})
