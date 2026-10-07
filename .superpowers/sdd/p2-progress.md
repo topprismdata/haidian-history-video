@@ -37,3 +37,5 @@
 - 待: P2整支终审(P2FinalReview 八系统面: G3语义vs路线图承诺/单源漂移变异/带重双门交互/裁决演化链superseded/石账纯度/sidecar新账完备/死码/测试轮探), 判PASS→P2关账→P3/P4
 - 环境注记: 主控全量839s(平时270s)中clean-clone重建测600s子进程超时FAIL=与终审套件并发抢CPU(T8亦自报本机后台配额异常); 已单跑复验(bg_995)+通报审查者勿误判回归; 若坐实=重测超时预算对加载机过紧, 记WARNING级测试健壮性问题
 - flake定性完成: 单跑600s超时+真树直测sequencer 380s未完+load 5.3(终审套件并发) → **环境争用非回归**(T8低载02:33全量含此测通过); 永久问题=重测600s预算对加载机过紧, 处置待P2FinalReview建议(标slow/预算可配/串行化)
+- P2整支终审(P2FinalReview 2h53m, 副本全cp真身无symlink真树只读): **FIX-FIRST 3 blocker**: BLK1 sidecar完备性无牙(len>=6删两行仍绿) BLK2 ①红不阻断(narration硬编码"三门全ok"常量, 摘支撑边实测rc=0自相矛盾工件可出厂) BLK3 W1清单0.99/25 vs 承重0.985/29差4块(同阈值两实现EQUAL=True漂移纯在常数); 结构发现: "每石支撑已存在"对3246肩背胞=构造自证恒真(仅券石侧有牙)/券架注册表spec承诺未落盘/IMPOST恒0重静默漏计(潜在)/run_g3 centerings死参数=spec接口位/stage_hint恒None/T8五负控不过run_g3链(=BLK2漏因); 正向: sidecar8条独立实算全中/g3_report整门重跑real diffs=0/α_crit=0.9306与四轴全复现/λ与LOCK_BAND_M变异有牙; clean-clone测独占197s, 600s预算并发即破=环境坐实
+- 主控裁决: BLK1/2/3全修+各配变异负控; 面1口径收口=关账文档改已证范围(券石真判据/肩背构造自证), FILL缺口升级为带判据票(不扩本轮); 券架注册表最小落盘(event_ledger meta.centerings); T6§1图行陈旧+A07孤儿图修; spec:44回写交付范围; IMPOST加fail-loud; 死参数删/stage_hint入P3交接注记; clean-clone预算600→900+slow注释
