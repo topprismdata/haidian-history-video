@@ -1,0 +1,871 @@
+=== commits ===
+93a3dfa feat(e30): P1-T6 导出(inset吃公差/STL3MF/manifest分批/coupon+雕件白名单)
+=== STAT ===
+ .superpowers/sdd/p1-task-6-report.md          |  38 +++
+ e30_shikongqiao_video/3d/export_print.py      | 370 +++++++++++++++++++++++++
+ e30_shikongqiao_video/3d/ledger.py            |  10 +-
+ e30_shikongqiao_video/tests/test_p1_export.py | 380 ++++++++++++++++++++++++++
+ 4 files changed, 795 insertions(+), 3 deletions(-)
+=== DIFF ===
+diff --git a/.superpowers/sdd/p1-task-6-report.md b/.superpowers/sdd/p1-task-6-report.md
+new file mode 100644
+index 0000000..6bc9a25
+--- /dev/null
++++ b/.superpowers/sdd/p1-task-6-report.md
+@@ -0,0 +1,38 @@
++# P1 Task 6 报告: export_print.py（inset 吃公差 / STL+3MF / manifest 分批 / coupon + 雕件白名单）
++
++日期: 2026-10-06 · 隔离树 `/tmp/e30_p1/`（git archive HEAD=6651bcf + bridge3d/docs 软链 + 独立 git init，基线复现 **147 passed**）→ 绿后同步主树。
++
++## 交付（TDD：新套件先对无实现跑红 ModuleNotFoundError，实现后绿）
++
++**`3d/export_print.py`（新）**
++- `inset(verts, clearance_model_mm)`：三轴各面内缩 clearance/1000 模型米；顶点逐轴按 bbox 界分类（下界 +c / 上界 −c / 内部不动 / 扁轴不动），只缩不涨，c=0 恒等。
++- `fit_for_block(dims_m)`：最小维 <0.3m→TIGHT(0.15) / <1.0m→NORMAL(0.3) / 否则 LOOSE(0.5)，边界值归更松档。
++- `flip_outward(verts, faces)`：signed_volume<0（族库实测内翻，wedge=−0.4）→ 每面反序成朝外右手序；幂等；不改写输入。
++- `export_stone(stone, verts, faces, out_dir, scale=1/50, fit="NORMAL")`：fit=None 走自动分档 → inset → flip → `check_stone`（S3 post-inset 时序，不过即 raise）→ 二进制 STL + 最小 3MF（zip+XML，打印件毫米，材质分组目录）。返回 `{stl, stl3mf(全路径), volume_cm3(打印件), fit, clearance_mm}`。
++- `export_ledger(led, mesh_fn, out_dir, roles=None, scale=1/50)`：基础校验（坏账 raise）→ 角色白名单（默认 `MASONRY_ROLES` = RING/SPANDREL/PIER/IMPOST/BACK/CORE/PAVING；CARVE/RAIL/POST 归 P4，过滤件记 `manifest.skipped` 不静默消失）→ 逐石自动分档 → clearance 只置在深拷贝出的 `ledger_print.json`（时序纪律；输入账目零改写；写盘前后 `validate_ledger` 双验）→ 220×220 床贪心货架装箱（超床件独占 oversize 批）→ `manifest.json`（meta/families×count×volume/stones/batches/materials/skipped）。
++- `coupon_set(out_dir)`：三档间隙楔形对 ×3 = 6 件 STL(+3MF)，名义拼装成对间隙 = 2×clearance。
++
++**`3d/ledger.py`（T1-I1）**：`validate_ledger(led, allow_clearance=False)`；True 放行已置 clearance 记录，其余判据不豁免；默认行为逐位不变。
++
++## 负控制（全部钉进 24 条新测试）
++- `CLEARANCE_PREMATURE` 默认仍拒 / `allow_clearance=True` 放行但坏 id 照报（不整体豁免）。
++- inset 精确断言 ±1e-9（每轴 bbox 收缩 = 2c/1000 m）+ **不外扩**（符号反转必红）+ c=0 恒等。
++- FIT 分派边界负控：0.2999→TIGHT、0.3→NORMAL、0.9999→NORMAL、1.0→LOOSE。
++- flip 确实反序（`f2[0][::-1]==f[0]`）+ 幂等 + 输入不改写 + flip 后 check_stone ok。
++- STL：头 80B/三角数 2×quad/文件长 84+50n/不以 "solid" 撞 ASCII；逐三角求体积 = 解析值（float32 放宽 rel 2e-4）且 >0（外翻）。
++- 3MF：三成员 zip、unit="millimeter"、顶点/三角计数。
++- manifest：family 聚合、fit/clearance 可追溯、材质分组目录、skipped 白名单、超床独批、坏账 raise、manifest 纯 JSON 回读一致。
++- coupon：6 件存在、pair_gap = 2×clearance（几何复核 + `gap_check` 名义拼装不穿透）、三档互相可分（TIGHT<NORMAL<LOOSE）。
++
++## 体积模型注记
++wedge-std 是剪切平行六面体（体积 = w·h·d 与 hw 收分无关）；inset 只动 bbox 界顶点 → 底面缩 2c、顶面不动，post-inset 体积 = (w−2c)(h−2c)(d−c)。测试按此解析式 ±rel 1e-9 断言。
++
++## 验证
++- 隔离树：`pytest tests/ -q` = **171 passed**（基线 147 + 新 24）。
++- 主树同步后：`pytest tests/ -q` = **171 passed**。
++- 装箱不变量 smoke：60 随机件 → 6 批全部 ≤220×220，assign/成员一致；超床分支 oversize=True。
++- 端到端 smoke（非测试）：真砖谱 `3d/stones/stones_p0.json` → `masonry2.face_stones`（15 SPANDREL 楔石）→ `export_ledger`：15 石全导出、ledger_print 时序双验通过、0 缺文件、总体积 122.1 cm³。
++
++## 备注
++- brief 的 `.superpowers/sdd/p1-task-6-brief.md` 实际在仓库根（非 e30_shikongqiao_video/ 下），已按其全局约束执行（Python 3.9 无 `X | None`/无 match；中文提交信息；测试在 `tests/test_p1_*.py`；合成数据不渲桥；隔离树先行）。
++- 本任务未触碰几何冻结项（facts/砖谱 JSON/bridge_geom2 等）；`test_no_literals` 不扫描 export_print.py，新常量集中在模块头。
+diff --git a/e30_shikongqiao_video/3d/export_print.py b/e30_shikongqiao_video/3d/export_print.py
+new file mode 100644
+index 0000000..a5fec04
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/export_print.py
+@@ -0,0 +1,370 @@
++# e30_shikongqiao_video/3d/export_print.py
++# -*- coding: utf-8 -*-
++"""P1-T6 打印导出器: inset 吃装配公差 -> 外翻 -> check -> STL/3MF -> manifest/coupon。
++
++canonical 永远是 mesh+ledger; STL/3MF 是派生物(打印件毫米口径 = 模型米 x scale x 1000)。
++- inset 语义(S2 裁决): clearance 只在装配接触面吃 -- 简化为对每石三轴 bbox 各面
++  内缩 clearance_model_mm/1000 模型米(装配对 = 两石各退一缝 -> 成对间隙 2x clearance)。
++  分档 FIT_TIERS 按块最小维: <0.3m TIGHT / <1.0m NORMAL / 否则 LOOSE, 分派结果
++  连同 clearance 写进 manifest 可追溯。
++- 绕向: 族库全体内翻(signed_volume<0); STL/3MF 出口必须外翻(法线朝外右手序),
++  flip_outward 统一翻三角, 翻完过 printcheck.check_stone 复验(S3: post-inset 几何
++  才准过, 在 inset 前跑 = 放行薄件)。
++- 范围(S2 裁决): 本轮只导出砌体角色 MASONRY_ROLES; 雕件(CARVE/RAIL/POST)不导出,
++  roles= 白名单可显式覆盖; 雕件 CSG union 方案归 P4。
++- 导出几何一律取石账的局部族网格(底面贴床), 不应用 ledger transform(装配定位是
++  拼装时的事); coupon 名义拼装间隙才用 transform 表达。
++"""
++import json
++import os
++import struct
++import time
++import zipfile
++from typing import Any, Callable, List, Optional, Sequence, Tuple
++
++import numpy as np
++
++import ledger as L
++import printcheck as PC
++from families import family_mesh
++
++PRINT_BED_MM = (220.0, 220.0)
++FIT_TIERS = {"TIGHT": 0.15, "NORMAL": 0.3, "LOOSE": 0.5}   # 模型毫米
++# (最小维上限 m, 档名): 逐界判定, 否则 LOOSE
++_FIT_BOUNDS = ((0.3, "TIGHT"), (1.0, "NORMAL"))
++MASONRY_ROLES = ("RING", "SPANDREL", "PIER", "IMPOST", "BACK", "CORE", "PAVING")
++_3MF_NS = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
++_3MF_REL_TYPE = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
++_STL_HEADER = b"e30 P1 export_print binary STL units=mm"
++
++
++# ---------------------------------------------------------------- 几何基元
++
++def signed_volume(verts, faces):
++    # type: (List[Tuple[float, float, float]], List[Tuple[int, ...]]) -> float
++    """散度定理带符号体积(法线朝外右手序为正; 族库内翻为负)。quad 扇形剖分。"""
++    total = 0.0
++    for fc in faces:
++        a = verts[fc[0]]
++        for i in range(1, len(fc) - 1):
++            b, c = verts[fc[i]], verts[fc[i + 1]]
++            total += (a[0] * (b[1] * c[2] - b[2] * c[1])
++                      + a[1] * (b[2] * c[0] - b[0] * c[2])
++                      + a[2] * (b[0] * c[1] - b[1] * c[0]))
++    return total / 6.0
++
++
++def fit_for_block(dims_m):
++    # type: (Sequence[float]) -> Tuple[str, float]
++    """按块最小维分派 (tier, clearance_model_mm): <0.3m TIGHT / <1.0m NORMAL /
++    否则 LOOSE。边界负控: 恰在界上归更松一档。"""
++    d0 = min(dims_m)
++    for bound, tier in _FIT_BOUNDS:
++        if d0 < bound:
++            return tier, FIT_TIERS[tier]
++    return "LOOSE", FIT_TIERS["LOOSE"]
++
++
++def inset(verts, clearance_model_mm):
++    # type: (List[Tuple[float, float, float]], float) -> List[Tuple[float, float, float]]
++    """三轴各面内缩 clearance_model_mm/1000 模型米: 顶点逐轴按是否落在 bbox
++    界分类(下界->+c, 上界->-c, 内部->0); 扁轴(extent~0)不动。只缩不涨;
++    clearance 0 恒等返回。"""
++    cm = float(clearance_model_mm) / 1000.0
++    if cm == 0.0:
++        return [(float(p[0]), float(p[1]), float(p[2])) for p in verts]
++    V = np.asarray(verts, dtype=float)
++    lo = V.min(axis=0)
++    hi = V.max(axis=0)
++    ext = hi - lo
++    tol = np.maximum(1e-12, ext * 1e-9)
++    off = np.zeros_like(V)
++    for ax in range(3):
++        if ext[ax] <= tol[ax]:
++            continue
++        off[:, ax] = (np.where(V[:, ax] <= lo[ax] + tol[ax], cm, 0.0)
++                      + np.where(V[:, ax] >= hi[ax] - tol[ax], -cm, 0.0))
++    V2 = V + off
++    return [(float(p[0]), float(p[1]), float(p[2])) for p in V2]
++
++
++def flip_outward(verts, faces):
++    # type: (List[Tuple[float, float, float]], List[Tuple[int, ...]])
++    # -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
++    """绕向归一: signed_volume<0(族库内翻) -> 每面反序成法线朝外右手序
++    (signed>0)。幂等; 输入不被改写。"""
++    faces_out = faces
++    if signed_volume(verts, faces) < 0.0:
++        faces_out = [tuple(reversed(fc)) for fc in faces]
++    return [(float(p[0]), float(p[1]), float(p[2])) for p in verts], faces_out
++
++
++def _extents_m(verts):
++    # type: (List[Tuple[float, float, float]]) -> Tuple[float, float, float]
++    V = np.asarray(verts, dtype=float)
++    e = V.max(axis=0) - V.min(axis=0)
++    return (float(e[0]), float(e[1]), float(e[2]))
++
++
++# ---------------------------------------------------------------- 文件格式
++
++def _tris_of(faces):
++    # type: (List[Tuple[int, ...]]) -> List[Tuple[int, int, int]]
++    return [(fc[0], fc[i], fc[i + 1])
++            for fc in faces for i in range(1, len(fc) - 1)]
++
++
++def _stl_bytes(verts_mm, faces):
++    # type: (List[Tuple[float, float, float]], List[Tuple[int, ...]]) -> bytes
++    """二进制 STL: 80B 头 + u32 三角数 + 每三角 50B(法线右手序朝外)。"""
++    tris = _tris_of(faces)
++    parts = [_STL_HEADER.ljust(80, b" "), struct.pack("<I", len(tris))]
++    for i0, i1, i2 in tris:
++        a = np.asarray(verts_mm[i0], dtype=float)
++        b = np.asarray(verts_mm[i1], dtype=float)
++        c = np.asarray(verts_mm[i2], dtype=float)
++        n = np.cross(b - a, c - a)
++        ln = float(np.linalg.norm(n))
++        if ln > 0.0:
++            n = n / ln
++        parts.append(struct.pack("<3f", float(n[0]), float(n[1]), float(n[2])))
++        for p in (a, b, c):
++            parts.append(struct.pack("<3f", float(p[0]), float(p[1]), float(p[2])))
++        parts.append(struct.pack("<H", 0))
++    return b"".join(parts)
++
++
++def _3mf_bytes(verts_mm, faces):
++    # type: (List[Tuple[float, float, float]], List[Tuple[int, ...]]) -> bytes
++    """最小 3MF(zip+[Content_Types].xml+_rels/.rels+3D/3dmodel.model),
++    顶点为打印件毫米, 三角外翻。"""
++    vs = "".join('<vertex x="%.6f" y="%.6f" z="%.6f"/>' % tuple(p)
++                 for p in verts_mm)
++    ts = "".join('<triangle v1="%d" v2="%d" v3="%d"/>' % t
++                 for t in _tris_of(faces))
++    model = ('<?xml version="1.0" encoding="UTF-8"?>'
++             '<model unit="millimeter" xml:lang="en-US" xmlns="%s">'
++             '<resources><object id="1" type="model"><mesh>'
++             '<vertices>%s</vertices><triangles>%s</triangles>'
++             '</mesh></object></resources>'
++             '<build><item objectid="1"/></build></model>') % (_3MF_NS, vs, ts)
++    ct = ('<?xml version="1.0" encoding="UTF-8"?>'
++          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
++          '<Default Extension="rels" ContentType='
++          '"application/vnd.openxmlformats-package.relationships+xml"/>'
++          '<Default Extension="model" ContentType='
++          '"application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
++          '</Types>')
++    rels = ('<?xml version="1.0" encoding="UTF-8"?>'
++            '<Relationships xmlns='
++            '"http://schemas.openxmlformats.org/package/2006/relationships">'
++            '<Relationship Id="rel0" Type="%s" Target="/3D/3dmodel.model"/>'
++            '</Relationships>') % _3MF_REL_TYPE
++    import io
++    buf = io.BytesIO()
++    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
++        zf.writestr("[Content_Types].xml", ct)
++        zf.writestr("_rels/.rels", rels)
++        zf.writestr("3D/3dmodel.model", model)
++    return buf.getvalue()
++
++
++# ---------------------------------------------------------------- 导出
++
++def export_stone(stone, verts, faces, out_dir, scale=1 / 50.0, fit="NORMAL"):
++    # type: (Dict[str, Any], List[Tuple[float, float, float]], List[Tuple[int, ...]], str, float, Optional[str]) -> Dict[str, Any]
++    """单石导出。fit=None 时按块最小维自动分档; 显式档名直接生效。
++    管线: inset(clearance) -> flip_outward -> check_stone(post-inset, S3, 不过即
++    raise) -> STL+3MF(打印件毫米, 材质分组目录)。返回
++    {stl, stl3mf(全路径), volume_cm3(打印件), fit, clearance_mm};
++    manifest 里由 export_ledger 转相对路径。"""
++    if fit is None:
++        fit, clr = fit_for_block(_extents_m(verts))
++    else:
++        if fit not in FIT_TIERS:
++            raise ValueError("unknown fit tier: %r (expect one of %s)"
++                             % (fit, sorted(FIT_TIERS)))
++        clr = FIT_TIERS[fit]
++    v2 = inset(verts, clr)
++    v2, f2 = flip_outward(v2, faces)
++    rep = PC.check_stone(v2, f2, scale=scale)
++    if not rep["ok"]:
++        raise ValueError("check_stone failed for %s: %s"
++                         % (stone.get("id"), rep["issues"]))
++    mm = [(p[0] * scale * 1000.0, p[1] * scale * 1000.0, p[2] * scale * 1000.0)
++          for p in v2]
++    d = os.path.join(out_dir, str(stone.get("material", "default")))
++    os.makedirs(d, exist_ok=True)
++    base = str(stone["id"]).replace(".", "_")
++    stl_path = os.path.join(d, base + ".stl")
++    with open(stl_path, "wb") as fh:
++        fh.write(_stl_bytes(mm, f2))
++    mf_path = os.path.join(d, base + ".3mf")
++    with open(mf_path, "wb") as fh:
++        fh.write(_3mf_bytes(mm, f2))
++    return {"stl": stl_path,
++            "stl3mf": mf_path,
++            "volume_cm3": float(PC.volume(v2, f2) * (scale ** 3) * 1e6),
++            "fit": fit,
++            "clearance_mm": float(clr)}
++
++
++def _pack_beds(items, bed_mm=PRINT_BED_MM):
++    # type: (List[Tuple[float, float, str]], Tuple[float, float]) -> Tuple[Dict[str, int], List[Dict[str, Any]]]
++    """220x220 床贪心货架装箱。items=(foot_w_mm, foot_d_mm, key), 按 max 维降序。
++    超床件独占一批(oversize=True)。返回 (key->batch, batches 列表)。"""
++    assign = {}     # type: Dict[str, int]
++    batches = []    # type: List[Dict[str, Any]]
++    cur_keys = None     # type: Optional[List[str]]
++    cx = cy = row_h = ux = uy = 0.0
++    for w, d, key in sorted(items, key=lambda t: -max(t[0], t[1])):
++        if w > bed_mm[0] or d > bed_mm[1]:
++            batches.append({"batch": len(batches), "stones": [key],
++                            "used_mm": [float(w), float(d)], "oversize": True})
++            assign[key] = batches[-1]["batch"]
++            continue
++        if cur_keys is None:
++            cur_keys = []
++            batches.append({"batch": len(batches), "stones": cur_keys,
++                            "used_mm": [0.0, 0.0], "oversize": False})
++            cx = cy = row_h = ux = uy = 0.0
++        if cx + w > bed_mm[0]:              # 换行(同床)
++            cx, cy, row_h = 0.0, cy + row_h, 0.0
++        if cy + d > bed_mm[1]:              # 床深满 -> 新批
++            cur_keys = []
++            batches.append({"batch": len(batches), "stones": cur_keys,
++                            "used_mm": [0.0, 0.0], "oversize": False})
++            cx = cy = row_h = ux = uy = 0.0
++        cur_keys.append(key)
++        assign[key] = batches[-1]["batch"]
++        cx += w
++        row_h = max(row_h, d)
++        ux = max(ux, cx)
++        uy = max(uy, cy + row_h)
++        batches[-1]["used_mm"] = [float(ux), float(uy)]
++    return assign, batches
++
++
++def export_ledger(led, mesh_fn, out_dir, roles=None, scale=1 / 50.0):
++    # type: (Dict[str, Any], Callable[[Dict[str, Any]], Tuple[list, list]], str, Optional[Sequence[str]], float) -> Dict[str, Any]
++    """整账导出。基础校验(过不了即 raise) -> 角色白名单(默认 MASONRY_ROLES,
++    雕件归 P4, 过滤件记 manifest.skipped 不静默消失) -> 逐石 fit 自动分档 +
++    clearance 置值(只置在导出账本 ledger_print.json 上, 原账目不改写) ->
++    STL/3MF(材质分组目录) -> 床装箱 -> manifest.json。返回 manifest dict。"""
++    errs = L.validate_ledger(led)
++    if errs:
++        raise ValueError("base ledger invalid: %s" % errs[:5])
++    if roles is None:
++        roles = MASONRY_ROLES
++    roles = tuple(roles)
++    os.makedirs(out_dir, exist_ok=True)
++    led_print = json.loads(json.dumps(led))     # 深拷贝, 输入不被改写
++    stones_out = []     # type: List[Dict[str, Any]]
++    skipped = []        # type: List[Dict[str, Any]]
++    footprint = []      # type: List[Tuple[float, float, str]]
++    for src, dst in zip(led["stones"], led_print["stones"]):
++        if src.get("role_struct") not in roles:
++            skipped.append({"id": src["id"], "role": src.get("role_struct")})
++            continue
++        verts, faces = mesh_fn(src)
++        rec = export_stone(src, verts, faces, out_dir, scale=scale, fit=None)
++        dst["clearance_manufacturing_mm"] = rec["clearance_mm"]
++        cm = rec["clearance_mm"] / 1000.0
++        ext = _extents_m(verts)
++        footprint.append((max(0.0, (ext[0] - 2 * cm) * scale * 1000.0),
++                          max(0.0, (ext[1] - 2 * cm) * scale * 1000.0),
++                          src["id"]))
++        stones_out.append({"id": src["id"], "uuid": src["uuid"],
++                           "family": src["family"],
++                           "role": src.get("role_struct"),
++                           "material": src.get("material"),
++                           "fit": rec["fit"],
++                           "clearance_mm": rec["clearance_mm"],
++                           "stl": os.path.relpath(rec["stl"], out_dir),
++                           "stl3mf": os.path.relpath(rec["stl3mf"], out_dir),
++                           "volume_cm3": rec["volume_cm3"]})
++    assign, batches = _pack_beds(footprint)
++    by_uuid = {s["uuid"]: d for s, d in zip(led["stones"], led_print["stones"])}
++    for s in stones_out:
++        s["batch"] = assign[s["id"]]
++        pdst = by_uuid[s["uuid"]]
++        pdst["print"]["batch"] = assign[s["id"]]
++        pdst["print"]["min_feature_ok"] = True
++    ledger_path = os.path.join(out_dir, "ledger_print.json")
++    chk = L.validate_ledger(led_print, allow_clearance=True)
++    if chk:
++        raise ValueError("post-assignment ledger invalid: %s" % chk[:5])
++    L.save_ledger(led_print, ledger_path)
++    fams = {}       # type: Dict[str, Dict[str, Any]]
++    mats = {}       # type: Dict[str, int]
++    for s in sorted(stones_out, key=lambda x: x["id"]):
++        f = fams.setdefault(s["family"], {"count": 0, "volume_cm3": 0.0,
++                                          "stl": s["stl"]})
++        f["count"] += 1
++        f["volume_cm3"] += s["volume_cm3"]
++        mats[s["material"]] = mats.get(s["material"], 0) + 1
++    manifest = {
++        "meta": {"schema": 1, "scale": float(scale),
++                 "bed_mm": list(PRINT_BED_MM), "roles": list(roles),
++                 "curve_hash": led.get("meta", {}).get("curve_hash"),
++                 "seed": led.get("meta", {}).get("seed"),
++                 "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
++                                              time.gmtime())},
++        "materials": mats,
++        "families": fams,
++        "stones": stones_out,
++        "batches": batches,
++        "skipped": skipped,
++        "ledger_print": os.path.relpath(ledger_path, out_dir),
++    }
++    with open(os.path.join(out_dir, "manifest.json"), "w",
++              encoding="utf-8") as fh:
++        json.dump(manifest, fh, ensure_ascii=False, indent=1, sort_keys=True)
++    return manifest
++
++
++# ---------------------------------------------------------------- coupon
++
++_COUPON_WEDGE = {"w": 0.3, "h": 0.2, "d": 0.15, "proud": 0.006,
++                 "back": 0.144, "hw_b": 0.25, "hw_t": 0.245}
++
++
++def _coupon_mesh(rec, side):
++    # type: (Dict[str, Any], str) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
++    """coupon 单件 post-inset 局部网格(导出与名义拼装共用同一真相)。"""
++    return rec["_mesh"][side]
++
++
++def coupon_set(out_dir, scale=1 / 50.0):
++    # type: (str, float) -> Dict[str, Dict[str, Any]]
++    """三档间隙楔形对 coupon: 每档 A/B 两件各按该档 clearance inset(名义拼装
++    间隙 = 2x clearance, 拼得上/拼不上的物理标尺)。out_dir/coupon/ 下 6 件 STL
++    (+3MF)。返回 {tier: {clearance_mm, a, b, pair_gap_mm, w_m, _mesh}}。"""
++    d = os.path.join(out_dir, "coupon")
++    os.makedirs(d, exist_ok=True)
++    va0, fa = family_mesh("wedge-std", _COUPON_WEDGE)
++    out = {}    # type: Dict[str, Dict[str, Any]]
++    for tier in ("TIGHT", "NORMAL", "LOOSE"):
++        clr = FIT_TIERS[tier]
++        meshes = {}
++        paths = {}
++        for side in ("a", "b"):
++            v2, f2 = flip_outward(inset(va0, clr), fa)
++            rep = PC.check_stone(v2, f2, scale=scale)
++            if not rep["ok"]:
++                raise ValueError("coupon %s/%s check_stone failed: %s"
++                                 % (tier, side, rep["issues"]))
++            mm = [(p[0] * scale * 1000.0, p[1] * scale * 1000.0,
++                   p[2] * scale * 1000.0) for p in v2]
++            base = "coupon_%s_%s" % (tier, side.upper())
++            stl_path = os.path.join(d, base + ".stl")
++            with open(stl_path, "wb") as fh:
++                fh.write(_stl_bytes(mm, f2))
++            with open(os.path.join(d, base + ".3mf"), "wb") as fh:
++                fh.write(_3mf_bytes(mm, f2))
++            meshes[side] = (v2, f2)
++            paths[side] = stl_path
++        out[tier] = {"clearance_mm": clr, "a": paths["a"], "b": paths["b"],
++                     "pair_gap_mm": 2.0 * clr, "w_m": _COUPON_WEDGE["w"],
++                     "_mesh": meshes}
++    return out
+diff --git a/e30_shikongqiao_video/3d/ledger.py b/e30_shikongqiao_video/3d/ledger.py
+index 833a906..ad2cffe 100644
+--- a/e30_shikongqiao_video/3d/ledger.py
++++ b/e30_shikongqiao_video/3d/ledger.py
+@@ -39,22 +39,25 @@ def new_stone(zone, face, role, course, block, family, params, transform,
+         "role_struct": role,
+         "evidence": evidence,
+         "support_edges": [],
+         "joint_historical_mm": float(joint_historical_mm),
+         "clearance_manufacturing_mm": None,
+         "lineage": {"parent_id": None, "replaces": None},
+         "stage_hint": None,
+         "print": {"batch": None, "faces_up": "+Z", "min_feature_ok": None},
+     }
+ 
+-def validate_ledger(led):
+-    # type: (Dict[str, Any]) -> List[str]
++def validate_ledger(led, allow_clearance=False):
++    # type: (Dict[str, Any], bool) -> List[str]
++    """账目校验。allow_clearance=False(默认): clearance_manufacturing_mm 已置值
++    报 CLEARANCE_PREMATURE(置值只许发生在 T6 导出时序内); True: 放行已置值记录,
++    其余判据不豁免。"""
+     errs = []  # type: List[str]
+     meta = led.get("meta", {})
+     if meta.get("schema") != SCHEMA:
+         errs.append("SCHEMA meta.schema != %d" % SCHEMA)
+     for k in ("curve_hash", "seed"):
+         if k not in meta:
+             errs.append("META_MISSING " + k)
+     seen = set()
+     seen_uuids = set()
+     for s in led.get("stones", []):
+@@ -68,21 +71,22 @@ def validate_ledger(led):
+                 errs.append("ID_DUP " + sid)
+             seen.add(sid)
+         uid = s.get("uuid")
+         if not _is_uuid4(uid):
+             errs.append("UUID_BAD id=%s uuid=%r" % (sid, uid))
+         if uid in seen_uuids:
+             errs.append("UUID_DUP id=%s uuid=%s" % (sid, uid))
+         seen_uuids.add(uid)
+         if s.get("evidence") not in EVIDENCE:
+             errs.append("EVIDENCE bad: %s" % s.get("evidence"))
+-        if s.get("clearance_manufacturing_mm") is not None:
++        if s.get("clearance_manufacturing_mm") is not None \
++                and not allow_clearance:
+             errs.append("CLEARANCE_PREMATURE " + sid)
+         for e in s.get("support_edges", []):
+             if not isinstance(e, dict):
+                 errs.append("SUPPORT_EDGE_SHAPE " + sid)
+                 continue
+             if e.get("type") not in SUPPORT_TYPES:
+                 errs.append("SUPPORT_TYPE " + sid)
+     return errs
+ 
+ def load_ledger(path):
+diff --git a/e30_shikongqiao_video/tests/test_p1_export.py b/e30_shikongqiao_video/tests/test_p1_export.py
+new file mode 100644
+index 0000000..2803e24
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/test_p1_export.py
+@@ -0,0 +1,380 @@
++# P1-T6: export_print 导出器(inset 吃公差/flip 外翻/STL+3MF/manifest 分批/coupon) 单测。
++# 合成数据, 不渲桥。每条判据带负控制: FIT 分派边界/inset 不外扩/flip 幂等/coupon 档位可分。
++import json
++import math
++import os
++import struct
++import sys
++import xml.etree.ElementTree as ET
++import zipfile
++
++import numpy as np
++import pytest
++
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
++import export_print as E
++import ledger as L
++import printcheck as PC
++from families import family_mesh
++
++S50 = 1 / 50.0
++
++
++# ---------------------------------------------------------------- 合成数据
++
++def _wedge(w=1.0, h=0.4, d=1.0, hw_b=6.0, hw_t=5.9):
++    return {"w": w, "h": h, "d": d, "proud": 0.006, "back": 0.3,
++            "hw_b": hw_b, "hw_t": hw_t}
++
++
++def _stone(zone, face, role, course, block, family, params, material="qingshi"):
++    return L.new_stone(zone, face, role, course, block, family, params,
++                       [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], material)
++
++
++def _led(stones):
++    return {"meta": {"schema": 1, "curve_hash": "t6test", "seed": 0},
++            "stones": stones}
++
++
++def _mesh_fn(stone):
++    return family_mesh(stone["family"], stone["params"])
++
++
++def _extents(verts):
++    v = np.asarray(verts, dtype=float)
++    return v.max(axis=0) - v.min(axis=0)
++
++
++# ---------------------------------------------------------------- T1-I1 ledger.allow_clearance
++
++def _clearance_set_ledger():
++    led = _led([_stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge())])
++    led["stones"][0]["clearance_manufacturing_mm"] = 0.3
++    return led
++
++
++def test_neg_clearance_still_rejected_by_default():
++    # 负控: 默认闸门不放松 -- 已置 clearance 的账目默认必须红
++    errs = L.validate_ledger(_clearance_set_ledger())
++    assert any(e.startswith("CLEARANCE_PREMATURE") for e in errs)
++
++
++def test_allow_clearance_passes_cleared_records():
++    assert L.validate_ledger(_clearance_set_ledger(), allow_clearance=True) == []
++
++
++def test_allow_clearance_keeps_other_checks():
++    # 阳性对照: allow_clearance=True 不豁免其他判据(坏 id 照报)
++    led = _clearance_set_ledger()
++    led["stones"][0]["id"] = "ARCH01.EAST.RING.C00"
++    errs = L.validate_ledger(led, allow_clearance=True)
++    assert any(e.startswith("ID_COORD") for e in errs)
++
++
++# ---------------------------------------------------------------- inset
++
++def test_inset_shrinks_exactly_per_axis():
++    for params in (_wedge(), {"w": 1.0, "h": 0.4, "d": 0.8}):
++        v, f = family_mesh("wedge-std" if "proud" in params else "slab", params)
++        c = 0.3
++        v2 = E.inset(v, c)
++        cm = c / 1000.0
++        for ax in range(3):
++            lo0, hi0 = min(p[ax] for p in v), max(p[ax] for p in v)
++            lo1, hi1 = min(p[ax] for p in v2), max(p[ax] for p in v2)
++            assert hi0 - lo0 - (hi1 - lo1) == pytest.approx(2 * cm, abs=1e-9)
++            assert lo1 == pytest.approx(lo0 + cm, abs=1e-9)
++            assert hi1 == pytest.approx(hi0 - cm, abs=1e-9)
++
++
++def test_inset_never_expands():
++    # 负控: 符号写反会外扩 -- 每个坐标必须落在原 bbox 内
++    v, f = family_mesh("wedge-std", _wedge())
++    v2 = E.inset(v, 0.5)
++    for ax in range(3):
++        lo = min(p[ax] for p in v)
++        hi = max(p[ax] for p in v)
++        for p in v2:
++            assert lo - 1e-12 <= p[ax] <= hi + 1e-12
++
++
++def test_inset_zero_is_identity():
++    v, f = family_mesh("slab", {"w": 1.0, "h": 0.4, "d": 0.8})
++    v2 = E.inset(v, 0.0)
++    assert v2 == [tuple(p) for p in v]
++
++
++# ---------------------------------------------------------------- FIT 分派
++
++def test_fit_dispatch_boundaries():
++    # 边界负控: <0.3 才 TIGHT, <1.0 才 NORMAL, 否则 LOOSE
++    assert E.fit_for_block((0.2999, 2.0, 2.0))[0] == "TIGHT"
++    assert E.fit_for_block((0.3, 2.0, 2.0))[0] == "NORMAL"
++    assert E.fit_for_block((0.9999, 2.0, 2.0))[0] == "NORMAL"
++    assert E.fit_for_block((1.0, 2.0, 2.0))[0] == "LOOSE"
++    assert E.fit_for_block((1.0001, 2.0, 2.0))[0] == "LOOSE"
++
++
++def test_fit_dispatch_returns_tier_clearance_pairs():
++    for tier, mm in (("TIGHT", 0.15), ("NORMAL", 0.3), ("LOOSE", 0.5)):
++        assert E.FIT_TIERS[tier] == mm
++    fit, mm = E.fit_for_block((0.2, 0.2, 0.2))
++    assert fit == "TIGHT" and mm == E.FIT_TIERS[fit]
++
++
++# ---------------------------------------------------------------- flip_outward
++
++def test_flip_makes_signed_volume_positive():
++    v, f = family_mesh("wedge-std", _wedge())
++    assert E.signed_volume(v, f) < 0.0          # 族库全体内翻(前置)
++    v2, f2 = E.flip_outward(v, f)
++    assert E.signed_volume(v2, f2) > 0.0
++
++
++def test_flip_is_real_flip_and_idempotent():
++    v, f = family_mesh("slab", {"w": 1.0, "h": 0.4, "d": 0.8})
++    v2, f2 = E.flip_outward(v, f)
++    assert f2[0][::-1] == f[0]                  # 确实反序, 不是空转
++    v3, f3 = E.flip_outward(v2, f2)
++    assert f3 == f2 and E.signed_volume(v3, f3) > 0.0   # 幂等
++    # 负控: 输入不被原地改写
++    assert f[0][0] == 0 and E.signed_volume(v, f) < 0.0
++
++
++def test_flip_then_check_stone_ok():
++    # S3 时序: inset -> flip -> check(post-inset 几何才准过)
++    v, f = family_mesh("wedge-std", _wedge())
++    v2 = E.inset(v, 0.3)
++    v2, f2 = E.flip_outward(v2, f)
++    r = PC.check_stone(v2, f2, scale=S50)
++    assert r["ok"], r["issues"]
++
++
++# ---------------------------------------------------------------- STL/3MF 文件形状
++
++def _stl_counts(path):
++    with open(path, "rb") as fh:
++        blob = fh.read()
++    n = struct.unpack("<I", blob[80:84])[0]
++    return blob, n
++
++
++def test_stl_binary_shape_and_triangle_count():
++    import tempfile
++    v, f = family_mesh("wedge-std", _wedge())
++    stone = _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge())
++    with tempfile.TemporaryDirectory() as td:
++        r = E.export_stone(stone, v, f, td, scale=S50)
++        blob, n = _stl_counts(r["stl"])
++        assert len(blob) == 84 + 50 * n
++        assert n == 2 * len(f)              # quad 扇形剖分
++        assert blob[:5] != b"solid"         # 二进制 STL 头不与 ASCII 撞
++
++
++def test_stl_volume_matches_print_scale_and_outward():
++    import tempfile
++    params = _wedge(w=2.0, h=0.5, d=1.0)
++    v, f = family_mesh("wedge-std", params)
++    stone = _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", params)
++    with tempfile.TemporaryDirectory() as td:
++        r = E.export_stone(stone, v, f, td, scale=S50)
++        blob, n = _stl_counts(r["stl"])
++        offs = np.frombuffer(blob[84:84 + 50 * n], dtype=np.uint8).reshape(n, 50)
++        rows = offs[:, :48].copy().view(np.float32).reshape(n, 4, 3)
++        sv = 0.0
++        for r in rows:
++            a, b, c = (r[i].astype(float) for i in (1, 2, 3))  # [0]=法线
++            sv += float(a @ np.cross(b, c)) / 6.0
++        # 解析: 楔形 post-inset 体积 = (w-2c)(h-2c)(d-c)(inset 只动界顶点);
++        # float32 存储放宽 rel
++        cm = 0.3 / 1000.0
++        expect_mm3 = (2.0 - 2 * cm) * (0.5 - 2 * cm) * (1.0 - cm) \
++            * S50 ** 3 * 1e9
++        assert sv == pytest.approx(expect_mm3, rel=2e-4)
++        assert sv > 0                        # 外翻(右手序朝外)
++
++
++def test_3mf_members_and_counts():
++    import tempfile
++    v, f = family_mesh("slab", {"w": 1.0, "h": 0.4, "d": 0.8})
++    stone = _stone("ARCH01", "EAST", "PAVING", 0, 0, "slab",
++                   {"w": 1.0, "h": 0.4, "d": 0.8})
++    with tempfile.TemporaryDirectory() as td:
++        r = E.export_stone(stone, v, f, td, scale=S50)
++        with zipfile.ZipFile(r["stl3mf"]) as z:
++            names = set(z.namelist())
++            assert {"[Content_Types].xml", "_rels/.rels",
++                    "3D/3dmodel.model"} <= names
++            root = ET.fromstring(z.read("3D/3dmodel.model"))
++        ns = "{http://schemas.microsoft.com/3dmanufacturing/core/2015/02}"
++        assert root.get("unit") == "millimeter"
++        assert len(root.findall(".//%svertex" % ns)) == len(v)
++        assert len(root.findall(".//%striangle" % ns)) == 2 * len(f)
++
++
++# ---------------------------------------------------------------- export_stone
++
++def test_export_stone_contract_and_volume():
++    import tempfile
++    params = {"w": 1.0, "h": 0.4, "d": 0.8}
++    v, f = family_mesh("slab", params)
++    stone = _stone("ARCH01", "EAST", "PIER", 0, 0, "slab", params)
++    with tempfile.TemporaryDirectory() as td:
++        r = E.export_stone(stone, v, f, td, scale=S50)
++        assert set(r) == {"stl", "stl3mf", "volume_cm3", "fit", "clearance_mm"}
++        assert r["fit"] == "NORMAL" and r["clearance_mm"] == 0.3
++        assert os.path.isfile(r["stl"]) and os.path.isfile(r["stl3mf"])
++        c = 0.3 / 1000.0
++        expect_cm3 = (1.0 - 2 * c) * (0.8 - 2 * c) * (0.4 - 2 * c) \
++            * S50 ** 3 * 1e6
++        assert r["volume_cm3"] == pytest.approx(expect_cm3, rel=1e-9)
++
++
++def test_export_stone_rejects_unknown_fit():
++    import tempfile
++    v, f = family_mesh("slab", {"w": 1.0, "h": 0.4, "d": 0.8})
++    stone = _stone("ARCH01", "EAST", "PIER", 0, 0, "slab",
++                   {"w": 1.0, "h": 0.4, "d": 0.8})
++    with tempfile.TemporaryDirectory() as td:
++        with pytest.raises(ValueError):
++            E.export_stone(stone, v, f, td, scale=S50, fit="WILD")
++
++
++# ---------------------------------------------------------------- export_ledger
++
++def _three_stone_ledger():
++    return _led([
++        _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge()),
++        _stone("ARCH01", "EAST", "RING", 0, 1, "wedge-std", _wedge()),
++        _stone("ARCH02", "WEST", "SPANDREL", 1, 0, "wedge-std", _wedge(w=0.2, h=0.15, d=0.12)),
++    ])
++
++
++def test_manifest_family_batches(tmp_path):
++    led = _led([
++        _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge()),
++        _stone("ARCH01", "EAST", "RING", 0, 1, "wedge-std", _wedge()),
++    ])
++    man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++    fam = man["families"]["wedge-std"]
++    assert fam["count"] == 2
++    assert fam["stl"].endswith(".stl")
++    # 楔形平行六面体体积 = w*h*d; inset 只动 bbox 界顶点 -> 底面缩 2c 顶面不动,
++    # 平均深 d-c, 体积 = (w-2c)(h-2c)(d-c)
++    c = 0.3 / 1000.0
++    one = (1.0 - 2 * c) * (0.4 - 2 * c) * (1.0 - c) * S50 ** 3 * 1e6
++    assert fam["volume_cm3"] == pytest.approx(2 * one, rel=1e-9)
++    assert [s["batch"] for s in man["stones"]] == [0, 0]
++    assert man == json.loads(json.dumps(man))    # 纯 JSON 可回读
++    with open(os.path.join(str(tmp_path), "manifest.json")) as fh:
++        assert json.load(fh) == man
++
++
++def test_manifest_records_fit_and_clearance_timing(tmp_path):
++    led = _three_stone_ledger()
++    man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++    by_id = {s["id"]: s for s in man["stones"]}
++    # 分派: 0.12m 最小维 -> TIGHT; 0.4 -> NORMAL
++    assert by_id["ARCH01.EAST.RING.C00.B00"]["fit"] == "NORMAL"
++    assert by_id["ARCH01.EAST.RING.C00.B00"]["clearance_mm"] == 0.3
++    assert by_id["ARCH01.EAST.RING.C00.B01"]["fit"] == "NORMAL"
++    assert by_id["ARCH02.WEST.SPANDREL.C01.B00"]["fit"] == "TIGHT"
++    assert by_id["ARCH02.WEST.SPANDREL.C01.B00"]["clearance_mm"] == 0.15
++    # 时序纪律: 落盘 ledger 带 clearance(allow_clearance 才合法), 原账目不被改写
++    assert led["stones"][0]["clearance_manufacturing_mm"] is None
++    with open(os.path.join(str(tmp_path), "ledger_print.json")) as fh:
++        lp = json.load(fh)
++    assert L.validate_ledger(lp) != []            # 默认仍拒(置值必走导出时序)
++    assert any(e.startswith("CLEARANCE_PREMATURE") for e in L.validate_ledger(lp))
++    assert L.validate_ledger(lp, allow_clearance=True) == []
++    for s in man["stones"]:
++        assert os.path.isfile(os.path.join(str(tmp_path), s["stl"]))
++        assert os.path.isfile(os.path.join(str(tmp_path), s["stl3mf"]))
++
++
++def test_roles_whitelist_excludes_carvings(tmp_path):
++    led = _led([
++        _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge()),
++        _stone("ARCH01", "EAST", "CARVE", 0, 0, "slab", {"w": 0.5, "h": 0.3, "d": 0.2}),
++        _stone("ARCH01", "EAST", "RAIL", 0, 0, "slab", {"w": 0.5, "h": 0.3, "d": 0.2}),
++    ])
++    man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++    assert [s["id"] for s in man["stones"]] == ["ARCH01.EAST.RING.C00.B00"]
++    assert {k["role"] for k in man["skipped"]} == {"CARVE", "RAIL"}
++    # 白名单可显式覆盖
++    man2 = E.export_ledger(led, _mesh_fn, str(tmp_path / "only_carve"),
++                           roles=("CARVE",), scale=S50)
++    assert [s["id"] for s in man2["stones"]] == ["ARCH01.EAST.CARVE.C00.B00"]
++
++
++def test_material_grouping_dirs(tmp_path):
++    led = _led([
++        _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge(), material="qingshi"),
++        _stone("ARCH01", "WEST", "RING", 0, 0, "wedge-std", _wedge(), material="granite"),
++    ])
++    man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++    assert man["materials"] == {"qingshi": 1, "granite": 1}
++    for s in man["stones"]:
++        assert s["stl"].split(os.sep)[0] == s["material"]
++
++
++def test_oversized_stone_gets_own_batch(tmp_path):
++    led = _led([
++        _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge()),
++        _stone("ARCH01", "EAST", "PIER", 0, 0, "slab", {"w": 12.0, "h": 1.2, "d": 12.0}),
++    ])
++    man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++    by_id = {s["id"]: s for s in man["stones"]}
++    # 12m×1/50×1000 = 240mm > 220 床 -> 独占超批
++    assert by_id["ARCH01.EAST.PIER.C00.B00"]["batch"] \
++        != by_id["ARCH01.EAST.RING.C00.B00"]["batch"]
++    ob = [b for b in man["batches"] if b["oversize"]]
++    assert len(ob) == 1 and len(ob[0]["stones"]) == 1
++    small = [b for b in man["batches"] if not b["oversize"]]
++    assert len(small) >= 1
++    assert all(b["used_mm"][0] <= 220.0 and b["used_mm"][1] <= 220.0
++               for b in man["batches"] if not b["oversize"])
++
++
++def test_export_ledger_rejects_invalid_base_ledger(tmp_path):
++    led = _three_stone_ledger()
++    led["stones"][1]["id"] = led["stones"][0]["id"]     # ID_DUP
++    with pytest.raises(ValueError):
++        E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
++
++
++# ---------------------------------------------------------------- coupon
++
++def test_coupon_six_pieces(tmp_path):
++    out = E.coupon_set(str(tmp_path))
++    assert set(out) == {"TIGHT", "NORMAL", "LOOSE"}
++    n_stl = 0
++    for tier, rec in out.items():
++        assert rec["clearance_mm"] == E.FIT_TIERS[tier]
++        for k in ("a", "b"):
++            assert os.path.isfile(rec[k])
++            n_stl += 1
++    assert n_stl == 6
++
++
++def test_coupon_pair_gap_is_two_clearance(tmp_path):
++    out = E.coupon_set(str(tmp_path))
++    gaps = {}
++    for tier, rec in out.items():
++        assert rec["pair_gap_mm"] == pytest.approx(2 * rec["clearance_mm"],
++                                                   abs=1e-9)
++        gaps[tier] = rec["pair_gap_mm"]
++        # 几何复核: 以名义 transform 拼装后量 x 向缝隙
++        va, fa = E._coupon_mesh(rec, "a")
++        vb, fb = E._coupon_mesh(rec, "b")
++        w = rec["w_m"]
++        tfa = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
++        tfb = (w, 0.0, 0.0, 0.0, 0.0, 0.0)
++        xa = max(np.asarray(va)[:, 0]) + tfa[0]
++        xb = min(np.asarray(vb)[:, 0]) + tfb[0]
++        assert (xb - xa) * 1000.0 == pytest.approx(2 * rec["clearance_mm"],
++                                                   abs=1e-9)
++        r = PC.gap_check((tfa, (va, fa)), (tfb, (vb, fb)), scale=S50)
++        assert r["ok"], r["issues"]              # 名义拼装不穿透
++    assert gaps["TIGHT"] < gaps["NORMAL"] < gaps["LOOSE"]   # 三档互相可分

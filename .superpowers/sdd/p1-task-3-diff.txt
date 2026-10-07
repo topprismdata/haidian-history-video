@@ -1,0 +1,155 @@
+dee62a6 feat(e30): P1-T3 面石层生成器(砖谱->ledger, 顺丁相间, 两缝分离)
+edac4c1 chore(e30): P1 ledger更新(T2闭环)
+=== STAT ===
+ .superpowers/sdd/p1-progress.md                 |  2 +-
+ e30_shikongqiao_video/3d/masonry2.py            | 68 +++++++++++++++++++++++++
+ e30_shikongqiao_video/tests/test_p1_masonry2.py | 55 ++++++++++++++++++++
+ 3 files changed, 124 insertions(+), 1 deletion(-)
+=== DIFF ===
+diff --git a/.superpowers/sdd/p1-progress.md b/.superpowers/sdd/p1-progress.md
+index a85ad3d..9775834 100644
+--- a/.superpowers/sdd/p1-progress.md
++++ b/.superpowers/sdd/p1-progress.md
+@@ -1,6 +1,6 @@
+ # P1 stone-ledger SDD Ledger
+ 计划: docs/superpowers/plans/2026-10-06-p1-stone-ledger.md | 分支: main | BASE: 9327c8f
+ 
+ - Task 1: complete (commits 9327c8f..50e3662, 审查Spec✅/质量Approved, 修复轮I2/I3/I4/M1/M3/M4落地, 15测试+回归82绿)
+   - 遗留跟进: I1 allow_clearance 挂 T6; 审查N4(zone/role词元映射)由T3/T4证实
+-- Task 2: implemented (0d9329d, 3测试绿) — 审查中, 焦点=params["d"]被忽略
++- Task 2: complete (commits 0d9329d..395d254, 审查Spec✅/质量需修→修复轮C1(d权威深度)/C2(收分方向反号)/I1(恒真测试删除重写带符号)/m2(slab测试), 86测试绿; U2原点语义移交T7)
+diff --git a/e30_shikongqiao_video/3d/masonry2.py b/e30_shikongqiao_video/3d/masonry2.py
+new file mode 100644
+index 0000000..90fd5b1
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/masonry2.py
+@@ -0,0 +1,68 @@
++# e30_shikongqiao_video/3d/masonry2.py
++# -*- coding: utf-8 -*-
++"""P1 三层生成器: 面石(顺丁)/背衬/core cells -> ledger。
++
++T3 面石层: 消费砖谱 spec(courses/blocks) 产出每石一条 ledger 账目。
++- 顺丁相间: (course+block) 偶数位=顺石 STRETCHER_D, 奇数位=丁石 HEADER_D;
++  深度差写进 params["d"] 供 T6 材料化(families._wedge_std 以 d 为权威深度)。
++- 间隙两量分离: joint_historical_mm=10(历史缝), clearance_manufacturing_mm=None
++  (制造间隙未定, T6 挂 allow_clearance 时序再定)。
++- zone 编号 1 基(设计 spec: 孔=ARCH01..17 西→东), 砖谱文件/字段 arch 为 0 基。
++"""
++import json
++import os
++from typing import Any, Callable, Dict, List
++
++import ledger as L
++
++STRETCHER_D = 1.2
++HEADER_D = 2.4
++PROUD = 0.006
++BACK = 0.30
++
++
++def _pairs(blocks):
++    # type: (List[Any]) -> List[Dict[str, float]]
++    """砖谱块界归一: {x0,x1} 字典直通; 沿 x 的界边表[a,b,c] -> [a-b, b-c] 相邻对。"""
++    if blocks and isinstance(blocks[0], dict):
++        return blocks
++    return [{"x0": blocks[i], "x1": blocks[i + 1]}
++            for i in range(len(blocks) - 1)]
++
++
++def face_stones(spec, arch_idx, side, hw_fn, course_h=0.55):
++    # type: (Dict[str, Any], int, int, Callable[[float, float], float], float) -> List[Dict[str, Any]]
++    zone = "ARCH%02d" % (arch_idx + 1)
++    face = "EAST" if side > 0 else "WEST"
++    out = []  # type: List[Dict[str, Any]]
++    for ci, course in enumerate(spec.get("courses", [])):
++        z0 = course["z0"]
++        for bi, blk in enumerate(_pairs(course.get("blocks", []))):
++            x0, x1 = blk["x0"], blk["x1"]
++            xm = (x0 + x1) / 2.0
++            zm = z0 + course_h / 2.0
++            depth = STRETCHER_D if (ci + bi) % 2 == 0 else HEADER_D
++            hw_b = hw_fn(xm, z0)
++            hw_t = hw_fn(xm, z0 + course_h)
++            y = hw_fn(xm, zm) + PROUD
++            st = L.new_stone(zone, face, "SPANDREL", ci, bi, "wedge-std",
++                             {"w": x1 - x0, "h": course_h, "d": depth,
++                              "proud": PROUD, "back": BACK,
++                              "hw_b": hw_b, "hw_t": hw_t},
++                             [xm, y if side > 0 else -y, zm, 0.0, 0.0, 0.0],
++                             "qingshi")
++            out.append(st)
++    return out
++
++
++def build_face_layer(stones_dir, hw_fn, arches):
++    # type: (str, Callable[[float, float], float], List[int]) -> List[Dict[str, Any]]
++    """逐孔读 stones_p<arch_idx>.json 砖谱, 东西两面合成整层面石账目。"""
++    out = []  # type: List[Dict[str, Any]]
++    for ai in arches:
++        path = os.path.join(stones_dir, "stones_p%d.json" % ai)
++        with open(path, "r", encoding="utf-8") as f:
++            spec = json.load(f)
++        for side in (1, -1):
++            out.extend(face_stones(spec, ai, side, hw_fn))
++    return out
+diff --git a/e30_shikongqiao_video/tests/test_p1_masonry2.py b/e30_shikongqiao_video/tests/test_p1_masonry2.py
+new file mode 100644
+index 0000000..541d4ac
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/test_p1_masonry2.py
+@@ -0,0 +1,55 @@
++# -*- coding: utf-8 -*-
++"""P1-T3 面石层生成器单测(合成 spec, 不依赖 blender; hw_fn 依赖注入)。"""
++import json
++import os
++import sys
++
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
++import masonry2 as M2  # noqa: E402
++
++SPEC = {"courses": [
++    {"z0": 2.0, "blocks": [{"x0": 0.0, "x1": 1.2}, {"x0": 1.2, "x1": 2.0}]},
++    {"z0": 2.55, "blocks": [{"x0": 0.0, "x1": 0.8}, {"x0": 0.8, "x1": 2.0}]}]}
++
++
++def _hw(x, z):
++    return 6.0 - 0.02 * (z - 2.0)
++
++
++def test_face_stones_ids_and_depths():
++    stones = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)
++    assert len(stones) == 4
++    ids = [s["id"] for s in stones]
++    assert ids[0] == "ARCH09.EAST.SPANDREL.C00.B00"
++    assert ids[3] == "ARCH09.EAST.SPANDREL.C01.B01"
++    # 顺丁相间: 同层奇偶块深不同(顺1.2/丁2.4 或参数表), 且都>0.5
++    d0 = stones[0]["params"]["d"]
++    d1 = stones[1]["params"]["d"]
++    assert d0 > 0.5 and d1 > 0.5 and abs(d0 - d1) > 0.3
++    # 间隙两量分离: 历史缝10mm, 制造间隙未定
++    assert all(s["joint_historical_mm"] == 10.0 for s in stones)
++    assert all(s["clearance_manufacturing_mm"] is None for s in stones)
++
++
++def test_face_stones_mirror_id():
++    west = M2.face_stones(SPEC, 8, -1, _hw, course_h=0.55)
++    assert west[0]["id"] == "ARCH09.WEST.SPANDREL.C00.B00"
++
++
++def test_face_stones_accepts_edge_list_blocks():
++    # 真实砖谱 stones_pX.json 的 blocks 是沿 x 的界边表, 不是 {x0,x1} 字典
++    spec = {"courses": [{"z0": 2.0, "blocks": [0.0, 1.2, 2.0]}]}
++    stones = M2.face_stones(spec, 0, 1, _hw, course_h=0.55)
++    assert [s["id"] for s in stones] == [
++        "ARCH01.EAST.SPANDREL.C00.B00", "ARCH01.EAST.SPANDREL.C00.B01"]
++    assert stones[0]["params"]["w"] == 1.2
++    assert stones[1]["params"]["w"] == 0.8
++
++
++def test_build_face_layer_aggregates_sides(tmp_path):
++    (tmp_path / "stones_p8.json").write_text(json.dumps(SPEC), encoding="utf-8")
++    got = M2.build_face_layer(str(tmp_path), _hw, [8])
++    assert len(got) == 8
++    assert [s["id"] for s in got[:2]] == [
++        "ARCH09.EAST.SPANDREL.C00.B00", "ARCH09.EAST.SPANDREL.C00.B01"]
++    assert all(s["id"].startswith("ARCH09.WEST.") for s in got[4:])

@@ -1,0 +1,1848 @@
+=== commits ===
+648ea30 fix(e30): P1-T9 G2转绿轮 — 106/85红门收敛+仿射inset+lift覆盖三根因+run升格+W1/W2收口
+=== STAT ===
+ .gitignore                                         |   10 +
+ .superpowers/sdd/p1-task-9-report.md               |   72 +
+ e30_shikongqiao_video/3d/dump_check_fixtures.py    |  185 ++
+ e30_shikongqiao_video/3d/export_print.py           |   30 +-
+ .../3d/out/print/central_slice/SLICE_NOTES.md      |   38 +-
+ .../3d/out/print/central_slice/manifest.json       | 1974 +++++++++++---------
+ .../3d/out/print/excluded_ids.json                 |    2 +-
+ e30_shikongqiao_video/3d/out/print/g2_report.json  | 1717 +----------------
+ e30_shikongqiao_video/3d/p1a_slice.py              |  202 +-
+ .../check_106/ARCH01.EAST.CORE.C07.B00.json        |  203 ++
+ .../check_106/ARCH03.EAST.SPANDREL.C07.B01.json    |  201 ++
+ .../check_106/ARCH05.EAST.BACK.C07.B00.json        |  281 +++
+ .../check_106/ARCH05.EAST.SPANDREL.C07.B00.json    |  281 +++
+ e30_shikongqiao_video/tests/test_p1_export.py      |   25 +-
+ e30_shikongqiao_video/tests/test_p1_slice.py       |  199 +-
+ 15 files changed, 2754 insertions(+), 2666 deletions(-)
+=== DIFF ===
+diff --git a/e30_shikongqiao_video/3d/export_print.py b/e30_shikongqiao_video/3d/export_print.py
+index ee0415e..6795798 100644
+--- a/e30_shikongqiao_video/3d/export_print.py
++++ b/e30_shikongqiao_video/3d/export_print.py
+@@ -71,34 +71,46 @@ def fit_for_block(dims_m, scale=1 / 50.0):
+     for bound, tier in _FIT_BOUNDS:
+         if d0 < bound:
+             return tier, FIT_PRINT_MM[tier] / float(scale)
+     return "LOOSE", FIT_PRINT_MM["LOOSE"] / float(scale)
+ 
+ 
+ def inset(verts, clearance_model_mm):
+     # type: (List[Tuple[float, float, float]], float) -> List[Tuple[float, float, float]]
+-    """三轴各面内缩 clearance_model_mm/1000 模型米: 顶点逐轴按是否落在 bbox
+-    界分类(下界->+c, 上界->-c, 内部->0); 扁轴(extent~0)不动。只缩不涨;
+-    clearance 0 恒等返回。"""
++    """逐轴仿射内缩 clearance_model_mm/1000 模型米: 每轴关于 bbox 中心把
++    [lo,hi] 线性映射到 [lo+c,hi-c](s_ax=(ext-2c)/ext); ext<=2c 的扁/薄轴
++    不动(2c 都打不出的轴没有配合语义, 该石由 thin_merge 口径收走)。
++    clearance 0 恒等返回。
++
++    T9 机制收口(真失败件 fixture 实证, tests/fixtures/check_106/): 旧实现
++    只位移 bbox 极值顶点、域内顶点不动 —— 该分段映射不单射, 极值面以整步
++    c 扫过距极值面 <c 的近极值顶点时翻越未动的邻边, 端帽面穿过侧壁四边形
++    (实测 ARCH05.EAST.BACK.C07.B00: x-min 帽面 -42.1960+15mm=-42.1810 越
++    过侧壁近边 -42.1812), 106/106 带裁片 SELF_INTERSECT 且随 clr 单调。
++    仿射映射是 [单射 + 极值面精确退让 c + 逐轴保持] 的最小封闭族: 内嵌网
++    格经可逆仿射不可能自交(定理, 非 Plug&Pray), 平面性/绕向/多壳拓扑逐
++    项保持, post-inset 包围盒逐轴恰好缩 2c(thin_merge/fit 分档判定不变)。
++    语义口径: bbox 装配贴合面(与其他打印单元的配合面)精确退让 clr —— 配
++    合公差吃在配合面; 切割缝面(非轴对齐装饰面)退让量 ≤c 且沿轴单调, 缝
++    配合由名义 GAP_W 承担(历史缝 0.2mm 打印当量本就不作精密配合)。
++    只缩不涨: s_ax<=1 且像含于 [lo+c,hi-c] 包围盒。"""
+     cm = float(clearance_model_mm) / 1000.0
+     if cm == 0.0:
+         return [(float(p[0]), float(p[1]), float(p[2])) for p in verts]
+     V = np.asarray(verts, dtype=float)
+     lo = V.min(axis=0)
+     hi = V.max(axis=0)
+     ext = hi - lo
+-    tol = np.maximum(1e-12, ext * 1e-9)
+-    off = np.zeros_like(V)
++    scale = np.ones(3)
+     for ax in range(3):
+-        if ext[ax] <= tol[ax]:
++        if ext[ax] <= 2.0 * cm:
+             continue
+-        off[:, ax] = (np.where(V[:, ax] <= lo[ax] + tol[ax], cm, 0.0)
+-                      + np.where(V[:, ax] >= hi[ax] - tol[ax], -cm, 0.0))
+-    V2 = V + off
++        scale[ax] = (ext[ax] - 2.0 * cm) / ext[ax]
++    V2 = (lo + hi) / 2.0 + (V - (lo + hi) / 2.0) * scale
+     return [(float(p[0]), float(p[1]), float(p[2])) for p in V2]
+ 
+ 
+ def flip_outward(verts, faces):
+     # type: (List[Tuple[float, float, float]], List[Tuple[int, ...]])
+     # -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+     """绕向归一: signed_volume<0(族库内翻) -> 每面反序成法线朝外右手序
+     (signed>0)。幂等; 输入不被改写。"""
+diff --git a/e30_shikongqiao_video/3d/p1a_slice.py b/e30_shikongqiao_video/3d/p1a_slice.py
+index d8dcd10..de45e3e 100644
+--- a/e30_shikongqiao_video/3d/p1a_slice.py
++++ b/e30_shikongqiao_video/3d/p1a_slice.py
+@@ -852,16 +852,39 @@ def _ring_trim_mesh(polys, stone):
+     for poly in polys:
+         lp = [(x - off[0], z - off[2]) for (x, z) in poly]
+         pv, pf = _prism_stitched(lp, yf, yb)
+         faces.extend(tuple(i + len(verts) for i in fc) for fc in pf)
+         verts.extend(pv)
+     return M2.materialize(stone, verts, faces)
+ 
+ 
++def _ring_lift_coverage(p):
++    # type: (dict) -> tuple
++    """环 lift 覆盖区间(单一真相 = 环 params; T9 85-残留根修)。
++    _voussoir 的 lift 是【沿法向】外弧外推(外弧 = 拱曲线法向偏移
++    ring_t+lift), 端站 x0/x1 是【内弧】放射缝站 —— 外弧角点 x = 端站 +
++    sin(angle)*(ring_t+lift), 在拱顶两侧各越出 stations 数十mm(实测
++    ARCH06 53/46mm)。前后脸 JOINT_GAP 收进(前 12.5/后 4.0)取更外者(后
++    脸), pad 按 min/max 钳回不越过 [x0,x1] —— 角度缺失的合成条目 s=0 时
++    垫 0, 覆盖与旧 [x0,x1] 逐位一致。lift<=0 或 stations 缺失 -> None。
++    返回 (lo, hi, lift)。"""
++    lift = float(p.get("lift", 0.0))
++    st = p.get("stations")
++    if lift <= 0.0 or not st:
++        return None
++    proj = float(p.get("ring_t", _MAS.RING_T)) + lift
++    angs = p.get("angles") or (0.0, 0.0)
++    s0 = math.sin(math.radians(float(angs[0])))
++    s1 = math.sin(math.radians(float(angs[1])))
++    pad_lo = min(0.0, _MAS.JOINT_GAP_BACK + s0 * proj)
++    pad_hi = max(0.0, s1 * proj - _MAS.JOINT_GAP_BACK)
++    return (float(st[0]) + pad_lo, float(st[1]) + pad_hi, lift)
++
++
+ def _band_trim_polys(stone, arch_idx, rings):
+     # type: (dict, int, list) -> tuple
+     """case_B print-view 裁剪: 石足印减『洞∪券环带』。减除区间按 x 竖条:
+       洞/拱带 |x-xc| < a+GAP_W:            减 z <= zc(x)  (void+band, 单一
+       真相 = masonry._hole_cut_polyline 折线, 与贴拱切块同几何);
+       承压带 a+GAP_W <= |x-xc| <= a+RING_T+GAP_W:
+                                            减 [spz-GAP_W, zc(x)] —— 下界
+         是座石面(环端承压于 z=spz, 墙顶 spz-GAP, masonry 同规则): 保留
+@@ -902,38 +925,46 @@ def _band_trim_polys(stone, arch_idx, rings):
+                 hi = mid
+         dx = px[hi] - px[lo]
+         if abs(dx) < 1e-12:
+             return max(pz[lo], pz[hi])     # 陡降段取高者(masonry 同规)
+         f = (x - px[lo]) / dx
+         return pz[lo] + f * (pz[hi] - pz[lo])
+ 
+     def lift_at(x):
+-        # 环 lift 包络: 仅计 station 覆盖 x 的环(账目 params, 单一真相;
+-        # stations/lift 缺失的合成条目按 0 计 —— 真 ledger 由 make_ring_entry
+-        # 恒写这两键)
++        # 环 lift 包络(单一真相 = 环 params, 见 _ring_lift_coverage):
++        # 覆盖区间必须含外弧角点越出段 —— T9 85-残留两类根修: ①旧覆盖只用
++        # 内弧站 [x0,x1], 角点外条带 bound 缺 lift, 环真剪影高出切割线
++        # ~60mm(=lift-GAP); ②覆盖边界台阶落在条带内部时, 单段线性 bound
++        # 把台阶抹成斜坡, 台阶附近欠割至多一整个 lift(实测 ARCH07 hit
++        # z[6.29,6.33] vs 真界 6.336)。②由 xs 强制覆盖边界成条带边界解决。
+         best = 0.0
+         for r in rings:
+-            p = r["params"]
+-            st = p.get("stations")
+-            if st and st[0] - 1e-9 <= x <= st[1] + 1e-9:
+-                best = max(best, float(p.get("lift", 0.0)))
++            cov = _ring_lift_coverage(r["params"])
++            if cov and cov[0] - 1e-9 <= x <= cov[1] + 1e-9:
++                best = max(best, cov[2])
+         return best
+ 
+     def seat(x):
+         # 承压带座石面(z<spz-GAP 为墙); 非承压带 -> None(无座条)
+         d = abs(x - xc)
+         if jamb <= d <= t_out:
+             return spz - gap
+         return None
+ 
++    lift_edges = set()
++    for r in rings:
++        cov = _ring_lift_coverage(r["params"])
++        if cov:
++            lift_edges.update(cov[:2])
+     xs = sorted({x0, x1}
+                 | {px_ for (px_, _pz) in pts if x0 < px_ < x1}
+                 | {b for b in (xc - jamb, xc + jamb, xc - t_out, xc + t_out)
+-                   if x0 < b < x1})
++                   if x0 < b < x1}
++                | {b for b in lift_edges if x0 < b < x1})
+     upper = []       # (sa, sb, bound0, bound1) bound 已钳 [z0, z1]
+     seats = []       # (sa, sb, seat_z)
+     removed = 0.0
+     for sa, sb in zip(xs[:-1], xs[1:]):
+         if sb - sa <= 1e-12:
+             continue
+         zc0, zc1 = zc(sa), zc(sb)
+         s0, s1 = seat(sa), seat(sb)
+@@ -987,24 +1018,30 @@ def _band_trim_polys(stone, arch_idx, rings):
+         if len(poly) < 2:
+             continue
+         poly.append((poly[-1][0], z1))
+         poly.append((poly[0][0], z1))
+         # 抽稀: 共线偏差 < 1.5mm 的中间点丢弃(折线 ARC_STEP 密采样产生
+         # 大量近共线点 -> 耳切出薄片三角, printcheck eps=1e-9 边界假交叉;
+         # 1.5mm << GAP_W=10mm, 不越缝口径)。共线点【跳过】, 不得拖动端点
+         # (拖动会让边界穿过保留域, 首版实测自交根因)。
++        # T9 例外: lift 覆盖台阶点【永不抽稀】—— 台阶点落在来向平滑曲线
++        # 上, 共线判据会把它当曲线中间点丢掉, 台阶被单段弦切角: 右缘实
++        # 测弦下切 13mm, 环端面外缘高出弦 2mm 掠穿(A#27xB#4, v_hit=0 的
++        # 最后 2 条 final_scope 残留根因)。
+         simp = [poly[0], poly[1]]
+         for p in poly[2:-1]:
+-            a, b = simp[-2], simp[-1]
+-            area2 = abs((b[0] - a[0]) * (p[1] - a[1])
+-                        - (b[1] - a[1]) * (p[0] - a[0]))
+-            seg = math.hypot(b[0] - a[0], b[1] - a[1])
+-            if seg > 1e-9 and area2 / seg > 1.5e-3:
+-                simp.append(p)
++            if not any(abs(p[0] - e) < 1e-12 for e in lift_edges):
++                a, b = simp[-2], simp[-1]
++                area2 = abs((b[0] - a[0]) * (p[1] - a[1])
++                            - (b[1] - a[1]) * (p[0] - a[0]))
++                seg = math.hypot(b[0] - a[0], b[1] - a[1])
++                if seg > 1e-9 and area2 / seg <= 1.5e-3:
++                    continue
++            simp.append(p)
+         simp.append(poly[-1])
+         dedup = []
+         for p in simp:
+             if dedup and abs(dedup[-1][0] - p[0]) < 1e-12 \
+                     and abs(dedup[-1][1] - p[1]) < 1e-12:
+                 continue
+             dedup.append(p)
+         if len(dedup) >= 3 and abs(_poly_signed_area2(dedup)) > 1e-12:
+@@ -1393,16 +1430,33 @@ def write_excluded_ids(sc, led, path):
+                                              time.gmtime())},
+             "buckets": {k: sorted(v) for k, v in sorted(all_buckets.items())}}
+     with open(path, "w", encoding="utf-8") as fh:
+         json.dump(data, fh, ensure_ascii=False, indent=1, sort_keys=True)
+     print("EXCLUDED_IDS written", path)
+     return path
+ 
+ 
++def _print_units(stone, statuses):
++    # type: (dict, dict) -> list
++    """石 -> 打印单元列表(T9 run 升格, 审查裁决: MULTI_SHELL 不豁免)。
++    带裁石 kept 折线含多个互断 run 时, 单一 mesh 是多壳体, check_stone 必
++    红 MULTI_SHELL —— 每个 run 升格为独立打印单元: unit_id = '<石id>#R<i>'
++    (i 按 kept 多边形构造序, 确定性), 谱系 parent_ids=[石id] 记入报告与
++    manifest; 单 run 石恒等返回自身(零行为变化; 现行真总体 475 石全单
++    run, 本机制为断料场景的结构保证)。返回 [(unit_id, kept_polys_or_None)]:
++    None = 走 world_mesh 常规路径, list = 只用该 run 折线构建棱柱。"""
++    status, polys = statuses[stone["id"]]
++    if status == "ring_trim" and len(polys) > 1:
++        return [("%s#R%d" % (stone["id"], i),
++                 [[list(p) for p in poly]])
++                for i, poly in enumerate(polys)]
++    return [(stone["id"], None)]
++
++
+ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
+     # type: (dict, dict, int) -> dict
+     """G2 全桥 printcheck(T8b 版): 打印单元划分(print_scope 面积判据) ->
+     ring↔链 dedup 宇宙处置(case_A subsume / case_B 带裁剪, 审查裁决:
+     PENETRATION 不进缝 fail —— 环↔链是同一材料的两种表征, 按体积吞没
+     unique_vol 处置) -> 逐石 post-inset check_stone -> 缝宇宙(同工艺缝
+     20/孔抽样 + spandrel-back 全量带界: 实体相交 depth>5mm 或 AABB 交叠
+     >100cm3 计 fail, 界内豁免全量记账, 豁免>50 打 WARN) -> ring_dedup
+@@ -1424,42 +1478,62 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
+     y_bad = ring_trim_y_violations(led, statuses)
+     if y_bad:
+         raise RuntimeError("ring_trim 世界 y 越出原族带 %d 块 首3: %s"
+                            % (len(y_bad), y_bad[:3]))
+     scope_ids = {s["id"] for s in scope}
+     role_counts = {}
+     fit_tiers = {}
+     fails = []
++    run_units = []       # T9 run 升格谱系(unit_id -> parent 石)
+     by_zone = {}
+     for s in scope:
+         role_counts[s["role_struct"]] = role_counts.get(s["role_struct"], 0) + 1
+         by_zone.setdefault(s["id"].split(".")[0], []).append(s)
+-        verts, faces = world_mesh(s, statuses)
+-        fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
+-        fit_tiers[fit] = fit_tiers.get(fit, 0) + 1
+-        v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
+-        rep = PC.check_stone(v2, f2, scale=G2_SCALE,
+-                             min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
+-        if not rep["ok"]:
+-            fails.append({"id": s["id"], "role": s["role_struct"],
+-                          "trim": s["params"].get("clipped_by") == "ring_band",
+-                          "issues": rep["issues"]})
++        units = _print_units(s, statuses)
++        for (uid, polys_view) in units:
++            if polys_view is None:
++                verts, faces = world_mesh(s, statuses)
++            else:
++                # run 升格单元: 只用该 run 折线构建(单壳), 谱系记石 id
++                verts, faces = _ring_trim_mesh(polys_view, s)
++            fit, clr_model = EP.fit_for_block(EP._extents_m(verts), G2_SCALE)
++            fit_tiers[fit] = fit_tiers.get(fit, 0) + 1
++            v2, f2 = EP.flip_outward(EP.inset(verts, clr_model), faces)
++            rep = PC.check_stone(v2, f2, scale=G2_SCALE,
++                                 min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
++            if not rep["ok"]:
++                fails.append({"id": uid, "role": s["role_struct"],
++                              "trim": s["params"].get("clipped_by") == "ring_band",
++                              "parent_ids": [s["id"]] if uid != s["id"] else [],
++                              "issues": rep["issues"]})
++        if len(units) > 1:
++            run_units.extend({"unit_id": uid, "parent_ids": [s["id"]],
++                              "role": s["role_struct"]}
++                             for (uid, _pv) in units)
++    n_print_units = sum(len(_print_units(s, statuses)) for s in scope)
+     # fail 矩阵(code x role, 新裁/存量归因 —— 主控 2A: T9 范围输入)
+     matrix = {}
+     for f in fails:
+         for iss in f["issues"]:
+             code = iss["code"]
+             matrix.setdefault(code, {}).setdefault(f["role"], 0)
+             matrix[code][f["role"]] += 1
+     # 旧 clip 片存量普查(void_cut_fragment 全量, 同判据; 只记账不入 verdict
+     # —— 它们已按 RING 为准排除, 但其几何质量是 T5/T7 追偿的范围输入)
+     by_id = {s["id"]: s for s in led["stones"]}
+     legacy = {"n": len(buckets["void_cut_fragment"]), "n_fail": 0,
+-              "matrix": {}}
++              "matrix": {},
++              # T9 主控 4: 存量几何质量本轮不修 —— 债务归口 T5/T7 追偿单,
++              # 普查数字即追偿范围输入; 覆盖率审计的 void_cut_fragment 洞
++              # 面积(coverage_audit)是该桶"以 RING 为准排除"留下的第二笔
++              # 待追偿账(材料是否需要碎片回填由 T5/T7 裁决)
++              "disposition": "excluded(以 RING 为准); 几何质量债务记 "
++                             "T5/T7 追偿单, 本轮不修",
++              "debt_ticket": "T5/T7"}
+     for sid in buckets["void_cut_fragment"]:
+         s = by_id[sid]
+         verts, faces = _postinset_world(s, statuses)
+         v2, f2 = EP.flip_outward(verts, faces)
+         rep = PC.check_stone(v2, f2, scale=G2_SCALE,
+                              min_wall_print_mm=G2_MIN_WALL_PRINT_MM)
+         if not rep["ok"]:
+             legacy["n_fail"] += 1
+@@ -1589,41 +1663,47 @@ def run_g2(led, statuses=None, pairs_per_arch=G2_GAP_PAIRS_PER_ARCH):
+                                   "相对差 6.2e-3 —— 体积数字是【耳切对角"
+                                   "约定】口径, 换剖分器有 ~0.6% 级漂移",
+                      "hours_basis": "12cm3/h 为 0.4mm 喷嘴 FDM 实心体经验"
+                                     "上界, 未扣 infill/支撑/失败重打",
+                      "core_overlap": "CORE y_extent=full_wall 与面石有意重"
+                                      "叠(牺牲芯建模语义), 不是可加和的净"
+                                      "打印料"},
+                  "counts": {"stones": len(led["stones"]),
+-                            "print_units": len(scope),
++                            "print_units": n_print_units,
++                            "print_stones": len(scope),
++                            "run_units": len(run_units),
+                             "roles": dict(sorted(role_counts.items())),
+                             "ring_total": sum(1 for s in led["stones"]
+                                               if s["role_struct"] == "RING"),
+                             "impost_total": sum(1 for s in led["stones"]
+                                                 if s["role_struct"] == "IMPOST")},
+                  "scope": {
+-                     "print_units": len(scope),
++                     "print_units": n_print_units,
+                      "excluded": excluded,
+-                     "identities": "print_units + sum(excluded.n) == "
+-                                   "meta.counts.stones",
++                     "identities": "print_stones + sum(excluded.n) == "
++                                   "meta.counts.stones; print_units = "
++                                   "print_stones + meta.scope.run_units 数"
++                                   "(带裁多 run 石升格独立单元, 谱系见 "
++                                   "run_units.parent_ids)",
+                      "excluded_standing": [
+                          {"bucket": "carve_p4",
+                           "reason": "CARVE/RAIL/POST/PAVING 等雕件与附属"
+                                     "白名单外归 P4(接线清单⑥; 本账无此类"
+                                     "石, export_print.MASONRY_ROLES 同口径)"},
+                          {"bucket": "abut",
+                           "reason": "ABUT 桥台砌体(八字墙/引道)本轮不入账"
+                                     "(接线清单⑤)"}],
+                      "by_design_overlaps":
+                          "场景链条石/背衬/芯与 RING 全深筒券为表现层理想化"
+                          "重叠; 打印单元按 print_scope 去重, 缝抽样只取"
+                          "打印单元间同工艺缝对; 环↔链真撞由 volume 宇宙"
+-                         "处置(subsume/带裁剪)"}},
+-        "check_stone": {"n": len(scope), "n_fail": len(fails),
++                         "处置(subsume/带裁剪)",
++                     "run_units": run_units}},
++        "check_stone": {"n": n_print_units, "n_fail": len(fails),
+                         "fails": fails,
+                         "fail_matrix": matrix,
+                         "legacy_clip_survey": legacy,
+                         "fit_tiers": dict(sorted(fit_tiers.items()))},
+         "gap_check": {"n_pairs": sum(v["sampled"] for v in per_arch.values()),
+                       "n_fail": len(gap_fails), "fails": gap_fails,
+                       "n_aabb_phantom": n_phantom,
+                       "assembly_fit": {
+@@ -1680,18 +1760,30 @@ def validate_g2_report(rep):
+     if cs.get("n") != counts.get("print_units"):
+         p.append("check_stone.n != meta.counts.print_units")
+     if counts.get("ring_total") != 193:
+         p.append("counts.ring_total != 193")
+     if counts.get("impost_total") != 492:
+         p.append("counts.impost_total != 492")
+     sc = meta.get("scope", {})
+     ex_n = sum(e.get("n", 0) for e in sc.get("excluded", []))
+-    if sc.get("print_units", -1) + ex_n != counts.get("stones"):
+-        p.append("scope 守恒失败: print_units+excluded != stones")
++    # T9 run 升格: 守恒以【石】计(print_stones), print_units 可大于它
++    # (带裁多 run 石升格独立单元); run_units 明细与差值互证
++    if sc.get("print_stones", sc.get("print_units", -1)) + ex_n \
++            != counts.get("stones"):
++        p.append("scope 守恒失败: print_stones+excluded != stones")
++    if counts.get("print_units", -1) \
++            != counts.get("print_stones", -1) + len(sc.get("run_units", [])
++                                                    or []):
++        p.append("print_units != print_stones + len(run_units)")
++    for ru in sc.get("run_units") or []:
++        if not ru.get("parent_ids"):
++            p.append("run_units %s 缺 parent_ids 谱系"
++                     % ru.get("unit_id", "?"))
++            break
+     names = [e.get("bucket") for e in sc.get("excluded", [])]
+     for need in ("in_void", "void_cut_fragment", "ring_band_overlap",
+                  "thin_merge"):
+         if need not in names:
+             p.append("scope.excluded 缺桶 %s" % need)
+     v = rep.get("verdict")
+     rd = rep.get("ring_dedup", {})
+     if v not in ("PASS", "FAIL"):
+@@ -1762,20 +1854,21 @@ def validate_g2_report(rep):
+         p.append("summary.n_trimmed != len(trimmed_ids)")
+     if "subsumed_ids" in rd and "n_subsumed" in sm \
+             and sm["n_subsumed"] != len(rd["subsumed_ids"]):
+         p.append("summary.n_subsumed != len(subsumed_ids)")
+     rm = sm.get("removed_model_cm3", {})
+     if sm.get("n_trimmed", 0) > 0 and not rm.get("trimmed", 0) > 0:
+         p.append("n_trimmed>0 但 removed_model_cm3.trimmed==0 (trim 材料"
+                  "账被抹)")
+-    if (sm.get("n_subsumed", 0) > 0
+-            and not (rm.get("subsumed", 0) > 0
+-                     or rm.get("subsumed_by_area_bucket", 0) > 0)):
+-        p.append("n_subsumed>0 但 subsume 材料账全零")
++    if sm.get("n_subsumed", 0) > 0 and not rm.get("subsumed", 0) > 0:
++        p.append("n_subsumed>0 但 removed_model_cm3.subsumed==0 (subsume "
++                 "材料账被抹; T9 W1 严格 AND 镜像 trim 侧 —— "
++                 "subsumed_by_area_bucket 是另一口径的账, 不可替代 "
++                 "volume 宇宙的 subsume 材料流)")
+     if "pairs" not in fsc:
+         p.append("final_scope_check.pairs missing")
+     elif isinstance(fsc.get("pairs"), list) \
+             and len(fsc["pairs"]) != fsc.get("n_colliding", -1):
+         p.append("final_scope_check.pairs 长度 != n_colliding (明细被清)")
+     fm = cs.get("fail_matrix")
+     if fm is not None:
+         # 真实结构 {code: {role: count}}(兼容扁平 {code: count})
+@@ -1818,16 +1911,25 @@ def _to_bed_mesh_fn(statuses):
+ 
+ 
+ def export_slice(led, statuses, out_dir=SLICE_DIR, arch_idx=SLICE_ZONE_IDX,
+                  scale=G2_SCALE, scope_ids=None):
+     # type: (dict, dict, str, int, float, set) -> dict
+     """中央孔试印包(纯): STL+3MF+ledger_print+manifest(FIT 双值/分批/family
+     x count x volume)。返回增强后的 manifest dict。"""
+     led_s = slice_ledger(led, arch_idx, scope_ids=scope_ids)
++    # T9 run 升格边界: check 侧多 run 石已按独立单元判(见 _print_units);
++    # 打包层(export_ledger)以石为键出单 STL, 多 run 石若到达此处会被打成
++    # MULTI_SHELL 单件 —— 响亮拒绝, 不静默打包(升格包机归 T5/T7 打包轮)。
++    multi = [s["id"] for s in led_s["stones"]
++             if statuses.get(s["id"], (None, None))[0] == "ring_trim"
++             and len(statuses[s["id"]][1]) > 1]
++    if multi:
++        raise RuntimeError("run 升格石到达试印包导出(check 侧已按独立单元,"
++                           "打包层逐 run STL 未支持): %r" % multi[:3])
+     os.makedirs(out_dir, exist_ok=True)
+     manifest = EP.export_ledger(led_s, mesh_fn=_to_bed_mesh_fn(statuses),
+                                 out_dir=out_dir, scale=scale)
+     # 切片概览增强(family x count x volume 已有; 补 role 视角与 in-void 弃量)
+     zone = "ARCH%02d" % (arch_idx + 1)
+     roles = {}
+     for s in led_s["stones"]:
+         roles[s["role_struct"]] = roles.get(s["role_struct"], 0) + 1
+@@ -2248,19 +2350,39 @@ def write_slice_notes(manifest, report, out_dir=SLICE_DIR,
+         % (len(over_ids), ", ".join(over_ids[:8]) or "无"),
+         "",
+         "## 缝的打印当量(模型 mm -> 打印件 mm)",
+         "- 券环放射缝 JOINT_GAP 12.5 -> 0.25; 后端 4.0 -> 0.08。",
+         "- 砧石真缝 GAP_W 10.0 -> 0.20; 面石-背衬隐缝 BACKING_GAP 2.0 -> 0.04。",
+         "- 装配制造间隙 FIT(TIGHT/NORMAL/LOOSE)= 0.15/0.30/0.50 (打印件",
+         "  直接尺寸, 非 1:50 换算; 1:50 下历史缝仅 0.04-0.25mm, 打不出,",
+         "  故配合靠 clearance 不靠历史缝)。",
+-        "- 带裁片的环-墙切割缝: 切割面与 RING 相贴(表征界面)但同样吃 FIT",
+-        "  余量, 打印当量 = GAP_W 0.20 + 2×clr ≈ 0.5-0.8mm —— 试印见此量",
+-        "  级宽缝属口径预期, 不是模型错误(T8c 口径披露, 复审实测)。",
++        "- 带裁片的环-墙切割缝: 切割面退让 ≤clr(仿射内缩, 见 T9 口径节),"
++        " 缝配合由名义 GAP_W 承担, 打印当量 ≈ GAP_W 0.20 + 切割面退让 "
++        "0~0.5mm —— 试印见此量级宽缝属口径预期, 不是模型错误(T8c 披露, "
++        "T9 仿射口径修订)。",
++        "",
++        "## T9 口径(装配余量来源 + run 升格 + 存量债务)",
++        "- inset = 逐轴仿射内缩(关于 bbox 中心, [lo,hi]->[lo+c,hi-c]): "
++        "bbox 装配贴合面(打印单元间配合面)精确退让 clr —— 配合公差吃在配"
++        "合面; 切割缝面(非轴对齐装饰面)退让 ≤c 且沿轴单调。切割面装配余",
++        "量来源 = 名义 GAP_W 缝语义不缩(1:50 历史缝 0.2mm 本打不出, 环-墙",
++        "切割界面是表征缝非精密配合) —— 旧实现只位移 bbox 极值顶点, 分段",
++        "映射不单射, 真失败件 fixture 实证 106 带裁片 post-inset 自交",
++        "(tests/fixtures/check_106/), 仿射映射单射故折叠类自交不可能。",
++        "- run 升格(审查裁决 MULTI_SHELL 不豁免): 带裁多 run 石拆独立打印",
++        "单元, 谱系 meta.scope.run_units.parent_ids; 现行真总体 475 石全",
++        "单 run, 机制为断料场景结构保证。试印包打包层遇多 run 石响亮拒绝",
++        "(逐 run STL 归 T5/T7 打包轮)。",
++        "- legacy clip 存量(check_stone.legacy_clip_survey, n=%d, n_fail="
++        "%d): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, "
++        "本轮不修。" % (report.get("check_stone", {})
++                           .get("legacy_clip_survey", {}).get("n", 0),
++                       report.get("check_stone", {})
++                           .get("legacy_clip_survey", {}).get("n_fail", 0)),
+         "",
+         "## 构成",
+         "| 族 | 数量 | 体积 cm3(打印件) |",
+         "|---|---|---|",
+         ] + fam_lines + [
+         "",
+         "- 石数: %d (roles: %s)" % (manifest["slice"]["stones"],
+                                     json.dumps(role_counts, sort_keys=True)),
+diff --git a/e30_shikongqiao_video/tests/fixtures/check_106/ARCH01.EAST.CORE.C07.B00.json b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH01.EAST.CORE.C07.B00.json
+new file mode 100644
+index 0000000..ed2f5ef
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH01.EAST.CORE.C07.B00.json
+@@ -0,0 +1,203 @@
++{
++ "schema": 1,
++ "id": "ARCH01.EAST.CORE.C07.B00",
++ "role": "CORE",
++ "fit": "NORMAL",
++ "clr_model_mm": 15.0,
++ "post_ok": false,
++ "post_fail_codes": [
++  "SELF_INTERSECT"
++ ],
++ "verts_pre": [
++  [
++   -75.0,
++   3.335801862,
++   2.0
++  ],
++  [
++   -73.83,
++   3.335801862,
++   2.0
++  ],
++  [
++   -72.941332674,
++   3.335801862,
++   2.096105493
++  ],
++  [
++   -72.820096326,
++   3.335801862,
++   2.189784792
++  ],
++  [
++   -72.694283703,
++   3.335801862,
++   2.277206534
++  ],
++  [
++   -72.578333333,
++   3.335801862,
++   2.349363214
++  ],
++  [
++   -72.578333333,
++   3.335801862,
++   2.363344054
++  ],
++  [
++   -75.0,
++   3.335801862,
++   2.363344054
++  ],
++  [
++   -75.0,
++   -3.335801862,
++   2.0
++  ],
++  [
++   -73.83,
++   -3.335801862,
++   2.0
++  ],
++  [
++   -72.941332674,
++   -3.335801862,
++   2.096105493
++  ],
++  [
++   -72.820096326,
++   -3.335801862,
++   2.189784792
++  ],
++  [
++   -72.694283703,
++   -3.335801862,
++   2.277206534
++  ],
++  [
++   -72.578333333,
++   -3.335801862,
++   2.349363214
++  ],
++  [
++   -72.578333333,
++   -3.335801862,
++   2.363344054
++  ],
++  [
++   -75.0,
++   -3.335801862,
++   2.363344054
++  ]
++ ],
++ "faces": [
++  [
++   7,
++   0,
++   1
++  ],
++  [
++   9,
++   8,
++   15
++  ],
++  [
++   7,
++   1,
++   2
++  ],
++  [
++   10,
++   9,
++   15
++  ],
++  [
++   7,
++   2,
++   3
++  ],
++  [
++   11,
++   10,
++   15
++  ],
++  [
++   7,
++   3,
++   4
++  ],
++  [
++   12,
++   11,
++   15
++  ],
++  [
++   7,
++   4,
++   5
++  ],
++  [
++   13,
++   12,
++   15
++  ],
++  [
++   5,
++   6,
++   7
++  ],
++  [
++   15,
++   14,
++   13
++  ],
++  [
++   1,
++   0,
++   8,
++   9
++  ],
++  [
++   2,
++   1,
++   9,
++   10
++  ],
++  [
++   3,
++   2,
++   10,
++   11
++  ],
++  [
++   4,
++   3,
++   11,
++   12
++  ],
++  [
++   5,
++   4,
++   12,
++   13
++  ],
++  [
++   6,
++   5,
++   13,
++   14
++  ],
++  [
++   7,
++   6,
++   14,
++   15
++  ],
++  [
++   0,
++   7,
++   15,
++   8
++  ]
++ ]
++}
+\ No newline at end of file
+diff --git a/e30_shikongqiao_video/tests/fixtures/check_106/ARCH03.EAST.SPANDREL.C07.B01.json b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH03.EAST.SPANDREL.C07.B01.json
+new file mode 100644
+index 0000000..5cbae36
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH03.EAST.SPANDREL.C07.B01.json
+@@ -0,0 +1,201 @@
++{
++ "schema": 1,
++ "id": "ARCH03.EAST.SPANDREL.C07.B01",
++ "role": "SPANDREL",
++ "fit": "TIGHT",
++ "clr_model_mm": 7.5,
++ "post_ok": true,
++ "post_fail_codes": [],
++ "verts_pre": [
++  [
++   -57.884,
++   3.361831354,
++   4.08
++  ],
++  [
++   -57.838330587,
++   3.361831354,
++   4.08
++  ],
++  [
++   -57.116117309,
++   3.354207593,
++   4.092376693
++  ],
++  [
++   -56.962594396,
++   3.323612706,
++   4.142045548
++  ],
++  [
++   -56.80685608,
++   3.297603249,
++   4.184270251
++  ],
++  [
++   -56.657,
++   3.277288515,
++   4.217249932
++  ],
++  [
++   -56.657,
++   3.210168646,
++   4.326214779
++  ],
++  [
++   -57.884,
++   3.210168646,
++   4.326214779
++  ],
++  [
++   -57.884,
++   2.161831354,
++   4.08
++  ],
++  [
++   -57.838330587,
++   2.161831354,
++   4.08
++  ],
++  [
++   -57.116117309,
++   2.154207593,
++   4.092376693
++  ],
++  [
++   -56.962594396,
++   2.123612706,
++   4.142045548
++  ],
++  [
++   -56.80685608,
++   2.097603249,
++   4.184270251
++  ],
++  [
++   -56.657,
++   2.077288515,
++   4.217249932
++  ],
++  [
++   -56.657,
++   2.010168646,
++   4.326214779
++  ],
++  [
++   -57.884,
++   2.010168646,
++   4.326214779
++  ]
++ ],
++ "faces": [
++  [
++   7,
++   0,
++   1
++  ],
++  [
++   9,
++   8,
++   15
++  ],
++  [
++   7,
++   1,
++   2
++  ],
++  [
++   10,
++   9,
++   15
++  ],
++  [
++   7,
++   2,
++   3
++  ],
++  [
++   11,
++   10,
++   15
++  ],
++  [
++   7,
++   3,
++   4
++  ],
++  [
++   12,
++   11,
++   15
++  ],
++  [
++   7,
++   4,
++   5
++  ],
++  [
++   13,
++   12,
++   15
++  ],
++  [
++   5,
++   6,
++   7
++  ],
++  [
++   15,
++   14,
++   13
++  ],
++  [
++   1,
++   0,
++   8,
++   9
++  ],
++  [
++   2,
++   1,
++   9,
++   10
++  ],
++  [
++   3,
++   2,
++   10,
++   11
++  ],
++  [
++   4,
++   3,
++   11,
++   12
++  ],
++  [
++   5,
++   4,
++   12,
++   13
++  ],
++  [
++   6,
++   5,
++   13,
++   14
++  ],
++  [
++   7,
++   6,
++   14,
++   15
++  ],
++  [
++   0,
++   7,
++   15,
++   8
++  ]
++ ]
++}
+\ No newline at end of file
+diff --git a/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.BACK.C07.B00.json b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.BACK.C07.B00.json
+new file mode 100644
+index 0000000..56c5d75
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.BACK.C07.B00.json
+@@ -0,0 +1,281 @@
++{
++ "schema": 1,
++ "id": "ARCH05.EAST.BACK.C07.B00",
++ "role": "BACK",
++ "fit": "NORMAL",
++ "clr_model_mm": 15.0,
++ "post_ok": false,
++ "post_fail_codes": [
++  "SELF_INTERSECT"
++ ],
++ "verts_pre": [
++  [
++   -42.196,
++   1.44112535,
++   4.313
++  ],
++  [
++   -42.181165683,
++   1.44112535,
++   4.313
++  ],
++  [
++   -41.759358763,
++   1.426422576,
++   4.341999013
++  ],
++  [
++   -41.639416662,
++   1.365134044,
++   4.462881433
++  ],
++  [
++   -41.514133382,
++   1.306643587,
++   4.578245074
++  ],
++  [
++   -41.383779331,
++   1.251078062,
++   4.687839723
++  ],
++  [
++   -41.2486241,
++   1.198551766,
++   4.79143995
++  ],
++  [
++   -41.108919304,
++   1.149162915,
++   4.888852039
++  ],
++  [
++   -41.06,
++   1.133481759,
++   4.919780763
++  ],
++  [
++   -41.06,
++   1.119681348,
++   4.947
++  ],
++  [
++   -42.196,
++   1.119681348,
++   4.947
++  ],
++  [
++   -42.196,
++   0.576597107,
++   4.313
++  ],
++  [
++   -42.181165683,
++   0.576597107,
++   4.313
++  ],
++  [
++   -41.759358763,
++   0.561894333,
++   4.341999013
++  ],
++  [
++   -41.639416662,
++   0.500605802,
++   4.462881433
++  ],
++  [
++   -41.514133382,
++   0.442115344,
++   4.578245074
++  ],
++  [
++   -41.383779331,
++   0.386549819,
++   4.687839723
++  ],
++  [
++   -41.2486241,
++   0.334023524,
++   4.79143995
++  ],
++  [
++   -41.108919304,
++   0.284634673,
++   4.888852039
++  ],
++  [
++   -41.06,
++   0.268953517,
++   4.919780763
++  ],
++  [
++   -41.06,
++   0.255153106,
++   4.947
++  ],
++  [
++   -42.196,
++   0.255153106,
++   4.947
++  ]
++ ],
++ "faces": [
++  [
++   10,
++   0,
++   1
++  ],
++  [
++   12,
++   11,
++   21
++  ],
++  [
++   10,
++   1,
++   2
++  ],
++  [
++   13,
++   12,
++   21
++  ],
++  [
++   10,
++   2,
++   3
++  ],
++  [
++   14,
++   13,
++   21
++  ],
++  [
++   10,
++   3,
++   4
++  ],
++  [
++   15,
++   14,
++   21
++  ],
++  [
++   10,
++   4,
++   5
++  ],
++  [
++   16,
++   15,
++   21
++  ],
++  [
++   10,
++   5,
++   6
++  ],
++  [
++   17,
++   16,
++   21
++  ],
++  [
++   10,
++   6,
++   7
++  ],
++  [
++   18,
++   17,
++   21
++  ],
++  [
++   10,
++   7,
++   8
++  ],
++  [
++   19,
++   18,
++   21
++  ],
++  [
++   8,
++   9,
++   10
++  ],
++  [
++   21,
++   20,
++   19
++  ],
++  [
++   1,
++   0,
++   11,
++   12
++  ],
++  [
++   2,
++   1,
++   12,
++   13
++  ],
++  [
++   3,
++   2,
++   13,
++   14
++  ],
++  [
++   4,
++   3,
++   14,
++   15
++  ],
++  [
++   5,
++   4,
++   15,
++   16
++  ],
++  [
++   6,
++   5,
++   16,
++   17
++  ],
++  [
++   7,
++   6,
++   17,
++   18
++  ],
++  [
++   8,
++   7,
++   18,
++   19
++  ],
++  [
++   9,
++   8,
++   19,
++   20
++  ],
++  [
++   10,
++   9,
++   20,
++   21
++  ],
++  [
++   0,
++   10,
++   21,
++   11
++  ]
++ ]
++}
+\ No newline at end of file
+diff --git a/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.SPANDREL.C07.B00.json b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.SPANDREL.C07.B00.json
+new file mode 100644
+index 0000000..0adae88
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/fixtures/check_106/ARCH05.EAST.SPANDREL.C07.B00.json
+@@ -0,0 +1,281 @@
++{
++ "schema": 1,
++ "id": "ARCH05.EAST.SPANDREL.C07.B00",
++ "role": "SPANDREL",
++ "fit": "NORMAL",
++ "clr_model_mm": 15.0,
++ "post_ok": false,
++ "post_fail_codes": [
++  "SELF_INTERSECT"
++ ],
++ "verts_pre": [
++  [
++   -42.196,
++   3.84312535,
++   4.313
++  ],
++  [
++   -42.181165683,
++   3.84312535,
++   4.313
++  ],
++  [
++   -41.759358763,
++   3.828422576,
++   4.341999013
++  ],
++  [
++   -41.639416662,
++   3.767134044,
++   4.462881433
++  ],
++  [
++   -41.514133382,
++   3.708643587,
++   4.578245074
++  ],
++  [
++   -41.383779331,
++   3.653078062,
++   4.687839723
++  ],
++  [
++   -41.2486241,
++   3.600551766,
++   4.79143995
++  ],
++  [
++   -41.108919304,
++   3.551162915,
++   4.888852039
++  ],
++  [
++   -41.06,
++   3.535481759,
++   4.919780763
++  ],
++  [
++   -41.06,
++   3.521681348,
++   4.947
++  ],
++  [
++   -42.196,
++   3.521681348,
++   4.947
++  ],
++  [
++   -42.196,
++   1.44312535,
++   4.313
++  ],
++  [
++   -42.181165683,
++   1.44312535,
++   4.313
++  ],
++  [
++   -41.759358763,
++   1.428422576,
++   4.341999013
++  ],
++  [
++   -41.639416662,
++   1.367134044,
++   4.462881433
++  ],
++  [
++   -41.514133382,
++   1.308643587,
++   4.578245074
++  ],
++  [
++   -41.383779331,
++   1.253078062,
++   4.687839723
++  ],
++  [
++   -41.2486241,
++   1.200551766,
++   4.79143995
++  ],
++  [
++   -41.108919304,
++   1.151162915,
++   4.888852039
++  ],
++  [
++   -41.06,
++   1.135481759,
++   4.919780763
++  ],
++  [
++   -41.06,
++   1.121681348,
++   4.947
++  ],
++  [
++   -42.196,
++   1.121681348,
++   4.947
++  ]
++ ],
++ "faces": [
++  [
++   10,
++   0,
++   1
++  ],
++  [
++   12,
++   11,
++   21
++  ],
++  [
++   10,
++   1,
++   2
++  ],
++  [
++   13,
++   12,
++   21
++  ],
++  [
++   10,
++   2,
++   3
++  ],
++  [
++   14,
++   13,
++   21
++  ],
++  [
++   10,
++   3,
++   4
++  ],
++  [
++   15,
++   14,
++   21
++  ],
++  [
++   10,
++   4,
++   5
++  ],
++  [
++   16,
++   15,
++   21
++  ],
++  [
++   10,
++   5,
++   6
++  ],
++  [
++   17,
++   16,
++   21
++  ],
++  [
++   10,
++   6,
++   7
++  ],
++  [
++   18,
++   17,
++   21
++  ],
++  [
++   10,
++   7,
++   8
++  ],
++  [
++   19,
++   18,
++   21
++  ],
++  [
++   8,
++   9,
++   10
++  ],
++  [
++   21,
++   20,
++   19
++  ],
++  [
++   1,
++   0,
++   11,
++   12
++  ],
++  [
++   2,
++   1,
++   12,
++   13
++  ],
++  [
++   3,
++   2,
++   13,
++   14
++  ],
++  [
++   4,
++   3,
++   14,
++   15
++  ],
++  [
++   5,
++   4,
++   15,
++   16
++  ],
++  [
++   6,
++   5,
++   16,
++   17
++  ],
++  [
++   7,
++   6,
++   17,
++   18
++  ],
++  [
++   8,
++   7,
++   18,
++   19
++  ],
++  [
++   9,
++   8,
++   19,
++   20
++  ],
++  [
++   10,
++   9,
++   20,
++   21
++  ],
++  [
++   0,
++   10,
++   21,
++   11
++  ]
++ ]
++}
+\ No newline at end of file
+diff --git a/e30_shikongqiao_video/tests/test_p1_export.py b/e30_shikongqiao_video/tests/test_p1_export.py
+index df45c20..104ecfd 100644
+--- a/e30_shikongqiao_video/tests/test_p1_export.py
++++ b/e30_shikongqiao_video/tests/test_p1_export.py
+@@ -204,21 +204,27 @@ def test_stl_volume_matches_print_scale_and_outward():
+         r = E.export_stone(stone, v, f, td, scale=S50)
+         blob, n = _stl_counts(r["stl"])
+         offs = np.frombuffer(blob[84:84 + 50 * n], dtype=np.uint8).reshape(n, 50)
+         rows = offs[:, :48].copy().view(np.float32).reshape(n, 4, 3)
+         sv = 0.0
+         for r in rows:
+             a, b, c = (r[i].astype(float) for i in (1, 2, 3))  # [0]=法线
+             sv += float(a @ np.cross(b, c)) / 6.0
+-        # 解析: 楔形 post-inset 体积 = (w-2c)(h-2c)(d-c)(inset 只动界顶点);
+-        # c 为 W3 新口径的模型侧量: NORMAL 0.3 打印毫米 / (1/50) = 15 模型毫米。
++        # 解析(T9 仿射内缩定律): V1 = |V0| * Π s_ax, s_ax=(ext_ax-2c)/ext_ax
++        # —— 单射仿射映射体积恰乘三轴缩放系数(对任意形状成立); 旧"极值顶点
++        # 平移"的 (d-c) 闭式随分段映射一并作废(该映射不单射, 真失败件
++        # fixture 实证 106 带裁片自交)。c 为 W3 口径模型侧量:
++        # NORMAL 0.3 打印毫米 / (1/50) = 15 模型毫米。
+         cm = (0.3 / S50) / 1000.0
+-        expect_mm3 = (2.0 - 2 * cm) * (0.5 - 2 * cm) * (1.0 - cm) \
+-            * S50 ** 3 * 1e9
++        ext = [max(p[ax] for p in v) - min(p[ax] for p in v) for ax in range(3)]
++        expect_mm3 = (abs(E.signed_volume(v, f))
++                      * (ext[0] - 2 * cm) / ext[0]
++                      * (ext[1] - 2 * cm) / ext[1]
++                      * (ext[2] - 2 * cm) / ext[2]) * S50 ** 3 * 1e9
+         assert sv == pytest.approx(expect_mm3, rel=1e-5)
+         assert sv > 0                        # 外翻(右手序朝外)
+ 
+ 
+ def test_3mf_members_and_counts():
+     import tempfile
+     v, f = family_mesh("slab", {"w": 1.0, "h": 0.4, "d": 0.8})
+     stone = _stone("ARCH01", "EAST", "PAVING", 0, 0, "slab",
+@@ -292,20 +298,25 @@ def test_manifest_family_batches(tmp_path):
+     led = _led([
+         _stone("ARCH01", "EAST", "RING", 0, 0, "wedge-std", _wedge()),
+         _stone("ARCH01", "EAST", "RING", 0, 1, "wedge-std", _wedge()),
+     ])
+     man = E.export_ledger(led, _mesh_fn, str(tmp_path), scale=S50)
+     fam = man["families"]["wedge-std"]
+     assert fam["count"] == 2
+     assert fam["stl"].endswith(".stl")
+-    # 楔形平行六面体体积 = w*h*d; inset 只动 bbox 界顶点 -> 底面缩 2c 顶面不动,
+-    # 平均深 d-c, 体积 = (w-2c)(h-2c)(d-c)
++    # T9 仿射内缩定律: V1 = |V0| * Π (ext_ax-2c)/ext_ax(对任意形状成立;
++    # 旧"极值顶点平移"的 d-c 闭式随分段映射一并作废)
+     c = (0.3 / S50) / 1000.0   # NORMAL: 打印 0.3mm -> 模型侧 15mm
+-    one = (1.0 - 2 * c) * (0.4 - 2 * c) * (1.0 - c) * S50 ** 3 * 1e6
++    wv, wf = family_mesh("wedge-std", _wedge())
++    ext = [max(p[ax] for p in wv) - min(p[ax] for p in wv) for ax in range(3)]
++    one = (abs(E.signed_volume(wv, wf))
++           * (ext[0] - 2 * c) / ext[0]
++           * (ext[1] - 2 * c) / ext[1]
++           * (ext[2] - 2 * c) / ext[2]) * S50 ** 3 * 1e6
+     assert fam["volume_cm3"] == pytest.approx(2 * one, rel=1e-9)
+     assert [s["batch"] for s in man["stones"]] == [0, 0]
+     assert man == json.loads(json.dumps(man))    # 纯 JSON 可回读
+     with open(os.path.join(str(tmp_path), "manifest.json")) as fh:
+         assert json.load(fh) == man
+ 
+ 
+ def test_manifest_records_fit_and_clearance_timing(tmp_path):
+diff --git a/e30_shikongqiao_video/tests/test_p1_slice.py b/e30_shikongqiao_video/tests/test_p1_slice.py
+index 0103cc7..1220218 100644
+--- a/e30_shikongqiao_video/tests/test_p1_slice.py
++++ b/e30_shikongqiao_video/tests/test_p1_slice.py
+@@ -3,16 +3,17 @@
+ 
+ 覆盖: RING/IMPOST 两新族锚语义(masonry2 分派)、families._baked 还原、
+ 账目条目构造与 materialize 可逆性(含负控制)、耳切三角化(非凸环扇帽面)、
+ 相邻缝对采样、G2 报告结构闸门(含篡改负控)、gap 两级判负控制。
+ Blender 内部分(数量/顶点互证)在 p1a_slice --g2 自 assert, 不在此重复。
+ """
+ import copy
+ import json
++import math
+ import os
+ import sys
+ 
+ import pytest
+ 
+ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
+ import masonry2 as M2  # noqa: E402
+ import families as FAM  # noqa: E402
+@@ -226,18 +227,20 @@ def test_sample_even_deterministic_and_bounded():
+ 
+ # ── G2 报告结构闸门(含篡改负控) ───────────────────────────────────────
+ 
+ def _good_report():
+     return {
+         "meta": {"schema": 2, "gate": "G2", "scale": 0.02, "scale_denom": 50,
+                  "volume_caliber": {"statement": "x"},
+                  "counts": {"stones": 3, "print_units": 2,
++                            "print_stones": 2, "run_units": 0,
+                             "ring_total": 193, "impost_total": 492},
+-                 "scope": {"print_units": 2, "excluded": [
++                 "scope": {"print_units": 2, "print_stones": 2,
++                           "run_units": [], "excluded": [
+                      {"bucket": "in_void", "n": 1},
+                      {"bucket": "void_cut_fragment", "n": 0},
+                      {"bucket": "ring_band_overlap", "n": 0},
+                      {"bucket": "thin_merge", "n": 0}]}},
+         "check_stone": {"n": 2, "n_fail": 0, "fails": [],
+                         "fail_matrix": {}, "legacy_clip_survey":
+                             {"n": 0, "n_fail": 0, "matrix": {}}},
+         "gap_check": {"n_pairs": 4, "n_fail": 0, "fails": [],
+@@ -315,16 +318,67 @@ def test_validate_g2_report_negative_controls():
+     r9 = copy.deepcopy(base)                     # fail_matrix 互证
+     r9["verdict"] = "FAIL"
+     r9["check_stone"]["n_fail"] = 1
+     r9["check_stone"]["fails"] = [{"id": "X", "issues": []}]
+     r9["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 2}
+     assert any("fail_matrix" in q for q in P.validate_g2_report(r9))
+     r9["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
+     assert P.validate_g2_report(r9) == []
++    # ── T9 W1: subsume 材料闸严格 AND(镜像 trim 侧) —— 面积桶账
++    # subsumed_by_area_bucket 是另一口径, 不可替代 volume 宇宙的
++    # removed_model_cm3.subsumed(篡改=把 subsume 材料流记成 0 仍过闸) ──
++    r10 = copy.deepcopy(base)                    # 合法 FAIL 变体打底
++    r10["verdict"] = "FAIL"
++    r10["check_stone"]["n_fail"] = 1
++    r10["check_stone"]["fails"] = [{"id": "X", "issues": []}]
++    r10["check_stone"]["fail_matrix"] = {"SELF_INTERSECT": 1}
++    r10["ring_dedup"]["final_scope_check"]["n_colliding"] = 1
++    r10["ring_dedup"]["final_scope_check"]["pairs"] = [{"chain": "X"}]
++    r10["ring_dedup"]["summary"]["n_subsumed"] = 2
++    r10["ring_dedup"]["subsumed_ids"] = ["A", "B"]
++    r10["ring_dedup"]["summary"]["removed_model_cm3"]["subsumed"] = 0.0
++    r10["ring_dedup"]["summary"]["removed_model_cm3"][
++        "subsumed_by_area_bucket"] = 5.8e7       # 面积桶账在, 也必须红
++    qs = P.validate_g2_report(r10)
++    assert any("removed_model_cm3.subsumed" in q for q in qs), qs
++    r10["ring_dedup"]["summary"]["removed_model_cm3"]["subsumed"] = 33.0
++    assert P.validate_g2_report(r10) == []       # 材料账到手即绿
++    # ── T9 run 升格谱系闸: 守恒以石计 + run_units 必须带 parent_ids ──
++    r11 = copy.deepcopy(base)                    # 合法 run 升格变体(对照)
++    r11["meta"]["counts"]["stones"] = 4
++    r11["meta"]["counts"]["print_units"] = 3
++    r11["meta"]["counts"]["print_stones"] = 2
++    r11["meta"]["counts"]["run_units"] = 1
++    r11["check_stone"]["n"] = 3
++    r11["meta"]["scope"]["print_units"] = 3
++    r11["meta"]["scope"]["print_stones"] = 2
++    r11["meta"]["scope"]["run_units"] = [{"unit_id": "S#R0",
++                                          "parent_ids": ["S"]}]
++    r11["meta"]["scope"]["excluded"][0]["n"] = 2
++    assert P.validate_g2_report(r11) == []
++    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = []   # 谱系被抹
++    assert any("parent_ids" in q
++               for q in P.validate_g2_report(r11))
++    r11["meta"]["scope"]["run_units"][0]["parent_ids"] = ["S"]
++    r11["meta"]["counts"]["print_units"] = 4                  # 差值互证破坏
++    assert any("print_units != print_stones" in q
++               for q in P.validate_g2_report(r11))
++
++
++def test_real_population_ledger_gate_fails_loud_when_missing(monkeypatch):
++    """T9 W2 负控: ledger_full.json 缺失时真总体钉数据闸必须 raise
++    (fail-on-skip), 而不是 pytest.skip 制造干净克隆假绿。"""
++    import sys
++    this_mod = sys.modules[__name__]
++    monkeypatch.setattr(this_mod, "_LEDGER_FULL",
++                        os.path.join(os.path.dirname(__file__),
++                                     "fixtures", "no_such_ledger.json"))
++    with pytest.raises(RuntimeError, match="fail-on-skip"):
++        this_mod._load_real_ledger_or_fail()
+ 
+ 
+ def test_g2_gate_constants():
+     assert P.G2_SCALE == 1.0 / 50.0
+     assert P.G2_MIN_WALL_PRINT_MM == 1.2
+     assert P.G2_GAP_TOL_MODEL_MM == 0.5
+     assert P.G2_GAP_PAIRS_PER_ARCH == 20
+     assert P.G2_N_ARCH == 17
+@@ -718,30 +772,167 @@ def test_ring_trim_clears_partner_and_ring_solids():
+             P._preinset_gap_entry(ring, statuses))
+         assert rep["ok"], "%s 裁后仍撞 RING: %r" % (sid, rep["issues"])
+     rep, _ph, _d = P.gap_check_pair(
+         P._preinset_gap_entry(face, statuses),
+         P._preinset_gap_entry(partner, statuses))
+     assert rep["ok"], "裁后 face×partner 实体互穿: %r" % (rep["issues"],)
+ 
+ 
++# ---------------------------------------------------------------------------
++# T9: 带裁片 post-inset 自交回归(真失败件 fixture, P1 处方: 合成非凸件抓
++# 不到)。fixture 由 3d/dump_check_fixtures.py 从真账重放生成并入库
++# (tests/fixtures/check_106/): 同带全绿负控 1 件 + 真失败件(极值带顶点数
++# 降序, 跨角色)。判据: 任意档位 clr 下 post-inset 无 SELF_INTERSECT;
++# 含 T8c 单调性反转钉(15mm 曾 106/106 全红, 现 0)。
++
++_FIXTURE_DIR_106 = os.path.join(os.path.dirname(__file__), "fixtures",
++                                "check_106")
++
++
++def _check106_fixtures():
++    # type: () -> list
++    return sorted(f for f in os.listdir(_FIXTURE_DIR_106)
++                  if f.endswith(".json"))
++
++
++@pytest.mark.parametrize("fname", _check106_fixtures())
++def test_check106_fixture_post_inset_no_self_intersect(fname):
++    import export_print as EP
++    with open(os.path.join(_FIXTURE_DIR_106, fname),
++              encoding="utf-8") as fh:
++        meta = json.load(fh)
++    faces = [tuple(f) for f in meta["faces"]]
++    # 该件入库时的现况必须与 post_ok 字段一致(防止 fixture 与实现漂移后
++    # 判据恒真: 负控件必须仍绿、失败件在修复前实现下必须红 —— 由
++    # test_check106_monotonicity_inverted 的 15mm 档共同钉住)
++    for clr in (meta["clr_model_mm"], 7.5, 15.0, 25.0):
++        v2, f2 = EP.flip_outward(EP.inset(meta["verts_pre"], clr), faces)
++        rep = P.PC.check_stone(v2, f2, scale=P.G2_SCALE,
++                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
++        codes = sorted({i["code"] for i in rep["issues"]})
++        assert "SELF_INTERSECT" not in codes, \
++            "%s clr=%.1fmm post-inset 自交: %r" % (meta["id"], clr,
++                                                   rep["issues"][:3])
++
++
++def test_check106_fixture_population_and_control():
++    """fixture 总体自证: 失败件 >=3 且跨角色, 负控件(post_ok=True)在列,
++    防止 fixture 目录被清空后判据恒真(没有失败件的回归钉是摆设)。"""
++    ids = _check106_fixtures()
++    assert len(ids) >= 4, "fixture 缺失: %r" % ids
++    metas = []
++    for fn in ids:
++        with open(os.path.join(_FIXTURE_DIR_106, fn),
++                  encoding="utf-8") as fh:
++            metas.append(json.load(fh))
++    fails = [m for m in metas if not m["post_ok"]]
++    controls = [m for m in metas if m["post_ok"]]
++    assert len(fails) >= 3 and len(controls) >= 1
++    assert {m["role"] for m in fails} >= {"SPANDREL", "BACK", "CORE"}
++
++
++def test_lift_coverage_pads_and_edge_is_strip_boundary():
++    """T9 85 钉(两类根因): ①lift 覆盖含外弧角点越出段(pad = sin·(ring_t+
++    lift) 与 JOINT_GAP_BACK 的代数和, 钳回 [x0,x1]; 角度缺失 -> 覆盖==
++    stations, 旧口径逐位); ②覆盖边界必须成为条带边界 —— 台阶落在条带内部
++    时单段线性 bound 把台阶抹成斜坡, 覆盖边界邻域欠割至多一整个 lift
++    (ARCH07.CORE.C14.B01 实测: hit z[6.29,6.33] vs 真界 6.336, 36400cm3)。"""
++    # ① pad 口径
++    cov = P._ring_lift_coverage({"stations": [-1.0, 1.0],
++                                 "angles": [-6.650228459881308,
++                                            6.650228459879352],
++                                 "ring_t": 0.54, "lift": 0.07})
++    proj = 0.54 + 0.07
++    ext = math.sin(math.radians(6.650228459881308)) * proj
++    assert cov[0] == pytest.approx(-1.0 - (ext - 0.004), abs=1e-12)
++    assert cov[1] == pytest.approx(1.0 + (ext - 0.004), abs=1e-12)
++    assert P._ring_lift_coverage({"stations": [-1.0, 1.0],
++                                  "ring_t": 0.54, "lift": 0.07}) == \
++        (-1.0, 1.0, 0.07)              # 无角度 -> 旧 stations 口径
++    assert P._ring_lift_coverage({"stations": [-1.0, 1.0], "lift": 0.0}) \
++        is None                        # 无 lift 无覆盖
++    # ② 覆盖边界成条带边界 + 台阶点不被抽稀: 用真 keystone 的浅法向角
++    # (±6.65°, ARCH06 实测) —— 台阶点恰落在来向平滑曲线上, 旧抽稀会把它
++    # 当共线点丢掉(右缘弦下切 13mm -> 环端面掠穿), 所以钉"poly 恰在覆盖
++    # 边界处有顶点"而不是只钉条带边界。
++    stone = _core_slab(-2.0, 2.0, 0.1, 0.9, 6.0, 7.5)
++    ring_p = {"stations": [-0.5, 0.5],
++              "angles": [-6.650228459881308, 6.650228459879352],
++              "ring_t": 0.54, "lift": 0.07}
++    cov = P._ring_lift_coverage(ring_p)
++    kept, _removed = P._band_trim_polys(stone, 8, [{"params": ring_p}])
++    assert kept, "跨拱顶石必须产生带裁保留片"
++    edge_xs = {p[0] for poly in kept for p in poly}
++    for target in cov[:2]:
++        assert any(abs(ex - target) < 1e-9 for ex in edge_xs), \
++            ("覆盖边界 %r 不在条带边界上(台阶被抹成斜坡): %r"
++             % (target, sorted(edge_xs)[:8]))
++
++
++def test_run_units_split_lineage_and_each_shell_clean():
++    """T9 run 升格钉(审查裁决: MULTI_SHELL 不豁免): 多 run 带裁石必须拆成
++    独立打印单元(id '<石id>#R<i>', 谱系 parent_ids=[石id]), 每个单元单独
++    过 check 无 MULTI_SHELL。负控: 不拆的整石单 mesh(旧行为)必须红
++    MULTI_SHELL —— 升格是真拆分, 不是豁免重命名。单 run 石恒等返回自身。"""
++    stone = _core_slab(0.0, 3.0, 0.1, 0.9, 4.0, 5.0)
++    sid = stone["id"]
++    run_a = [(0.0, 4.0), (0.8, 4.0), (0.8, 5.0), (0.0, 5.0)]
++    run_b = [(2.2, 4.0), (3.0, 4.0), (3.0, 5.0), (2.2, 5.0)]
++    statuses = {sid: ("ring_trim", [run_a, run_b])}
++    # 负控: 整石单 mesh = 两个互断闭合壳 -> MULTI_SHELL 必红
++    v_all, f_all = P.world_mesh(stone, statuses)
++    rep_all = P.PC.check_stone(v_all, f_all, scale=P.G2_SCALE,
++                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
++    assert any(i["code"] == "MULTI_SHELL" for i in rep_all["issues"]), \
++        rep_all["issues"]
++    # 升格: 拆成两个独立单元, 谱系 + 各自单壳干净
++    units = P._print_units(stone, statuses)
++    assert [u[0] for u in units] == [sid + "#R0", sid + "#R1"]
++    for (uid, polys_view) in units:
++        verts, faces = P._ring_trim_mesh(polys_view, stone)
++        fit, clr_model = P.EP.fit_for_block(P.EP._extents_m(verts), P.G2_SCALE)
++        v2, f2 = P.EP.flip_outward(P.EP.inset(verts, clr_model), faces)
++        rep = P.PC.check_stone(v2, f2, scale=P.G2_SCALE,
++                               min_wall_print_mm=P.G2_MIN_WALL_PRINT_MM)
++        assert not any(i["code"] == "MULTI_SHELL" for i in rep["issues"]), \
++            (uid, rep["issues"])
++    # 单 run / 非带裁石恒等
++    assert P._print_units(stone, {sid: ("ring_trim", [run_a])}) == \
++        [(sid, None)]
++    assert P._print_units(stone, {sid: ("out", [])}) == [(sid, None)]
++
++
+ # ---------------------------------------------------------------------------
+ # T8c 真总体落位回归(C-T8b-1 防再犯): 现有判据全 x-z 口径, y 向错位不可
+ # 见 —— 上面两条钉死测试是合成迷你账, 这里对【真账本全量 489 裁石】钉
+ # y 区间与符号。管线一次 ~140s(纯 python, 无 blender), module 级 fixture
+ # 两条测试共享。
+ _LEDGER_FULL = os.path.join(os.path.dirname(__file__), "..", "3d",
+                             "out", "ledger_full.json")
+ 
+ 
++def _load_real_ledger_or_fail():
++    # type: () -> dict
++    """T9 W2: 真总体钉(③④⑤+材料恒等)的数据闸 —— ledger_full.json 缺失时
++    【fail-on-skip】, 不再静默 skip。skip 会让"229 passed"掩盖 3 条未执行
++    的钉子(干净克隆假绿); 真钉必须要么真跑、要么响亮失败。数据由
++    `blender -b --python 3d/p1a_slice.py -- --g2` 一次性产出(需要 blender
++    建 RING/IMPOST 账, 纯 pytest 环境无法自建), 故允许有意跳过者显式
++    --deselect 本组钉子, 而不是被动绿灯。"""
++    if not os.path.exists(_LEDGER_FULL):
++        raise RuntimeError(
++            "out/ledger_full.json 不在盘上 —— 真总体钉 fail-on-skip(T9 W2,"
++            " 干净克隆不许假绿): 先跑 blender -b --python 3d/p1a_slice.py "
++            "-- --g2 产出账本; 或显式 --deselect 真总体钉(不许静默跳过)")
++
++
+ @pytest.fixture(scope="module")
+ def real_ring_trim_state():
+-    if not os.path.exists(_LEDGER_FULL):
+-        pytest.skip("out/ledger_full.json 不在盘上: 先跑 blender -b "
+-                    "--python 3d/p1a_slice.py -- --g2")
++    _load_real_ledger_or_fail()
+     led = copy.deepcopy(json.load(open(_LEDGER_FULL)))
+     statuses = P.classify_full(led["stones"])
+     sc = P.print_scope(led, statuses)
+     arch_idx_of = {"ARCH%02d" % (i + 1): i for i in range(P.G2_N_ARCH)}
+     rd = P._ring_dedup_dispositions(led, statuses, sc["scope"],
+                                     sc["buckets"], arch_idx_of)
+     by_id = {s["id"]: s for s in led["stones"]}
+     trim_ids = sorted(sid for sid, st in statuses.items()

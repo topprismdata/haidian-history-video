@@ -1,0 +1,408 @@
+=== commit ===
+commit 93a9be17c918c6d42be6d271442566ede100db86
+Author: topprismdata <topprismdata@users.noreply.github.com>
+Date:   Wed Oct 7 11:54:13 2026 +0800
+
+    feat(e30): P2-T4 序列器(R0-R7+frontier+平衡度+曲线回写)
+
+=== DIFF(sequencer) ===
+commit 93a9be17c918c6d42be6d271442566ede100db86
+Author: topprismdata <topprismdata@users.noreply.github.com>
+Date:   Wed Oct 7 11:54:13 2026 +0800
+
+    feat(e30): P2-T4 序列器(R0-R7+frontier+平衡度+曲线回写)
+
+diff --git a/e30_shikongqiao_video/3d/sequencer.py b/e30_shikongqiao_video/3d/sequencer.py
+new file mode 100644
+index 0000000..5d829f9
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/sequencer.py
+@@ -0,0 +1,1057 @@
++# e30_shikongqiao_video/3d/sequencer.py
++# -*- coding: utf-8 -*-
++"""P2-T4 建造序列器: R0-R7 规则引擎 + frontier 状态机 → 事件流 + stage 分组。
++
++输入: 石账(ledger v2, 5935 真源只读) + 券架表(centering.build_centering_for_arch)。
++输出: {"events", "sequence", "frontier_trace", "meta"}; 券石支撑曲线回写石账
++**副本** out/ledger_sequenced.json(原 ledger_full.json 永不改动)。
++
++规则(spec v2.1 §2, 逐条实现+每规则≥1 测试):
++- R0 良构性: seq 从 1 起全局连续递增; 每石恰出现在一个 MASONRY 事件; 角色可分类。
++- R1 墩 z 升序: 孔内 IMPOST/PIER(墩肩/拱座)先砌, 逐石 z_bottom 非降序。
++- R2 券架先行: 每孔先发 HOLD_EVENT(hole, stone_id=CEN-ARCHxx) 为立架锚事件
++  (7 类事件词表中唯一可合法引用券架的持荷形态, events.py 前缀分流核); 全部
++  RING 石 PLACE_STONE 的 prereq ⊇ {立架 seq} 且 seq ∈ (立架, 合龙) 开窗。
++- R3 荷载平衡度: 券石按弧参数 θ 两侧交替——θ 中值镜像配对(东/西对称对),
++  配对为放置单位; 每孔以**偶数位前缀(配对完成)与收尾前缀**核
++  |W_L−W_R|/(W_L+W_R) ≤ ε。单石前缀(首块券石落座 W 单侧=满重)由墩台直接
++  承托非拱作用承担, 不入核——否则闸恒假。W=体积×密度, 密度取 STONE_DENSITY=1.0:
++  R3 比值对共同密度因子不变, 则例石作密度论题在册(C:A1-A5)但无数值, 禁发明
++  [三红线]。体积估计纯消费 facts.arch_z 单源(弧长×环厚×width_at 桥宽)。
++- R4 合龙持荷落架: CLOSE_RING(prereq ⊇ 该孔全部 RING 置放) → ≥min_hold 个
++  HOLD_EVENT → DECENTER_START → WEDGE_RELEASE×k 沿 λ 栅格 {0.25,.5,.75,1.0}
++  逐档全走(load_lambda=已释放荷载份额) → CENTERING_CLEAR。
++  min_hold=3 [工程参数·敏感性]。
++- R5a 环肩锁固: 环肩咬合石(params.clipped_by=="ring_band")与下部锁固肩
++  (判据: 石底 z ≤ 该孔 extrados[facts.arch_z+params.ring_t] ∧ 石 bbox 与券架
++  parts bbox[全局系] 无碰撞)排 CLOSE 后 CLEAR 前, prereq ⊇ {合龙 seq}。
++- R5b 其余肩背胞: 其余 SPANDREL/BACK/CORE 排 CENTERING_CLEAR 后。
++- R6 frontier 状态机: 孔状态 UNBUILT < RING_CLOSED < CLOSED_SUPPORTED <
++  DECENTERING < CLEARED < FILLED; 跨孔组合表禁: 相邻孔同时 DECENTERING;
++  孔 i DECENTERING 而 i±1 < CLOSED_SUPPORTED(跳孔落架)。组合表反推构造
++  日程必须两波: 波1 逐孔砌至持荷(CLOSED_SUPPORTED), 波2 逐孔落架拆架填胞
++  —— 否则首孔落架时邻孔必 UNBUILT, 恒违例。
++- R7 面上最后: PAVING → RAIL/POST → CARVE 全局收尾(真账 5935 石暂无此四角色,
++  形制就绪; 合成账钉测试)。
++
++石账支撑曲线回写(回写副本, 石账纯度红线: 券架/事件不进石账):
++- IMPOST/PIER: foundation 边 [[place,1.0]](墩台直接承托)。
++- RING/R5a: centering 边按 λ 阶梯衰减 [[place,1.0],[DECENTER,1.0],
++  [W1,0.75],[W2,0.5],[W3,0.25],[W4,0.0],[CLEAR,0.0]] + stone 边自持接管
++  [[W4,1.0]](拱圈自持, RING)/[[CLEAR,1.0]](肩石落于环体)。
++- 其余(R5b): stone 边 [[place,1.0]]。
++全部 curve x 均为真实事件 seq(E.event_seqs 交叉核)。
++
++史料引用(construction_history.md 编号, GRADES=inferred——序列细节靠通例+实物
++反推, C:A3 明示则例无工序教科书): 立架/落架/拆架=C:A3/B14; 券石=C:A2/B14;
++合龙/持荷=B14; 撞券石=C:A2; 背胞fill=C:A1; R7=C:A1。
++
++Python 3.9.6 纯 stdlib, blender-free; 几何禁第二套公式(消费 geom_math/facts)。
++"""
++import copy
++import json
++import math
++import os
++from typing import Any, Dict, List, Optional
++
++import ledger as L
++import events as E
++import centering as CEN
++import geom_math as GM
++import facts as F
++
++EPS_DEFAULT = 0.15          # [工程参数·敏感性] R3 平衡度阈
++MIN_HOLD_DEFAULT = E.MIN_HOLD_DEFAULT
++LAMBDA_LADDER = (0.25, 0.5, 0.75, 1.0)   # λ 档全走(spec 1/4 步进)
++STONE_DENSITY = 1.0         # R3 比值对共同密度不变, 不发明无出处常数[三红线]
++PAIR_MIRROR_TOL = 1e-6      # θ 镜像配对容差(度)
++EXTRADOS_EPS = 1e-9         # z 比较浮点容差
++
++# 角色分类(R0 fail-closed: 未登记角色报错, 不静默归类)
++IMPOST_ROLES = ("IMPOST", "PIER")            # R1: 墩肩/拱座, 立架前
++RING_ROLE = "RING"
++FILL_ROLES = ("SPANDREL", "BACK", "CORE")    # R5a/R5b 分类域
++R7_PAVING = ("PAVING",)
++R7_RAIL_POST = ("RAIL", "POST")
++R7_CARVE = ("CARVE",)
++KNOW_ROLES = IMPOST_ROLES + (RING_ROLE,) + FILL_ROLES + R7_PAVING + R7_RAIL_POST + R7_CARVE
++
++R7_ORDER = ("PAVING", "RAIL_POST", "CARVE")
++
++# frontier 状态(严格升序)
++FRONTIER_STATES = ("UNBUILT", "RING_CLOSED", "CLOSED_SUPPORTED",
++                   "DECENTERING", "CLEARED", "FILLED")
++_STATE_RANK = {s: i for i, s in enumerate(FRONTIER_STATES)}
++
++# 事件证据编号(refs/construction_history.md; 形制 A\d+|B\d+|C:[AB]\d+)
++EV_IMPOST = "C:A2"          # 撞券石名目
++EV_CEN = "C:A3/B14"         # 支拆券胎在册 + 落架拆除反证
++EV_RING = "C:A2/B14"        # 券石名目 + 对称砌筑→合龙→落架序锚
++EV_CLOSE = "B14/C:A2"       # 合龙石楔入
++EV_HOLD = "B14"             # 合龙前拱圈不能自持→持荷
++EV_SHOULDER = "B14"         # 券体依赖周围砌体共同工作(孔庆普拆除实证)
++EV_FILL = "C:A1"            # 则例石作制度
++EV_R7 = "C:A1"
++
++
++class SequencerError(Exception):
++    """序列构造自检失败(负控/自闸), 携带规则码(如 R3_IMBALANCE)。"""
++
++
++# ---------------------------------------------------------------------------
++# 石几何估计(纯 params 消费; 断面语义同 masonry2: wedge-std transform=块中心,
++# slab transform=最小角(bbox 直写))
++# ---------------------------------------------------------------------------
++
++def _role(sid):
++    # type: (str) -> str
++    return sid.split(".")[2]
++
++
++def _stone_xz(stone):
++    # type: (Dict[str, Any]) -> Any
++    """石中点 (x_mid, z_bottom, z_mid) 估计: wedge-std=transform 中心±h/2;
++    slab=paramsgroup bbox; 其余回退 transform[2]。"""
++    p = stone.get("params", {}) or {}
++    role = _role(stone.get("id", ""))
++    if role == "CORE" and isinstance(p.get("bbox"), dict):
++        bb = p["bbox"]
++        return ((bb["x0"] + bb["x1"]) / 2.0, bb["z0"],
++                (bb["z0"] + bb["z1"]) / 2.0)
++    tz = stone.get("transform", [0, 0, 0])[2]
++    h = p.get("h")
++    if isinstance(h, (int, float)) and not isinstance(h, bool):
++        return (stone.get("transform", [0, 0, 0])[0], tz - h / 2.0, tz)
++    return (stone.get("transform", [0, 0, 0])[0], tz, tz)
++
++
++def stone_weight(stone, density=STONE_DENSITY):
++    # type: (Dict[str, Any], float) -> float
++    """石重=体积×密度。体积从 params 估: CORE= bbox 直积; RING=环厚×弧长×桥宽
++    (弧长经 facts.arch_z 单源采样); 其余=w×h×d 断面矩形[估计]。"""
++    p = stone.get("params", {}) or {}
++    role = _role(stone.get("id", ""))
++    if role == "CORE" and isinstance(p.get("bbox"), dict):
++        bb = p["bbox"]
++        vol = ((bb["x1"] - bb["x0"]) * (bb["y1"] - bb["y0"])
++               * (bb["z1"] - bb["z0"]))
++    elif role == RING_ROLE:
++        vol = _ring_volume(stone)
++    else:
++        w = p.get("w", 0.0)
++        h = p.get("h", 0.0)
++        d = p.get("d", 0.0)
++        vol = float(w) * float(h) * float(d)
++    return vol * density
++
++
++def _ring_volume(stone):
++    # type: (Dict[str, Any]) -> float
++    """券石体积: 环厚 params.ring_t × 内弧弧长(facts.arch_z 采样) ×
++    桥宽(2×geom_math.width_at 石中高处)。"""
++    p = stone.get("params", {}) or {}
++    ring_t = float(p["ring_t"])
++    xc = float(p["xc"])
++    st = p["stations"]
++    x0, x1 = float(st[0]), float(st[1])
++    ai = int(stone["id"].split(".")[0][4:]) - 1
++    a = GM.SPANS[ai] / 2.0
++    b = GM.arch_rise(ai)
++    springer = GM.arch_springer_z(ai)
++
++    def z_lo(lx):
++        return F.arch_z(lx, 0.0, springer, a, b)
++
++    n = 8
++    arc = 0.0
++    prev = None  # type: Optional[tuple]
++    for k in range(n + 1):
++        gx = x0 + (x1 - x0) * k / float(n)
++        cur = (gx, z_lo(gx - xc))
++        if prev is not None:
++            arc += math.hypot(cur[0] - prev[0], cur[1] - prev[1])
++        prev = cur
++    xm = (x0 + x1) / 2.0
++    zm = z_lo(xm - xc) + ring_t / 2.0
++    depth = 2.0 * GM.width_at(xm, zm)
++    return ring_t * arc * depth
++
++
++def _theta_mid(stone):
++    # type: (Dict[str, Any]) -> float
++    """券石弧参数中值(度)。"""
++    ang = stone["params"]["angles"]
++    return (float(ang[0]) + float(ang[1])) / 2.0
++
++
++def _theta_left_frac(stone):
++    # type: (Dict[str, Any]) -> float
++    """券石重量归于左半拱(θ<0)的份额: 龙门石按 θ=0 分割。"""
++    ang = stone["params"]["angles"]
++    t0, t1 = float(ang[0]), float(ang[1])
++    if t1 <= t0:
++        return 0.5
++    return min(1.0, max(0.0, (0.0 - t0) / (t1 - t0)))
++
++
++def _plan_ring_banks(ring_stones):
++    # type: (List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]
++    """θ 镜像配对 → 放置单位(两侧交替); 单数收尾为龙门石独行行。"""
++    order = sorted(ring_stones, key=_theta_mid)
++    n = len(order)
++    banks = []
++    i, j = 0, n - 1
++    while i < j:
++        mi, mj = _theta_mid(order[i]), _theta_mid(order[j])
++        if abs(mi + mj) > PAIR_MIRROR_TOL:
++            raise SequencerError(
++                "R3_PAIRING 券石 θ 非镜像对称: %s(%.4f) vs %s(%.4f)"
++                % (order[i]["id"], mi, order[j]["id"], mj))
++        banks.append([order[i], order[j]])
++        i += 1
++        j -= 1
++    if i == j:
++        banks.append([order[i]])
++    return banks
++
++
++def _ring_stone_box(stone):
++    # type: (Dict[str, Any]) -> tuple
++    """券石全局 bbox 估计(占位冲突用): stations x 跨 × 环厚 z 向 × 桥宽 y 向。"""
++    p = stone["params"]
++    ring_t = float(p["ring_t"])
++    xc = float(p["xc"])
++    st = p["stations"]
++    ai = int(stone["id"].split(".")[0][4:]) - 1
++    a = GM.SPANS[ai] / 2.0
++    b = GM.arch_rise(ai)
++    springer = GM.arch_springer_z(ai)
++    xm = (float(st[0]) + float(st[1])) / 2.0
++    z_lo = F.arch_z(xm - xc, 0.0, springer, a, b)
++    hw = GM.width_at(xm, z_lo + ring_t / 2.0)
++    return (min(float(st[0]), float(st[1])), max(float(st[0]), float(st[1])),
++            -hw, hw, z_lo, z_lo + ring_t)
++
++
++def _wedge_std_box(stone):
++    # type: (Dict[str, Any]) -> tuple
++    """wedge-std 石 bbox(masonry2 语义): x/z=块中心±, y=外缘|ty|内缘|ty|-d。"""
++    t = stone.get("transform", [0, 0, 0])
++    p = stone.get("params", {}) or {}
++    w = float(p.get("w", 0.0))
++    h = float(p.get("h", 0.0))
++    d = float(p.get("d", 0.0))
++    ty = float(t[1])
++    y_out = abs(ty)
++    y0, y1 = (y_out - d, y_out) if ty >= 0 else (-y_out, -(y_out - d))
++    return (float(t[0]) - w / 2.0, float(t[0]) + w / 2.0,
++            min(y0, y1), max(y0, y1),
++            float(t[2]) - h / 2.0, float(t[2]) + h / 2.0)
++
++
++def _slab_box(stone):
++    # type: (Dict[str, Any]) -> tuple
++    bb = (stone.get("params", {}) or {}).get("bbox")
++    if not isinstance(bb, dict):
++        return _wedge_std_box(stone)
++    return (bb["x0"], bb["x1"], bb["y0"], bb["y1"], bb["z0"], bb["z1"])
++
++
++def _stone_box(stone):
++    # type: (Dict[str, Any]) -> tuple
++    role = _role(stone.get("id", ""))
++    if role == "CORE":
++        return _slab_box(stone)
++    if role == RING_ROLE:
++        return _ring_stone_box(stone)
++    return _wedge_std_box(stone)
++
++
++def _boxes_collide(b1, b2, tol=EXTRADOS_EPS):
++    # type: (tuple, tuple, float) -> bool
++    return all(b1[2 * k + 1] > b2[2 * k] + tol
++               and b2[2 * k + 1] > b1[2 * k] + tol for k in range(3))
++
++
++def _centering_boxes_global(cen):
++    # type: (Dict[str, Any]) -> List[tuple]
++    """券架占位 bbox 全局系(parts bbox + xc 平移, centering.py 消费约定)。"""
++    out = []
++    xc = cen["xc"]
++    for part in cen["parts"]:
++        bx = part["bbox"]
++        out.append((bx[0] + xc, bx[1] + xc, bx[2], bx[3], bx[4], bx[5]))
++    return out
++
++
++# ---------------------------------------------------------------------------
++# 构造
++# ---------------------------------------------------------------------------
++
++def _hole_of(stone):
++    # type: (Dict[str, Any]) -> str
++    return stone["id"].split(".")[0]
++
++
++def _arch_idx(zone):
++    # type: (str) -> int
++    return int(zone[4:]) - 1
++
++
++def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
++                   min_hold=MIN_HOLD_DEFAULT, ring_order=None):
++    # type: (Dict[str, Any], Any, float, int, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
++    """规则引擎主入口。ring_order: {zone: [ring stone id 顺序]} 可选显式券石
++    顺序(负控注入位); None=按 θ 镜像配对自动派生。自检失败 raise SequencerError。
++    """
++    stones = ledger.get("stones", [])
++    cen_by_zone = {}
++    for c in (centerings or []):
++        cen_by_zone[c["zone"]] = c
++    by_id = {}
++    holes = {}  # type: Dict[str, Dict[str, List[Dict[str, Any]]]]
++    for s in stones:
++        sid = s.get("id", "")
++        if not sid:
++            raise SequencerError("R0_NO_ID 石记录缺 id")
++        if sid in by_id:
++            raise SequencerError("R0_DUP_STONE 石 id 重复: %s" % sid)
++        by_id[sid] = s
++        role = _role(sid)
++        if role not in KNOW_ROLES:
++            raise SequencerError("R0_UNKNOWN_ROLE 石 %s 角色未登记: %s"
++                                 % (sid, role))
++        holes.setdefault(_hole_of(s), []).append(s)
++    for zone in sorted(holes):
++        if zone not in cen_by_zone:
++            raise SequencerError("R2_NO_CENTERING 孔 %s 无券架记录" % zone)
++
++    events = []  # type: List[Dict[str, Any]]
++    trace = []  # type: List[Dict[str, Any]]
++    stages = []  # type: List[Dict[str, Any]]
++    edge_plan = {}  # type: Dict[str, List[Dict[str, Any]]]  # sid -> support_edges
++    hole_report = []  # type: List[Dict[str, Any]]
++
++    def emit(hole, etype, stone_id=None, prereq=(), load_lambda=None,
++             evidence=EV_FILL, grade="inferred"):
++        seq = len(events) + 1
++        ev = E.new_event(seq, hole, etype, stone_id=stone_id,
++                         prereq=list(prereq), load_lambda=load_lambda,
++                         evidence=evidence, grade=grade)
++        events.append(ev)
++        return seq
++
++    def open_stage(name, centering_id=None, evidence=EV_FILL):
++        return {"id": "S%03d" % (len(stages) + 1), "stage": name,
++                "event_range": None, "depends_on": None,
++                "centering_id": centering_id, "evidence": evidence}
++
++    def close_stage(st, first_seq, last_seq, dep_ids):
++        st["event_range"] = [first_seq, last_seq]
++        st["depends_on"] = list(dep_ids)
++        stages.append(st)
++
++    def stage_course_key(stone):
++        return stone["id"].split(".")[3]
++
++    # 两波推进(R6 语义要求: 孔 i 落架时邻孔 i±1 须 ≥ CLOSED_SUPPORTED,
++    # 故逐孔"全合龙到持荷"先于任何落架 —— 波1 全孔到 CLOSED_SUPPORTED,
++    # 波2 逐孔落架+拆架+肩背胞; 顺序均按孔号升序)。
++    zones_sorted = sorted(holes)
++    wave1 = {}  # type: Dict[str, Dict[str, Any]]
++    for zone in zones_sorted:
++        cen = cen_by_zone[zone]
++        idx = _arch_idx(zone)
++        a = GM.SPANS[idx] / 2.0
++        b = GM.arch_rise(idx)
++        springer = GM.arch_springer_z(idx)
++        xc = GM.arch_center_x(idx)
++        ring_t = float(next(s["params"]["ring_t"] for s in holes[zone]
++                            if _role(s["id"]) == RING_ROLE))
++        prev_stage = stages[-1]["id"] if stages else None
++
++        def extrados_z(gx):
++            return F.arch_z(gx - xc, 0.0, springer, a, b) + ring_t
++
++        cen_boxes = _centering_boxes_global(cen)
++
++        # -- R1: 墩肩/拱座 z 升序(立架前) --
++        imposts = sorted((s for s in holes[zone]
++                          if _role(s["id"]) in IMPOST_ROLES),
++                         key=lambda s: (_stone_xz(s)[1], s["id"]))
++        for st_course in _group_by(imposts, stage_course_key):
++            st = open_stage("%s.IMPOST.%s" % (zone, stage_course_key(st_course[0])),
++                            evidence=EV_IMPOST)
++            lo = len(events) + 1
++            for s in st_course:
++                emit(zone, "PLACE_STONE", stone_id=s["id"], evidence=EV_IMPOST)
++                edge_plan[s["id"]] = [{"type": "foundation",

@@ -1,0 +1,459 @@
+2ca3434 feat(e30): P1-T5 printcheck(流形/自交/壁厚@scale/穿透)
+00c44b0 chore(e30): P1 ledger更新(T3闭环)
+=== STAT ===
+ .superpowers/sdd/p1-progress.md                   |   2 +
+ e30_shikongqiao_video/3d/printcheck.py            | 299 ++++++++++++++++++++++
+ e30_shikongqiao_video/tests/test_p1_printcheck.py | 127 +++++++++
+ 3 files changed, 428 insertions(+)
+=== DIFF ===
+diff --git a/.superpowers/sdd/p1-progress.md b/.superpowers/sdd/p1-progress.md
+index 9775834..0392b45 100644
+--- a/.superpowers/sdd/p1-progress.md
++++ b/.superpowers/sdd/p1-progress.md
+@@ -1,6 +1,8 @@
+ # P1 stone-ledger SDD Ledger
+ 计划: docs/superpowers/plans/2026-10-06-p1-stone-ledger.md | 分支: main | BASE: 9327c8f
+ 
+ - Task 1: complete (commits 9327c8f..50e3662, 审查Spec✅/质量Approved, 修复轮I2/I3/I4/M1/M3/M4落地, 15测试+回归82绿)
+   - 遗留跟进: I1 allow_clearance 挂 T6; 审查N4(zone/role词元映射)由T3/T4证实
+ - Task 2: complete (commits 0d9329d..395d254, 审查Spec✅/质量需修→修复轮C1(d权威深度)/C2(收分方向反号)/I1(恒真测试删除重写带符号)/m2(slab测试), 86测试绿; U2原点语义移交T7)
++- Task 3: complete (commits dee62a6..6974723, 审查Spec✅两偏离裁对, 修复轮course_h从spec层距推导插穿47/107→0, 94测试绿; **T4契约: 层高必须复用_course_heights**)
++- Task 5: implemented 审查中
+diff --git a/e30_shikongqiao_video/3d/printcheck.py b/e30_shikongqiao_video/3d/printcheck.py
+new file mode 100644
+index 0000000..0c888c1
+--- /dev/null
++++ b/e30_shikongqiao_video/3d/printcheck.py
+@@ -0,0 +1,299 @@
++# e30_shikongqiao_video/3d/printcheck.py
++# -*- coding: utf-8 -*-
++"""P1-T5 printcheck: 打印性验证器(流形/自交/壁厚@scale/穿透/体积)。
++
++单位约定(顶点与 families/场景一致, 单位=米):
++- THIN_WALL 按打印件毫米: 任一 bbox 维(m) * scale * 1000 < min_wall_mm(brief 公式, 严格小于);
++- PENETRATION 按模型毫米: AABB 重叠深度(m) * 1000 > tol_mm。语义依据 brief 测试:
++  两盒间距 0.999 即重叠 0.001m = 1mm(模型) > tol 0.5mm 必报; scale 仅用于消息中的打印当量换算。
++
++判据:
++- 流形 = 每条边恰被 2 个面使用(纯面拓扑计数, 不依赖法向/vn -- T2 审查裁决方向);
++- 自交 = 逐面 AABB 粗筛 + 精检(纯 numpy 手写, 无第三方几何库), 分两路:
++  * 共面对(整面共面): 按多边形「边界」判 -- 边界横穿或顶点严格包含才算交叉;
++    扇形三角化的对角线是伪边不参与, 否则同平面叠置两石(对角线交叉)必误报(有负控制钉死)。
++  * 非共面对: 三角扇逐对精检(严格跨越对方平面 + 交线段相交)。扇面恒等于真实面片,
++    三角级交叉即真实表面交叉; 单侧贴边(接触)不算。
++  共享顶点的相邻面对一律跳过(本就贴合)。面片假定: 凸、平面(族库满足)。
++  语义边界: 偏置共面「部分接触」(T 形交界/边界共线)不算交叉 -- 零体积重叠即接触;
++  面级判据无法区分「接触」与「轴向齐平的实体互穿」(二者共面对 2D 构型全同),
++  后者属分离实体, 由 gap_check 的 AABB 重叠判据负责(见 test_penetration)。
++- 规模契约: 逐石调用(数十~数百面), AABB 对矩阵 O(n^2) 足够; 不用于整桥合并网格。
++"""
++import numpy as np
++
++_EPS = 1e-9     # 3D 长度/平面距离容差(m)
++_EPS2 = 1e-12   # 2D 叉积容差(m^2, 面积量级)
++
++
++# ---------------------------------------------------------------- 流形
++
++def _manifold_issues(faces):
++    # type: (list) -> list
++    """面拓扑流形: 每条边(无向)恰被 2 个面使用。退化面单独报且不参与计数。"""
++    issues = []
++    degenerate = [i for i, f in enumerate(faces) if len(f) < 3 or len(set(f)) != len(f)]
++    if degenerate:
++        issues.append("DEGENERATE_FACE: %d face(s), e.g. #%d" % (len(degenerate), degenerate[0]))
++    degen = set(degenerate)
++    ec = {}
++    for i, f in enumerate(faces):
++        if i in degen:
++            continue
++        n = len(f)
++        for k in range(n):
++            a, b = f[k], f[(k + 1) % n]
++            key = (a, b) if a <= b else (b, a)
++            ec[key] = ec.get(key, 0) + 1
++    bad = sorted(e for e, c in ec.items() if c != 2)
++    if bad:
++        issues.append("NON_MANIFOLD: %d edge(s) used by !=2 faces, e.g. %s x%d"
++                      % (len(bad), str(bad[0]), ec[bad[0]]))
++    return issues
++
++
++# ---------------------------------------------------------------- 几何基元
++
++def _face_tris(verts, faces):
++    # type: (np.ndarray, list) -> list
++    """凸面假定: 多边形扇形三角化。返回 [face -> [np.ndarray(3,3), ...]]。"""
++    out = []
++    for f in faces:
++        p0 = verts[f[0]]
++        tris = []
++        for k in range(1, len(f) - 1):
++            tris.append(np.array([p0, verts[f[k]], verts[f[k + 1]]]))
++        out.append(tris)
++    return out
++
++
++def _newell_normal(pts):
++    # type: (np.ndarray) -> np.ndarray
++    """多边形 Newell 法线(平面凸面稳健)。"""
++    n = np.zeros(3)
++    m = len(pts)
++    for k in range(m):
++        a = pts[k]
++        b = pts[(k + 1) % m]
++        n[0] += (a[1] - b[1]) * (a[2] + b[2])
++        n[1] += (a[2] - b[2]) * (a[0] + b[0])
++        n[2] += (a[0] - b[0]) * (a[1] + b[1])
++    return n
++
++
++def _seg_seg_dist(p1, q1, p2, q2):
++    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray) -> float
++    """两线段最近距离(Ericson clamped closest-point)。"""
++    d1 = q1 - p1
++    d2 = q2 - p2
++    r = p1 - p2
++    a = float(d1 @ d1)
++    e = float(d2 @ d2)
++    f = float(d2 @ r)
++    tiny = _EPS * _EPS
++    if a <= tiny and e <= tiny:
++        return float(np.linalg.norm(r))
++    if a <= tiny:
++        s = 0.0
++        t = min(1.0, max(0.0, f / e))
++    else:
++        c = float(d1 @ r)
++        if e <= tiny:
++            t = 0.0
++            s = min(1.0, max(0.0, -c / a))
++        else:
++            b = float(d1 @ d2)
++            denom = a * e - b * b
++            s = min(1.0, max(0.0, (b * f - c * e) / denom)) if denom > 0.0 else 0.0
++            t = (b * s + f) / e
++            if t < 0.0:
++                t = 0.0
++                s = min(1.0, max(0.0, -c / a))
++            elif t > 1.0:
++                t = 1.0
++                s = min(1.0, max(0.0, (b - c) / a))
++    return float(np.linalg.norm((p1 + d1 * s) - (p2 + d2 * t)))
++
++
++def _clip_segment(tri, dist, eps):
++    # type: (np.ndarray, list, float) -> tuple
++    """三角形与平面的交线段(顶点带平面有符号距离 dist, 须严格跨越)。"""
++    pts = []
++    for i in range(3):
++        j = (i + 1) % 3
++        di, dj = dist[i], dist[j]
++        if (di > eps and dj < -eps) or (di < -eps and dj > eps):
++            t = di / (di - dj)
++            pts.append(tri[i] + (tri[j] - tri[i]) * t)
++    if len(pts) < 2:
++        return None
++    return pts[0], pts[1]
++
++
++def _cross2(o, a, b):
++    # type: (tuple, tuple, tuple) -> float
++    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
++
++
++def _proper_cross2(a, b, c, d):
++    # type: (tuple, tuple, tuple, tuple) -> bool
++    """两 2D 线段横穿(交点在双方内部; 共线/端点触碰不算)。"""
++    d1 = _cross2(c, d, a)
++    d2 = _cross2(c, d, b)
++    d3 = _cross2(a, b, c)
++    d4 = _cross2(a, b, d)
++    if abs(d1) <= _EPS2 or abs(d2) <= _EPS2 or abs(d3) <= _EPS2 or abs(d4) <= _EPS2:
++        return False
++    return (d1 > 0) != (d2 > 0) and (d3 > 0) != (d4 > 0)
++
++
++def _strictly_inside2(pt, poly2d):
++    # type: (tuple, list) -> bool
++    """点严格位于凸多边形内部(在边上不算)。"""
++    sgn = None
++    m = len(poly2d)
++    for i in range(m):
++        c = _cross2(poly2d[i], poly2d[(i + 1) % m], pt)
++        if abs(c) <= _EPS2:
++            return False
++        s = c > 0
++        if sgn is None:
++            sgn = s
++        elif s != sgn:
++            return False
++    return True
++
++
++def _project2(pts, normal):
++    # type: (np.ndarray, np.ndarray) -> list
++    """沿法线主轴投影到 2D(去掉绝对值最大的分量, 保持分量次序)。"""
++    ax = int(np.argmax(np.abs(normal)))
++    keep = [k for k in range(3) if k != ax]
++    return [(float(p[keep[0]]), float(p[keep[1]])) for p in pts]
++
++
++# ---------------------------------------------------------------- 相交精检
++
++def _coplanar_faces_intersect(pts_i, pts_j, ni):
++    # type: (np.ndarray, np.ndarray, np.ndarray) -> bool
++    """整面共面: 按「边界」判交叉(横穿或严格包含)。扇形对角线不参与。"""
++    P = _project2(pts_i, ni)
++    Q = _project2(pts_j, ni)
++    mp, mq = len(P), len(Q)
++    for a in range(mp):
++        for b in range(mq):
++            if _proper_cross2(P[a], P[(a + 1) % mp], Q[b], Q[(b + 1) % mq]):
++                return True
++    return _strictly_inside2(P[0], Q) or _strictly_inside2(Q[0], P)
++
++
++def _tris_cross_non_coplanar(t1, t2):
++    # type: (np.ndarray, np.ndarray) -> bool
++    """非共面三角对: 双方严格跨越对方平面 + 交线段相交(单侧贴边=接触, 不算)。"""
++    n1 = np.cross(t1[1] - t1[0], t1[2] - t1[0])
++    n2 = np.cross(t2[1] - t2[0], t2[2] - t2[0])
++    if float(n1 @ n1) <= _EPS * _EPS or float(n2 @ n2) <= _EPS * _EPS:
++        return False  # 退化三角
++    d1 = [float((v - t1[0]) @ n1) for v in t2]   # t2 各顶点到平面(t1)
++    d2 = [float((v - t2[0]) @ n2) for v in t1]   # t1 各顶点到平面(t2)
++    if not (min(d2) < -_EPS and max(d2) > _EPS):
++        return False
++    if not (min(d1) < -_EPS and max(d1) > _EPS):
++        return False
++    sp = _clip_segment(t1, d2, _EPS)
++    sq = _clip_segment(t2, d1, _EPS)
++    if sp is None or sq is None:
++        return False
++    return _seg_seg_dist(sp[0], sp[1], sq[0], sq[1]) <= _EPS
++
++
++def _face_pair_crosses(pts_i, pts_j, ni, nj, tris_i, tris_j):
++    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, list, list) -> bool
++    if float(nj @ nj) <= _EPS * _EPS or float(ni @ ni) <= _EPS * _EPS:
++        return False  # 退化面(DEGENERATE_FACE 已报)
++    d = [float((v - pts_i[0]) @ ni) for v in pts_j]
++    if all(abs(x) <= _EPS for x in d):
++        return _coplanar_faces_intersect(pts_i, pts_j, ni)
++    return any(_tris_cross_non_coplanar(a, b) for a in tris_i for b in tris_j)
++
++
++def _self_intersect_count(verts, faces):
++    # type: (np.ndarray, list) -> int
++    """逐面 AABB 粗筛 -> 跳过共享顶点的相邻对 -> 共面/非共面分路精检。返回交叉面对数。"""
++    n = len(faces)
++    if n < 2:
++        return 0
++    polys = [verts[list(f)] for f in faces]
++    normals = [_newell_normal(p) for p in polys]
++    tris = _face_tris(verts, faces)
++    vsets = [set(f) for f in faces]
++    lo = np.array([p.min(axis=0) for p in polys])
++    hi = np.array([p.max(axis=0) for p in polys])
++    ov = np.all(lo[:, None, :] <= hi[None, :, :], axis=2) & \
++         np.all(hi[:, None, :] >= lo[None, :, :], axis=2)
++    hits = 0
++    for i, j in zip(*np.nonzero(np.triu(ov, 1))):
++        i, j = int(i), int(j)
++        if vsets[i] & vsets[j]:
++            continue  # 相邻面(共享顶点)本就贴合
++        if _face_pair_crosses(polys[i], polys[j], normals[i], normals[j], tris[i], tris[j]):
++            hits += 1
++    return hits
++
++
++# ---------------------------------------------------------------- 体积
++
++def volume(verts, faces):
++    # type: (list, list) -> float
++    """散度定理体积(取绝对值; 族库绕向朝内, 不作绕向判据)。"""
++    V = np.asarray(verts, dtype=float)
++    total = 0.0
++    for f in faces:
++        p0 = V[f[0]]
++        for k in range(1, len(f) - 1):
++            total += float(p0 @ np.cross(V[f[k]], V[f[k + 1]]))
++    return abs(total) / 6.0
++
++
++# ---------------------------------------------------------------- 对外接口
++
++def check_stone(verts, faces, scale=1.0 / 50.0, min_wall_mm=1.2):
++    # type: (list, list, float, float) -> dict
++    """逐石打印性检查。返回 {"ok": bool, "issues": [str], "volume_m3": float}。"""
++    V = np.asarray(verts, dtype=float)
++    if V.size == 0 or len(faces) == 0:
++        return {"ok": False,
++                "issues": ["EMPTY_MESH: %d verts / %d faces" % (len(verts), len(faces))],
++                "volume_m3": 0.0}
++    issues = []
++    issues.extend(_manifold_issues(faces))
++    ext = V.max(axis=0) - V.min(axis=0)
++    for axis, e in zip(("x", "y", "z"), ext):
++        mm = float(e) * scale * 1000.0
++        if mm < min_wall_mm:
++            issues.append("THIN_WALL: bbox %s=%.3fmm < %.3fmm @scale 1/%d"
++                          % (axis, mm, min_wall_mm, int(round(1.0 / scale))))
++    hits = _self_intersect_count(V, faces)
++    if hits:
++        issues.append("SELF_INTERSECT: %d face-pair(s) cross (eps=%g)" % (hits, _EPS))
++    return {"ok": not issues, "issues": issues, "volume_m3": volume(verts, faces)}
++
++
++def gap_check(entry_a, entry_b, tol_mm=0.5, scale=1.0 / 50.0):
++    # type: (tuple, tuple, float, float) -> list
++    """两石空间关系检查。entry = (位置偏移, (verts, faces))。
++    AABB 重叠深度(模型 mm) > tol_mm -> ["PENETRATION: ..."]; 否则 [](贴合/容差内/分离均干净)。"""
++    pa, ma = entry_a
++    pb, mb = entry_b
++    Va = np.asarray(ma[0], dtype=float) + np.asarray(pa, dtype=float)
++    Vb = np.asarray(mb[0], dtype=float) + np.asarray(pb, dtype=float)
++    a_lo, a_hi = Va.min(axis=0), Va.max(axis=0)
++    b_lo, b_hi = Vb.min(axis=0), Vb.max(axis=0)
++    overlap = np.minimum(a_hi, b_hi) - np.maximum(a_lo, b_lo)
++    if not np.all(overlap > 0.0):
++        return []
++    depth_mm = float(overlap.min()) * 1000.0   # 模型毫米
++    if depth_mm > tol_mm:
++        return ["PENETRATION: overlap %.4fmm(model)=%.4fmm(printed) > tol %.3fmm"
++                % (depth_mm, depth_mm * scale, tol_mm)]
++    return []
+diff --git a/e30_shikongqiao_video/tests/test_p1_printcheck.py b/e30_shikongqiao_video/tests/test_p1_printcheck.py
+new file mode 100644
+index 0000000..86d3863
+--- /dev/null
++++ b/e30_shikongqiao_video/tests/test_p1_printcheck.py
+@@ -0,0 +1,127 @@
++# e30_shikongqiao_video/tests/test_p1_printcheck.py
++# P1-T5: printcheck 验证器(流形/自交/壁厚@scale/穿透) 单测。合成数据, 不渲桥。
++import os, sys
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "3d"))
++import printcheck as PC
++from families import family_mesh
++
++S50 = 1 / 50.0
++
++
++def _wedge_params():
++    return {"w": 1.0, "h": 0.4, "d": 1.0,
++            "proud": 0.006, "back": 0.3, "hw_b": 6.0, "hw_t": 5.9}
++
++
++# ---------- Step1 brief 逐字测试 ----------
++
++def test_good_wedge_passes():
++    v, f = family_mesh("wedge-std", _wedge_params())
++    r = PC.check_stone(v, f, scale=S50, min_wall_mm=1.2)
++    assert r["ok"] and not r["issues"]
++
++
++def test_open_box_non_manifold():
++    v = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
++    f = [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5)]   # 缺两面
++    r = PC.check_stone(v, f)
++    assert any("NON_MANIFOLD" in i for i in r["issues"])
++
++
++def test_thin_wall_at_scale():
++    v, f = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.03})  # 3cm@1:50=0.6mm
++    r = PC.check_stone(v, f, scale=S50, min_wall_mm=1.2)
++    assert any("THIN_WALL" in i for i in r["issues"])
++
++
++def test_penetration():
++    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    r = PC.gap_check([(0, 0, 0), a], [(0.999, 0, 0), a], tol_mm=0.5, scale=S50)
++    assert any("PENETRATION" in i for i in r)   # 重叠 1mm > tol 0.5mm
++
++
++# ---------- 自交 ----------
++
++def test_self_intersect_needle_through_box():
++    # 针穿过盒: 两个各自闭合的子网格拼成一 mesh -> 边计数全 2(NON_MANIFOLD 沉默),
++    # 但针侧面穿过盒顶/底面 -> 必报 SELF_INTERSECT。
++    box = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    needle = family_mesh("slab", {"w": 0.08, "d": 0.08, "h": 1.0})
++    nv = [(x + 0.46, y + 0.46, z - 0.25) for (x, y, z) in needle[0]]
++    nf = [(i + 8, j + 8, k + 8, l + 8) for (i, j, k, l) in needle[1]]
++    v = list(box[0]) + nv
++    f = list(box[1]) + nf
++    r = PC.check_stone(v, f, scale=S50, min_wall_mm=1.2)
++    assert any("SELF_INTERSECT" in i for i in r["issues"])
++    assert not any("NON_MANIFOLD" in i for i in r["issues"])  # 自交判据独立于流形判据
++
++
++def test_self_intersect_negative_stacked_contact_not_flagged():
++    # 负控制: 两盒共面叠置(面面接触, 顶点不共享)是接触不是穿透, 不得误报。
++    lo = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    hi = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    hv = [(x, y, z + 0.5) for (x, y, z) in hi[0]]
++    hf = [(i + 8, j + 8, k + 8, l + 8) for (i, j, k, l) in hi[1]]
++    r = PC.check_stone(list(lo[0]) + hv, list(lo[1]) + hf, scale=S50, min_wall_mm=1.2)
++    assert not any("SELF_INTERSECT" in i for i in r["issues"])
++
++
++def test_self_intersect_negative_offset_partial_contact():
++    # 偏置共面「部分接触」(T 形交界/边界共线): 零体积重叠即接触, 不报自交。
++    # 同构型的实体互穿归 gap_check 管(见 test_penetration 的 0.999 偏置)。
++    lo = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    hi = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    hv = [(x + 0.2, y, z + 0.5) for (x, y, z) in hi[0]]
++    hf = [(i + 8, j + 8, k + 8, l + 8) for (i, j, k, l) in hi[1]]
++    r = PC.check_stone(list(lo[0]) + hv, list(lo[1]) + hf, scale=S50, min_wall_mm=1.2)
++    assert not any("SELF_INTERSECT" in i for i in r["issues"])
++
++
++def test_self_intersect_coplanar_cross_reported():
++    # 共面交叉两三角: 非流形 + 自交同时被抓(证明共面分支有效)。
++    v = [(0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (2.0, 2.0, 0.0), (0.0, 2.0, 0.0),
++         (1.0, -1.0, 0.0), (3.0, 1.0, 0.0), (1.0, 3.0, 0.0), (-1.0, 1.0, 0.0)]
++    f = [(0, 1, 2), (4, 5, 6)]
++    r = PC.check_stone(v, f)
++    assert any("SELF_INTERSECT" in i for i in r["issues"])
++    assert any("NON_MANIFOLD" in i for i in r["issues"])
++
++
++def test_coplanar_inner_triangle_reported():
++    # 共面包含: 小三角完全落在大三角内部(边界不相交), 仍须报自交。
++    v = [(0.0, 0.0, 0.0), (4.0, 0.0, 0.0), (0.0, 4.0, 0.0),
++         (1.0, 1.0, 0.0), (2.0, 1.0, 0.0), (1.0, 2.0, 0.0)]
++    f = [(0, 1, 2), (3, 4, 5)]
++    r = PC.check_stone(v, f)
++    assert any("SELF_INTERSECT" in i for i in r["issues"])
++
++
++# ---------- 壁厚边界 ----------
++
++def test_thin_wall_boundary_exactly_at_limit_passes():
++    # 0.06m @1:50 = 1.2mm == min_wall -> 判据是严格小于, 不得报。
++    v, f = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.06})
++    r = PC.check_stone(v, f, scale=S50, min_wall_mm=1.2)
++    assert not any("THIN_WALL" in i for i in r["issues"])
++
++
++# ---------- 穿透负控制 ----------
++
++def test_no_penetration_when_touching_or_separated():
++    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    assert PC.gap_check([(0, 0, 0), a], [(1.0, 0, 0), a], tol_mm=0.5, scale=S50) == []      # 贴合, 重叠 0
++    assert PC.gap_check([(0, 0, 0), a], [(1.1, 0, 0), a], tol_mm=0.5, scale=S50) == []      # 分离
++
++
++def test_penetration_within_tol_not_flagged():
++    # 重叠 0.2mm(model) <= tol 0.5mm -> 数值容差内, 不报。
++    a = family_mesh("slab", {"w": 1.0, "d": 1.0, "h": 0.5})
++    r = PC.gap_check([(0, 0, 0), a], [(0.9998, 0, 0), a], tol_mm=0.5, scale=S50)
++    assert r == []
++
++
++# ---------- 体积(文件职责表含体积) ----------
++
++def test_volume_matches_box():
++    v, f = family_mesh("slab", {"w": 2.0, "d": 1.0, "h": 0.5})
++    assert abs(PC.volume(v, f) - 1.0) < 1e-9

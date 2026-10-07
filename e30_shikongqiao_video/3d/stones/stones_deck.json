@@ -1,0 +1,187 @@
+{
+ "provenance": "stones_deck v2 (m20C 2026-10-06): v1 两沟/列线/行线全保留; 相位节升级 = v1 相机重正射24px/m 端缘实测 + v1 列线对 H1(-74.45) / H2(-75.0 端柱即端缘) S/3 栅格残差对比 (H2 mean|r|=0.109 vs H1 0.255); 柱带周期扫描与步行帧差分均为 negative(如实记), 相位维持 v1 ±0.5m",
+ "frame": "refs/video_frames/yt_02AJfa4jmH4/f001470_s551.jpg",
+ "camera": {
+  "params_9+X0": [
+   3.015,
+   -0.157,
+   76.62,
+   0.274,
+   2.763,
+   540.277,
+   0.017,
+   85.467,
+   230.978,
+   -74.45
+  ],
+  "rms_px": 8.98010778644231,
+  "note": "proj=[az,el,Cx,Cy,Cz,f,roll,u0,v0]+X0; X0=柱链相位(最靠西可见柱 x)"
+ },
+ "phase": {
+  "X0": -74.45,
+  "X0_mod_2.381": 1.74,
+  "grid_phase_if_endpost_at_-75": 1.19,
+  "phase_offset_vs_grid_m": 0.55,
+  "uncertainty_note": "相位不确定度 ±0.5m(相机残差主导); 正射上桥面端缘实测 x≈74.6 与模型端 75 一致性 ±0.4m"
+ },
+ "grooves": [
+  {
+   "y": 1.582,
+   "strength": 29.9,
+   "width_m_est": "0.10-0.15",
+   "conf": "hi",
+   "note": "清晰连续, 全窗可见"
+  },
+  {
+   "y": 1.179,
+   "strength": 41.8,
+   "width_m_est": "0.10-0.15",
+   "conf": "hi",
+   "note": "清晰连续"
+  }
+ ],
+ "grooves_negative_side": {
+  "status": "不可辨",
+  "reason": "−y 侧整条处于栏板阴影带(正射 y<−1.8 暗), 无可靠暗谷"
+ },
+ "row_lines": [
+  {
+   "y": -0.177,
+   "strength": 22.5,
+   "conf": "weak",
+   "note": "走道中线弱缝, 非网格频率(可信度低)"
+  }
+ ],
+ "column_lines": [
+  {
+   "x": 42.58,
+   "bands": 3,
+   "conf": "medium"
+  },
+  {
+   "x": 43.95,
+   "bands": 3,
+   "conf": "medium"
+  },
+  {
+   "x": 44.75,
+   "bands": 2,
+   "conf": "low"
+  },
+  {
+   "x": 74.585,
+   "conf": "hi",
+   "note": "桥面端缘(非板缝)"
+  }
+ ],
+ "column_spacing_hypothesis": {
+  "measured_pairs": {
+   "44.75-43.95": 0.8,
+   "43.95-42.58": 1.37
+  },
+  "verdict": "0.80 ≈ 2.381/3 = 0.794 支持「每柱距 3 块板」假设; 1.37 疑漏检一缝",
+  "plan_hypotheses": {
+   "2/间=1.190": "未获支持",
+   "3/间=0.794": "部分支持(证据中等)"
+  }
+ },
+ "post_alignment": {
+  "posts_x_fitted_phase": [
+   30.31,
+   32.69,
+   35.07,
+   37.45,
+   39.84,
+   42.22,
+   44.6,
+   46.98,
+   49.36,
+   51.74,
+   54.12,
+   56.5,
+   58.88,
+   61.26,
+   63.65,
+   66.03,
+   68.41,
+   70.79,
+   73.17,
+   75.55
+  ],
+  "verdict": "inconclusive",
+  "detail": "列线样本仅 3 条且相位不确定度(±0.55m)与半板宽(0.4m)同量级; 拟合相位下最近柱距缝偏移 +0.36/-0.65/+0.15m — 均非对缝, 但不排除相位系统差; 如实记 N 非整数判据不可靠",
+  "N_slabs_per_interval": "3(假设), 非整数判据: 无清晰缝列贯穿全窗"
+ },
+ "families": {
+  "schema": "铺石按 列(x)×长度档 归族",
+  "length_bins_m": [
+   [
+    0.75,
+    0.85
+   ]
+  ],
+  "note": "板宽(纵向尺寸)在 32px/m 正射上不可分辨(<0.1m), 长度主档 0.79-0.80; 打印族数下限=1(等长板)+边角切割件(端缘/沟沿, 数量不可辨)",
+  "unique_estimate": {
+   "min": 2,
+   "max": 8,
+   "note": "含沟沿石/端缘异形; 全桥铺石族数待更高分辨率帧"
+  }
+ },
+ "phase_v2": {
+  "X0": -74.45,
+  "X0_mod_S": 1.74,
+  "uncertainty_m": 0.5,
+  "hypotheses": {
+   "H1_v1_postfeet": {
+    "X0": -74.45,
+    "mod": 1.740476190476187,
+    "res": [
+     {
+      "x": 42.58,
+      "nearest_grid": 42.217,
+      "residual_m": 0.363
+     },
+     {
+      "x": 43.95,
+      "nearest_grid": 43.804,
+      "residual_m": 0.146
+     }
+    ],
+    "mean_abs_res_m": 0.255,
+    "max_abs_res_m": 0.363
+   },
+   "H2_endpost_at_end": {
+    "X0": -75.0,
+    "mod": 1.1904761904761898,
+    "res": [
+     {
+      "x": 42.58,
+      "nearest_grid": 42.46,
+      "residual_m": 0.12
+     },
+     {
+      "x": 43.95,
+      "nearest_grid": 44.048,
+      "residual_m": -0.098
+     }
+    ],
+    "mean_abs_res_m": 0.109,
+    "max_abs_res_m": 0.12
+   }
+  },
+  "end_edge_meas": {
+   "x_meas": 74.545,
+   "model": 75.0,
+   "delta_vs_model_m": -0.455,
+   "note": "同正射系差分, 抵消相机慢漂; 端缘-柱栅格间隙无法单值化(柱脚带信号弱)"
+  },
+  "negative_results": {
+   "post_band_period_scan": {
+    "status": "negative",
+    "detail": "v1正射上柱础带周期扫描 FWHM=1.19m≈S/2, 分半相位差17m(栅格走样), f001470 远景柱脚信号不足以独立定相"
+   },
+   "walking_frames_differential": "yt_0JBKsf6VIvw 103帧抽帧密度下未识别出'入桥端缘+柱脚同帧'(无端缘穿越帧候选), 差分定相不可执行; 如需再定相须回到原视频在入/出桥秒级重抽帧"
+  },
+  "verdict": "H1(-74.45±0.5) 与 H2(-75.0 端柱即端缘) 在现有证据下不可分辨; 列线栅格残差 H2 略优(见 hypotheses), 维持 v1 相位与 ±0.5m 不确定度"
+ }
+}

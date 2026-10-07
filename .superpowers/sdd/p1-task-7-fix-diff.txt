@@ -1,0 +1,464 @@
+=== commits ===
+17b37dd fix(e30): P1-T7审查修复(cap_to_deck slab锚+越顶全role断言+clip响亮化+门常数50+gitignore反豁免)
+29a5fa4 chore(e30): P1 ledger记T7审查H1+T8接线清单汇总
+=== STAT ===
+ .gitignore                                   |   9 ++
+ e30_shikongqiao_video/3d/build_scene2.py     |  97 ++++++++++++++------
+ e30_shikongqiao_video/3d/masonry2.py         |  10 ++-
+ e30_shikongqiao_video/tests/test_p1_scene.py | 129 ++++++++++++++++++++++++++-
+ 4 files changed, 215 insertions(+), 30 deletions(-)
+=== DIFF ===
+diff --git a/.gitignore b/.gitignore
+index 1474483..77e5ffc 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -191,8 +191,17 @@
+ !e30_shikongqiao_video/3d/tools/cert_gates.json
+ !e30_shikongqiao_video/3d/tools/photo_native_width.json
+ e30_shikongqiao_video/3d/refs/video_raw/
+ e30_shikongqiao_video/3d/refs/video_frames/
+ e30_shikongqiao_video/3d/shot_*.png
+ e30_shikongqiao_video/3d/*.blend
+ e30_shikongqiao_video/3d/*.blend1
+ e30_shikongqiao_video/3d/ledger_cache/
++
++# ── 放行：E30 砖谱 JSON（2026-10-07 S4 反豁免）───────────────────────────
++# ⚠ 全桥账目链(--emit-lib/纯链测试)必需输入; p0..p9 此前逐文件 force-add,
++#   p10+ 会被上面 `*` 静默吞掉(干净克隆 --emit-lib 直接 FileNotFoundError)。
++# ⚠ 必须先反豁免目录本身: gitignore 语义下父目录被排除时, 单条文件级 !
++#   规则不可达(check-ignore 实测)。stones_deck.json 本链不消费, 只可见不
++#   入库(git add 仍需显式)。
++!e30_shikongqiao_video/3d/stones/
++!e30_shikongqiao_video/3d/stones/*.json
+diff --git a/e30_shikongqiao_video/3d/build_scene2.py b/e30_shikongqiao_video/3d/build_scene2.py
+index ba75260..4568f63 100644
+--- a/e30_shikongqiao_video/3d/build_scene2.py
++++ b/e30_shikongqiao_video/3d/build_scene2.py
+@@ -6,26 +6,42 @@ P1-T7 三模式(2026-10-06): 默认 = proxy(现行合并网格路径, 行为逐
+ """
+ import os
+ import sys
+ import math
+ _c=math.cos; _s=math.sin; _pi=math.pi
+ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ # blender 依赖一律守护导入: 无 bpy 环境(pytest/纯链复用)下置 None,
+ # blender 模式逐位不变; 纯逻辑段只用 facts/masonry2/families/ledger/export_print。
++# S1(2026-10-07 审查修复): bpy 组与本体组分两个 try —— 旧版一把抓曾把
++# "blender 可用但 bridge_geom2 等本体缺文件"吞成 bpy=None 静默降级; 现在
++# bpy 可用而任一本体模块缺失即显式 ImportError, blender-free 环境不受影响。
+ try:
+     import bpy, bmesh
++    from mathutils import Vector, Matrix
++    _HAS_BPY = True
++except ImportError:   # pragma: no cover - blender-free 环境
++    bpy = bmesh = None
++    Vector = Matrix = None
++    _HAS_BPY = False
++try:
+     import bridge_geom2 as G
+     import materials as MAT
+     import lions2 as LIONS   # 蹲狮 v2: 母模布尔并 + linked duplicates(旧 lions.py 球堆叠已弃用)
+     import beasts2 as BEASTS # 靠山兽 v2: 4只 linked duplicates(5000+面/水密/正名靠山兽)
+-    from mathutils import Vector, Matrix
+-except ImportError:   # pragma: no cover - blender-free 环境
+-    bpy = bmesh = G = MAT = LIONS = BEASTS = None
+-    Vector = Matrix = None
++except ImportError:
++    G = MAT = LIONS = BEASTS = None
++if _HAS_BPY and (G is None or MAT is None or LIONS is None or BEASTS is None):
++    raise ImportError(
++        "build_scene2: bpy 可用但本体模块导入失败(G/MAT/LIONS/BEASTS 缺失="
++        "%r) —— 不再静默降级" % ([n for n, m in (("bridge_geom2", G),
++                                                 ("materials", MAT),
++                                                 ("lions2", LIONS),
++                                                 ("beasts2", BEASTS))
++                                 if m is None],))
+ 
+ HERE = os.path.dirname(os.path.abspath(__file__))
+ BRIDGE_AXIS_AZ = 112.0     # 北京建筑大学口径(东端略南/西端略北), 供后续光影用
+ 
+ 
+ def mat(name, rgb, rough=0.85):
+     m = bpy.data.materials.new(name); m.use_nodes = True
+     b = m.node_tree.nodes.get("Principled BSDF")
+@@ -968,17 +984,17 @@ import facts as _F
+ import assumptions as _ASSUM
+ from assumptions import BODY_BOTTOM as _BODY_BOTTOM
+ import masonry2 as _M2
+ import families as _FAM
+ import ledger as _LED
+ import export_print as _EP
+ 
+ COL_FAMILIES = "COL_FAMILIES"
+-LAYOUT_MAX_OBJECTS = 60          # --layout 场景 Object 硬门(主场景不持有 5000 Object)
++LAYOUT_MAX_OBJECTS = 50          # --layout 场景 Object 硬门(主场景不持有 5000 Object; W1 对齐简报, 实测 20)
+ ARC_STEP = 0.04                  # void 弧段折线采样步长(m); 折线内接矢高 ~1e-4m 亚像素
+ CLIP_EPS = 1e-9
+ VOID_Z_MIN = _BODY_BOTTOM - 2.0  # void 矩形部下界(低于一切砌体; 只为 SH 裁剪有限化)
+ 
+ 
+ def piers_and_spans():
+     # type: () -> Tuple[List[float], List[float]]
+     """墩位中心/孔跨(facts 累加式, 与 bridge_geom2.PIER_X 同式)。"""
+@@ -1272,28 +1288,34 @@ def stone_world_bbox(stone):
+                             stone["transform"])
+     xs = [v[0] + off[0] for v in verts]
+     zs = [v[2] + off[2] for v in verts]
+     return min(xs), max(xs), min(zs), max(zs)
+ 
+ 
+ def classify_stones(stones, bands=None):
+     # type: (List[Dict[str, Any]], Optional[List[Dict[str, float]]]) -> Dict[str, Tuple[str, List[List[Tuple[float, float]]]]]
+-    """逐石 void 分类(各石只对自己孔带判定; 孔带互不重叠, 块不会跨带)。"""
++    """逐石 void 分类(各石只对自己孔带判定; 孔带互不重叠, 块不会跨带)。
++    W4(2026-10-07 审查): 判为 clip 的石在 params 打 clipped=True 标 ——
++    masonry2.materialize 对无烘焙网格的带标石显式 raise, 把"整块族网格
++    静默顶替裁剪片"的前向陷阱(导出/再放置路径)变成响亮错误。"""
+     if bands is None:
+         bands = [arch_band(i) for i in range(_F.N_SPAN)]
+     zone_idx = {"ARCH%02d" % (i + 1): i for i in range(_F.N_SPAN)}
+     out = {}
+     for s in stones:
+         i = zone_idx.get(s["id"].split(".")[0])
+         if i is None:
+             out[s["id"]] = ("out", [])
+             continue
+         x0, x1, z0, z1 = stone_world_bbox(s)
+-        out[s["id"]] = clip_footprint(x0, x1, z0, z1, bands[i], band_key=i)
++        status, polys = clip_footprint(x0, x1, z0, z1, bands[i], band_key=i)
++        if status == "clip":
++            s["params"]["clipped"] = True
++        out[s["id"]] = (status, polys)
+     return out
+ 
+ 
+ def stone_local_mesh(stone, status="out", polys=None):
+     # type: (Dict[str, Any], str, Optional[List[List[Tuple[float, float]]]]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+     """石的材料化前局部网格: 未裁剪走参数化族; clip 片 -> 双剖面棱柱
+     (局部系, 世界 x/z 减锚点偏移; 体积朝向由 flip_outward 单一归一)。"""
+     if status != "clip":
+@@ -1392,71 +1414,96 @@ def load_spec(stones_dir, arch_idx):
+     half = _F.N_SPAN // 2
+     src = arch_idx if arch_idx <= half else (_F.N_SPAN - 1 - arch_idx)
+     with open(os.path.join(stones_dir, "stones_p%d.json" % src),
+               "r", encoding="utf-8") as f:
+         spec = _json.load(f)
+     return mirror_spec(spec) if arch_idx > half else spec
+ 
+ 
+-def cap_to_deck(stones, min_h=0.025):
+-    # type: (List[Dict[str, Any]], float) -> List[Dict[str, Any]]
++def cap_to_deck(stones, min_h=0.025, stats=None):
++    # type: (List[Dict[str, Any]], float, Optional[Dict[str, Any]]) -> List[Dict[str, Any]]
+     """场景链收口: 砌体顶截到桥面弧线。
+ 
+     砖谱末层 z0 是照片描摹的平线; 桥面是抛物线(端孔一孔内落差可达 0.5m),
+-    平线末层按谱层高直砌会在桥面上方露出条带。规则: 每块按块心桥面标高
+-    截顶(h 缩、zm 随实高、wedge hw_t / slab bbox 同步重算); 整块底已高于
+-    桥面(截后 h <= min_h)的场景侧不留 —— 那里的墙不存在。只改本链自建
+-    stone dict, 不触碰 masonry2 生成器与其冻结测试语义。"""
++    平线末层按谱层高直砌会在桥面上方露出条带。规则: 每块按【块心】桥面标高
++    截顶; 整块底已高于桥面(截后 h <= min_h)的场景侧不留 —— 那里的墙不存在,
++    但必须记数归账(stats["skipped_below_deck"/"skipped_ids"], H1: 静默弃曾
++    把超底 slab 藏成账实不符)。
++    锚语义按族分派(masonry2.anchor_offset 同一分派表, H1 修复核心):
++      wedge-std 块中心锚: z0=tz-h/2, 截顶后 zm=z0+h2/2、hw_t 随实高重算;
++      slab 最小角锚:     z0=tz(=bbox.z0), 截顶只改 params.h 与 bbox.z1,
++                         transform[2] 不动, 维持 bbox.z0==transform[2]。
++    桥面采样 x 一律块心: slab 用 bbox 中点 —— 旧版对 slab 误用最小角锚公式
++    (z0=tz-h/2 半高虚低 + 采样 x0), 截顶线系统性偏高, CORE 顶穿桥面
++    (实测越顶 29 块/旧断言口径)。只改本链自建 stone dict, 不触碰 masonry2
++    生成器与其冻结测试语义。"""
+     out = []
+     for s in stones:
+         p = s["params"]
+         h = float(p["h"])
+-        z0 = float(s["transform"][2]) - h / 2.0
+-        cap = deck_z_at(float(s["transform"][0]))
++        if s["family"] in _M2._ANCHOR_MIN_CORNER:
++            bb = p["bbox"]
++            z0 = float(s["transform"][2])
++            cap = deck_z_at(0.5 * (float(bb["x0"]) + float(bb["x1"])))
++        else:
++            z0 = float(s["transform"][2]) - h / 2.0
++            cap = deck_z_at(float(s["transform"][0]))
+         h2 = min(h, cap - z0)
+         if h2 <= min_h:
++            if stats is not None:
++                stats["skipped_below_deck"] = \
++                    stats.get("skipped_below_deck", 0) + 1
++                stats.setdefault("skipped_ids", []).append(s["id"])
+             continue
+         if h2 < h - 1e-12:
+             p["h"] = h2
+-            s["transform"][2] = z0 + h2 / 2.0
+-            if s["family"] == "wedge-std" and "hw_t" in p:
+-                p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
+-            if "bbox" in p:
+-                p["bbox"]["z1"] = z0 + h2
++            if s["family"] in _M2._ANCHOR_MIN_CORNER:
++                p["bbox"]["z1"] = z0 + h2   # 最小角锚: transform[2] 不动
++            else:
++                s["transform"][2] = z0 + h2 / 2.0
++                if s["family"] == "wedge-std" and "hw_t" in p:
++                    p["hw_t"] = hw_wall(float(s["transform"][0]), z0 + h2)
++                if "bbox" in p:
++                    p["bbox"]["z1"] = z0 + h2
+         out.append(s)
+     return out
+ 
+ 
+ def bridge_ledger(stones_dir=None):
+     # type: (Optional[str]) -> Dict[str, Any]
+     """全桥砌体账目: 面石(谱)+背衬+core × 17 孔 × 东西两面。
+     末层高兜底 = 拱心线桥面标高 - 谱末层 z0(砌体顶随桥面弧线封口);
+-    core 带界 = 孔带(首末孔外扩到桥端, 补桥台条带); z 带 = 水下底..桥面。"""
++    core 带界 = 孔带(首末孔外扩到桥端, 补桥台条带); z 带 = 水下底..桥面。
++    整块超底弃石记入 meta.skipped_below_deck(_ids) 并打日志(H1 归账)。"""
+     if stones_dir is None:
+         stones_dir = os.path.join(HERE, "stones")
+     px, _spans = piers_and_spans()
++    skipped = {"skipped_below_deck": 0, "skipped_ids": []}
+     stones = []    # type: List[Dict[str, Any]]
+     for i in range(_F.N_SPAN):
+         spec = load_spec(stones_dir, i)
+         band = arch_band(i)
+         ch = max(0.05, band["z_hi"] - spec["courses"][-1]["z0"])
+         for side in (1, -1):
+             faces = _M2.face_stones(spec, i, side, hw_wall, course_h=ch)
+-            faces = cap_to_deck(faces)
++            faces = cap_to_deck(faces, stats=skipped)
+             stones.extend(faces)
+             stones.extend(cap_to_deck(
+-                _M2.backing_stones(faces, hw_wall, seed=i)))
++                _M2.backing_stones(faces, hw_wall, seed=i), stats=skipped))
+         x_lo = -_F.BRIDGE_LEN / 2.0 if i == 0 else band["x_lo"]
+         x_hi = _F.BRIDGE_LEN / 2.0 if i == _F.N_SPAN - 1 else band["x_hi"]
+         stones.extend(cap_to_deck(
+             _M2.core_cells(i, hw_wall, _BODY_BOTTOM, band["z_hi"],
+-                           x_lo, x_hi, seed=i)))
++                           x_lo, x_hi, seed=i), stats=skipped))
++    print("SKIPPED_BELOW_DECK n=%d" % skipped["skipped_below_deck"])
+     return {"meta": {"schema": _LED.SCHEMA, "curve_hash": "e30-p1t7-bridge",
+-                     "seed": 0},
++                     "seed": 0,
++                     "skipped_below_deck": skipped["skipped_below_deck"],
++                     "skipped_below_deck_ids": skipped["skipped_ids"]},
+             "stones": stones}
+ 
+ 
+ def layout_group(stone):
+     # type: (Dict[str, Any]) -> str
+     """GN 分区 collection: CORE 石按块心 x 落 ABUT_W/ABUT_E/CORE, 其余按孔。"""
+     if stone.get("role_struct") == "CORE":
+         c = family_center(stone)
+diff --git a/e30_shikongqiao_video/3d/masonry2.py b/e30_shikongqiao_video/3d/masonry2.py
+index 930f996..7651da5 100644
+--- a/e30_shikongqiao_video/3d/masonry2.py
++++ b/e30_shikongqiao_video/3d/masonry2.py
+@@ -282,19 +282,27 @@ def _euler_xyz_matrix(rx, ry, rz):
+ 
+ 
+ def materialize(stone, verts=None, faces=None):
+     # type: (Dict[str, Any], Optional[List[Tuple[float, float, float]]], Optional[List[Tuple[int, ...]]]) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]
+     """把石的局部族网格放置到世界系(U2: 导出与场景共用的唯一放置算子)。
+ 
+     verts/faces 缺省用 families.family_mesh(family, params) 生成; 传入裁剪
+     unique 网格时, 放置中心仍取完整族网格 bbox 中点(整块语义, 见节注释)。
+-    不改写 stone 与传入网格。返回 (world_verts, faces)。
++    W4(2026-10-07 审查): params.clipped=True 的石(跨洞裁剪片, build_scene2.
++    classify_stones 打标)缺省路径会拿【整块】族网格静默顶替裁剪片 —— 必须
++    传烘焙网格(stone_local_mesh 产物), 否则 raise。不改写 stone 与传入网格。
++    返回 (world_verts, faces)。
+     """
+     if verts is None:
++        if stone["params"].get("clipped"):
++            raise ValueError(
++                "materialize: %s clip 石导出必须传烘焙网格"
++                "(params.clipped=True, 族网格只代表整块; 用 "
++                "build_scene2.stone_local_mesh 产物)" % stone.get("id"))
+         verts, faces = FAM.family_mesh(stone["family"], stone["params"])
+     off = anchor_offset(stone["family"], stone["params"], stone["transform"])
+     rx, ry, rz = (float(stone["transform"][3]), float(stone["transform"][4]),
+                   float(stone["transform"][5]))
+     if abs(rx) < 1e-12 and abs(ry) < 1e-12 and abs(rz) < 1e-12:
+         return [(v[0] + off[0], v[1] + off[1], v[2] + off[2]) for v in verts], \
+             list(faces)
+     full_v, _ = FAM.family_mesh(stone["family"], stone["params"])
+diff --git a/e30_shikongqiao_video/tests/test_p1_scene.py b/e30_shikongqiao_video/tests/test_p1_scene.py
+index 9b13c22..19b035b 100644
+--- a/e30_shikongqiao_video/tests/test_p1_scene.py
++++ b/e30_shikongqiao_video/tests/test_p1_scene.py
+@@ -294,16 +294,28 @@ def _independent_chain_count():
+     capped = []
+     for i in range(F.N_SPAN):
+         zone = "ARCH%02d" % (i + 1)
+         capped.extend(BS.cap_to_deck(
+             [s for s in stones if s["id"].startswith(zone + ".")]))
+     return len(BS.census(capped, BS.classify_stones(capped)))
+ 
+ 
++def _world_top_center_x(s):
++    """家族锚语义的世界顶 z 与块心 x(H1): slab=最小角锚(顶=tz+h, 心=bbox
++    中点), wedge=中心锚(顶=tz+h/2, 心=transform[0])。与 masonry2
++    anchor_offset 的分派表同源, 不另立第二语义。"""
++    if s["family"] in M2._ANCHOR_MIN_CORNER:
++        bb = s["params"]["bbox"]
++        return (float(s["transform"][2]) + float(s["params"]["h"]),
++                0.5 * (float(bb["x0"]) + float(bb["x1"])))
++    return (float(s["transform"][2]) + float(s["params"]["h"]) / 2.0,
++            float(s["transform"][0]))
++
++
+ def test_bridge_ledger_structure_and_family_count_crosscheck():
+     led = BS.bridge_ledger()
+     errs = LED.validate_ledger(led)
+     assert not errs, errs[:5]
+     stones = led["stones"]
+     zones = {s["id"].split(".")[0] for s in stones}
+     assert zones == {"ARCH%02d" % (i + 1) for i in range(F.N_SPAN)}
+     roles = {s["role_struct"] for s in stones}
+@@ -325,21 +337,25 @@ def test_bridge_ledger_structure_and_family_count_crosscheck():
+         zt2 = "ARCH%02d" % (F.N_SPAN + 1 - int(z[4:]))
+         if zt2 not in byz or int(z[4:]) > F.N_SPAN // 2:
+             continue
+         xs_a = sorted(round(s["transform"][0], 6) for s in sides["EAST"])
+         xs_b = sorted(round(-s["transform"][0], 6) for s in byz[zt2]["EAST"])
+         assert xs_a == xs_b, "%s 与 %s 镜像足印不一致" % (z, zt2)
+         mirror_pairs += 1
+     assert mirror_pairs >= F.N_SPAN // 2
+-    # 面石顶不越过桥面弧线(cap_to_deck 收口; 端孔谱平线末层逐块截顶)
++    # 顶不越桥面弧线(cap_to_deck 收口; 端孔谱平线末层逐块截顶)——H1 修复后
++    # 断言从"只扫 SPANDREL"扩到全 role: 世界顶 <= 该块【块心 x】处桥面标高
++    # (容差 1e-9)。修复前同口径(旧采样 transform[0])全 role 实测 29 块越顶,
++    # 全部是 CORE slab(slab 被当块中心锚截顶, 顶穿桥面弧线)。
+     for s in stones:
+-        if s["role_struct"] == "SPANDREL":
+-            zt = s["transform"][2] + s["params"]["h"] / 2.0
+-            assert zt <= BS.deck_z_at(s["transform"][0]) + 1e-9
++        zt, xc = _world_top_center_x(s)
++        assert zt <= BS.deck_z_at(xc) + 1e-9, \
++            "%s 世界顶 %r 越过块心(%r)桥面 %r" % (s["id"], zt, xc,
++                                                 BS.deck_z_at(xc))
+     # 独立链互证族数(FAMILIES_EMIT 的可测替身)
+     assert len(BS.census(stones, BS.classify_stones(stones))) \
+         == _independent_chain_count()
+ 
+ 
+ def test_layout_group_partition():
+     led = BS.bridge_ledger()
+     groups = {}
+@@ -410,8 +426,113 @@ def test_export_default_mesh_fn_is_materialize_translation():
+     assert dev == 0.0
+     v_bad2 = [(v[0], v[1], v[2] + 1.0 if k % 2 else v[2])
+               for k, v in enumerate(v_def)]
+     t2 = [sum((a[i] - b[i]) for a, b in zip(v_def, v_bad2)) / len(v_def)
+           for i in range(3)]
+     dev2 = max(max(abs((a[i] - b[i]) - t2[i]) for i in range(3))
+                for a, b in zip(v_def, v_bad2))
+     assert dev2 > 1e-3, "等价判据对真差异无感"
++
++
++# ── P1-T7 修复轮(2026-10-07 审查 H1/W1/W4/S1) ────────────────────────
++
++def test_cap_to_deck_slab_min_corner_anchor_negative_control(monkeypatch):
++    """H1 slab 负控: 最小角锚石截顶只改 h/bbox.z1, transform[2] 不动;
++    不变式 bbox.z0==transform[2] 与"世界 z 跨度==bbox 跨度"维持; 截后顶
++    ==块心桥面标高(1e-9); 整块超底的弃且记数。wedge 中心锚同步回归
++    (zm 随实高平移, 现状语义不变)。"""
++    cells = M2.core_cells(8, lambda x, z: 3.0, z_lo=4.0, z_hi=5.2,
++                          x_lo=-1.0, x_hi=1.0)
++    assert sorted(c["transform"][2] for c in cells) == [4.0] * 3 + [4.6] * 3
++    stats = {}
++    monkeypatch.setattr(BS, "deck_z_at", lambda x: 4.5)  # 平桥面
++    out = BS.cap_to_deck(cells, stats=stats)
++    # z0=4.6 层整块超底: 弃且记数; z0=4.0 层截到 0.5 存活
++    assert len(out) == 3 and stats["skipped_below_deck"] == 3
++    assert sorted(stats["skipped_ids"]) == sorted(
++        c["id"] for c in cells if c["id"] not in {o["id"] for o in out})
++    kept = out[0]
++    assert kept["transform"][2] == 4.0, "最小角锚 transform[2] 不得动"
++    assert kept["params"]["h"] == pytest.approx(0.5)
++    bb = kept["params"]["bbox"]
++    assert bb["z0"] == kept["transform"][2], "bbox.z0==transform[2] 不变式"
++    assert bb["z1"] == pytest.approx(4.5)
++    verts, _ = M2.materialize(kept)
++    assert max(v[2] for v in verts) == pytest.approx(4.5, abs=1e-9)
++    zspan = max(v[2] for v in verts) - min(v[2] for v in verts)
++    assert zspan == pytest.approx(bb["z1"] - bb["z0"], abs=1e-12)
++    # wedge 回归: 中心锚石截顶后 zm=z0+h2/2(旧语义逐位保持)
++    w = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)[0]
++    w["transform"][2] = 5.0 - w["params"]["h"] / 2.0    # 顶贴 z=5
++    out2 = BS.cap_to_deck([w])
++    assert len(out2) == 1
++    # h2 = 4.5 - (5.0-0.55) = 0.05; zm = z0 + h2/2
++    assert out2[0]["transform"][2] == pytest.approx(4.45 + 0.05 / 2.0)
++
++
++def test_bridge_ledger_records_below_deck_stones():
++    """H1: 整块超底石不得静默消失 —— 计数+ids 记入 meta 且与账面一致。
++    审查点名的两块超底 CORE slab 必须在记录里(修复前它们要么被静默弃、
++    要么带着错误锚位混进账面, 账实不符)。"""
++    led = BS.bridge_ledger()
++    rec_n = led["meta"]["skipped_below_deck"]
++    rec_ids = led["meta"]["skipped_below_deck_ids"]
++    assert rec_n >= 1
++    assert rec_n == len(rec_ids) == len(set(rec_ids)), "计数与 ids 必须对账"
++    named = {"ARCH11.EAST.CORE.C15.B02", "ARCH14.EAST.CORE.C12.B02"}
++    assert named <= set(rec_ids), sorted(named - set(rec_ids))
++    kept = {s["id"] for s in led["stones"]}
++    assert not (named & kept), "被记弃石不得同时出现在账面"
++
++
++def test_layout_object_gate_is_50():
++    """W1: --layout 场景 Object 硬门对齐简报 50(实测 20, 不再用放宽的 60)。"""
++    assert BS.LAYOUT_MAX_OBJECTS == 50
++
++
++def test_clip_stones_marked_and_materialize_demands_baked_mesh():
++    """W4: 跨洞裁剪石 params.clipped=True; materialize 无烘焙网格必须
++    响亮 raise —— 把"整块族网格静默顶替裁剪片"的前向陷阱变成显式错误。
++    未裁剪石不打标、默认路径照常。"""
++    led = BS.bridge_ledger()
++    statuses = BS.classify_stones(led["stones"])
++    clips = [s for s in led["stones"] if statuses[s["id"]][0] == "clip"]
++    outs = [s for s in led["stones"] if statuses[s["id"]][0] == "out"]
++    assert clips and outs, "真实账目必须同时有跨洞石与洞外石"
++    for s in clips:
++        assert s["params"].get("clipped") is True, s["id"]
++    assert all("clipped" not in s["params"] for s in outs)
++    st = clips[0]
++    with pytest.raises(ValueError, match="clipped"):
++        M2.materialize(st)
++    verts, faces = BS.stone_local_mesh(st, "clip", statuses[st["id"]][1])
++    wv, wf = M2.materialize(st, verts, faces)
++    assert len(wv) == len(verts) and len(wf) == len(faces)
++    M2.materialize(_wedge_stone())   # 未裁剪石: 默认族网格路径不受影响
++
++
++def test_guarded_import_loud_when_bpy_present_but_body_modules_missing():
++    """S1: bpy 可用而本体模块(G/MAT/LIONS/BEASTS)缺失 -> 显式 ImportError。
++    旧守护 except 一把抓曾把 blender 环境的本体缺文件吞成 bpy=None 静默降级。"""
++    import importlib
++    import types
++    names = ("bpy", "bmesh", "mathutils", "bridge_geom2", "materials",
++             "lions2", "beasts2", "build_scene2")
++    saved = {k: sys.modules.get(k) for k in names}
++    try:
++        for k in ("bpy", "bmesh"):
++            sys.modules[k] = types.ModuleType(k)
++        mu = types.ModuleType("mathutils")
++        mu.Vector = mu.Matrix = object
++        sys.modules["mathutils"] = mu
++        # sys.modules 值置 None -> import 该名即 ImportError(真模块不执行)
++        for k in ("bridge_geom2", "materials", "lions2", "beasts2"):
++            sys.modules[k] = None
++        with pytest.raises(ImportError):
++            importlib.reload(BS)
++    finally:
++        for k, v in saved.items():
++            if v is None:
++                sys.modules.pop(k, None)
++            else:
++                sys.modules[k] = v
++        importlib.reload(BS)

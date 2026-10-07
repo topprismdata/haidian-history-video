@@ -1,0 +1,292 @@
+d095eee feat(e30): P1-T4 背衬层+core cells(证据级core_reconstruction, 隐缝2mm)
+=== STAT ===
+ e30_shikongqiao_video/3d/masonry2.py            | 115 +++++++++++++++++++++++-
+ e30_shikongqiao_video/tests/test_p1_masonry2.py |  98 ++++++++++++++++++++
+ 2 files changed, 212 insertions(+), 1 deletion(-)
+=== DIFF ===
+diff --git a/e30_shikongqiao_video/3d/masonry2.py b/e30_shikongqiao_video/3d/masonry2.py
+index 50e016c..afdbf0a 100644
+--- a/e30_shikongqiao_video/3d/masonry2.py
++++ b/e30_shikongqiao_video/3d/masonry2.py
+@@ -3,33 +3,49 @@
+ """P1 三层生成器: 面石(顺丁)/背衬/core cells -> ledger。
+ 
+ T3 面石层: 消费砖谱 spec(courses/blocks) 产出每石一条 ledger 账目。
+ - 顺丁相间: (course+block) 偶数位=顺石 STRETCHER_D, 奇数位=丁石 HEADER_D;
+   深度差写进 params["d"] 供 T6 材料化(families._wedge_std 以 d 为权威深度)。
+ - 间隙两量分离: joint_historical_mm=10(历史缝), clearance_manufacturing_mm=None
+   (制造间隙未定, T6 挂 allow_clearance 时序再定)。
+ - zone 编号 1 基(设计 spec: 孔=ARCH01..17 西→东), 砖谱文件/字段 arch 为 0 基。
+ - 层高由砖谱自身推导: h_i = z0_{i+1} - z0_i, 末层用显式 course_h 兜底(未传则
+   DEFAULT_COURSE_H); 真实砖谱层间距不等, 定高建层会纵向插穿(T3 审查修复)。
++T4 背衬层 + core cells:
++- 背衬 role=BACK evidence=ashlar_truth: 与面石同块位/同层高(_course_heights
++  同口径), 外缘退到可及丁石内缘再靠后 BACKING_GAP(2mm 隐缝, 记入
++  clearance_manufacturing_mm 制造侧), 深 BACKING_D 伪随机(seed 确定性)。
++- core cells role=CORE evidence=core_reconstruction: 孔内 x 分 CORE_COLS 列
++  × z 每 CORE_CELL_H 一层 × 前后(东西两墙)合并单 cell, params 记 bbox,
++  直盒天然水密(print.watertight, T5 printcheck 复核)。z 界从入参 z_lo/z_hi
++  推导不硬编; x 界默认以拱心线处墙面半宽近似孔净半跨(T8 可用 x_lo/x_hi 精化)。
+ """
+ import json
++import math
+ import os
+-from typing import Any, Callable, Dict, List, Optional
++import random
++from typing import Any, Callable, Dict, List, Optional, Tuple
+ 
+ import ledger as L
+ 
+ STRETCHER_D = 1.2
+ HEADER_D = 2.4
+ PROUD = 0.006
+ BACK = 0.30
+ # 末层兜底层高: 砖谱最后一层没有下一条起算线可推导, 才用这个常数
+ DEFAULT_COURSE_H = 0.55
++# T4 背衬: 深度伪随机区间(m) 与丁石内缘隐缝(m)
++BACKING_D = (0.8, 1.2)
++BACKING_GAP = 0.002
++# T4 core cells: 层高上限(m) 与 x 列数
++CORE_CELL_H = 0.6
++CORE_COLS = 3
+ 
+ 
+ def _pairs(blocks):
+     # type: (List[Any]) -> List[Dict[str, float]]
+     """砖谱块界归一: {x0,x1} 字典直通; 沿 x 的界边表[a,b,c] -> [a-b, b-c] 相邻对。
+ 
+     边表相邻成块、首尾两边为该列的左右界: n 条界边产出 n-1 块砖,
+     故奇数长度的边表不是缺块, 而是这一列有偶数个界位。
+     """
+     if blocks and isinstance(blocks[0], dict):
+@@ -73,20 +89,117 @@ def face_stones(spec, arch_idx, side, hw_fn, course_h=None):
+             st = L.new_stone(zone, face, "SPANDREL", ci, bi, "wedge-std",
+                              {"w": x1 - x0, "h": h, "d": depth,
+                               "proud": PROUD, "back": BACK,
+                               "hw_b": hw_b, "hw_t": hw_t},
+                              [xm, y if side > 0 else -y, zm, 0.0, 0.0, 0.0],
+                              "qingshi")
+             out.append(st)
+     return out
+ 
+ 
++def _face_idx(stone):
++    # type: (Dict[str, Any]) -> Tuple[int, int]
++    """ARCH09.EAST.SPANDREL.C00.B01 -> (0, 1)。"""
++    tok = stone["id"].split(".")
++    return int(tok[3][1:]), int(tok[4][1:])
++
++
++def backing_stones(spec, arch_idx, side, hw_fn, course_h=None, seed=0):
++    # type: (Dict[str, Any], int, int, Callable[[float, float], float], Optional[float], int) -> List[Dict[str, Any]]
++    """背衬层: 与面石同块位/同层高, 外缘退到可及丁石内缘后 2mm 隐缝。
++
++    层高与块位直接取自 face_stones 账目(同口径, 硬契约: 复用 _course_heights)。
++    退让线: 对每块背衬, 取 z 向可及(名义层带与两石真实半跨和之较大者内)的
++    丁石内缘最小值再退 BACKING_GAP; 可及集为空(全顺层)则退到全部面石内缘
++    最小值之后。深度 BACKING_D 区间内 seed 伪随机(同 seed 确定性, 东西同
++    seed 即镜像对称)。隐缝 2mm 是制造/装配量, 记 clearance_manufacturing_mm。
++    transform[1] = 背衬外缘 y(与面石外缘同语义), 内缘 = |y| - d。
++    """
++    faces = face_stones(spec, arch_idx, side, hw_fn, course_h=course_h)
++    zone = "ARCH%02d" % (arch_idx + 1)
++    face = "EAST" if side > 0 else "WEST"
++    # 丁石内缘表(取自面石账目, 与面石几何零偏差)
++    hdr = [(s["transform"][2], abs(s["transform"][1]) - s["params"]["d"],
++            s["params"]["h"])
++           for s in faces if s["params"]["d"] == HEADER_D]
++    all_in = [abs(s["transform"][1]) - s["params"]["d"] for s in faces]
++    rng = random.Random(seed)
++    out = []  # type: List[Dict[str, Any]]
++    for s in sorted(faces, key=_face_idx):
++        ci, bi = _face_idx(s)
++        h = s["params"]["h"]
++        zm = s["transform"][2]
++        # 逐丁石可及带宽: 名义层带(跨薄层相邻) 与 真实半跨和(厚层贴触) 取大
++        reach = [y_in for (zm_h, y_in, h_h) in hdr
++                 if abs(zm - zm_h) < max(DEFAULT_COURSE_H,
++                                         0.5 * (h + h_h)) + 1e-9]
++        if not reach:
++            reach = all_in
++        y_out = min(reach) - BACKING_GAP
++        d = BACKING_D[0] + (BACKING_D[1] - BACKING_D[0]) * rng.random()
++        xm = s["transform"][0]
++        hw_mid = hw_fn(xm, zm)
++        st = L.new_stone(zone, face, "BACK", ci, bi, "wedge-std",
++                         {"w": s["params"]["w"], "h": h, "d": d,
++                          "proud": 0.0, "hw_b": hw_mid, "hw_t": hw_mid,
++                          "gap_mm": 2.0},
++                         [xm, y_out if side > 0 else -y_out, zm, 0.0, 0.0, 0.0],
++                         "maoshi")
++        # 2mm 隐缝是制造/装配量: 记 params.gap_mm; clearance_manufacturing_mm
++        # 挂 T6 allow_clearance 时序才准置值(ledger I1 纪律, 置早=校验错)
++        st["print"]["watertight"] = True
++        out.append(st)
++    return out
++
++
++def core_cells(arch_idx, hw_fn, z_lo, z_hi, seed=0, x_lo=None, x_hi=None):
++    # type: (int, Callable[[float, float], float], float, float, int, Optional[float], Optional[float]) -> List[Dict[str, Any]]
++    """牺牲芯 cells: x 分 CORE_COLS 列 × z 每 CORE_CELL_H 一层 × 前后合并。
++
++    胞是贯穿东西两墙之间的单块直盒(family slab, 前后合并), y 半宽取该列心/
++    层中处墙面半宽; params 记 bbox。z 界只从 z_lo/z_hi 推导(末层短胞兜到
++    z_hi), 不硬编; x 界缺省以 hw_fn(0, 层中)近似孔净半跨(拱心线处墙面半宽),
++    调用方可传 x_lo/x_hi 用真实拱线精化。seed 保留(当前网格无自由度, 与
++    背衬共用伪随机接口纪律)。cell 高恒 <= CORE_CELL_H; 直盒天然水密。
++    """
++    zone = "ARCH%02d" % (arch_idx + 1)
++    if z_hi <= z_lo:
++        return []
++    if x_lo is None or x_hi is None:
++        half = hw_fn(0.0, 0.5 * (z_lo + z_hi))
++        if x_lo is None:
++            x_lo = -half
++        if x_hi is None:
++            x_hi = half
++    out = []  # type: List[Dict[str, Any]]
++    n_layers = int(math.ceil((z_hi - z_lo) / CORE_CELL_H - 1e-9))
++    for ci in range(n_layers):
++        z0 = z_lo + ci * CORE_CELL_H
++        # h 用截断量算, 不用 z1-z0 回减: 浮点回减会得 0.6000000000000001
++        h = min(CORE_CELL_H, z_hi - z0)
++        z1 = z0 + h
++        zm = 0.5 * (z0 + z1)
++        for bj in range(CORE_COLS):
++            x0 = x_lo + (x_hi - x_lo) * bj / CORE_COLS
++            x1 = x_lo + (x_hi - x_lo) * (bj + 1) / CORE_COLS
++            yh = hw_fn(0.5 * (x0 + x1), zm)
++            bb = {"x0": x0, "x1": x1, "y0": -yh, "y1": yh, "z0": z0, "z1": z1}
++            cell = L.new_stone(zone, "EAST", "CORE", ci, bj, "slab",
++                               {"w": x1 - x0, "h": h, "d": 2.0 * yh,
++                                "bbox": bb},
++                               [x0, -yh, z0, 0.0, 0.0, 0.0],
++                               "maoshi", evidence="core_reconstruction")
++            cell["print"]["watertight"] = True
++            out.append(cell)
++    return out
++
++
+ def build_face_layer(stones_dir, hw_fn, arches, course_h=None):
+     # type: (str, Callable[[float, float], float], List[int], Optional[float]) -> List[Dict[str, Any]]
+     """逐孔读 stones_p<arch_idx>.json 砖谱, 东西两面合成整层面石账目。
+ 
+     course_h 仅为末层兜底透传; 其余层高按各孔砖谱自身层间距推导。
+     """
+     out = []  # type: List[Dict[str, Any]]
+     for ai in arches:
+         path = os.path.join(stones_dir, "stones_p%d.json" % ai)
+         with open(path, "r", encoding="utf-8") as f:
+diff --git a/e30_shikongqiao_video/tests/test_p1_masonry2.py b/e30_shikongqiao_video/tests/test_p1_masonry2.py
+index 7e6777b..b03933d 100644
+--- a/e30_shikongqiao_video/tests/test_p1_masonry2.py
++++ b/e30_shikongqiao_video/tests/test_p1_masonry2.py
+@@ -113,10 +113,108 @@ def test_real_p8_spec_has_no_vertical_penetration():
+ def test_build_face_layer_derives_heights_by_default(tmp_path):
+     (tmp_path / "stones_p8.json").write_text(json.dumps(UNEQUAL_SPEC),
+                                              encoding="utf-8")
+     got = M2.build_face_layer(str(tmp_path), _hw, [8])
+     assert [s["params"]["h"] for s in got[:3]] == [
+         0.290 - 0.146, 0.850 - 0.290, M2.DEFAULT_COURSE_H]
+     # 末层兜底值可透传
+     tail = M2.build_face_layer(str(tmp_path), _hw, [8], course_h=0.40)
+     assert [s["params"]["h"] for s in tail[:3]] == [
+         0.290 - 0.146, 0.850 - 0.290, 0.40]
++
++
++# ── T4: 背衬层 + core cells ──────────────────────────────────────────
++# 背衬 role=BACK evidence=ashlar_truth, 深 0.8-1.2 伪随机, 内缘退到最深
++# 丁石之后 2mm(隐缝); core cells role=CORE evidence=core_reconstruction,
++# 每 0.6m 一层 × x 3 列 × 前后合并, bbox 入 params, 直盒水密。
++def test_backing_no_penetration_with_headers():
++    faces = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)
++    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
++    hdr = [s for s in faces if s["params"]["d"] == M2.HEADER_D]
++    for b in backs:
++        y_in = abs(b["transform"][1]) - b["params"]["d"]   # 背衬内缘
++        for h in hdr:
++            y_h_in = abs(h["transform"][1]) - h["params"]["d"]
++            if abs(b["transform"][2] - h["transform"][2]) < 0.55:
++                assert y_in <= y_h_in - 0.002   # 隐缝>=2mm 不穿透
++
++
++def test_core_cells_evidence_and_height():
++    cells = M2.core_cells(8, _hw, z_lo=1.0, z_hi=6.0, seed=7)
++    assert all(c["evidence"] == "core_reconstruction" for c in cells)
++    assert all(c["params"]["h"] <= 0.6 for c in cells)
++    assert len(cells) >= 8
++
++
++def test_backing_evidence_depth_and_clearance():
++    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
++    assert len(backs) == len(M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55))
++    assert all(s["role_struct"] == "BACK" for s in backs)
++    assert all(s["evidence"] == "ashlar_truth" for s in backs)
++    assert all(0.8 <= s["params"]["d"] <= 1.2 for s in backs)
++    # 2mm 隐缝记 params.gap_mm(几何事实); clearance_manufacturing_mm 保持
++    # None 挂 T6 时序(ledger I1: 置早被 validate_ledger 抓 CLEARANCE_PREMATURE)
++    assert all(s["params"]["gap_mm"] == 2.0 for s in backs)
++    assert all(s["clearance_manufacturing_mm"] is None for s in backs)
++    assert all(s["id"].split(".")[2] == "BACK" for s in backs)
++
++
++def test_backing_depth_is_pseudorandom_deterministic():
++    a = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
++    b = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
++    c = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=8)
++    same = lambda x, y: [(s["id"], s["transform"], s["params"]) for s in x] == \
++        [(s["id"], s["transform"], s["params"]) for s in y]
++    assert same(a, b)                      # 同种子逐位一致
++    assert not same(a, c)                  # 异种子深度序列确实变了
++    assert [s["transform"][1] for s in a] == \
++           [-s["transform"][1] for s in
++            M2.backing_stones(SPEC, 8, -1, _hw, course_h=0.55, seed=7)]
++
++
++def test_backing_penetration_negative_control():
++    # 判据负控制: 退让量被抵消再多推 1cm -> 穿透必须被抓住(判据非恒真)
++    faces = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)
++    backs = M2.backing_stones(SPEC, 8, 1, _hw, course_h=0.55, seed=7)
++    hdr = [s for s in faces if s["params"]["d"] == M2.HEADER_D]
++
++    def worst(b):
++        return max((abs(b["transform"][1]) - b["params"]["d"])
++                   - (abs(h["transform"][1]) - h["params"]["d"]) - 0.002
++                   for h in hdr
++                   if abs(b["transform"][2] - h["transform"][2]) < 0.55)
++
++    assert all(worst(b) <= 0.0 for b in backs)
++    busted = dict(backs[0])
++    busted["params"] = dict(backs[0]["params"])
++    busted["transform"] = list(backs[0]["transform"])
++    busted["transform"][1] += busted["params"]["d"] + 0.01
++    assert worst(busted) > 0.0
++
++
++def test_backing_reuses_course_heights_contract():
++    # T3 审查硬契约: 背衬层高必须与面石同口径(_course_heights 推导)
++    f = M2.face_stones(UNEQUAL_SPEC, 8, 1, _hw)
++    b = M2.backing_stones(UNEQUAL_SPEC, 8, 1, _hw, seed=7)
++    assert [s["params"]["h"] for s in b] == [s["params"]["h"] for s in f]
++    assert [s["transform"][2] for s in b] == [s["transform"][2] for s in f]
++
++
++def test_core_cells_bbox_watertight_and_coverage():
++    cells = M2.core_cells(8, _hw, z_lo=1.0, z_hi=6.0, seed=7)
++    assert all(c["role_struct"] == "CORE" for c in cells)
++    assert all(c["id"].split(".")[2] == "CORE" for c in cells)
++    assert all(c["print"]["watertight"] is True for c in cells)
++    for c in cells:
++        bb = c["params"]["bbox"]
++        assert bb["z1"] == bb["z0"] + c["params"]["h"]   # 构造恒等式
++        assert bb["x1"] - bb["x0"] == c["params"]["w"]
++        assert abs((bb["y1"] - bb["y0"]) - c["params"]["d"]) < 1e-12
++        # 前后合并: 宽度 = 2 * hw(列心, 层中)
++        yh = _hw((bb["x0"] + bb["x1"]) / 2.0, (bb["z0"] + bb["z1"]) / 2.0)
++        assert abs(bb["y1"] - yh) < 1e-9 and abs(bb["y0"] + yh) < 1e-9
++    # z 覆盖无缝无叠: 按 (层,列) 排序后层界首尾相接
++    zs = sorted(set((c["params"]["bbox"]["z0"], c["params"]["bbox"]["z1"])
++                    for c in cells))
++    assert zs[0][0] == 1.0 and zs[-1][1] == 6.0
++    for (a0, a1), (b0, b1) in zip(zs, zs[1:]):
++        assert abs(a1 - b0) < 1e-9

@@ -1,0 +1,459 @@
+=== commit ===
+commit b23a9f1316f168e593778422aacfa21dba01fcf9
+Author: topprismdata <topprismdata@users.noreply.github.com>
+Date:   Wed Oct 7 10:40:10 2026 +0800
+
+    fix(e30): P2-T3审查修复(fail-closed三闸+裁决pin+引用类分流+affects核+崩溃堵)
+
+=== DIFF ===
+commit b23a9f1316f168e593778422aacfa21dba01fcf9
+Author: topprismdata <topprismdata@users.noreply.github.com>
+Date:   Wed Oct 7 10:40:10 2026 +0800
+
+    fix(e30): P2-T3审查修复(fail-closed三闸+裁决pin+引用类分流+affects核+崩溃堵)
+
+diff --git a/e30_shikongqiao_video/3d/events.py b/e30_shikongqiao_video/3d/events.py
+index 9f2a7c5..247e611 100644
+--- a/e30_shikongqiao_video/3d/events.py
++++ b/e30_shikongqiao_video/3d/events.py
+@@ -1,56 +1,103 @@
+ # e30_shikongqiao_video/3d/events.py
+ # -*- coding: utf-8 -*-
+ """P2-T3 事件账本: 事件词表 + event_ledger schema + validate_event_ledger。
+ 
+ 石账纯度红线: 券架/事件永不进 stone ledger(5935 真源), 本账独立(spec §4)。
+-事件 seq 即 support_edge capacity_curve 的 x 轴(T1 已入库): 必须是 int 且全局
+-严格递增无洞, 否则曲线插值不可定义。
++事件 seq 即 support_edge capacity_curve 的 x 轴(T1 已入库): 必须是 int、首事件
++从 0 或 1 起、全局严格递增无洞, 否则曲线插值不可定义。
++
++消费约定(T4/T5 依赖, 与 p2-task-3-report §4 同源):
++- validate 一律返回错误列表(空表=绿); 输入残缺(None 集合/缺键/非 int
++  min_hold)报错码, 绝不抛异常。
++- errs==[] 数学上保证 prereq 图无环: prereq 必须指向更小且存在的 seq,
++  自环/前指均红, T5 可据此直接做拓扑遍历。
++- 事件 hole 必须等于所引石 id 的 zone 段(HOLE_UNKNOWN/REF_HOLE_MISMATCH
++  fail-closed); hole=None 仅允许用于不引石的事件。否则"每孔 CLOSE_RING
++  prereq ⊇ 该孔全部 RING 石"这一旗舰判据会因键不一致静默空转(假绿)。
++- curve x ↔ 事件 seq 往返完整性两侧交叉持有:
++  L.validate_ledger(led, known_event_seqs=E.event_seqs(ev_led))。
+ 
+ 校验判据(brief 接口节全量):
+-- seq 严格递增无洞; etype ∈ EVENT_TYPES; grade ∈ GRADES
++- seq 严格递增无洞, 首事件 seq ∈ {0,1}(SEQ_START); etype ∈ EVENT_TYPES;
++  grade ∈ GRADES
+ - prereq 全部指向更小 seq 且存在
+-- CENTERING_CLEAR 前该孔必有 DECENTER_START; DECENTER_START 前该孔必有 CLOSE_RING
+-- WEDGE_RELEASE 的 load_lambda 沿孔严格递增(卸楔逐档, λ∈[0,1], spec λ∈{0,.25,.5,.75,1})
+-- 引用的 stone_id/centering_id 存在于传入集合(按 "CEN-" 前缀分流, 不 import centering)
+-- 每孔 CLOSE_RING 恰一次且其 prereq ⊇ 该孔全部 RING 石(以传入 ledger 石记录
+-  列表或纯 id 表核)
++- 引用类分流: MASONRY(PLACE_STONE/CLOSE_RING/ADD_FILL) 引石账 id,
++  DECENTERING(DECENTER_START/WEDGE_RELEASE/CENTERING_CLEAR) 引券架 id,
++  形与类不符报 REF_CLASS_MISMATCH; affects 逐条核 ref 存在性(AFFECT_REF_
++  UNKNOWN) + curve 点形([int 事件序号, 有限数值], AFFECT_SHAPE) +
++  x ∈ 已有事件 seq 集(AFFECT_SEQ_UNKNOWN), curve 语义复用 ledger._curve_points
++- 每孔 CLOSE_RING 恰一次且其 prereq ⊇ 该孔全部 RING 石; 有 CLOSE 而该孔
++  在传入石账无 RING 石时报 RING_SET_EMPTY(判据空转防护)
++- CENTERING_CLEAR 前该孔必有 DECENTER_START; DECENTER_START 前该孔必有
++  CLOSE_RING
++- WEDGE_RELEASE 的 load_lambda 沿孔严格递增(等值也红), 域 [0,1] 且落在
++  spec 1/4 档栅格 {0,.25,.5,.75,1}(LAMBDA_STEP)
+ - CLOSE→DECENTER 窗口内该孔 HOLD_EVENT 数 ≥ min_hold(默认 3)才准落架。
+   MIN_HOLD=3 是 [工程参数·敏感性](B15 灰浆通例只作背景注), 非史料常数。
++- evidence 默认不核(在制账合法, new_event 默认 "R?:n" 为待挂占位);
++  require_evidence=True 为交付闸: 占位(None/''/"R?:n")报 EVIDENCE_PLACEHOLDER,
++  非 refs/construction_history.md 编号形制(A\\d+|B\\d+|C:[AB]\\d+, 可用
++  / 或 - 组合)报 EVIDENCE_FORMAT。
++
++非目标(覆盖类验收, 归 T4 生成侧约束与 T5 frontier 状态机, 本校验器不查):
++注册却从不 DECENTER/CLEAR 的券架、CLEAR 前 λ 未走满档、无 WEDGE 直接 CLEAR、
++同孔多次 DECENTER_START、孤立 WEDGE_RELEASE、同石多次 PLACE、CORE 抢砌。
+ """
++import re
++
+ from typing import Any, Dict, List, Optional
+ 
++import ledger as _ledger
++
+ EVENT_TYPES = ("PLACE_STONE", "CLOSE_RING", "HOLD_EVENT", "DECENTER_START",
+                "WEDGE_RELEASE", "CENTERING_CLEAR", "ADD_FILL")
+ GRADES = ("fact", "context", "inferred")
+ MIN_HOLD_DEFAULT = 3  # [工程参数·敏感性] 敏感性 1/3/6 记 G3 报告
+ CEN_PREFIX = "CEN-"   # T2 券架 id 形制(如 "CEN-ARCH09"), 只做字符串引用核
++MASONRY_TYPES = ("PLACE_STONE", "CLOSE_RING", "ADD_FILL")
++DECENTERING_TYPES = ("DECENTER_START", "WEDGE_RELEASE", "CENTERING_CLEAR")
++LAMBDA_GRID = 4       # spec λ 档 = 1/4 步进 {0,.25,.5,.75,1}
++EVIDENCE_ID_RE = re.compile(r"^(?:A\d+|B\d+|C:[AB]\d+)$")
+ 
+ 
+ def new_event(seq, hole, etype, stone_id=None, prereq=None, affects=None,
+               load_lambda=None, evidence="R?:n", grade="inferred"):
+     # type: (int, Optional[str], str, Optional[str], Optional[List[int]], Optional[list], Optional[float], str, str) -> Dict[str, Any]
+     """单事件记录。affects=[[edge_ref, [[event_seq, factor], ...]], ...],
+     与 ledger v2 capacity_curve 同形, sequencer 可直接写入支撑边。
+     stone_id 承载被作用对象 id: 砌筑类事件(PLACE/CLOSE/FILL)引石账 id,
+-    落架类事件(DECENTER/WEDGE/CLEAR)引 centering id; 校验按前缀分流。"""
++    落架类事件(DECENTER/WEDGE/CLEAR)引 centering id; 校验按事件类分流。
++    prereq/affects 传入即深拷贝两级, 调用方后续改写不影响已建事件。"""
+     return {
+         "seq": seq,
+         "hole": hole,
+         "etype": etype,
+         "stone_id": stone_id,
+         "prereq": list(prereq) if prereq else [],
+-        "affects": [list(a) for a in affects] if affects else [],
++        "affects": [[a[0], [list(p) for p in a[1]]] for a in affects]
++                   if affects else [],
+         "load_lambda": load_lambda,
+         "evidence": evidence,
+         "grade": grade,
+     }
+ 
+ 
++def event_seqs(ev_led):
++    # type: (Any) -> List[int]
++    """事件账全部合法 seq 集(升序)。T5/T8 交叉调用位:
++    L.validate_ledger(led, known_event_seqs=E.event_seqs(ev_led))
++    同时接受 {"events":[...]} 与裸事件表。"""
++    events = ev_led.get("events", []) if isinstance(ev_led, dict) \
++        else list(ev_led)
++    return sorted(e["seq"] for e in events
++                  if isinstance(e, dict) and _is_int(e.get("seq")))
++
++
+ def _is_int(v):
+     # type: (Any) -> bool
+     return isinstance(v, int) and not isinstance(v, bool)
+ 
+ 
+ def _as_id(x):
+     # type: (Any) -> str
+     """石/券架引用集合元素兼容两种形态: ledger 石记录 dict(取 id 键)或纯 id 字符串。"""
+@@ -71,124 +118,230 @@ def _ring_by_hole(stone_ids):
+     return out
+ 
+ 
+ def _num(v):
+     # type: (Any) -> bool:
+     return isinstance(v, (int, float)) and not isinstance(v, bool)
+ 
+ 
+-def validate_event_ledger(ev_led, centering_ids, stone_ids,
+-                          min_hold=MIN_HOLD_DEFAULT):
+-    # type: (Dict[str, Any], Any, Any, int) -> List[str]
+-    """事件账校验, 返回错误列表(空=绿)。centering_ids/stone_ids 接受 dict 记录
+-    或 id 字符串的可迭代集合(ledger 石列表直接传入亦可)。"""
++def _evidence_ok(ev):
++    # type: (Any) -> bool
++    """refs/construction_history.md 编号形制: A\\d+ | B\\d+ | C:[AB]\\d+,
++    允许 / 或 - 组合(如 "B5/B6"、"A1-A5")。"""
++    if not isinstance(ev, str) or not ev:
++        return False
++    return all(EVIDENCE_ID_RE.match(tok)
++               for tok in re.split(r"[/\-]", ev))
++
++
++def _check_evidence(e, seq):
++    # type: (Dict[str, Any], Any) -> List[str]
+     errs = []  # type: List[str]
+-    if isinstance(ev_led, dict):
+-        events = ev_led.get("events", [])
+-    else:
+-        events = list(ev_led)
+-    stone_set = set(_as_id(s) for s in stone_ids)
+-    cen_set = set(_as_id(c) for c in centering_ids)
+-    rings_by_hole = _ring_by_hole(stone_set)
++    ev = e.get("evidence")
++    if ev is None or ev == "" or ev == "R?:n":
++        errs.append("EVIDENCE_PLACEHOLDER seq=%s evidence=%r 待挂证据编号"
++                    % (seq, ev))
++    elif not _evidence_ok(ev):
++        errs.append("EVIDENCE_FORMAT seq=%s evidence=%r 不符 "
++                    "A\\d+|B\\d+|C:[AB]\\d+ 形制" % (seq, ev))
++    return errs
+ 
+-    # ---- 逐事件形制 + seq 全局递增无洞 ----
+-    by_seq = {}  # type: Dict[int, Dict[str, Any]]
++
++def _check_shapes(ctx):
++    # type: (Dict[str, Any]) -> List[str]
++    """逐事件形制: seq/etype/grade/evidence + seq 全局递增无洞与起点。"""
++    errs = []  # type: List[str]
++    by_seq = ctx["by_seq"]
+     prev_seq = None  # type: Optional[int]
+-    place_by_stone = {}  # type: Dict[str, int]
+-    for i, e in enumerate(events):
++    for i, e in enumerate(ctx["events"]):
+         seq = e.get("seq")
+         ok_seq = _is_int(seq)
+         if not ok_seq:
+             errs.append("SEQ_TYPE seq=%r 必须是 int(index=%d)" % (seq, i))
+         etype = e.get("etype")
+         if etype not in EVENT_TYPES:
+             errs.append("ETYPE bad: %r (seq=%s)" % (etype, seq))
+         if e.get("grade") not in GRADES:
+             errs.append("GRADE bad: %r (seq=%s)" % (e.get("grade"), seq))
+-        sid = e.get("stone_id")
+-        if sid:
+-            if sid.startswith(CEN_PREFIX):
+-                if sid not in cen_set:
+-                    errs.append("CENTERING_UNKNOWN %s (seq=%s)" % (sid, seq))
+-            elif sid not in stone_set:
+-                errs.append("STONE_UNKNOWN %s (seq=%s)" % (sid, seq))
++        if ctx["require_evidence"]:
++            errs.extend(_check_evidence(e, seq))
+         if ok_seq:
+-            if prev_seq is not None:
+-                if seq <= prev_seq:
+-                    errs.append("SEQ_ORDER seq=%d 未严格递增(前事件 seq=%d)"
+-                                % (seq, prev_seq))
+-                elif seq != prev_seq + 1:
+-                    errs.append("SEQ_GAP seq=%d 与前事件 seq=%d 之间有洞"
+-                                % (seq, prev_seq))
++            if prev_seq is None:
++                if seq not in (0, 1):
++                    errs.append("SEQ_START seq=%d 首事件 seq 必须从 0 或 1 起"
++                                % seq)
++            elif seq <= prev_seq:
++                errs.append("SEQ_ORDER seq=%d 未严格递增(前事件 seq=%d)"
++                            % (seq, prev_seq))
++            elif seq != prev_seq + 1:
++                errs.append("SEQ_GAP seq=%d 与前事件 seq=%d 之间有洞"
++                            % (seq, prev_seq))
+             prev_seq = seq
+             by_seq.setdefault(seq, e)
+-            if etype == "PLACE_STONE" and sid and sid not in place_by_stone:
+-                place_by_stone[sid] = seq
++    return errs
++
++
++def _check_affects(ctx, e, seq):
++    # type: (Dict[str, Any], Dict[str, Any], Any) -> List[str]
++    """affects=[[edge_ref, [[event_seq, factor], ...]], ...] 逐条核。"""
++    errs = []  # type: List[str]
++    for aff in e.get("affects") or []:
++        if (not isinstance(aff, (list, tuple)) or len(aff) != 2
++                or not isinstance(aff[1], (list, tuple))):
++            errs.append("AFFECT_SHAPE seq=%s affects 项须为 [edge_ref, "
++                        "points] 二元组: %r" % (seq, aff))
++            continue
++        ref, points = aff[0], list(aff[1])
++        if not isinstance(ref, str) or not ref:
++            errs.append("AFFECT_SHAPE seq=%s affects edge_ref 须为非空字符串:"
++                        " %r" % (seq, ref))
++            continue
++        if _ledger._curve_points(points) is None:
++            errs.append("AFFECT_SHAPE seq=%s affects curve 须为非空 "
++                        "[int 事件序号, 有限数值] 点表: %r" % (seq, points))
++            continue
++        if ref.startswith(CEN_PREFIX):
++            if ref not in ctx["cen_set"]:
++                errs.append("AFFECT_REF_UNKNOWN seq=%s affects 引用券架 %s "
++                            "不在 centering_ids" % (seq, ref))
++        elif ref not in ctx["stone_set"]:
++            errs.append("AFFECT_REF_UNKNOWN seq=%s affects 引用 %s 不在 "
++                        "stone_ids" % (seq, ref))
++        for p in points:
++            if not _is_int(p[0]):
++                errs.append("AFFECT_SHAPE seq=%s affects curve x=%r 须为 int "
++                            "事件序号" % (seq, p[0]))
++            elif p[0] not in ctx["by_seq"]:
++                errs.append("AFFECT_SEQ_UNKNOWN seq=%s affects curve x=%s "
++                            "不在事件 seq 集" % (seq, p[0]))
++    return errs
++
++
++def _check_refs(ctx):
++    # type: (Dict[str, Any]) -> List[str]
++    """hole↔zone 交叉 + 引用类分流存在性 + affects。"""
++    errs = []  # type: List[str]
++    stone_set = ctx["stone_set"]
++    zones = ctx["zones"]
++    for e in ctx["events"]:
++        seq = e.get("seq")
++        etype = e.get("etype")
++        hole = e.get("hole")
++        # H1 fail-closed: 事件 hole 必须在石账 zone 集里, 否则按孔判据空转
++        if hole is not None and hole not in zones:
++            errs.append("HOLE_UNKNOWN hole=%s (seq=%s) 不在传入石账 zone 集 "
++                        "%s 中" % (hole, seq, sorted(zones)))
++        sid = e.get("stone_id")
++        if sid:
++            if etype in MASONRY_TYPES:
++                if sid.startswith(CEN_PREFIX):
++                    errs.append("REF_CLASS_MISMATCH seq=%s %s 事件引用券架 "
++                                "%s(应为石账 id)" % (seq, etype, sid))
++                elif sid not in stone_set:
++                    errs.append("STONE_UNKNOWN %s (seq=%s)" % (sid, seq))
++                elif hole != sid.split(".")[0]:
++                    errs.append("REF_HOLE_MISMATCH seq=%s hole=%s 与石 %s 的 "
++                                "zone=%s 不一致"
++                                % (seq, hole, sid, sid.split(".")[0]))
++            elif etype in DECENTERING_TYPES:
++                if not sid.startswith(CEN_PREFIX):
++                    errs.append("REF_CLASS_MISMATCH seq=%s %s 事件引用 %s"
++                                "(应为 CEN- 券架 id)" % (seq, etype, sid))
++                elif sid not in ctx["cen_set"]:
++                    errs.append("CENTERING_UNKNOWN %s (seq=%s)" % (sid, seq))
++            else:
++                # 其余 etype(如 HOLD_EVENT)沿用前缀分流存在性核
++                if sid.startswith(CEN_PREFIX):
++                    if sid not in ctx["cen_set"]:
++                        errs.append("CENTERING_UNKNOWN %s (seq=%s)"
++                                    % (sid, seq))
++                elif sid not in stone_set:
++                    errs.append("STONE_UNKNOWN %s (seq=%s)" % (sid, seq))
++            if etype == "PLACE_STONE" and _is_int(seq) \
++                    and sid not in ctx["place_by_stone"]:
++                ctx["place_by_stone"][sid] = seq
++        errs.extend(_check_affects(ctx, e, seq))
++    return errs
+ 
+-    # ---- prereq 指向更小 seq 且存在 ----
+-    for e in events:
++
++def _check_prereqs(ctx):
++    # type: (Dict[str, Any]) -> List[str]
++    """prereq 指向更小 seq 且存在。"""
++    errs = []  # type: List[str]
++    for e in ctx["events"]:
+         seq = e.get("seq")
+         for p in e.get("prereq", []):
+             if not _is_int(p):
+                 errs.append("PREREQ_TYPE seq=%s prereq=%r 必须是 int"
+                             % (seq, p))
+-            elif p not in by_seq:
++            elif p not in ctx["by_seq"]:
+                 errs.append("PREREQ_UNKNOWN seq=%s prereq=%d 不存在"
+                             % (seq, p))
+             elif _is_int(seq) and p >= seq:
+                 errs.append("PREREQ_ORDER seq=%s prereq=%d 未指向更小 seq"
+                             % (seq, p))
++    return errs
+ 
+-    # ---- 按孔时序 ----
++
++def _check_hole_lifecycle(ctx):
++    # type: (Dict[str, Any]) -> List[str]
++    """按孔时序: 合龙/持荷窗口/落架/拆架/卸楔 λ。"""
++    errs = []  # type: List[str]
++    rings_by_hole = ctx["rings_by_hole"]
+     by_hole = {}  # type: Dict[Any, Dict[str, List[Dict[str, Any]]]]
+-    for e in events:
++    for e in ctx["events"]:
+         if not _is_int(e.get("seq")):
+             continue
+         groups = by_hole.setdefault(e.get("hole"),
+                                     {"close": [], "hold": [], "decenter": [],
+                                      "wedge": [], "clear": []})
+         key = {"CLOSE_RING": "close", "HOLD_EVENT": "hold",
+                "DECENTER_START": "decenter", "WEDGE_RELEASE": "wedge",
+-               "CENTERING_CLEAR": "clear"}.get(e["etype"])
++               "CENTERING_CLEAR": "clear"}.get(e.get("etype"))
+         if key:
+             groups[key].append(e)
+ 
+     for hole, g in sorted(by_hole.items(), key=lambda kv: str(kv[0])):
+         closes = sorted(g["close"], key=lambda e: e["seq"])
+         if len(closes) > 1:
+             for extra in closes[1:]:
+                 errs.append("CLOSE_RING_DUP hole=%s seq=%d 每孔只许一次合龙"
+                             % (hole, extra["seq"]))
+         close = closes[0] if closes else None
++        if close is not None and not rings_by_hole.get(hole):
++            errs.append("RING_SET_EMPTY hole=%s seq=%d 传入石账该孔无 RING "
++                        "石, CLOSE_RING 判据将空转(请确认传入含 RING 的石账)"
++                        % (hole, close["seq"]))
+         if close is None:
+             if rings_by_hole.get(hole):
+                 errs.append("CLOSE_RING_MISSING hole=%s 有 RING 石却无合龙事件"
+                             % hole)
+         else:
+             covered = set(close.get("prereq", []))
+             for rs in sorted(rings_by_hole.get(hole, [])):
+-                pseq = place_by_stone.get(rs)
++                pseq = ctx["place_by_stone"].get(rs)
+                 if pseq is None:
+                     errs.append("CLOSE_RING_PREREQ hole=%s seq=%d 券石 %s "
+                                 "无 PLACE_STONE 事件" % (hole, close["seq"], rs))
+                 elif pseq not in covered:
+                     errs.append("CLOSE_RING_PREREQ hole=%s seq=%d prereq 缺 "
+-                                "券石 %s(seq=%d)" % (hole, close["seq"], rs, pseq))
++                                "券石 %s(seq=%d)"
++                                % (hole, close["seq"], rs, pseq))
+         holds = sorted(e["seq"] for e in g["hold"])
+         for d in sorted(g["decenter"], key=lambda e: e["seq"]):
+             if close is None or close["seq"] >= d["seq"]:
+                 errs.append("DECENTER_WITHOUT_CLOSE hole=%s seq=%d 落架前未合龙"
+                             % (hole, d["seq"]))
+                 continue
+             n = sum(1 for s in holds if close["seq"] < s < d["seq"])
+-            if n < min_hold:
++            if n < ctx["min_hold"]:
+                 errs.append("HOLD_INSUFFICIENT hole=%s seq=%d CLOSE 后仅 %d "
+                             "个 HOLD_EVENT < min_hold=%d"
+-                            % (hole, d["seq"], n, min_hold))
++                            % (hole, d["seq"], n, ctx["min_hold"]))
+         dseqs = [e["seq"] for e in g["decenter"]]
+         for c in sorted(g["clear"], key=lambda e: e["seq"]):
+             if not any(s < c["seq"] for s in dseqs):
+                 errs.append("CLEAR_WITHOUT_START hole=%s seq=%d 拆架前无 "
+                             "DECENTER_START" % (hole, c["seq"]))
+         prev_lam = None  # type: Optional[float]
+         for w in sorted(g["wedge"], key=lambda e: e["seq"]):
+             lam = w.get("load_lambda")
+@@ -198,13 +351,52 @@ def validate_event_ledger(ev_led, centering_ids, stone_ids,
+                 continue
+             if not _num(lam):
+                 errs.append("LAMBDA_TYPE hole=%s seq=%d load_lambda=%r 非数值"
+                             % (hole, w["seq"], lam))
+                 continue
+             if not (0.0 <= lam <= 1.0):
+                 errs.append("LAMBDA_RANGE hole=%s seq=%d load_lambda=%s 超出 "
+                             "[0,1]" % (hole, w["seq"], lam))
++            elif abs(LAMBDA_GRID * lam - round(LAMBDA_GRID * lam)) > 1e-9:
++                errs.append("LAMBDA_STEP hole=%s seq=%d load_lambda=%s 不在 "
++                            "spec 档位 {0,.25,.5,.75,1}"
++                            % (hole, w["seq"], lam))
+             if prev_lam is not None and lam <= prev_lam:
+                 errs.append("LAMBDA_MONOTONIC hole=%s seq=%d load_lambda %s "
+-                            "未沿孔递增(前档 %s)" % (hole, w["seq"], lam, prev_lam))
++                            "未沿孔递增(前档 %s)"
++                            % (hole, w["seq"], lam, prev_lam))
+             prev_lam = lam
+     return errs
++
++
++def validate_event_ledger(ev_led, centering_ids, stone_ids,
++                          min_hold=MIN_HOLD_DEFAULT, require_evidence=False):
++    # type: (Dict[str, Any], Any, Any, int, bool) -> List[str]
++    """事件账校验, 返回错误列表(空=绿)。centering_ids/stone_ids 接受 dict 记录
++    或 id 字符串的可迭代集合(ledger 石列表直接传入亦可), None 按空集报错不崩。
++    require_evidence=True 开 evidence 交付闸(见模块 docstring)。"""
++    errs = []  # type: List[str]
++    if not _is_int(min_hold):
++        errs.append("MIN_HOLD_TYPE min_hold=%r 必须是 int, 已回退默认 %d"
++                    % (min_hold, MIN_HOLD_DEFAULT))
++        min_hold = MIN_HOLD_DEFAULT
++    if isinstance(ev_led, dict):
++        events = ev_led.get("events", [])
++    else:
++        events = list(ev_led)
++    ctx = {
++        "events": events,
++        "stone_set": set(_as_id(s) for s in (stone_ids or ())),
++        "cen_set": set(_as_id(c) for c in (centering_ids or ())),
++        "min_hold": min_hold,
++        "require_evidence": require_evidence,
++        "by_seq": {},  # type: Dict[int, Dict[str, Any]]
++        "place_by_stone": {},  # type: Dict[str, int]
++    }  # type: Dict[str, Any]
++    ctx["rings_by_hole"] = _ring_by_hole(ctx["stone_set"])
++    ctx["zones"] = set(sid.split(".")[0] for sid in ctx["stone_set"]
++                       if sid.count(".") >= 3)
++    errs.extend(_check_shapes(ctx))
++    errs.extend(_check_refs(ctx))
++    errs.extend(_check_prereqs(ctx))
++    errs.extend(_check_hole_lifecycle(ctx))
++    return errs
