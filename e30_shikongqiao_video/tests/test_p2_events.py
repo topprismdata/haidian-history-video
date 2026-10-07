@@ -319,3 +319,294 @@ def test_min_hold_parameter_lowers_bar():
             e["seq"] -= 2
         e["prereq"] = [p - 2 if p >= 6 else p for p in e["prereq"]]
     assert E.validate_event_ledger(led, CENS, STONES, min_hold=1) == []
+
+
+# ==== 修复轮新增(审查 H1/H2/H3/M1-M6/L2/L4) ====
+
+# ---- H1 fail-closed 三闸: hole 键与石账 zone 交叉校验 ----
+
+def test_event_hole_not_in_stone_zones_red():
+    # S2: 事件 hole 写 'ARCH9' 而石 id zone 是 'ARCH09' → 旗舰判据曾整账假绿
+    led = _chain_close()
+    for e in led["events"]:
+        e["hole"] = "ARCH9"
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES)
+    assert any(e.startswith("HOLE_UNKNOWN") for e in errs)
+    assert any(e.startswith("RING_SET_EMPTY") for e in errs)
+
+
+def test_empty_stone_set_fails_closed_red():
+    # S1: 传空石表 → 判据空转, 必须报不得整账绿
+    errs = E.validate_event_ledger(_chain_close(), CENS, [])
+    assert any(e.startswith("HOLE_UNKNOWN") for e in errs)
+    assert any(e.startswith("RING_SET_EMPTY") for e in errs)
+
+
+def test_ringless_stone_ledger_fails_closed_red():
+    # 误接零 RING 角色的石表(如审计副本) → CLOSE 判据将空转必须报
+    errs = E.validate_event_ledger(_chain_close(), CENS, [SPAND])
+    assert any(e.startswith("RING_SET_EMPTY") for e in errs)
+
+
+def test_masonry_ref_zone_mismatch_red():
+    # 砌筑事件所引石的 zone 必须等于事件 hole
+    led = _chain_close()
+    led["events"][0]["stone_id"] = "ARCH10.EAST.RING.C01.B01"
+    errs = E.validate_event_ledger(
+        led, CENS, CHAIN_STONES + ["ARCH10.EAST.RING.C01.B01"])
+    assert any(e.startswith("REF_HOLE_MISMATCH") for e in errs)
+
+
+def test_masonry_without_hole_red():
+    # fail-closed: 砌筑事件 hole=None 无法锚定孔, 一律红
+    led = _chain_close()
+    led["events"][0]["hole"] = None
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES)
+    assert any(e.startswith("REF_HOLE_MISMATCH") for e in errs)
+
+
+# ---- H2 两条裁决性质回归 pin ----
+
+def test_neighbor_hole_cannot_dilute_hold_red():
+    # d929428 裁决: HOLD 按本孔计数, 邻孔持荷不得稀释本孔养护窗
+    arch10_spand = "ARCH10.EAST.SPANDREL.C01.B01"
+    led = _ev(
+        E.new_event(1, "ARCH09", "PLACE_STONE", stone_id=RING1),
+        E.new_event(2, "ARCH09", "PLACE_STONE", stone_id=RING2, prereq=[1]),
+        E.new_event(3, "ARCH09", "CLOSE_RING", prereq=[1, 2]),
+        E.new_event(4, "ARCH10", "HOLD_EVENT"),
+        E.new_event(5, "ARCH10", "HOLD_EVENT"),
+        E.new_event(6, "ARCH10", "HOLD_EVENT"),
+        E.new_event(7, "ARCH09", "DECENTER_START", stone_id=CEN, prereq=[3]),
+    )
+    errs = E.validate_event_ledger(led, CENS, [RING1, RING2, arch10_spand])
+    hits = [e for e in errs if e.startswith("HOLD_INSUFFICIENT")]
+    assert len(hits) == 1 and "hole=ARCH09" in hits[0]
+
+
+def test_wedge_lambda_grouped_per_hole():
+    # λ 严格升按孔分组: A/B 交替且各自升 → 绿(全局口径必误红); 仅 B 回退 → 红
+    a1, a2 = "ARCH09.EAST.RING.C01.B01", "ARCH09.EAST.RING.C01.B02"
+    b1, b2 = "ARCH10.EAST.RING.C01.B01", "ARCH10.EAST.RING.C01.B02"
+    ca, cb = "CEN-ARCH09", "CEN-ARCH10"
+
+    def _two_hole_chain(lam_a, lam_b):
+        evs = [
+            E.new_event(1, "ARCH09", "PLACE_STONE", stone_id=a1),
+            E.new_event(2, "ARCH10", "PLACE_STONE", stone_id=b1),
+            E.new_event(3, "ARCH09", "PLACE_STONE", stone_id=a2, prereq=[1]),
+            E.new_event(4, "ARCH10", "PLACE_STONE", stone_id=b2, prereq=[2]),
+            E.new_event(5, "ARCH09", "CLOSE_RING", prereq=[1, 3]),
+            E.new_event(6, "ARCH10", "CLOSE_RING", prereq=[2, 4]),
+        ]
+        s = 7
+        for hole in ("ARCH09", "ARCH10") * 3:  # 交替持荷
+            evs.append(E.new_event(s, hole, "HOLD_EVENT"))
+            s += 1
+        evs.append(E.new_event(13, "ARCH09", "DECENTER_START",
+                               stone_id=ca, prereq=[11]))
+        evs.append(E.new_event(14, "ARCH10", "DECENTER_START",
+                               stone_id=cb, prereq=[12]))
+        evs.append(E.new_event(15, "ARCH09", "WEDGE_RELEASE", stone_id=ca,
+                               prereq=[13], load_lambda=lam_a[0]))
+        evs.append(E.new_event(16, "ARCH10", "WEDGE_RELEASE", stone_id=cb,
+                               prereq=[14], load_lambda=lam_b[0]))
+        evs.append(E.new_event(17, "ARCH09", "WEDGE_RELEASE", stone_id=ca,
+                               prereq=[15], load_lambda=lam_a[1]))
+        evs.append(E.new_event(18, "ARCH10", "WEDGE_RELEASE", stone_id=cb,
+                               prereq=[16], load_lambda=lam_b[1]))
+        return _ev(*evs)
+
+    green = _two_hole_chain((0.25, 1.0), (0.25, 1.0))
+    assert E.validate_event_ledger(green, [ca, cb], [a1, a2, b1, b2]) == []
+
+    red = _two_hole_chain((0.25, 1.0), (0.75, 0.25))
+    errs = E.validate_event_ledger(red, [ca, cb], [a1, a2, b1, b2])
+    assert any(e.startswith("LAMBDA_MONOTONIC") and "hole=ARCH10" in e
+               for e in errs)
+    assert not any(e.startswith("LAMBDA_MONOTONIC") and "hole=ARCH09" in e
+                   for e in errs)
+
+
+# ---- H3 引用类分流 + affects 逐条核 ----
+
+def test_masonry_ref_to_centering_red():
+    # R1/R5 形: 砌筑事件挂券架 id, 笔误必须可见
+    led = _chain_close()
+    led["events"][0]["stone_id"] = CEN
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES)
+    assert any(e.startswith("REF_CLASS_MISMATCH") for e in errs)
+
+
+def test_decentering_ref_to_stone_red():
+    # R2 形: 落架事件挂石 id
+    led = _full_chain()
+    led["events"][7]["stone_id"] = SPAND
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert any(e.startswith("REF_CLASS_MISMATCH") for e in errs)
+
+
+def test_affects_ref_unknown_red():
+    led = _full_chain()
+    led["events"][4]["affects"] = [["ARCH99.EAST.RING.C01.B01", [[3, 1.0]]]]
+    led["events"][5]["affects"] = [["CEN-ARCH99", [[3, 1.0]]]]
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert sum(1 for e in errs if e.startswith("AFFECT_REF_UNKNOWN")) == 2
+
+
+def test_affects_shape_red():
+    led = _full_chain()
+    led["events"][4]["affects"] = [["only_ref"]]            # 非二元组
+    led["events"][5]["affects"] = [[CEN, []]]               # 空 curve
+    led["events"][6]["affects"] = [[CEN, [["3", 1.0]]]]     # x 非数值
+    led["events"][7]["affects"] = [[CEN, [[3, float("nan")]]]]  # 非有限
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert sum(1 for e in errs if e.startswith("AFFECT_SHAPE")) == 4
+
+
+def test_affects_seq_unknown_red():
+    led = _full_chain()
+    led["events"][4]["affects"] = [[CEN, [[404, 1.0]]]]
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert any(e.startswith("AFFECT_SEQ_UNKNOWN") for e in errs)
+
+
+def test_affects_valid_green():
+    led = _full_chain()
+    led["events"][4]["affects"] = [[CEN, [[3, 1.0], [8, 0.0]]],
+                                   [RING1, [[5, 1.0]]]]
+    assert E.validate_event_ledger(led, CENS, STONES) == []
+
+
+# ---- M1 崩溃路径: 必须返回错误列表, 不得 raise ----
+
+def test_none_id_collections_return_errors_not_crash():
+    errs = E.validate_event_ledger(_full_chain(), None, None)
+    assert isinstance(errs, list) and errs
+    assert any(e.startswith("HOLE_UNKNOWN") for e in errs)
+
+
+def test_min_hold_none_reported_and_default_restored():
+    led = _ev(
+        E.new_event(1, "ARCH09", "PLACE_STONE", stone_id=RING1),
+        E.new_event(2, "ARCH09", "PLACE_STONE", stone_id=RING2, prereq=[1]),
+        E.new_event(3, "ARCH09", "CLOSE_RING", prereq=[1, 2]),
+        E.new_event(4, "ARCH09", "DECENTER_START", stone_id=CEN, prereq=[3]),
+    )
+    errs = E.validate_event_ledger(led, CENS, [RING1, RING2], min_hold=None)
+    assert any(e.startswith("MIN_HOLD_TYPE") for e in errs)
+    assert any(e.startswith("HOLD_INSUFFICIENT") for e in errs)  # 回退默认 3
+
+
+def test_missing_etype_key_reported_not_crash():
+    led = _full_chain()
+    del led["events"][7]["etype"]  # DECENTER_START 丢 etype 键
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert any(e.startswith("ETYPE") for e in errs)
+
+
+# ---- M2 λ 档位栅格 / M3 等值放行 pin ----
+
+def test_wedge_lambda_off_grid_red():
+    led = _full_chain()
+    lam = [e for e in led["events"] if e["etype"] == "WEDGE_RELEASE"]
+    lam[0]["load_lambda"] = 0.33
+    lam[1]["load_lambda"] = 0.66
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert sum(1 for e in errs if e.startswith("LAMBDA_STEP")) == 2
+
+
+def test_wedge_lambda_quarter_grid_green():
+    led = _full_chain()
+    lam = [e for e in led["events"] if e["etype"] == "WEDGE_RELEASE"]
+    lam[0]["load_lambda"] = 0.0
+    lam[1]["load_lambda"] = 0.75
+    assert E.validate_event_ledger(led, CENS, STONES) == []
+
+
+def test_wedge_lambda_equal_steps_red():
+    # 同档重复释放是账目错误: λ 相等也必须红(钉死 <= 而非 <)
+    led = _full_chain()
+    lam = [e for e in led["events"] if e["etype"] == "WEDGE_RELEASE"]
+    lam[0]["load_lambda"] = 0.25
+    lam[1]["load_lambda"] = 0.25
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert any(e.startswith("LAMBDA_MONOTONIC") for e in errs)
+
+
+# ---- M4 evidence 交付闸(需 require_evidence=True) ----
+
+def test_evidence_placeholder_flagged_only_when_required():
+    led = _chain_close()
+    assert E.validate_event_ledger(led, CENS, CHAIN_STONES) == []
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES,
+                                   require_evidence=True)
+    assert sum(1 for e in errs if e.startswith("EVIDENCE_PLACEHOLDER")) == 6
+
+
+def test_evidence_format_gate():
+    led = _chain_close()
+    for i, ev in enumerate(("rubbish", "A", 42, "B14", "C:A3", "B5/B6")):
+        led["events"][i]["evidence"] = ev
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES,
+                                   require_evidence=True)
+    assert sum(1 for e in errs if e.startswith("EVIDENCE_FORMAT")) == 3
+    assert not any(e.startswith("EVIDENCE_PLACEHOLDER") for e in errs)
+
+
+# ---- M5 seq 起点 ----
+
+def test_seq_start_must_be_zero_or_one():
+    led = _chain_close()
+    for e in led["events"]:
+        e["seq"] += 1  # 2..7
+    errs = E.validate_event_ledger(led, CENS, CHAIN_STONES)
+    assert any(e.startswith("SEQ_START") for e in errs)
+    led2 = _chain_close()
+    for e in led2["events"]:
+        e["seq"] -= 3  # -2..3
+    errs2 = E.validate_event_ledger(led2, CENS, CHAIN_STONES)
+    assert any(e.startswith("SEQ_START") for e in errs2)
+    led3 = _ev(E.new_event(0, "ARCH09", "PLACE_STONE", stone_id=RING1),
+               E.new_event(1, "ARCH09", "PLACE_STONE", stone_id=RING2,
+                           prereq=[0]),
+               E.new_event(2, "ARCH09", "CLOSE_RING", prereq=[0, 1]))
+    assert E.validate_event_ledger(led3, CENS, [RING1, RING2]) == []
+
+
+# ---- M6 event_seqs 访问器(T5/T8 交叉调用位) ----
+
+def test_event_seqs_accessor_and_t5_wiring():
+    assert E.event_seqs(_full_chain()) == list(range(1, 12))
+    assert E.event_seqs([]) == []
+    import inspect
+    assert "known_event_seqs" in inspect.signature(
+        L.validate_ledger).parameters
+
+
+# ---- L2 隔离的 DECENTER_WITHOUT_CLOSE 用例 ----
+
+def test_decenter_without_close_isolated_red():
+    # B4 形: 整体删 CLOSE 并重排 → 红且无 seq 噪声(旧用例变异不隔离)
+    led = _full_chain()
+    led["events"] = [e for e in led["events"]
+                     if e["etype"] != "CLOSE_RING"]
+    for e in led["events"]:
+        if e["seq"] >= 5:
+            e["seq"] -= 1
+        e["prereq"] = [p - 1 if p >= 4 else p for p in e["prereq"]]
+    errs = E.validate_event_ledger(led, CENS, STONES)
+    assert any(e.startswith("DECENTER_WITHOUT_CLOSE") for e in errs)
+    assert not any(e.startswith(("SEQ_ORDER", "SEQ_GAP", "SEQ_TYPE"))
+                   for e in errs)
+
+
+# ---- L4 affects 深拷贝独立性 ----
+
+def test_new_event_affects_deep_copy_independent():
+    aff = [[CEN, [[3, 1.0]]]]
+    ev = E.new_event(8, "ARCH09", "DECENTER_START", stone_id=CEN,
+                     affects=aff)
+    aff[0][1][0][0] = 99
+    aff[0][1].append([100, 0.5])
+    assert ev["affects"] == [[CEN, [[3, 1.0]]]]
