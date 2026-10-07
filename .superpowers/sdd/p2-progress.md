@@ -11,3 +11,4 @@
 - Task 4: complete (93a9be1→0e3fe56, 392绿; 复审PASS零阻塞: Σ≥1独立复扫7.9M点0违例, 五变异恰红, 原账sha不变, 工件可复现cmp逐位)
   - W1裁决: 28块≥99%被环石实体吞没的rbo石=P1双建模债显形, 记T5交接+P3视觉隐藏处置, 不扩幻影定义(in_void语义已100%执行, 扩=全链返工)
   - W2: 报告§6.6补superseded注(T5代理顺手)
+- Task 5: complete (0e3fe56→T5, 392+17=409绿; g3_check snapshot状态机+①Σ≥1/活跃/RING三闸/幻影闸/R6独立重建, 不import sequencer闭包钉死; 真账4070事件2.63s(<10s闸)零违例, holes_timeline≡frontier_trace逐孔, in_void≡excluded_ids 2052逐位; 五负控+3b/5b恰红(③Σ=0.75/0.5/0.25/0逐档); W1复现25块@0.99 vs 主控口径28@0.985(敏感带0.986-0.989三块), 以落盘清单为准待主控裁决; W2已注40.9%)

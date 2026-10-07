@@ -69,7 +69,7 @@
 3. R3 核的单位是"θ 对称配对完成的前缀"(偶数位), 每单石前缀核会恒假(首块券石单侧满重); 负控注入走 `ring_order` 参数直入构造器。
 4. 密度取 1.0 而非发明常数: R3 是比值, 共同因子约去; 已有测试钉 `density=2600` 时权重线性放大。
 5. HOLD_EVENT(挂 CEN id)兼作立架锚: 事件词表无 ERECT 类, 这是 events.py 校验器下唯一合法形态; T5 的 HOLD zone 交叉注意 stone_id 是 CEN 前缀。
-6. 真账 R5a 占肩背胞 61%: 判据"石底 z≤extrados 区"按字面实现(extrados 单源 facts.arch_z+params.ring_t), 端孔大侧墙与拱腹下填腹按判据归锁固肩, 拆架前完成——与"加载预压后落架"通例相容; 若主控要收紧为"贴 extrados 一层带", 只动 `_is_lock_shoulder` 一处。
+6. 真账 R5a 占肩背胞 61%: 判据"石底 z≤extrados 区"按字面实现(extrados 单源 facts.arch_z+params.ring_t), 端孔大侧墙与拱腹下填腹按判据归锁固肩, 拆架前完成——与"加载预压后落架"通例相容; 若主控要收紧为"贴 extrados 一层带", 只动 `_is_lock_shoulder` 一处。**(T5 加注) 61% 口径已被 §8 撞架分流取代, 实测 40.9%**(=R5a 1307/肩背胞 3198, 裁1 滤幻影+撞架裁片落 R5b 后的重算)。
 7. R7 四角色真账为 0: ID 形制与调度已就绪, M20 后续若导出 PAVING/RAIL/POST/CARVE 石自动入列。
 
 ## 7. T5 交接
