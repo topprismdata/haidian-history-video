@@ -2,7 +2,7 @@
 状态：**v2.1**（自审×3 → GPT 8.6/架构PASS/G3暂缓 → 主控六项全采纳=v2 → **v2.1 三轮自修**：清除 v2 遗留旧文 6 处（cot/cure_stages/时窗/券架入石账/叙事顺序/stage-event 口径）+ 命名统一 capacity_curve + ε/枚举签署注记）。上游：M22 路线图；输入=G1 封版几何+P1 ledger+G0 史料库。
 
 ## 0. 已定决策（用户拍板 2026-10-07）
-- 券架=**结构可信型**：按清式木作逻辑程序化生成（排架柱+楞木+弧形券胎板+卸架楔），每孔一副随跨变化；**不入石账也不入打印账**（T1 越界发现经主控裁决：券架注册于 event_ledger 的 centering 表，evidence=inferred_construction；stone ledger 5935 纯度红线不破，print.excluded 字段不需要）
+- 券架=**结构可信型**：按清式木作逻辑程序化生成（排架柱+楞木+弧形券胎板+卸架楔），每孔一副随跨变化；**不入石账也不入打印账**（券架注册于 event_ledger 的 centering 表，evidence=inferred_construction；stone ledger 5935 纯度红线不破；id=CEN-ARCH%02d 1-based+zone/arch_idx/xc 字段，D4 裁决）
 - G3=**①③④实做+②规则化**：时窗支撑 DAG、落架压力线、多孔不平衡推力（由③派生，见 §4）全实现；逐事件接触力 LP 用"荷载平衡度砌筑+持荷卸架"规则代替（μ 无史料值，LP 在 6000+ 事件上不划算）
 
 ## 1. 目标与非目标
@@ -26,7 +26,7 @@
 ## 3. 组件
 | 文件 | 职责 |
 |---|---|
-| `3d/centering.py` | 券架生成器：输入孔参数（span/ring_t/lift/springer），输出木作对象（排架柱间距 1.2m [推断]、楞木、券胎板沿 extrados+30mm 工作面、卸架楔对）；bmesh 局部网格；**注册进 event_ledger 的 centering 表**（id=CEN-ARCHxx, family=wood-\<arch\>），**不进 stone ledger**（§4 纯度红线）；evidence 枚举 v2 扩展 `inferred_construction`（schema minor） |
+| `3d/centering.py` | 券架生成器：输入孔参数（span/lift/springer via geom_math 单源；ring_t 按石账 params 现算与 facts.RING_T 解耦——D2 停车线裁决），输出木作对象（排架柱间距 1.2m [推断]、楞木、券胎板顶沿**拱腹 intrados−5mm**（D1 裁决：支撑面在被支撑面之下；楔行程 0.06m=合龙后压缩沉落非脱环）、卸架楔对）；bmesh 局部网格；**注册进 event_ledger 的 centering 表**（id=CEN-ARCHxx, family=wood-\<arch\>），**不进 stone ledger**（§4 纯度红线）；evidence 枚举 v2 扩展 `inferred_construction`（schema minor） |
 | `3d/sequencer.py` | 规则引擎：ledger+券架 → 拓扑排序 → sequence.json（{id, stage:int, event_range:[e0,e1], depends_on[], centering_id, evidence}；event=§3 词表实例，stage=连续 event 的叙事分组）；stage 数目标 200-600（叙事分组粒度；event 数≈石数+工事数 ~6000+，力学逐 event 核） |
 | `3d/g3_check.py` | **事件驱动**：每个结构事件（统一词表：PLACE_STONE / CLOSE_RING / HOLD_EVENT / DECENTER_START / WEDGE_RELEASE / CENTERING_CLEAR / ADD_FILL）后生成 structural snapshot，逐 snapshot 核：①支撑 DAG 活跃（支撑边 `capacity_curve` 在当前事件的插值容量 >0 才算活着，悬空=红）③压力线：acceptance case=**RING+pre-strike 锁固肩（R5a 组）**（落架瞬间真实存在物），robustness case=裸环（裸环不过而带锁固肩过=肩石属结构工序，不判红；两者都过=鲁棒性加分）④**与③同模型**：压力线导出可行推力区间 H∈[Hmin,Hmax]，墩不平衡 ΔHmax=max|H_L−H_R|（λ 逐档），现代裕度 M_res≥1.5·M_unb **明示为现代安全系数**+无系数核距指标 e=M_unbal/V 并行输出 |
 | 输出 | `3d/out/sequence.json`、`3d/out/event_ledger.json`（event_id/hole/type/prerequisites/affected_support_edges/load_transfer/snapshot_id/evidence_id/inference_grade）、`3d/out/g3_report.json`、`3d/out/narration_beats.md` |
