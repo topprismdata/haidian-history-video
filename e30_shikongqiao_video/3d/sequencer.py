@@ -1319,6 +1319,36 @@ def apply_support_edges(ledger, result):
 
 
 # ---------------------------------------------------------------------------
+# 事件账出口(P2-T8 真账接线): event_ledger.json 容器 + 序列化单源
+# ---------------------------------------------------------------------------
+
+EVENT_LEDGER_SCHEMA = "event-ledger-v1"   # 事件簿容器形制(词表/校验单源
+# events.py; 与石账 L.SCHEMA 无关 —— 券架/事件永不进石账, 石账纯度红线)
+
+
+def event_ledger_doc(res):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
+    """build_sequence 产物 → 事件簿容器(events 原样, 无派生字段 ——
+    交付闸 validate_event_ledger 与 G3 消费同一事件流, 不出第二套)。"""
+    return {
+        "schema": EVENT_LEDGER_SCHEMA,
+        "meta": {
+            "n_events": len(res["events"]),
+            "hole_order": list(res["meta"]["hole_order"]),
+            "generated_by": "sequencer.py P2-T8 真账接线",
+        },
+        "events": res["events"],
+    }
+
+
+def dump_event_ledger(doc):
+    # type: (Dict[str, Any]) -> bytes
+    """事件簿序列化唯一出口(main 与 test_p2_full 共用; 幂等 cmp 单源)。"""
+    return json.dumps(doc, ensure_ascii=False, sort_keys=True,
+                      indent=1).encode("utf-8")
+
+
+# ---------------------------------------------------------------------------
 # CLI: 真账全链
 # ---------------------------------------------------------------------------
 
@@ -1365,6 +1395,20 @@ def main():
     with open(os.path.join(_OUT_DIR, "sequence.json"), "w",
               encoding="utf-8") as f:
         json.dump(seq_out, f, ensure_ascii=False, indent=1, sort_keys=True)
+    # [P2-T8 出口] 事件账落盘: 交付闸(require_evidence=True)不过不写盘
+    ev_led = event_ledger_doc(res)
+    sched_ids = [s["id"] for s in led2["stones"]
+                 if s["id"] not in _in_void_ids(led)]
+    ev_errs = E.validate_event_ledger(
+        ev_led, [c["id"] for c in centerings], sched_ids,
+        require_evidence=True)
+    if ev_errs:
+        for m in ev_errs[:40]:
+            print("ERR EVENT_LEDGER", m)
+        print("event_ledger validate: %d 违例(拒绝落盘)" % len(ev_errs))
+        return 1
+    with open(os.path.join(_OUT_DIR, "event_ledger.json"), "wb") as f:
+        f.write(dump_event_ledger(ev_led))
     n_stage = len(res["sequence"])
     print("OK stones=%d(in_void 滤除 %d, dm 占位剔除 %d) events=%d stages=%d "
           "trace=%d holes=%d"

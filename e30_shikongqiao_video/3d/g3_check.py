@@ -2006,3 +2006,80 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
         exc.report = report          # 停报主控: 三节齐 + 逐墩账 + 顺序建议
         raise exc
     return report
+
+
+# ---------------------------------------------------------------------------
+# CLI: 真账 G3 报告落盘(P2-T8 出口接线)。三门红仍走停车线异常 —— 停报
+# 主控, 禁调参自救(T6/T7 先例); 本 CLI 只串接, 不改任何判据。
+# ---------------------------------------------------------------------------
+
+def _strip_elapsed(obj):
+    # type: (Any) -> Any
+    """递归摘除 elapsed_s 计时字段(报告完整性摘要的规范化口径)。"""
+    if isinstance(obj, dict):
+        return {k: _strip_elapsed(v) for k, v in obj.items()
+                if k != "elapsed_s"}
+    if isinstance(obj, list):
+        return [_strip_elapsed(v) for v in obj]
+    return obj
+
+
+def canonical_digest(report):
+    # type: (Dict[str, Any]) -> str
+    """报告内容摘要: 除 elapsed_s 计时与 meta.generation 外逐字段的
+    sha256(sort_keys, ensure_ascii=False)。run_g3 报告含耗时, 文件字节
+    两次生成必不同(与 ledger_full uuid4 同口径的既有行为); 本摘要即
+    "除计时外逐字节"的完整性锚, test_p2_full 从盘上文件重算核对。"""
+    body = _strip_elapsed(report)
+    body.get("meta", {}).pop("generation", None)
+    blob = json.dumps(body, ensure_ascii=False, sort_keys=True)
+    import hashlib
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def main():
+    # type: () -> int
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))
+    led = L.load_ledger(os.path.join(here, "out", "ledger_sequenced.json"))
+    with open(DEFAULT_SEQ_PATH, encoding="utf-8") as f:
+        seqdoc = json.load(f)
+    # rbo_ids=None → W1 双建模全桶扫描(ring_band_overlap 桶单源);
+    # 三门任一红 → 停车线异常原样抛出(停报主控), 本 CLI 不接判据。
+    report = run_g3(seqdoc["events"], led)
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=here, capture_output=True,
+            text=True, timeout=30).stdout.strip()
+    except Exception:
+        head = ""
+    report["meta"]["generation"] = {
+        "command": "python3 3d/g3_check.py",
+        "git_head": head if len(head) == 40 else "unknown",
+        "git_head_note": ("生成时代码状态 HEAD; 本工件 untracked, 由本命令"
+                          "重出, 复现账见 3d/refs/artifact_sha256.txt"),
+        "content_sha256_excl_timing": canonical_digest(report),
+        "digest_note": ("elapsed_s 计时字段字节级不稳定, 完整性以本摘要为锚"
+                        "(除 elapsed_s 与 meta.generation 外逐字段)"),
+    }
+    out = os.path.join(here, "out", "g3_report.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=1, sort_keys=True)
+    print("OK G3_REPORT gate_dag=%s gate_stress=%s gate_imbalance=%s "
+          "acceptance=%d/%d robustness=%d/%d n_evals=%d viol_uniform_hmax=%d"
+          " -> %s"
+          % (report["gate_dag"]["ok"], report["gate_stress"]["ok"],
+             report["gate_imbalance"]["ok"],
+             sum(1 for h in report["gate_stress"]["holes"].values()
+                 if h["acceptance"]["feasible"]),
+             len(report["gate_stress"]["holes"]),
+             sum(1 for h in report["gate_stress"]["holes"].values()
+                 if h["robustness"]["feasible"]),
+             len(report["gate_stress"]["holes"]),
+             report["gate_imbalance"]["n_evals"],
+             report["gate_imbalance"]["viol_uniform_hmax"], out))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

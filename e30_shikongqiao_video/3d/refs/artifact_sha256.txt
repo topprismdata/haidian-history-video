@@ -32,3 +32,20 @@ f7e26c2f5db59d1c51492e7170d6357391757f6de509631251f4eb5b7344efb3  3d/out/ledger_
 513dfd9333e81df9702e675be720e69492fcf30a85540c0b2c27d75a5b48f377  3d/core_hash.json
 45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d  3d/out/print/central_slice/manifest.json
 fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/excluded_ids.json
+#
+# [P2-T8 追加] 记录时点: 2026-10-08, P2-T8 出口轮(事件账/旁白表落盘;
+# sequence/ledger_sequenced/ledger_full/core_hash/切片清单逐位未动 ——
+# 重跑 sequencer 实测 sha 与上行记录逐位一致)。
+#   2b. python3 3d/sequencer.py (P2-T8 起兼出事件账; 交付闸
+#       validate_event_ledger(require_evidence=True) 不过拒绝落盘)
+#         → 3d/out/event_ledger.json (幂等: 两连跑逐字节相同, 无计时字段)
+#   2c. python3 3d/g3_check.py (P2-T8 新增 CLI)
+#         → 3d/out/g3_report.json —— **不进本 sidecar**: 报告含 elapsed_s
+#           计时, 文件字节两次生成必不同; 完整性锚=报告内
+#           meta.generation.content_sha256_excl_timing(除计时与 generation
+#           块外逐字段 sha256, test_p2_full 从盘上文件重算核对)
+#   2d. python3 3d/narration.py (读 sequence.json + g3_report.json 计数
+#       字段, 纯函数可字节复现; narration_lint 零红才落盘)
+#         → 3d/out/narration_beats.md
+e7087ffddf4c864ab281ddb92b81e76298830287d2d35ac34dbad3381833bd06  3d/out/event_ledger.json
+565f488498786701b1f20cb060d9ea62957cd1466717584b7acea299587ac0b1  3d/out/narration_beats.md
