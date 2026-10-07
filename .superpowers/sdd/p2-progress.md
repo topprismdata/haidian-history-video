@@ -36,3 +36,4 @@
 - Task 8落地(9e5d709, +1073行6文件): 真账全链4118事件/408stages如实钉(brief预估~6000不凑), 三门ok=True我独立验, viol_uniform_hmax=1机器可读; event_ledger.json(schema v1 validate==[]幂等)+g3_report.json(generation元数据)+narration_beats.md(426行200铁律标注); lint七禁词逐词红+11现代词入引语一票红+无源断言红+空表skip≠pass; 五组负控注入逐组点名(悬空/CLEAR对调/跳孔/R3单边/λ篡改+H翻倍可见性); 全门回归33断言/L2+NEG/G2replay/sidecar全过(agent报469绿, 我全量bg_989在跑)
 - 待: P2整支终审(P2FinalReview 八系统面: G3语义vs路线图承诺/单源漂移变异/带重双门交互/裁决演化链superseded/石账纯度/sidecar新账完备/死码/测试轮探), 判PASS→P2关账→P3/P4
 - 环境注记: 主控全量839s(平时270s)中clean-clone重建测600s子进程超时FAIL=与终审套件并发抢CPU(T8亦自报本机后台配额异常); 已单跑复验(bg_995)+通报审查者勿误判回归; 若坐实=重测超时预算对加载机过紧, 记WARNING级测试健壮性问题
+- flake定性完成: 单跑600s超时+真树直测sequencer 380s未完+load 5.3(终审套件并发) → **环境争用非回归**(T8低载02:33全量含此测通过); 永久问题=重测600s预算对加载机过紧, 处置待P2FinalReview建议(标slow/预算可配/串行化)
