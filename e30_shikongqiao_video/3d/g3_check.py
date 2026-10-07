@@ -195,7 +195,7 @@ class Snapshot(object):
 
     __slots__ = ("seq", "event", "present", "capacity", "by_hole", "holes",
                  "dirty", "violations", "in_void", "_edges", "_placed_at",
-                 "_heap")
+                 "_heap", "_win_last")
 
     def __init__(self, edges, in_void):
         # type: (Dict[str, List[Dict[str, Any]]], frozenset) -> None
@@ -211,6 +211,7 @@ class Snapshot(object):
         self._edges = edges
         self._placed_at = {}  # type: Dict[str, int]
         self._heap = []  # type: List[Tuple[int, str, int]]
+        self._win_last = {}  # type: Dict[str, Optional[int]]
 
     def copy(self):
         # type: () -> Snapshot
@@ -229,6 +230,7 @@ class Snapshot(object):
         cl.violations = list(self.violations)
         cl._placed_at = dict(self._placed_at)
         cl._heap = list(self._heap)
+        cl._win_last = dict(self._win_last)
         return cl
 
 
@@ -265,6 +267,33 @@ def snapshots(events, ledger, in_void=None):
     edges = stone_edges(ledger)
     snap = Snapshot(edges, in_void)
 
+    # W-1: 持荷窗全量预扫 —— CLOSED_SUPPORTED 的判据是"窗内全部 HOLD 已
+    # 发生"(= derive_frontier 的 window[-1] 语义)。增量态只见迄今事件,
+    # 不预扫则窗中段落架恒绿(窗内首个 HOLD 即持荷), 与构造侧分歧; 故从
+    # 手上全量事件流预扫每孔窗内末个 HOLD seq(snapshots 的入参本就是
+    # 完整流, 非真流式)。
+    ev_close = {}  # type: Dict[str, int]
+    ev_dstart = {}  # type: Dict[str, int]
+    for e in events:
+        zh0 = e.get("hole") or ""
+        et0 = e.get("etype")
+        q0 = e.get("seq")
+        if not isinstance(q0, int) or isinstance(q0, bool):
+            continue
+        if et0 == "CLOSE_RING":
+            ev_close.setdefault(zh0, q0)
+        elif et0 == "DECENTER_START":
+            ev_dstart.setdefault(zh0, q0)
+    for zh0 in set(ev_close) | set(ev_dstart):
+        close0 = ev_close.get(zh0)
+        dstart0 = ev_dstart.get(zh0)
+        hs = [e["seq"] for e in events
+              if (e.get("hole") or "") == zh0
+              and e.get("etype") == "HOLD_EVENT"
+              and close0 is not None and close0 < e["seq"]
+              and (dstart0 is None or e["seq"] < dstart0)]
+        snap._win_last[zh0] = max(hs) if hs else None
+
     # R6 邻接域: 事件孔 ∪ 石账孔(无事件孔也参与邻接判, 防"空档孔漏过"。
     # 同 T4 check_frontier 的 zones 语义, 但从本侧两个来源独立取集。)
     zones = {e.get("hole") for e in events if e.get("hole")}
@@ -289,7 +318,6 @@ def snapshots(events, ledger, in_void=None):
         et = ev.get("etype")
         zh = ev.get("hole") or ""
         sid = ev.get("stone_id")
-        h = snap.holes.get(zh)
 
         # -- 事件级: 幻影残留闸(双保险, 拒收入集) --
         if sid is not None and sid in snap.in_void:
@@ -304,34 +332,22 @@ def snapshots(events, ledger, in_void=None):
         if et in ("PLACE_STONE", "ADD_FILL") and sid is not None:
             _place_stone(snap, sid, seq)
         elif et == "HOLD_EVENT":
-            if h is None:
-                h = snap.holes[zh] = {"erect": None, "close": None,
-                                      "dstart": None, "clear": None,
-                                      "holds": []}
+            h = _ensure_hole(snap, zh)
             if isinstance(sid, str) and sid == CEN_PREFIX + zh \
                     and h["erect"] is None:
                 h["erect"] = seq
             h["holds"].append(seq)
         elif et == "CLOSE_RING":
-            if h is None:
-                h = snap.holes[zh] = {"erect": None, "close": None,
-                                      "dstart": None, "clear": None,
-                                      "holds": []}
+            h = _ensure_hole(snap, zh)
             if h["close"] is None:
                 h["close"] = seq
         elif et == "DECENTER_START":
-            if h is None:
-                h = snap.holes[zh] = {"erect": None, "close": None,
-                                      "dstart": None, "clear": None,
-                                      "holds": []}
+            h = _ensure_hole(snap, zh)
             if h["dstart"] is None:
                 h["dstart"] = seq
             _check_r6(snap, zh, seq, zone_order, rank_of)
         elif et == "CENTERING_CLEAR":
-            if h is None:
-                h = snap.holes[zh] = {"erect": None, "close": None,
-                                      "dstart": None, "clear": None,
-                                      "holds": []}
+            h = _ensure_hole(snap, zh)
             if h["clear"] is None:
                 h["clear"] = seq
 
@@ -339,8 +355,11 @@ def snapshots(events, ledger, in_void=None):
         yield snap
 
 
-def _lifecycle(snap, zh):
+def _ensure_hole(snap, zh):
     # type: (Snapshot, str) -> Dict[str, Any]
+    """取(或建)孔生命周期 dict —— snapshots 四个生命周期分支共用的
+    初始化 helper(W-4: 原四份逐字内联拷贝 + 零调用的死函数 _lifecycle
+    已删, 初始化只此一份)。形态同 holes_timeline 的 setdefault 初值。"""
     h = snap.holes.get(zh)
     if h is None:
         h = snap.holes[zh] = {"erect": None, "close": None, "dstart": None,
@@ -382,21 +401,21 @@ def _advance_knots(snap, seq):
         snap.dirty.setdefault(sid, []).append(x)
 
 
-def _supported_at(h, s):
-    # type: (Dict[str, Any], int) -> bool
-    """孔在事件 seq=s 时是否 ≥ CLOSED_SUPPORTED(独立重建, 同 derive_
-    frontier 语义): 已合龙且 (close, dstart) 窗内已有持荷 HOLD 且该 HOLD
-    seq<=s(状态按 seq 前进)。"""
+def _supported_at(snap, zh, s):
+    # type: (Snapshot, str, int) -> bool
+    """孔 zh 在事件 seq=s 时是否 ≥ CLOSED_SUPPORTED(独立重建)。W-1 修后
+    与 derive_frontier 同构: 已合龙 ∧ 持荷窗 (close, dstart) 内**全部**
+    HOLD 已发生 —— 判据 = 预扫的窗内末个 HOLD(snap._win_last) ≤ s, 即
+    状态恰在 window[-1] 翻真(derive_frontier 的 at_seq)。旧实现"增量态
+    窗内任一(首个) HOLD 即持荷"与构造侧分歧 —— 邻孔窗内中段落架可
+    sequencer 红/g3 绿, 削弱互证(test_w1 钉死)。窗内无 HOLD(或未合龙)
+    → 永不 CLOSED_SUPPORTED。"""
+    h = snap.holes.get(zh) or {}
     close = h.get("close")
     if close is None or close > s:
         return False
-    dstart = h.get("dstart")
-    for hs in h.get("holds", ()):
-        if hs is None:
-            continue
-        if close < hs and hs <= s and (dstart is None or hs < dstart):
-            return True
-    return False
+    win_last = snap._win_last.get(zh)
+    return win_last is not None and win_last <= s
 
 
 def _decentering_at(h, s):
@@ -428,7 +447,7 @@ def _check_r6(snap, zh, seq, zone_order, rank_of):
         if _decentering_at(nh, seq):
             snap.violations.append(
                 "%s 相邻孔 %s/%s 同落架(seq=%d)" % (CODE_R6_ADJ, zh, nz, seq))
-        elif not _supported_at(nh, seq):
+        elif not _supported_at(snap, nz, seq):
             snap.violations.append(
                 "%s 孔 %s 落架(seq=%d)时邻孔 %s 未达合龙持荷(跳孔落架)"
                 % (CODE_R6_JUMP, zh, seq, nz))
@@ -488,24 +507,54 @@ def check_dag(snap):
     return out
 
 
+def _drain_tail_knots(snap):
+    # type: (Snapshot) -> int
+    """W-2: 事件流末尾后排空结点堆 —— x>末事件 seq 的未来结点同样是
+    分段线性端点; 不排空则"端点全覆盖"论证在流外失效(sequencer 端
+    _check_capacity_invariant 核每边全部 knot, g3 不得留静默盲区:
+    畸形账可借尾部结点逃逸)。返回核点数; dirty 留给调用方 check_dag
+    统一复核。堆内结点只属已置放石(入堆仅在置放时), "石存在后才核"
+    的物理前提不变。"""
+    n = 0
+    heap = snap._heap
+    while heap:
+        x, sid, i = heapq.heappop(heap)
+        ed = snap._edges.get(sid, ())[i]
+        snap.capacity[(sid, i)] = L.edge_capacity(ed, x)
+        snap.dirty.setdefault(sid, []).append(x)
+        n += 1
+    return n
+
+
 def check_dag_all(events, ledger, in_void=None):
     # type: (List[Dict[str, Any]], Dict[str, Any], Optional[Set[str]]) -> Tuple[List[str], Dict[str, Any]]
     """流式驱动: 全事件 snapshots + check_dag 聚合。stats 含耗时/快照数/
-    石级复核步数/终态 present。"""
+    石级复核步数/终态 present。W-2: 流尾把结点堆排空再核一遍 ——
+    x>末事件 seq 的结点(曲线在流外衰减/变化的段)也在核查域内; 真账
+    构造保证结点皆真实事件 seq, 排空为零开销。"""
     t0 = time.perf_counter()
     viols = []  # type: List[str]
     n_checks = 0
     n_snaps = 0
+    n_tail = 0
+    final_present = set()  # type: Set[str]
     for snap in snapshots(events, ledger, in_void=in_void):
         viols.extend(check_dag(snap))
         n_checks += sum(len(xs) for xs in snap.dirty.values())
         n_snaps += 1
         final_present = snap.present
+    if n_snaps:
+        n_tail = _drain_tail_knots(snap)
+        if n_tail:
+            snap.violations = []   # 事件级违例已随流聚合, 此步仅石级复核
+            viols.extend(check_dag(snap))
+            n_checks += n_tail
     stats = {
         "n_snapshots": n_snaps,
         "n_stone_checks": n_checks,
+        "n_tail_checks": n_tail,
         "elapsed_s": time.perf_counter() - t0,
-        "final_present": set(final_present) if n_snaps else set(),
+        "final_present": set(final_present),
     }
     return viols, stats
 

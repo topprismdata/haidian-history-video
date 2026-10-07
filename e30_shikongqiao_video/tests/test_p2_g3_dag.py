@@ -172,6 +172,11 @@ def _ring_sid(zone, face="EAST", which=0, led=None):
     return sids[which]
 
 
+def _by_hole(events, zone, etype):
+    return [e for e in events
+            if e.get("hole") == zone and e.get("etype") == etype]
+
+
 # ---------------------------------------------------------------------------
 # 正控: 全流 0 违例 + snapshot 结构 + Σ 互补形状
 # ---------------------------------------------------------------------------
@@ -424,6 +429,104 @@ def test_g3_check_pure_no_dirty_mutation(sched):
     assert v1 == v2
 
 
+def test_w1_mid_window_decenter_both_implementations_red(sched):
+    """W-1 修复钉: 持荷窗中段落架 —— ARCH02 窗内 holds=[h1,h2,h3],
+    ARCH01 落架块插在 h1/h2 之间。derive_frontier(CLOSED_SUPPORTED 取
+    window[-1]) 与 g3 _supported_at(修后同构: 窗内**全部** HOLD 已发生)
+    必须同红 R6_JUMP; 旧 g3"首个窗内 HOLD 即持荷"在此绿 —— 语义分歧
+    钉死(对抗/篡改流不再 g3 绿 sequencer 红)。"""
+    led2, res = sched
+    evs = copy.deepcopy(res["events"])
+    a2_close = _by_hole(evs, "ARCH02", "CLOSE_RING")[0]["seq"]
+    a2_dstart = _by_hole(evs, "ARCH02", "DECENTER_START")[0]["seq"]
+    a2_holds = sorted(e["seq"] for e in _by_hole(evs, "ARCH02", "HOLD_EVENT")
+                      if a2_close < e["seq"] < a2_dstart)
+    assert len(a2_holds) >= 3, "前提失效: 微账持荷窗不足 3 HOLD"
+    blk = [e for e in evs if e["hole"] == "ARCH01"
+           and e["etype"] in ("DECENTER_START", "WEDGE_RELEASE",
+                              "CENTERING_CLEAR")]
+    assert blk and blk[0]["etype"] == "DECENTER_START"
+    evs = [e for e in evs if e not in blk]
+    h1 = next(e for e in evs if e["hole"] == "ARCH02"
+              and e["etype"] == "HOLD_EVENT" and e["seq"] == a2_holds[0])
+    idx = evs.index(h1) + 1              # 插在 h1 与 h2 之间
+    evs[idx:idx] = blk
+    _resequence(evs)
+    viols, _stats = G3.check_dag_all(evs, led2)
+    assert any(G3.CODE_R6_JUMP in v and "ARCH02" in v for v in viols), \
+        viols[:10]
+    # sequencer 同向(独立实现, derive_frontier window[-1] 语义)
+    zones = sorted({s["id"].split(".")[0] for s in led2["stones"]})
+    errs = SQ.check_frontier(evs, zones)
+    assert any(m.startswith("R6_JUMP_DECENTER") and "ARCH02" in m
+               for m in errs), errs[:8]
+
+
+def test_w2_tail_knots_beyond_last_event_checked(sched):
+    """W-2 修复钉: 事件流末端之后的曲线结点也核 —— 注入 3 块石, 自持边
+    curve 在 T_last+5 衰减(1.0→0.25), 其后无任何事件。旧实现堆中未来
+    结点永不弹出 → g3 静默(0 违例, sequencer 却点名); 修后 check_dag_all
+    流尾排空, 3 块全部点名, 与 sequencer._check_capacity_invariant 同向。"""
+    led2, res = sched
+    led3 = copy.deepcopy(led2)
+    evs = copy.deepcopy(res["events"])
+    t_last = evs[-1]["seq"]
+    donor = next(s for s in led2["stones"]
+                 if s["id"] == "ARCH01.WEST.BACK.C01.B01")
+    sids = []
+    for k in range(3):
+        st = copy.deepcopy(donor)
+        st["id"] = "ARCH01.WEST.BACK.C08.B%02d" % (k + 1)
+        st["support_edges"] = [
+            {"type": "stone",
+             "capacity_curve": [[t_last + 1 + k, 1.0], [t_last + 5, 0.25]]}]
+        led3["stones"].append(st)
+        sids.append(st["id"])
+        evs.append(E.new_event(t_last + 1 + k, "ARCH01", "PLACE_STONE",
+                               stone_id=st["id"], prereq=[],
+                               evidence="C:A1"))
+    viols, stats = G3.check_dag_all(evs, led3)
+    hits = [v for v in viols if G3.CODE_UNSUPPORTED in v]
+    for sid in sids:
+        assert any(sid in v for v in hits), (sid, viols[:6])
+    assert stats["n_tail_checks"] == 3, stats
+    # 对照(与 sequencer 同向): 同一 curve 的 Σ 核在流外结点处同样点名
+    plan = {sid: next(s["support_edges"] for s in led3["stones"]
+                      if s["id"] == sid) for sid in sids}
+    errs = SQ._check_capacity_invariant(plan, evs)
+    assert len(errs) == 3 and all("CAP_INVARIANT" in m for m in errs), errs
+
+
+def test_s1_selfhold_at_close_boundary(sched):
+    """S-1/M6 边界钉: RING 石自持 stone 边恰在 close 结点起 1.0 → 合龙
+    瞬间自持合法, 全流零违例(变异 x<close→x<=close 在此必红); 同形结点
+    提前一拍(close-1) → SELFHOLD_EARLY 必红且点名 seq。"""
+    led2, res = sched
+    zone = "ARCH02"
+    close = _by_hole(res["events"], zone, "CLOSE_RING")[0]["seq"]
+    sid = _ring_sid(zone, led=led2)
+    place = next(e["seq"] for e in res["events"]
+                 if e.get("stone_id") == sid and e["etype"] == "PLACE_STONE")
+    # (a) 自持恰在 close 起(x==close): 合法
+    led_a = copy.deepcopy(led2)
+    st = next(s for s in led_a["stones"] if s["id"] == sid)
+    st["support_edges"] = [
+        {"type": "centering", "capacity_curve": [[place, 1.0], [close, 0.0]]},
+        {"type": "stone", "capacity_curve": [[place, 0.0], [close, 1.0]]}]
+    viols, _ = G3.check_dag_all(copy.deepcopy(res["events"]), led_a)
+    assert viols == [], viols[:6]
+    # (b) 提前一拍(x==close-1 结点已 1.0): 红
+    led_b = copy.deepcopy(led2)
+    st = next(s for s in led_b["stones"] if s["id"] == sid)
+    st["support_edges"] = [
+        {"type": "centering", "capacity_curve": [[place, 1.0], [close, 0.0]]},
+        {"type": "stone",
+         "capacity_curve": [[place, 0.0], [close - 1, 1.0]]}]
+    viols_b, _ = G3.check_dag_all(copy.deepcopy(res["events"]), led_b)
+    assert any(G3.CODE_RING_SELFHOLD_EARLY in v and sid in v
+               and ("seq=%d" % (close - 1)) in v for v in viols_b), viols_b[:8]
+
+
 def test_g3_independent_no_sequencer_import():
     """独立性: g3_check 导入闭包不含 sequencer(两独立实现互证的前提)。"""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -484,8 +587,9 @@ def test_real_ledger_g3_fullchain():
         assert any(G3.CODE_PHANTOM in v and victim in v for v in viols2)
 
     # W1 双建模债清单: ≥99% 吞没的 rbo 石进报告, 不判红, 单自持边合规
-    # (T6 起 run_g3 串 gate_stress; 真账中央 6 孔 acceptance 不可行 →
-    #  停车线 raise, 报告挂异常 .report —— 两门数据不受影响)
+    # (T6 裁决轮起 run_g3 的 gate_stress 用结构带口径; 真账 ARCH07
+    #  acceptance 不可行 → 停车线 raise, 报告挂异常 .report ——
+    #  两门数据不受影响)
     try:
         rep = G3.run_g3(events, led, in_void=in_void)
     except G3.G3_FROZEN_GEOMETRY_CONFLICT as exc:

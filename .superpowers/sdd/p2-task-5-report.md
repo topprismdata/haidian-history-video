@@ -53,8 +53,12 @@ Commit: `feat(e30): P2-T5 G3①支撑活跃+snapshot状态机(独立Σ交叉验�
 | `check_dag_all` 全程(含 in_void 推导) | **2.63s** (<10s 闸 ✓) |
 | 其中 snapshot 流 + check(纯增量路径) | 0.06s |
 | in_void 推导(classify_stones, 5935 石) | ~2.5s(可传 `in_void=` 复用) |
-| 石级复核点 | 10,543(=3883 置放 + ~6,660 曲线结点) |
+| 石级复核点 | **6,199**(=3883 置放 + 2,316 置放后曲线结点; 另 4,076 个迟到/同步结点由置放步精确插值覆盖, 不另设核点) —— **勘误(W-3)**: 原载"10,543(=3883+~6,660)"不可复现(全账曲线上不同结点总数仅 6,392), 系迟到结点内联实现更新前的观测残留, 以本行落盘 `stats.n_stone_checks` 为准(T5 修复轮实测 6,199, `n_tail_checks=0` —— 真账结点皆真实事件 seq, 流尾排空零开销) |
 | 微账 103 事件 | 0.026s |
+
+> **数字纪律(T5 审查 W-3 后增补)**: 本报告及后续任务报告的一切计数一律
+> 从代码 stats 落盘字段取(`n_stone_checks`/`n_snapshots`/`final_present`
+> 等), 会话内观测值不得直接入文; 报告即交付物, 数字须与落盘代码对账。
 
 ## 4. 五负控(全部恰红, 微账 ARCH01-03)
 
@@ -86,12 +90,14 @@ Commit: `feat(e30): P2-T5 G3①支撑活跃+snapshot状态机(独立Σ交叉验�
 量 `V(stone∩RING∪)/V(stone)`, **P1 体素单源**(`p1a_slice._voxel_unique_vol`,
 2cm 栅格, bbox 预筛, pre-inset), 阈值 ≥0.99, 耗时 ~26s。
 
-**本扫描复现 = 25 块**(24 块吞没率 1.0000 + 1 块 0.9979):
+**本扫描复现 = 25 块**(24 块吞没率 1.0000 + 1 块 0.9979), 按组展开
+(括号内为组内块数, 合计 25; **勘误(S-3)**: 原列表重复计入
+ARCH07/11.EAST.{BACK,SPANDREL}.C12.B03 且漏 ARCH07.WEST.BACK.C12.B03,
+去重后仅 24≠25):
 
-ARCH07/11.EAST.{BACK,SPANDREL}.C06.{B00,B08}, ARCH07/11.EAST.{BACK,SPANDREL}.C12.B03,
-ARCH07.WEST.BACK.C06.B00(0.9979), ARCH07/08/09/10/11.EAST.BACK.C12.B03,
-ARCH07/08/09/10/11.EAST.SPANDREL.C12.B03, ARCH08/09/10.WEST.BACK.C12.B03,
-ARCH11.WEST.BACK.C06.B00, ARCH11.WEST.BACK.C12.B03
+ARCH07/11.EAST.{BACK,SPANDREL}.C06.{B00,B08}(8),
+ARCH07-11.{EAST.BACK,EAST.SPANDREL,WEST.BACK}.C12.B03(15),
+ARCH07/11.WEST.BACK.C06.B00(2; ARCH07=0.9979, 余 1.0000)
 (完整 id+率以 `run_g3` 报告 `double_model_placeholders` 落盘为准, 幂等可复现)
 
 **与主控口径 28 块的差异说明**: T4 修复轮的 28 系会话内实测未落盘, 不可
