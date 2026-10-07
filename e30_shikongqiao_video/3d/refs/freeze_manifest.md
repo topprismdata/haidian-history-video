@@ -12,7 +12,7 @@
 
 | 文件 | SHA256 | 说明 |
 |---|---|---|
-| `3d/facts.py` | `af260eab4f78a666c9c301d9face053140cb20ade8a5e2e47c61dbc4439dd7b6` | 31 条本体条目（M19 冬照重标定 2026-10-06：DECK_Z_TOP/DECK_Z_END/SPANDREL_C/SPANDREL_E/RISE_E 改标 [图像推导]，新增 RISE_C/CROWN_BLUNT_K/CROWN_BLUNT_CAP/SPRINGER_WATER_MIN 登记）；等级分布见 §9 |
+| `3d/facts.py` | `bc52a3bac55f24186586c44f23fd182ee1a45a46cb892ad469641a5de842d343` | 31 条本体条目（M19 冬照重标定 2026-10-06：DECK_Z_TOP/DECK_Z_END/SPANDREL_C/SPANDREL_E/RISE_E 改标 [图像推导]，新增 RISE_C/CROWN_BLUNT_K/CROWN_BLUNT_CAP/SPRINGER_WATER_MIN 登记）；2026-10-07 P2-T2 修复轮 D2 停车线裁决：RING_T **维持 0.40**，行尾 STALE 注记（与券石账目 params.ring_t=0.54 分叉、端孔 extrados 穿桥面属真缺陷、债务票 M20b 标定 ring_t(i) 后统一）——对齐尝试曾实测端孔 MET_RING_FIT 红，判据等价式 RING_T>spandrel(i)；qa_bridge 零改动，几何零变化；等级分布见 §9 |
 | `3d/assumptions.py` | `94e428e48b8a05ed1f1d016e59e1b15ed6c336f582e440e4a142dcedd0102dec` | 假设层，不进冻结，改动须记录（终审 I13 删 `BRIDGE_ABUT_TARGET`、I9/I12 外置 `VOID_CUT_MARGIN`；2026-10-06 外置 `VOID_CUT_WIDTH_K` 贯通系数，SPANDREL_C 等值锁正规出路） |
 
 等级分布（facts.SOURCES 31 条）: **官方 6**（BRIDGE_LEN / N_SPAN / DECK_UP_W / DECK_DOWN_W / PUBLISHED_GENERAL_WIDTH / PUBLISHED_BRIDGE_HEIGHT）、**图像推导 7**（ARCH_RATIO + M19 冬照重标定 DECK_Z_TOP / DECK_Z_END / SPANDREL_C / SPANDREL_E / RISE_C / RISE_E）、**工作值 18**（14 条本体尺寸/形状锚 + 4 条判据阈值参数 CLOSURE_TOL / ARCH_RATIO_TARGET / ARCH_RATIO_TOL / SPRINGER_WATER_MIN，清单见 §9）。**测绘 0 / 档案 0** —— 故本体只能走条件冻结（§9）。
@@ -189,7 +189,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 
 | # | 常量 | 值 | 无公开来源的量 |
 |---|---|---|---|
-| 1 | RING_T | 0.40 m | 券圈径向厚 |
+| 1 | RING_T | 0.40 m | 券圈径向厚（**STALE**: 与券石账目 params.ring_t=0.54 分叉, 端孔 extrados 穿桥面 4-11cm 属真缺陷, 债务票 M20b 标定 ring_t(i) 后统一 — 2026-10-07 D2 停车线主控裁决） |
 | 2 | SPAN_DISTINCT | [4.50,4.90,5.40,5.90,6.40,6.90,7.40,8.00,8.50] | 9 个完整净跨（无逐孔测绘值） |
 | 3 | SPRINGER | 1.14 m | 中央孔起拱线（M19 导出值=DECK_Z_TOP−SPANDREL_C−rise·8.50，非独立事实；MET_SPRINGER 恒等校验） |
 | 4 | SPRINGER_WATER_MIN | 0.15 m | 起拱线水上硬下限（M19 冬照"springer≥0.15"约束升格判据阈值，无文献） |

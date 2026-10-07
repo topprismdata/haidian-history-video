@@ -394,3 +394,18 @@
 
 **冻结影响**: blender 重建零错 SAVED v2, freeze_hash 三对象(bridge_body/voussoir/coursing) sha_sorted/sha_order/nverts/nfaces/bbox **逐位不变(CORE_HASH_IDENTICAL: True)**; qa_l2 正检 QA_L2_OK、负控 NEG_CAUGHT 10/10。几何值逐位未动 —— 委托只改公式住址, 不改数值。
 
+## 2026-10-07 P2-T2 审查修复轮 D1/D2/D4/D5/D6/D7 + 变异盲区补测 —— centering 语义重锚, 本体几何零变化
+
+**主控裁决**: 审查 BLOCK(2C+4H+变异盲区)七项 D1-D7(见 p2-task-2-report.md 修复轮节); D3 本体侧另条记录。
+
+**改动文件**: `centering.py`(D1 工作面重锚+D2 RING_T 解耦+D4 id/zone/arch_idx/xc+D5 DECK_CLASH+D6 footprint 结构+D7 语义注记; 删 SPRINGER_ZONE/WORK_CLEAR 分叉)、`facts.py`(D2 停车线: RING_T 维持 0.40 + 行尾 STALE 注记 + SOURCES 溯源更新)、`masonry.py`(D2: RING_T=0.54 加分叉指针注记, 数值不变→几何逐位不变)、`tests/test_p2_centering.py`(重写 20 条, 含变异补测与解耦钉)、`refs/freeze_manifest.md`(§1 facts 哈希重锚+§9 RING_T 行 STALE 注记)。
+
+- **D1**: 工作面基准 = 拱腹 intrados: rib 板顶 z = arch_z(x) − RIB_GAP(0.005 施工隙), 楞木/柱顶随之下移(rib→楞木→楔对→柱堆叠不变); "拱脚区贴 intrados/跨中 extrados+30mm"分叉删除(SPRINGER_ZONE/WORK_CLEAR 常量删失, 测试含 hasattr 负证); 楔副 1:8 行程 0.06m 语义 = **合龙后压缩沉落**(非脱环预抬), lift 参数 = 沉落状态模拟量 ∈[0, WEDGE_TRAVEL], 越行程/负值 raise。
+- **D2 停车线响应记录**(主控裁决 2026-10-07): 对齐尝试(临时把 facts.RING_T 改账目真值 0.54)实测 **MET_RING_FIT fail ×2** —— 孔1/孔17: 拱背 2.77 高于桥面 2.73(余量 −0.040m)。**数学根源(判据等价式, M20b 起点)**: 该判据 fail ⟺ `RING_T > spandrel(i)`(crown=deck−spandrel 代入后桥面项消去, 平移不变), spandrel 剖面 1.40(中央)→0.50(端孔), RING_T=0.54 时端孔必红恰 0.04, 与 Z 平移/容差无关 —— **0.40 的旧绿灯测的是虚构几何**(本次统一尝试的价值所在)。按主控裁决收口: facts.RING_T **维持 0.40 原值**, 行尾加 STALE 注记(端孔 extrados 穿桥面 4-11cm 属真缺陷, 债务票 M20b 标定 ring_t(i) 后统一); qa_bridge/MET_RING_FIT 零改动; masonry.RING_T=0.54(券石几何冻结侧, core_hash 门)加分叉指针注记防"善意对齐"。
+- **D1 红利(主控裁决#2 确认)**: 工作面改 intrados 后 centering **不再消费 facts.RING_T** —— 新增 `stone_ring_t(arch_idx)` 从石账 params.ring_t 现算(按孔缓存, 账目缺失响亮 raise 不静默兜底), wrapper 缺省环厚走它; 解耦可执行钉: AST 扫描 centering 代码无 `_F.RING_T/facts.RING_T` 消费节点 + wrapper 缺省值 == 0.54(账目真值) + facts.RING_T 仍 0.40。M20b 标定 ring_t(i) 后券架自动跟随。
+- **D4**: id = "CEN-ARCH%02d" % (arch_idx+1)(1 基, 与石账 zone/事件账 CEN-ARCH09 同形); 返回体加 zone="ARCH%02d"/arch_idx/xc(geom_math.arch_center_x 孔心表); 测试钉 CEN-ARCH09 + 17 孔 CEN 集合 == 石账 zone 集合(跨源, fail-on-skip)。
+- **D5**: 桥面夹持 min() → **DECK_CLASH raise**(消息附 x 位置与余量), rib 顶(全链最高点)纳入夹持, 排位点+rib 采样双重覆盖; 测试: 压低 deck_z_fn 必红(断言消息含 x=/余量/−0.01) + 17 孔真实工况零误伤。
+- **D6**: footprint 改 `[{"poly": [(x,z)...], "y0", "y1", "kind": "rib"}, ...]` 按榀(两行)返回 + 全局 xc 平移字段; docstring 改"占位体积取 parts[].bbox 加 xc 平移(全局系), footprint 仅 rib 带轮廓"; footprint_polys 旧键删失(干净切换); 测试: footprint ≡ rib 采样逐点等(独立重算 25+25 点)。
+- **D7**: "端孔柱高"语义 = **柱顶标高**(非柱长), docstring+测试注释写明(柱顶 <3.0m vs 柱长 >4m 两量级可分)。
+- **变异盲区补测**(审查 M06/M07/M08/M11/M12 存活项): rib 两榀计数恰 2×RIB_SEG_N=48; 楞木 y 向跨两柱头(同排两柱心均在楞木 y 域内); 夹持 raise(见 D5); RIB_T 带界改**含 rib 厚的双侧界** [拱腹−0.005−lift−RIB_T, 拱腹−0.005−lift] 逐顶点; 恒真 stations 测试换独立期望值(中央 8 排/端 4 排字面钉, 排数断言收敛到 test_post_station_counts_pinned_to_literals 一处)。
+- **冻结影响**: blender 重建零错 SAVED v2, freeze_hash 三对象逐位不变(本修复轮二次实测, CORE_HASH_IDENTICAL True×2); qa_l2 正检 QA_L2_OK + 负控 NEG_CAUGHT 10/10; 本体 build 链不消费 RING_T, masonry 数值不变, 几何零变化。
