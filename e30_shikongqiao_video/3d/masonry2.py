@@ -74,6 +74,20 @@ def _course_heights(courses, course_h):
     return [zs[i + 1] - zs[i] for i in range(len(zs) - 1)] + [top]
 
 
+def bridge_mirror_phase(arch_idx):
+    # type: (int) -> bool
+    """[P2-T6b 裁决] 该孔砌筑相位是否须桥轴镜像协变(东半孔)。
+
+    顺/丁深度奇偶与背衬伪随机序原本按**孔西缘**计数 —— 跨孔镜像时
+    块序号不随桥轴翻转, 西东对称孔在镜像位(bi ↔ n-1-bi)上反手性
+    (Arch07 诊断: 145/214 镜像位深度反相 → ARCH07 停车线伪影根因)。
+    东半孔(arch_idx > 桥心 N_SPAN//2)一律倒序消费相位; 桥心孔自镜像
+    不动。只动相位锚, 不动砖谱 x/z 块界/石型多重集/尺寸/带界 ——
+    块界是照片钉死的证据(photos-derived), 相位在立面上不可见。"""
+    import geom_math as GM
+    return arch_idx > GM.N_SPAN // 2
+
+
 def face_stones(spec, arch_idx, side, hw_fn, course_h=None):
     # type: (Dict[str, Any], int, int, Callable[[float, float], float], Optional[float]) -> List[Dict[str, Any]]
     zone = "ARCH%02d" % (arch_idx + 1)
@@ -81,13 +95,19 @@ def face_stones(spec, arch_idx, side, hw_fn, course_h=None):
     courses = spec.get("courses", [])
     heights = _course_heights(courses, course_h)
     out = []  # type: List[Dict[str, Any]]
+    mirror = bridge_mirror_phase(arch_idx)
     for ci, (course, h) in enumerate(zip(courses, heights)):
         z0 = course["z0"]
-        for bi, blk in enumerate(_pairs(course.get("blocks", []))):
+        blocks = _pairs(course.get("blocks", []))
+        n_bi = len(blocks)
+        for bi, blk in enumerate(blocks):
             x0, x1 = blk["x0"], blk["x1"]
             xm = (x0 + x1) / 2.0
             zm = z0 + h / 2.0
-            depth = STRETCHER_D if (ci + bi) % 2 == 0 else HEADER_D
+            # [P2-T6b] 相位锚: 东半孔按倒序块位计奇偶(桥轴镜像协变);
+            # 块的 x/z 界与石型多重集原样(照片证据, 不动)。
+            bi_phase = (n_bi - 1 - bi) if mirror else bi
+            depth = STRETCHER_D if (ci + bi_phase) % 2 == 0 else HEADER_D
             hw_b = hw_fn(xm, z0)
             hw_t = hw_fn(xm, z0 + h)
             y = hw_fn(xm, zm) + PROUD
@@ -134,6 +154,10 @@ def backing_stones(faces, hw_fn, seed=0):
     zone = faces[0]["id"].split(".")[0]
     face_name = faces[0]["id"].split(".")[1]
     side = 1 if face_name == "EAST" else -1
+    arch_idx = int(zone[4:]) - 1
+    # [P2-T6b] 消费序: 东半孔按倒序块位消费伪随机(配合调用方的镜像孔
+    # 种子锚), 镜像位深度与西镜像孔一致; 退让线 c 是逐块几何推导,
+    # 与消费序无关, 不受影响。
     # 账目恢复几何带: z 带 = zm±h/2, x 带 = xm±w/2(单一真相, 不重跑面石)
     geo = [(s, s["transform"][2] - s["params"]["h"] / 2.0,
             s["transform"][2] + s["params"]["h"] / 2.0,
@@ -142,7 +166,12 @@ def backing_stones(faces, hw_fn, seed=0):
            for s in faces]
     rng = random.Random(seed)
     out = []  # type: List[Dict[str, Any]]
-    for s, zb0, zb1, xb0, xb1 in sorted(geo, key=lambda g: _face_idx(g[0])):
+    if bridge_mirror_phase(arch_idx):
+        ordered = sorted(geo, key=lambda g: (_face_idx(g[0])[0],
+                                             -_face_idx(g[0])[1]))
+    else:
+        ordered = sorted(geo, key=lambda g: _face_idx(g[0]))
+    for s, zb0, zb1, xb0, xb1 in ordered:
         ci, bi = _face_idx(s)
         h = s["params"]["h"]
         xm = s["transform"][0]

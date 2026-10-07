@@ -308,14 +308,20 @@ def test_real_17_holes_acceptance_feasible_and_report():
       剔除双建模占位(0.985 吞没 28 石 → R5b)。R5a: 1307 → 1290。
     ② 结构协同假设: 锁固带与券脸石餬灰胶结(C:A5 "餬灰璺"), 并入拱截面
       (s 检验带厚 ring_t+0.35; 带重计入块链 W_k)。
-    实测: robustness(裸环) 17/17; acceptance(结构带) 16/17 —— ARCH07 仍
-    不可行, run_g3 维持 raise(主控裁决第三条), 历史结论 = 券架须驻留至
-    拱肩近满才可落架。旧口径 A/B(截面不加厚)对照 {ARCH07..11} 全翻假,
-    证明结构带假设 load-bearing。若砖谱/几何再冻结, 此处结论应被显式
+    实测(T6b 相位协变重账): robustness(裸环) 17/17; acceptance(结构带)
+    **ARCH07 转可行 [33.479,39.106]**(治本达成; 治本链=①相位协变
+    ②in_void 手性修复 ③CORE 肩载质心锚 ④冠载侧归属 EPS 一致)。
+    **A08-11 转不可行** —— 冠列核心荷载(13.5-15.4, 占带重 ~20%)锚语义
+    修正(角→质心, H1 分派表)使其作用臂移向冠点 ~1.1m 的物理后果, 停车线
+    按 A08-11 维持 raise 待主控裁决(冠列荷载分摊方式)。旧口径 A/B(截面
+    不加厚)对照见 §7.3/neg 控制。若砖谱/几何再冻结, 此处结论应被显式
     复核而非静默漂移。"""
     led, seqdoc = _real_chain()
     r5a = G3.load_r5a_shoulders()
-    assert sum(len(v) for v in r5a.values()) == 1290
+    # [P2-T6b 相位协变重账] R5a 1290→1342 (+52): in_void 手性修复释放 48 块
+    # (12 孔×4, 全部入本孔 R5a) + dm/rbo 0.985 体素口径边界移位 +4
+    # (A13 +2, A15 +2; dm 总数 28→29)。归因表见 p2-task-6-report.md §8。
+    assert sum(len(v) for v in r5a.values()) == 1342
     assert sorted(r5a) == ["ARCH%02d" % i for i in range(1, 18)]
 
     gate = G3.stress_gate(led, r5a=r5a)
@@ -329,11 +335,11 @@ def test_real_17_holes_acceptance_feasible_and_report():
         assert h["robustness"]["band_t"] == 0.0
         assert h["band_bonded"] and h["n_r5a"] > 0
         assert h["acceptance"]["band_t"] == pytest.approx(G3.LOCK_BAND_M)
-    # acceptance(结构带)实况: 16 孔 feasible + ARCH07 停车线(裁决基线;
-    # 几何/砖谱再冻结须显式复核本行)
+    # acceptance(结构带)实况: 13 孔 feasible + A08-11 停车线(T6b 冠载臂
+    # 修正后的裁决基线; 几何/砖谱/荷载分摊再裁决须显式复核本行)
     infeasible = sorted(zh for zh in gate["holes"]
                         if not gate["holes"][zh]["acceptance"]["feasible"])
-    assert infeasible == ["ARCH07"], infeasible
+    assert infeasible == ["ARCH%02d" % i for i in range(8, 12)], infeasible
     assert [v.split(" ", 1)[0] for v in gate["violations"]] == \
         [G3.CODE_STRESS_INFEASIBLE] * len(infeasible)
     assert [v.split("hole=")[1].split(" ", 1)[0]
@@ -364,7 +370,13 @@ def test_real_17_holes_acceptance_feasible_and_report():
         G3.LOCK_BAND_M = _saved
     old_infra = sorted(zh for zh in old_gate["holes"]
                        if not old_gate["holes"][zh]["acceptance"]["feasible"])
-    assert old_infra == ["ARCH%02d" % i for i in range(7, 12)], old_infra
+    # [P2-T6b] 不变量: 截面不加厚(锁固带当裸环外荷载=修正前模型)的不可行
+    # 集合 ⊇ 结构带模型, 且严格更大 —— 结构带假设 load-bearing, 方向单调
+    # (T6b 重账后旧口径不可行集实测见 print, 含 A04-13 中央大部)。
+    print("旧口径(截面不加厚) infeasible:", old_infra)
+    assert set(infeasible) <= set(old_infra), (infeasible, old_infra)
+    assert len(old_infra) > len(infeasible), old_infra
+    assert "ARCH07" in old_infra and "ARCH07" not in infeasible
 
     # 带界守恒(0.36m 外肩石不得混入): r5a 集合逐石足印径向距 ≤ 0.35
     import sequencer as SQ

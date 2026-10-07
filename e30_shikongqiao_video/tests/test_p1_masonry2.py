@@ -343,3 +343,68 @@ def test_core_cells_bbox_and_coverage():
     assert zs[0][0] == 1.0 and zs[-1][1] == 6.0
     for (a0, a1), (b0, b1) in zip(zs, zs[1:]):
         assert abs(a1 - b0) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# [P2-T6b 裁决] 砌筑相位桥轴镜像协变: 东半孔 bi 倒序(顺丁奇偶 + 背衬伪随机序)
+# ---------------------------------------------------------------------------
+
+def test_bridge_mirror_phase_helper():
+    """相位协变域: 东半孔(arch_idx > 桥心)协变, 西半孔/桥心孔维持原相位。
+    17 孔 0-based 桥心=8(ARCH09 自镜像); 镜像对 i ↔ N_SPAN-1-i。"""
+    assert not M2.bridge_mirror_phase(0)
+    assert not M2.bridge_mirror_phase(6)    # ARCH07 西半孔
+    assert not M2.bridge_mirror_phase(8)    # 桥心 ARCH09 自镜像
+    assert M2.bridge_mirror_phase(9)        # ARCH10 起东半孔
+    assert M2.bridge_mirror_phase(10)       # ARCH11(ARCH07 镜像对)
+    assert M2.bridge_mirror_phase(16)
+
+
+def test_face_phase_bridge_mirror_covariant():
+    """东半孔顺丁深度在镜像位(bi ↔ n-1-bi)与西镜像孔一致; 同 bi 反相。
+    旧实现两孔同 (ci+bi) 奇偶 = 跨孔反手性(ARCH07 停车线伪影根因,
+    实测 145/214 镜像位深度反相) —— 本测在旧实现下必红。"""
+    west = M2.face_stones(SPEC, 6, 1, _hw, course_h=0.55)    # ARCH07 西半孔
+    east = M2.face_stones(SPEC, 10, 1, _hw, course_h=0.55)   # ARCH11 东半孔
+    dw = {}
+    for s in west:
+        t = s["id"].split(".")
+        dw[(int(t[3][1:]), int(t[4][1:]))] = s["params"]["d"]
+    n_checked = 0
+    for s in east:
+        t = s["id"].split(".")
+        ci, bi = int(t[3][1:]), int(t[4][1:])
+        n = max(b for c, b in dw if c == ci) + 1
+        mi = n - 1 - bi
+        if (ci, mi) in dw:
+            n_checked += 1
+            assert s["params"]["d"] == dw[(ci, mi)], \
+                ("镜像位深度反相", t, dw[(ci, mi)])
+    assert n_checked == len(dw), (n_checked, len(dw))
+    # 桥心孔(ARCH09)相位不变: (ci+bi) 奇偶原样
+    c00 = M2.face_stones(SPEC, 8, 1, _hw, course_h=0.55)[0]
+    assert c00["params"]["d"] == M2.STRETCHER_D   # (0+0)%2==0 → 顺
+
+
+def test_backing_phase_bridge_mirror_covariant():
+    """东半孔背衬伪随机序镜像消费: 镜像孔同种子下, 镜像位深度一致。
+    旧实现按孔西缘序消费同种子 → 镜像位取不同抽签(手性), 本测必红。"""
+    fw = M2.face_stones(SPEC, 6, 1, _hw, course_h=0.55)
+    fe = M2.face_stones(SPEC, 10, 1, _hw, course_h=0.55)
+    bw = M2.backing_stones(fw, _hw, seed=6)
+    be = M2.backing_stones(fe, _hw, seed=6)   # 种子跨孔镜像锚(同镜像孔种子)
+    dw = {}
+    for s in bw:
+        t = s["id"].split(".")
+        dw[(int(t[3][1:]), int(t[4][1:]))] = s["params"]["d"]
+    n_checked = 0
+    for s in be:
+        t = s["id"].split(".")
+        ci, bi = int(t[3][1:]), int(t[4][1:])
+        n = max(b for c, b in dw if c == ci) + 1
+        mi = n - 1 - bi
+        if (ci, mi) in dw:
+            n_checked += 1
+            assert s["params"]["d"] == dw[(ci, mi)], \
+                ("镜像位背衬深度反相", t)
+    assert n_checked == len(dw), (n_checked, len(dw))

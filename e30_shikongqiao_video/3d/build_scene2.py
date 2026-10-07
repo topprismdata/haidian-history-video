@@ -1203,6 +1203,13 @@ def _kept_pieces(x0, x1, z0, z1, band):
         elif pts[-1][1] == z0:
             # 出界到块底以下: 底边沿 z0 延到 sb, 右边上行, 顶边回, 左边闭合
             pts = pts + [(sb, z0), (sb, z1), (sa, z1)]
+        elif pts[-1][1] == z1:
+            # [P2-T6b] 上穿出界(弦线带内上行后越过块顶): 带内段沿弦, 顶边
+            # 沿 z1 折返首点 x 闭合。旧实现无此支 —— 2 点开环被 len>=3 丢弃
+            # → 整条保留片蒸发, 石被误判 in_void(跨缘石 ARCH07.C04.B00 四石
+            # 即此); station 网格按孔绝对 x 对齐, 镜像孔离散错位使该支只在
+            # 单侧触发 = 手性伪影(in_void 180 vs 176)。
+            pts = pts + [(pts[0][0], z1)]
         # 出界到 z1: pts 已止于 (x*, z1), 顶边沿 z1 回 sa 即闭合
         if len(pts) >= 3 and abs(_poly_area(pts)) > 1e-12:
             kept.append(pts)
@@ -1501,8 +1508,11 @@ def bridge_ledger(stones_dir=None):
             faces = _M2.face_stones(spec, i, side, hw_wall, course_h=ch)
             faces = cap_to_deck(faces, stats=skipped)
             stones.extend(faces)
+            # [P2-T6b] 背衬种子跨孔镜像锚: 东半孔用镜像孔种子, 配合
+            # backing_stones 内的倒序消费, 镜像位深度与西镜像孔一致。
+            seed_bk = (_F.N_SPAN - 1 - i) if _M2.bridge_mirror_phase(i) else i
             stones.extend(cap_to_deck(
-                _M2.backing_stones(faces, hw_wall, seed=i), stats=skipped))
+                _M2.backing_stones(faces, hw_wall, seed=seed_bk), stats=skipped))
         x_lo = -_F.BRIDGE_LEN / 2.0 if i == 0 else band["x_lo"]
         x_hi = _F.BRIDGE_LEN / 2.0 if i == _F.N_SPAN - 1 else band["x_hi"]
         stones.extend(cap_to_deck(

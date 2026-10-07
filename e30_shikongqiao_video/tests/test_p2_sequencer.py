@@ -30,7 +30,7 @@
   test_p2_ledger_v2); 交付闸 validate_event_ledger(require_evidence=True)
   ==[] 硬约束(T3 复审 M4 裁决)。
 负控五组: 悬空券石/邻孔稀释 HOLD/跳孔落架/单边领先超 ε/CLEAR 无 START 必红。
-blender-free; 真账 5935 石全链(裁1 后 3883 入日程)为存在性 skip 的尾测,
+blender-free; 真账 5935 石全链(T6b 相位协变重账后 3931 入日程)为存在性 skip 的尾测,
 含 in_void 滤除集与 excluded_ids.json 逐位交叉核。
 """
 import copy
@@ -1073,7 +1073,9 @@ def test_real_ledger_fullchain():
     cens = [CEN.build_centering_for_arch(int(z[4:]) - 1) for z in zones]
     # P2-T6 裁决: 双建模占位集一次扫描, build/check 共用(省一次 ~26s 体素扫)
     dm = SQ._double_model_ids(led)
-    assert len(dm) == 28, "0.985 吞没口径占位集应为 28 石(裁决声明值), 实得 %d" % len(dm)
+    # [P2-T6b] 28→29: 相位协变改变石深 → 一块 rbo 石吞没率越过 0.985 界
+    # (体素口径边界移位, 非判据变化; 归因见 p2-task-6-report.md §8)
+    assert len(dm) == 29, "0.985 吞没口径占位集(T6b 重账实测), 实得 %d" % len(dm)
     res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=dm)
     # 交付闸: require_evidence=True 硬约束
     errs = SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD,
@@ -1081,7 +1083,9 @@ def test_real_ledger_fullchain():
     assert errs == [], "真账 check_sequence 违例(前 10): %s" % errs[:10]
     # 裁1: 幻影石过滤 —— 事件量级 6122→4070(=5935-2052 砌置放+187 券架事件);
     # in_void 滤除数与 excluded_ids.json 同源同值
-    assert res["meta"]["n_stones_in_void"] == 2052
+    # [P2-T6b] 2052→2004: in_void 手性修复(_kept_pieces 上穿出界支)释放
+    # 48 块跨缘真石(12 孔×4), 误删归零且两半桥对称(176/176)。
+    assert res["meta"]["n_stones_in_void"] == 2004
     assert 3900 <= len(res["events"]) <= 4250
     # 真账 in_void 过滤交叉核: 被滤石集合 == excluded_ids.json["in_void"] 逐位
     _excl = os.path.join(os.path.dirname(__file__), "..", "3d", "out",
@@ -1092,10 +1096,10 @@ def test_real_ledger_fullchain():
         got = SQ._in_void_ids(led)
         assert got == want, "in_void 滤除集与旁挂全表不一致: %d vs %d, 差集=%r" \
             % (len(got), len(want), list(got ^ want)[:8])
-    # P2-T6 裁决收缩: R5a = 1290(旧 1307 − 17 占位剔除; 其余 11 块占位石
-    # 本就非锁固肩)。带闸(径向 0.35m)在真账零额外剔除 —— 实体墙肩全部
-    # 径向贴环, 收缩量全部来自占位剔除(两轮探针见 T6 报告"裁决与发现")。
-    assert res["meta"]["n_dm_excluded"] == 28
+    # [P2-T6b] R5a = 1342(收缩裁 1290 + in_void 释放 48 + dm/rbo 边界移位
+    # 4: A13+2 A15+2)。带闸(径向 0.35m)在真账零额外剔除 —— 实体墙肩全部
+    # 径向贴环。逐轮演化: 3187(含幻影)→1307→1290(收缩)→1342(重账)。
+    assert res["meta"]["n_dm_excluded"] == 29
     r5a = 0
     for e in res["events"]:
         if e["etype"] != "PLACE_STONE" or not e.get("stone_id"):
@@ -1107,7 +1111,7 @@ def test_real_ledger_fullchain():
                       if x["hole"] == zh and x["etype"] == "DECENTER_START")
         if close < e["seq"] < dstart:
             r5a += 1
-    assert r5a == 1290, r5a
+    assert r5a == 1342, r5a
     # frontier 轨迹合法
     assert SQ.check_frontier(res["events"], zones) == []
     # stage 叙事分组目标 200-600

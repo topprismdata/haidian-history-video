@@ -12,12 +12,12 @@
    "debt_ticket": "T5/T7",
    "disposition": "excluded(以 RING 为准); 几何质量债务记 T5/T7 追偿单, 本轮不修",
    "matrix": {
-    "MULTI_SHELL": 401,
-    "SELF_INTERSECT": 511,
-    "THIN_WALL": 1223
+    "MULTI_SHELL": 446,
+    "SELF_INTERSECT": 556,
+    "THIN_WALL": 1048
    },
-   "n": 1520,
-   "n_fail": 842
+   "n": 1568,
+   "n_fail": 896
   },
   "n": 2113,
   "n_fail": 0
@@ -25,15 +25,15 @@
  "coverage_audit": [
   {
    "bucket": "in_void",
-   "cells": 1122064,
-   "uncovered_cells": 40,
-   "uncovered_cm2": 160.0
+   "cells": 1110735,
+   "uncovered_cells": 30,
+   "uncovered_cm2": 120.0
   },
   {
    "bucket": "void_cut_fragment",
-   "cells": 898555,
-   "uncovered_cells": 656094,
-   "uncovered_cm2": 2624376.0
+   "cells": 912713,
+   "uncovered_cells": 656311,
+   "uncovered_cm2": 2625244.0
   },
   {
    "bucket": "ring_band_overlap",
@@ -193,7 +193,7 @@
    "run_units": 0,
    "stones": 5935
   },
-  "created_utc": "2026-10-07T00:42:58Z",
+  "created_utc": "2026-10-07T10:48:23Z",
   "gap_pairs_per_arch": 20,
   "gap_tol_model_mm": 0.5,
   "gate": "G2",
@@ -213,21 +213,22 @@
       "ARCH01.EAST.BACK.C00.B02",
       "ARCH01.EAST.BACK.C01.B00",
       "ARCH01.EAST.BACK.C01.B01",
-      "ARCH01.EAST.BACK.C02.B00",
       "ARCH01.EAST.BACK.C02.B01",
       "ARCH01.EAST.CORE.C00.B01",
       "ARCH01.EAST.CORE.C01.B01",
       "ARCH01.EAST.CORE.C02.B01",
       "ARCH01.EAST.CORE.C03.B01",
-      "ARCH01.EAST.CORE.C04.B01"
+      "ARCH01.EAST.CORE.C04.B01",
+      "ARCH01.EAST.CORE.C05.B01"
      ],
-     "n": 2052,
+     "n": 2004,
      "reason": "场景链洞内理想化石(GN in_void 布局即剔除)=空气, 不印"
     },
     {
      "bucket": "void_cut_fragment",
      "ids_sample": [
       "ARCH01.EAST.BACK.C01.B02",
+      "ARCH01.EAST.BACK.C02.B00",
       "ARCH01.EAST.BACK.C02.B02",
       "ARCH01.EAST.BACK.C03.B00",
       "ARCH01.EAST.BACK.C03.B01",
@@ -237,10 +238,9 @@
       "ARCH01.EAST.CORE.C01.B00",
       "ARCH01.EAST.CORE.C01.B02",
       "ARCH01.EAST.CORE.C02.B00",
-      "ARCH01.EAST.CORE.C02.B02",
-      "ARCH01.EAST.CORE.C03.B00"
+      "ARCH01.EAST.CORE.C02.B02"
      ],
-     "n": 1520,
+     "n": 1568,
      "reason": "切洞裁剪片: 与 RING 真几何带重复建模(实测 400+ 件 <6cm 碎片/双壳/自交三角), 打印以 RING 为准"
     },
     {
@@ -3284,27 +3284,27 @@
    },
    {
     "chain": "ARCH10.EAST.BACK.C08.B00",
-    "collide_vol_cm3_pre": 296848.0,
+    "collide_vol_cm3_pre": 594944.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH10.EAST.SPANDREL.C08.B00 (seam consistency)",
     "rings": [
      "ARCH10.EAST.RING.C00.B04",
      "ARCH10.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 480752.0,
-    "v_stone_cm3": 777600.0
+    "unique_vol_cm3": 960256.0,
+    "v_stone_cm3": 1555200.0
    },
    {
     "chain": "ARCH10.EAST.SPANDREL.C08.B00",
-    "collide_vol_cm3_pre": 296848.0,
+    "collide_vol_cm3_pre": 594944.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH10.EAST.RING.C00.B04",
      "ARCH10.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 480752.0,
-    "v_stone_cm3": 777600.0
+    "unique_vol_cm3": 960256.0,
+    "v_stone_cm3": 1555200.0
    },
    {
     "chain": "ARCH10.EAST.BACK.C09.B01",
@@ -3356,73 +3356,73 @@
    },
    {
     "chain": "ARCH10.EAST.BACK.C10.B03",
-    "collide_vol_cm3_pre": 56400.0,
+    "collide_vol_cm3_pre": 28080.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH10.EAST.SPANDREL.C10.B03 (seam consistency)",
     "rings": [
      "ARCH10.EAST.RING.C00.B05",
      "ARCH10.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 127920.0,
-    "v_stone_cm3": 184320.0
+    "unique_vol_cm3": 64080.0,
+    "v_stone_cm3": 92160.0
    },
    {
     "chain": "ARCH10.EAST.SPANDREL.C10.B03",
-    "collide_vol_cm3_pre": 56400.0,
+    "collide_vol_cm3_pre": 28080.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH10.EAST.RING.C00.B05",
      "ARCH10.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 127920.0,
-    "v_stone_cm3": 184320.0
+    "unique_vol_cm3": 64080.0,
+    "v_stone_cm3": 92160.0
    },
    {
     "chain": "ARCH10.EAST.BACK.C10.B07",
-    "collide_vol_cm3_pre": 230624.0,
+    "collide_vol_cm3_pre": 114944.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH10.EAST.SPANDREL.C10.B07 (seam consistency)",
     "rings": [
      "ARCH10.EAST.RING.C00.B10",
      "ARCH10.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 264736.0,
-    "v_stone_cm3": 495360.0
+    "unique_vol_cm3": 132736.0,
+    "v_stone_cm3": 247680.0
    },
    {
     "chain": "ARCH10.EAST.SPANDREL.C10.B07",
-    "collide_vol_cm3_pre": 230624.0,
+    "collide_vol_cm3_pre": 114944.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH10.EAST.RING.C00.B10",
      "ARCH10.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 264736.0,
-    "v_stone_cm3": 495360.0
+    "unique_vol_cm3": 132736.0,
+    "v_stone_cm3": 247680.0
    },
    {
     "chain": "ARCH10.EAST.BACK.C11.B04",
-    "collide_vol_cm3_pre": 2880.0,
+    "collide_vol_cm3_pre": 1440.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH10.EAST.SPANDREL.C11.B04 (seam consistency)",
     "rings": [
      "ARCH10.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 423360.0,
-    "v_stone_cm3": 426240.0
+    "unique_vol_cm3": 211680.0,
+    "v_stone_cm3": 213120.0
    },
    {
     "chain": "ARCH10.EAST.SPANDREL.C11.B04",
-    "collide_vol_cm3_pre": 2880.0,
+    "collide_vol_cm3_pre": 1440.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH10.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 423360.0,
-    "v_stone_cm3": 426240.0
+    "unique_vol_cm3": 211680.0,
+    "v_stone_cm3": 213120.0
    },
    {
     "chain": "ARCH10.EAST.BACK.C13.B02",
@@ -3524,8 +3524,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 774352.0,
-    "v_stone_cm3": 777600.0
+    "unique_vol_cm3": 1551952.0,
+    "v_stone_cm3": 1555200.0
    },
    {
     "chain": "ARCH10.WEST.SPANDREL.C08.B00",
@@ -3535,8 +3535,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 774352.0,
-    "v_stone_cm3": 777600.0
+    "unique_vol_cm3": 1551952.0,
+    "v_stone_cm3": 1555200.0
    },
    {
     "chain": "ARCH10.WEST.BACK.C09.B01",
@@ -3594,8 +3594,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 180296.0,
-    "v_stone_cm3": 184320.0
+    "unique_vol_cm3": 88136.0,
+    "v_stone_cm3": 92160.0
    },
    {
     "chain": "ARCH10.WEST.SPANDREL.C10.B03",
@@ -3605,8 +3605,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 180296.0,
-    "v_stone_cm3": 184320.0
+    "unique_vol_cm3": 88136.0,
+    "v_stone_cm3": 92160.0
    },
    {
     "chain": "ARCH10.WEST.BACK.C10.B07",
@@ -3617,8 +3617,8 @@
      "ARCH10.EAST.RING.C00.B10",
      "ARCH10.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 490072.0,
-    "v_stone_cm3": 495360.0
+    "unique_vol_cm3": 242392.0,
+    "v_stone_cm3": 247680.0
    },
    {
     "chain": "ARCH10.WEST.SPANDREL.C10.B07",
@@ -3629,8 +3629,8 @@
      "ARCH10.EAST.RING.C00.B10",
      "ARCH10.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 490072.0,
-    "v_stone_cm3": 495360.0
+    "unique_vol_cm3": 242392.0,
+    "v_stone_cm3": 247680.0
    },
    {
     "chain": "ARCH10.WEST.BACK.C11.B04",
@@ -3640,8 +3640,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 426096.0,
-    "v_stone_cm3": 426240.0
+    "unique_vol_cm3": 212976.0,
+    "v_stone_cm3": 213120.0
    },
    {
     "chain": "ARCH10.WEST.SPANDREL.C11.B04",
@@ -3651,8 +3651,8 @@
     "rings": [
      "ARCH10.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 426096.0,
-    "v_stone_cm3": 426240.0
+    "unique_vol_cm3": 212976.0,
+    "v_stone_cm3": 213120.0
    },
    {
     "chain": "ARCH10.WEST.BACK.C13.B02",
@@ -3763,51 +3763,51 @@
    },
    {
     "chain": "ARCH11.EAST.BACK.C08.B00",
-    "collide_vol_cm3_pre": 164352.0,
+    "collide_vol_cm3_pre": 330112.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH11.EAST.SPANDREL.C08.B00 (seam consistency)",
     "rings": [
      "ARCH11.EAST.RING.C00.B03",
      "ARCH11.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 434688.0,
-    "v_stone_cm3": 599040.0
+    "unique_vol_cm3": 867968.0,
+    "v_stone_cm3": 1198080.0
    },
    {
     "chain": "ARCH11.EAST.SPANDREL.C08.B00",
-    "collide_vol_cm3_pre": 164352.0,
+    "collide_vol_cm3_pre": 330112.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH11.EAST.RING.C00.B03",
      "ARCH11.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 434688.0,
-    "v_stone_cm3": 599040.0
+    "unique_vol_cm3": 867968.0,
+    "v_stone_cm3": 1198080.0
    },
    {
     "chain": "ARCH11.EAST.BACK.C08.B05",
-    "collide_vol_cm3_pre": 604584.0,
+    "collide_vol_cm3_pre": 301440.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH11.EAST.SPANDREL.C08.B05 (seam consistency)",
     "rings": [
      "ARCH11.EAST.RING.C00.B10",
      "ARCH11.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 808536.0,
-    "v_stone_cm3": 1413120.0
+    "unique_vol_cm3": 405120.0,
+    "v_stone_cm3": 706560.0
    },
    {
     "chain": "ARCH11.EAST.SPANDREL.C08.B05",
-    "collide_vol_cm3_pre": 604584.0,
+    "collide_vol_cm3_pre": 301440.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH11.EAST.RING.C00.B10",
      "ARCH11.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 808536.0,
-    "v_stone_cm3": 1413120.0
+    "unique_vol_cm3": 405120.0,
+    "v_stone_cm3": 706560.0
    },
    {
     "chain": "ARCH11.EAST.BACK.C09.B01",
@@ -3947,47 +3947,47 @@
    },
    {
     "chain": "ARCH11.EAST.BACK.C13.B03",
-    "collide_vol_cm3_pre": 43680.0,
+    "collide_vol_cm3_pre": 87360.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH11.EAST.SPANDREL.C13.B03 (seam consistency)",
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 465120.0,
-    "v_stone_cm3": 508800.0
+    "unique_vol_cm3": 930240.0,
+    "v_stone_cm3": 1017600.0
    },
    {
     "chain": "ARCH11.EAST.SPANDREL.C13.B03",
-    "collide_vol_cm3_pre": 43680.0,
+    "collide_vol_cm3_pre": 87360.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 465120.0,
-    "v_stone_cm3": 508800.0
+    "unique_vol_cm3": 930240.0,
+    "v_stone_cm3": 1017600.0
    },
    {
     "chain": "ARCH11.EAST.BACK.C13.B04",
-    "collide_vol_cm3_pre": 19200.0,
+    "collide_vol_cm3_pre": 9600.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH11.EAST.SPANDREL.C13.B04 (seam consistency)",
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 1363200.0,
-    "v_stone_cm3": 1382400.0
+    "unique_vol_cm3": 681600.0,
+    "v_stone_cm3": 691200.0
    },
    {
     "chain": "ARCH11.EAST.SPANDREL.C13.B04",
-    "collide_vol_cm3_pre": 19200.0,
+    "collide_vol_cm3_pre": 9600.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 1363200.0,
-    "v_stone_cm3": 1382400.0
+    "unique_vol_cm3": 681600.0,
+    "v_stone_cm3": 691200.0
    },
    {
     "chain": "ARCH11.WEST.BACK.C08.B00",
@@ -3997,8 +3997,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 584080.0,
-    "v_stone_cm3": 599040.0
+    "unique_vol_cm3": 1183120.0,
+    "v_stone_cm3": 1198080.0
    },
    {
     "chain": "ARCH11.WEST.SPANDREL.C08.B00",
@@ -4008,8 +4008,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 584080.0,
-    "v_stone_cm3": 599040.0
+    "unique_vol_cm3": 1183120.0,
+    "v_stone_cm3": 1198080.0
    },
    {
     "chain": "ARCH11.WEST.BACK.C08.B05",
@@ -4019,8 +4019,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 1387800.0,
-    "v_stone_cm3": 1413120.0
+    "unique_vol_cm3": 681240.0,
+    "v_stone_cm3": 706560.0
    },
    {
     "chain": "ARCH11.WEST.SPANDREL.C08.B05",
@@ -4030,8 +4030,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 1387800.0,
-    "v_stone_cm3": 1413120.0
+    "unique_vol_cm3": 681240.0,
+    "v_stone_cm3": 706560.0
    },
    {
     "chain": "ARCH11.WEST.BACK.C09.B01",
@@ -4177,8 +4177,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 501704.0,
-    "v_stone_cm3": 508800.0
+    "unique_vol_cm3": 1010504.0,
+    "v_stone_cm3": 1017600.0
    },
    {
     "chain": "ARCH11.WEST.SPANDREL.C13.B03",
@@ -4188,8 +4188,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 501704.0,
-    "v_stone_cm3": 508800.0
+    "unique_vol_cm3": 1010504.0,
+    "v_stone_cm3": 1017600.0
    },
    {
     "chain": "ARCH11.WEST.BACK.C13.B04",
@@ -4199,8 +4199,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 1380728.0,
-    "v_stone_cm3": 1382400.0
+    "unique_vol_cm3": 689528.0,
+    "v_stone_cm3": 691200.0
    },
    {
     "chain": "ARCH11.WEST.SPANDREL.C13.B04",
@@ -4210,8 +4210,8 @@
     "rings": [
      "ARCH11.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 1380728.0,
-    "v_stone_cm3": 1382400.0
+    "unique_vol_cm3": 689528.0,
+    "v_stone_cm3": 691200.0
    },
    {
     "chain": "ARCH11.EAST.CORE.C13.B00",
@@ -4250,73 +4250,73 @@
    },
    {
     "chain": "ARCH12.EAST.BACK.C07.B00",
-    "collide_vol_cm3_pre": 35456.0,
+    "collide_vol_cm3_pre": 17216.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C07.B00 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B02",
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 166144.0,
-    "v_stone_cm3": 201600.0
+    "unique_vol_cm3": 83584.0,
+    "v_stone_cm3": 100800.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C07.B00",
-    "collide_vol_cm3_pre": 35456.0,
+    "collide_vol_cm3_pre": 17216.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B02",
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 166144.0,
-    "v_stone_cm3": 201600.0
+    "unique_vol_cm3": 83584.0,
+    "v_stone_cm3": 100800.0
    },
    {
     "chain": "ARCH12.EAST.BACK.C08.B00",
-    "collide_vol_cm3_pre": 15840.0,
+    "collide_vol_cm3_pre": 31680.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C08.B00 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 372960.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 745920.0,
+    "v_stone_cm3": 777600.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C08.B00",
-    "collide_vol_cm3_pre": 15840.0,
+    "collide_vol_cm3_pre": 31680.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 372960.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 745920.0,
+    "v_stone_cm3": 777600.0
    },
    {
     "chain": "ARCH12.EAST.BACK.C08.B05",
-    "collide_vol_cm3_pre": 140816.0,
+    "collide_vol_cm3_pre": 69880.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C08.B05 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B10",
      "ARCH12.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 838384.0,
-    "v_stone_cm3": 979200.0
+    "unique_vol_cm3": 419720.0,
+    "v_stone_cm3": 489600.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C08.B05",
-    "collide_vol_cm3_pre": 140816.0,
+    "collide_vol_cm3_pre": 69880.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B10",
      "ARCH12.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 838384.0,
-    "v_stone_cm3": 979200.0
+    "unique_vol_cm3": 419720.0,
+    "v_stone_cm3": 489600.0
    },
    {
     "chain": "ARCH12.EAST.BACK.C09.B01",
@@ -4388,71 +4388,71 @@
    },
    {
     "chain": "ARCH12.EAST.BACK.C10.B02",
-    "collide_vol_cm3_pre": 177400.0,
+    "collide_vol_cm3_pre": 355344.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C10.B02 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B05",
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 246920.0,
-    "v_stone_cm3": 424320.0
+    "unique_vol_cm3": 493296.0,
+    "v_stone_cm3": 848640.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C10.B02",
-    "collide_vol_cm3_pre": 177400.0,
+    "collide_vol_cm3_pre": 355344.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B05",
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 246920.0,
-    "v_stone_cm3": 424320.0
+    "unique_vol_cm3": 493296.0,
+    "v_stone_cm3": 848640.0
    },
    {
     "chain": "ARCH12.EAST.BACK.C11.B01",
-    "collide_vol_cm3_pre": 40800.0,
+    "collide_vol_cm3_pre": 81600.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C11.B01 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 506400.0,
-    "v_stone_cm3": 547200.0
+    "unique_vol_cm3": 1012800.0,
+    "v_stone_cm3": 1094400.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C11.B01",
-    "collide_vol_cm3_pre": 40800.0,
+    "collide_vol_cm3_pre": 81600.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 506400.0,
-    "v_stone_cm3": 547200.0
+    "unique_vol_cm3": 1012800.0,
+    "v_stone_cm3": 1094400.0
    },
    {
     "chain": "ARCH12.EAST.BACK.C11.B03",
-    "collide_vol_cm3_pre": 39840.0,
+    "collide_vol_cm3_pre": 79680.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH12.EAST.SPANDREL.C11.B03 (seam consistency)",
     "rings": [
      "ARCH12.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 392160.0,
-    "v_stone_cm3": 432000.0
+    "unique_vol_cm3": 784320.0,
+    "v_stone_cm3": 864000.0
    },
    {
     "chain": "ARCH12.EAST.SPANDREL.C11.B03",
-    "collide_vol_cm3_pre": 39840.0,
+    "collide_vol_cm3_pre": 79680.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH12.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 392160.0,
-    "v_stone_cm3": 432000.0
+    "unique_vol_cm3": 784320.0,
+    "v_stone_cm3": 864000.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C07.B00",
@@ -4462,8 +4462,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B02"
     ],
-    "unique_vol_cm3": 200368.0,
-    "v_stone_cm3": 201600.0
+    "unique_vol_cm3": 99568.0,
+    "v_stone_cm3": 100800.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C07.B00",
@@ -4473,8 +4473,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B02"
     ],
-    "unique_vol_cm3": 200368.0,
-    "v_stone_cm3": 201600.0
+    "unique_vol_cm3": 99568.0,
+    "v_stone_cm3": 100800.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C08.B00",
@@ -4484,8 +4484,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 386424.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 775224.0,
+    "v_stone_cm3": 777600.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C08.B00",
@@ -4495,8 +4495,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 386424.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 775224.0,
+    "v_stone_cm3": 777600.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C08.B05",
@@ -4507,8 +4507,8 @@
      "ARCH12.EAST.RING.C00.B10",
      "ARCH12.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 966784.0,
-    "v_stone_cm3": 979200.0
+    "unique_vol_cm3": 477184.0,
+    "v_stone_cm3": 489600.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C08.B05",
@@ -4519,8 +4519,8 @@
      "ARCH12.EAST.RING.C00.B10",
      "ARCH12.EAST.RING.C00.B11"
     ],
-    "unique_vol_cm3": 966784.0,
-    "v_stone_cm3": 979200.0
+    "unique_vol_cm3": 477184.0,
+    "v_stone_cm3": 489600.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C09.B01",
@@ -4597,8 +4597,8 @@
      "ARCH12.EAST.RING.C00.B05",
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 418544.0,
-    "v_stone_cm3": 424320.0
+    "unique_vol_cm3": 842864.0,
+    "v_stone_cm3": 848640.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C10.B02",
@@ -4609,8 +4609,8 @@
      "ARCH12.EAST.RING.C00.B05",
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 418544.0,
-    "v_stone_cm3": 424320.0
+    "unique_vol_cm3": 842864.0,
+    "v_stone_cm3": 848640.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C11.B01",
@@ -4620,8 +4620,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 543120.0,
-    "v_stone_cm3": 547200.0
+    "unique_vol_cm3": 1090320.0,
+    "v_stone_cm3": 1094400.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C11.B01",
@@ -4631,8 +4631,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 543120.0,
-    "v_stone_cm3": 547200.0
+    "unique_vol_cm3": 1090320.0,
+    "v_stone_cm3": 1094400.0
    },
    {
     "chain": "ARCH12.WEST.BACK.C11.B03",
@@ -4642,8 +4642,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 425728.0,
-    "v_stone_cm3": 432000.0
+    "unique_vol_cm3": 857728.0,
+    "v_stone_cm3": 864000.0
    },
    {
     "chain": "ARCH12.WEST.SPANDREL.C11.B03",
@@ -4653,8 +4653,8 @@
     "rings": [
      "ARCH12.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 425728.0,
-    "v_stone_cm3": 432000.0
+    "unique_vol_cm3": 857728.0,
+    "v_stone_cm3": 864000.0
    },
    {
     "chain": "ARCH12.EAST.CORE.C13.B00",
@@ -4695,93 +4695,93 @@
    },
    {
     "chain": "ARCH13.EAST.BACK.C07.B00",
-    "collide_vol_cm3_pre": 153600.0,
+    "collide_vol_cm3_pre": 76800.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH13.EAST.SPANDREL.C07.B00 (seam consistency)",
     "rings": [
      "ARCH13.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1096320.0,
-    "v_stone_cm3": 1249920.0
+    "unique_vol_cm3": 548160.0,
+    "v_stone_cm3": 624960.0
    },
    {
     "chain": "ARCH13.EAST.SPANDREL.C07.B00",
-    "collide_vol_cm3_pre": 153600.0,
+    "collide_vol_cm3_pre": 76800.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH13.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1096320.0,
-    "v_stone_cm3": 1249920.0
+    "unique_vol_cm3": 548160.0,
+    "v_stone_cm3": 624960.0
    },
    {
     "chain": "ARCH13.EAST.BACK.C07.B05",
-    "collide_vol_cm3_pre": 249384.0,
+    "collide_vol_cm3_pre": 500704.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH13.EAST.SPANDREL.C07.B05 (seam consistency)",
     "rings": [
      "ARCH13.EAST.RING.C00.B08",
      "ARCH13.EAST.RING.C00.B09"
     ],
-    "unique_vol_cm3": 598776.0,
-    "v_stone_cm3": 848160.0
+    "unique_vol_cm3": 1195616.0,
+    "v_stone_cm3": 1696320.0
    },
    {
     "chain": "ARCH13.EAST.SPANDREL.C07.B05",
-    "collide_vol_cm3_pre": 249384.0,
+    "collide_vol_cm3_pre": 500704.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH13.EAST.RING.C00.B08",
      "ARCH13.EAST.RING.C00.B09"
     ],
-    "unique_vol_cm3": 598776.0,
-    "v_stone_cm3": 848160.0
+    "unique_vol_cm3": 1195616.0,
+    "v_stone_cm3": 1696320.0
    },
    {
     "chain": "ARCH13.EAST.BACK.C08.B00",
-    "collide_vol_cm3_pre": 36960.0,
+    "collide_vol_cm3_pre": 73920.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH13.EAST.SPANDREL.C08.B00 (seam consistency)",
     "rings": [
      "ARCH13.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 824160.0,
-    "v_stone_cm3": 861120.0
+    "unique_vol_cm3": 1648320.0,
+    "v_stone_cm3": 1722240.0
    },
    {
     "chain": "ARCH13.EAST.SPANDREL.C08.B00",
-    "collide_vol_cm3_pre": 36960.0,
+    "collide_vol_cm3_pre": 73920.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH13.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 824160.0,
-    "v_stone_cm3": 861120.0
+    "unique_vol_cm3": 1648320.0,
+    "v_stone_cm3": 1722240.0
    },
    {
     "chain": "ARCH13.EAST.BACK.C08.B04",
-    "collide_vol_cm3_pre": 10080.0,
+    "collide_vol_cm3_pre": 20160.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH13.EAST.SPANDREL.C08.B04 (seam consistency)",
     "rings": [
      "ARCH13.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 497760.0,
-    "v_stone_cm3": 507840.0
+    "unique_vol_cm3": 995520.0,
+    "v_stone_cm3": 1015680.0
    },
    {
     "chain": "ARCH13.EAST.SPANDREL.C08.B04",
-    "collide_vol_cm3_pre": 10080.0,
+    "collide_vol_cm3_pre": 20160.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH13.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 497760.0,
-    "v_stone_cm3": 507840.0
+    "unique_vol_cm3": 995520.0,
+    "v_stone_cm3": 1015680.0
    },
    {
     "chain": "ARCH13.EAST.BACK.C09.B01",
@@ -4839,8 +4839,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1244728.0,
-    "v_stone_cm3": 1249920.0
+    "unique_vol_cm3": 619768.0,
+    "v_stone_cm3": 624960.0
    },
    {
     "chain": "ARCH13.WEST.SPANDREL.C07.B00",
@@ -4850,8 +4850,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1244728.0,
-    "v_stone_cm3": 1249920.0
+    "unique_vol_cm3": 619768.0,
+    "v_stone_cm3": 624960.0
    },
    {
     "chain": "ARCH13.WEST.BACK.C07.B05",
@@ -4861,8 +4861,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B09"
     ],
-    "unique_vol_cm3": 814120.0,
-    "v_stone_cm3": 848160.0
+    "unique_vol_cm3": 1662280.0,
+    "v_stone_cm3": 1696320.0
    },
    {
     "chain": "ARCH13.WEST.SPANDREL.C07.B05",
@@ -4872,8 +4872,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B09"
     ],
-    "unique_vol_cm3": 814120.0,
-    "v_stone_cm3": 848160.0
+    "unique_vol_cm3": 1662280.0,
+    "v_stone_cm3": 1696320.0
    },
    {
     "chain": "ARCH13.WEST.BACK.C08.B00",
@@ -4883,8 +4883,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 857872.0,
-    "v_stone_cm3": 861120.0
+    "unique_vol_cm3": 1718992.0,
+    "v_stone_cm3": 1722240.0
    },
    {
     "chain": "ARCH13.WEST.SPANDREL.C08.B00",
@@ -4894,8 +4894,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 857872.0,
-    "v_stone_cm3": 861120.0
+    "unique_vol_cm3": 1718992.0,
+    "v_stone_cm3": 1722240.0
    },
    {
     "chain": "ARCH13.WEST.BACK.C08.B04",
@@ -4905,8 +4905,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 505632.0,
-    "v_stone_cm3": 507840.0
+    "unique_vol_cm3": 1013472.0,
+    "v_stone_cm3": 1015680.0
    },
    {
     "chain": "ARCH13.WEST.SPANDREL.C08.B04",
@@ -4916,8 +4916,8 @@
     "rings": [
      "ARCH13.EAST.RING.C00.B08"
     ],
-    "unique_vol_cm3": 505632.0,
-    "v_stone_cm3": 507840.0
+    "unique_vol_cm3": 1013472.0,
+    "v_stone_cm3": 1015680.0
    },
    {
     "chain": "ARCH13.WEST.BACK.C09.B01",
@@ -4991,51 +4991,51 @@
    },
    {
     "chain": "ARCH14.EAST.BACK.C06.B00",
-    "collide_vol_cm3_pre": 260368.0,
+    "collide_vol_cm3_pre": 521008.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH14.EAST.SPANDREL.C06.B00 (seam consistency)",
     "rings": [
      "ARCH14.EAST.RING.C00.B02",
      "ARCH14.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 322832.0,
-    "v_stone_cm3": 583200.0
+    "unique_vol_cm3": 645392.0,
+    "v_stone_cm3": 1166400.0
    },
    {
     "chain": "ARCH14.EAST.SPANDREL.C06.B00",
-    "collide_vol_cm3_pre": 260368.0,
+    "collide_vol_cm3_pre": 521008.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH14.EAST.RING.C00.B02",
      "ARCH14.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 322832.0,
-    "v_stone_cm3": 583200.0
+    "unique_vol_cm3": 645392.0,
+    "v_stone_cm3": 1166400.0
    },
    {
     "chain": "ARCH14.EAST.BACK.C06.B05",
-    "collide_vol_cm3_pre": 15552.0,
+    "collide_vol_cm3_pre": 7384.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH14.EAST.SPANDREL.C06.B05 (seam consistency)",
     "rings": [
      "ARCH14.EAST.RING.C00.B09",
      "ARCH14.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 373248.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 187016.0,
+    "v_stone_cm3": 194400.0
    },
    {
     "chain": "ARCH14.EAST.SPANDREL.C06.B05",
-    "collide_vol_cm3_pre": 15552.0,
+    "collide_vol_cm3_pre": 7384.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH14.EAST.RING.C00.B09",
      "ARCH14.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 373248.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 187016.0,
+    "v_stone_cm3": 194400.0
    },
    {
     "chain": "ARCH14.EAST.BACK.C07.B00",
@@ -5141,8 +5141,8 @@
     "rings": [
      "ARCH14.EAST.RING.C00.B02"
     ],
-    "unique_vol_cm3": 583080.0,
-    "v_stone_cm3": 583200.0
+    "unique_vol_cm3": 1166280.0,
+    "v_stone_cm3": 1166400.0
    },
    {
     "chain": "ARCH14.WEST.SPANDREL.C06.B00",
@@ -5152,8 +5152,8 @@
     "rings": [
      "ARCH14.EAST.RING.C00.B02"
     ],
-    "unique_vol_cm3": 583080.0,
-    "v_stone_cm3": 583200.0
+    "unique_vol_cm3": 1166280.0,
+    "v_stone_cm3": 1166400.0
    },
    {
     "chain": "ARCH14.WEST.BACK.C06.B05",
@@ -5164,8 +5164,8 @@
      "ARCH14.EAST.RING.C00.B09",
      "ARCH14.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 387320.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 192920.0,
+    "v_stone_cm3": 194400.0
    },
    {
     "chain": "ARCH14.WEST.SPANDREL.C06.B05",
@@ -5176,8 +5176,8 @@
      "ARCH14.EAST.RING.C00.B09",
      "ARCH14.EAST.RING.C00.B10"
     ],
-    "unique_vol_cm3": 387320.0,
-    "v_stone_cm3": 388800.0
+    "unique_vol_cm3": 192920.0,
+    "v_stone_cm3": 194400.0
    },
    {
     "chain": "ARCH14.WEST.BACK.C07.B00",
@@ -5332,95 +5332,95 @@
    },
    {
     "chain": "ARCH15.EAST.BACK.C06.B00",
-    "collide_vol_cm3_pre": 386736.0,
+    "collide_vol_cm3_pre": 777520.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH15.EAST.SPANDREL.C06.B00 (seam consistency)",
     "rings": [
      "ARCH15.EAST.RING.C00.B03",
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 681264.0,
-    "v_stone_cm3": 1068000.0
+    "unique_vol_cm3": 1358480.0,
+    "v_stone_cm3": 2136000.0
    },
    {
     "chain": "ARCH15.EAST.SPANDREL.C06.B00",
-    "collide_vol_cm3_pre": 386736.0,
+    "collide_vol_cm3_pre": 777520.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH15.EAST.RING.C00.B03",
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 681264.0,
-    "v_stone_cm3": 1068000.0
+    "unique_vol_cm3": 1358480.0,
+    "v_stone_cm3": 2136000.0
    },
    {
     "chain": "ARCH15.EAST.BACK.C07.B01",
-    "collide_vol_cm3_pre": 17760.0,
+    "collide_vol_cm3_pre": 35520.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH15.EAST.SPANDREL.C07.B01 (seam consistency)",
     "rings": [
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 547680.0,
-    "v_stone_cm3": 565440.0
+    "unique_vol_cm3": 1095360.0,
+    "v_stone_cm3": 1130880.0
    },
    {
     "chain": "ARCH15.EAST.SPANDREL.C07.B01",
-    "collide_vol_cm3_pre": 17760.0,
+    "collide_vol_cm3_pre": 35520.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 547680.0,
-    "v_stone_cm3": 565440.0
+    "unique_vol_cm3": 1095360.0,
+    "v_stone_cm3": 1130880.0
    },
    {
     "chain": "ARCH15.EAST.BACK.C07.B02",
-    "collide_vol_cm3_pre": 307176.0,
+    "collide_vol_cm3_pre": 153328.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH15.EAST.SPANDREL.C07.B02 (seam consistency)",
     "rings": [
      "ARCH15.EAST.RING.C00.B04",
      "ARCH15.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 331224.0,
-    "v_stone_cm3": 638400.0
+    "unique_vol_cm3": 165872.0,
+    "v_stone_cm3": 319200.0
    },
    {
     "chain": "ARCH15.EAST.SPANDREL.C07.B02",
-    "collide_vol_cm3_pre": 307176.0,
+    "collide_vol_cm3_pre": 153328.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH15.EAST.RING.C00.B04",
      "ARCH15.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 331224.0,
-    "v_stone_cm3": 638400.0
+    "unique_vol_cm3": 165872.0,
+    "v_stone_cm3": 319200.0
    },
    {
     "chain": "ARCH15.EAST.BACK.C07.B04",
-    "collide_vol_cm3_pre": 71040.0,
+    "collide_vol_cm3_pre": 35520.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH15.EAST.SPANDREL.C07.B04 (seam consistency)",
     "rings": [
      "ARCH15.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 631680.0,
-    "v_stone_cm3": 702720.0
+    "unique_vol_cm3": 315840.0,
+    "v_stone_cm3": 351360.0
    },
    {
     "chain": "ARCH15.EAST.SPANDREL.C07.B04",
-    "collide_vol_cm3_pre": 71040.0,
+    "collide_vol_cm3_pre": 35520.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH15.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 631680.0,
-    "v_stone_cm3": 702720.0
+    "unique_vol_cm3": 315840.0,
+    "v_stone_cm3": 351360.0
    },
    {
     "chain": "ARCH15.WEST.BACK.C05.B00",
@@ -5452,8 +5452,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1060160.0,
-    "v_stone_cm3": 1068000.0
+    "unique_vol_cm3": 2128160.0,
+    "v_stone_cm3": 2136000.0
    },
    {
     "chain": "ARCH15.WEST.SPANDREL.C06.B00",
@@ -5463,8 +5463,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B03"
     ],
-    "unique_vol_cm3": 1060160.0,
-    "v_stone_cm3": 1068000.0
+    "unique_vol_cm3": 2128160.0,
+    "v_stone_cm3": 2136000.0
    },
    {
     "chain": "ARCH15.WEST.BACK.C07.B01",
@@ -5474,8 +5474,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 562992.0,
-    "v_stone_cm3": 565440.0
+    "unique_vol_cm3": 1128432.0,
+    "v_stone_cm3": 1130880.0
    },
    {
     "chain": "ARCH15.WEST.SPANDREL.C07.B01",
@@ -5485,8 +5485,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B04"
     ],
-    "unique_vol_cm3": 562992.0,
-    "v_stone_cm3": 565440.0
+    "unique_vol_cm3": 1128432.0,
+    "v_stone_cm3": 1130880.0
    },
    {
     "chain": "ARCH15.WEST.BACK.C07.B02",
@@ -5497,8 +5497,8 @@
      "ARCH15.EAST.RING.C00.B04",
      "ARCH15.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 625192.0,
-    "v_stone_cm3": 638400.0
+    "unique_vol_cm3": 305992.0,
+    "v_stone_cm3": 319200.0
    },
    {
     "chain": "ARCH15.WEST.SPANDREL.C07.B02",
@@ -5509,8 +5509,8 @@
      "ARCH15.EAST.RING.C00.B04",
      "ARCH15.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 625192.0,
-    "v_stone_cm3": 638400.0
+    "unique_vol_cm3": 305992.0,
+    "v_stone_cm3": 319200.0
    },
    {
     "chain": "ARCH15.WEST.BACK.C07.B04",
@@ -5520,8 +5520,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 694616.0,
-    "v_stone_cm3": 702720.0
+    "unique_vol_cm3": 343256.0,
+    "v_stone_cm3": 351360.0
    },
    {
     "chain": "ARCH15.WEST.SPANDREL.C07.B04",
@@ -5531,8 +5531,8 @@
     "rings": [
      "ARCH15.EAST.RING.C00.B06"
     ],
-    "unique_vol_cm3": 694616.0,
-    "v_stone_cm3": 702720.0
+    "unique_vol_cm3": 343256.0,
+    "v_stone_cm3": 351360.0
    },
    {
     "chain": "ARCH15.EAST.CORE.C10.B00",
@@ -5606,7 +5606,7 @@
    },
    {
     "chain": "ARCH16.EAST.BACK.C05.B01",
-    "collide_vol_cm3_pre": 496072.0,
+    "collide_vol_cm3_pre": 994728.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH16.EAST.SPANDREL.C05.B01 (seam consistency)",
     "rings": [
@@ -5614,12 +5614,12 @@
      "ARCH16.EAST.RING.C00.B04",
      "ARCH16.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 768728.0,
-    "v_stone_cm3": 1264800.0
+    "unique_vol_cm3": 1534872.0,
+    "v_stone_cm3": 2529600.0
    },
    {
     "chain": "ARCH16.EAST.SPANDREL.C05.B01",
-    "collide_vol_cm3_pre": 496072.0,
+    "collide_vol_cm3_pre": 994728.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
@@ -5627,32 +5627,32 @@
      "ARCH16.EAST.RING.C00.B04",
      "ARCH16.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 768728.0,
-    "v_stone_cm3": 1264800.0
+    "unique_vol_cm3": 1534872.0,
+    "v_stone_cm3": 2529600.0
    },
    {
     "chain": "ARCH16.EAST.BACK.C05.B03",
-    "collide_vol_cm3_pre": 266728.0,
+    "collide_vol_cm3_pre": 533616.0,
     "disposition": "trim_partner",
     "reason": "same-block partner of ARCH16.EAST.SPANDREL.C05.B03 (seam consistency)",
     "rings": [
      "ARCH16.EAST.RING.C00.B06",
      "ARCH16.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 483992.0,
-    "v_stone_cm3": 750720.0
+    "unique_vol_cm3": 967824.0,
+    "v_stone_cm3": 1501440.0
    },
    {
     "chain": "ARCH16.EAST.SPANDREL.C05.B03",
-    "collide_vol_cm3_pre": 266728.0,
+    "collide_vol_cm3_pre": 533616.0,
     "disposition": "trim",
     "reason": "trimmed to band cut line (masonry polyline; bearing seat kept below spz-GAP; ring lift envelope added)",
     "rings": [
      "ARCH16.EAST.RING.C00.B06",
      "ARCH16.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 483992.0,
-    "v_stone_cm3": 750720.0
+    "unique_vol_cm3": 967824.0,
+    "v_stone_cm3": 1501440.0
    },
    {
     "chain": "ARCH16.WEST.BACK.C04.B00",
@@ -5708,8 +5708,8 @@
      "ARCH16.EAST.RING.C00.B04",
      "ARCH16.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 1247272.0,
-    "v_stone_cm3": 1264800.0
+    "unique_vol_cm3": 2512072.0,
+    "v_stone_cm3": 2529600.0
    },
    {
     "chain": "ARCH16.WEST.SPANDREL.C05.B01",
@@ -5721,8 +5721,8 @@
      "ARCH16.EAST.RING.C00.B04",
      "ARCH16.EAST.RING.C00.B05"
     ],
-    "unique_vol_cm3": 1247272.0,
-    "v_stone_cm3": 1264800.0
+    "unique_vol_cm3": 2512072.0,
+    "v_stone_cm3": 2529600.0
    },
    {
     "chain": "ARCH16.WEST.BACK.C05.B03",
@@ -5733,8 +5733,8 @@
      "ARCH16.EAST.RING.C00.B06",
      "ARCH16.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 717776.0,
-    "v_stone_cm3": 750720.0
+    "unique_vol_cm3": 1468496.0,
+    "v_stone_cm3": 1501440.0
    },
    {
     "chain": "ARCH16.WEST.SPANDREL.C05.B03",
@@ -5745,8 +5745,8 @@
      "ARCH16.EAST.RING.C00.B06",
      "ARCH16.EAST.RING.C00.B07"
     ],
-    "unique_vol_cm3": 717776.0,
-    "v_stone_cm3": 750720.0
+    "unique_vol_cm3": 1468496.0,
+    "v_stone_cm3": 1501440.0
    },
    {
     "chain": "ARCH16.EAST.CORE.C09.B00",
@@ -5803,8 +5803,8 @@
    "note": "unique_vol 同栅格度量; 相握环取并集(单块 max 会低估 collide, 偏保守, 不作精确值); 处置判据全为 pre-inset(post-inset 会把配合缝当清道夫, 审查负控③)",
    "removed_model_cm3": {
     "subsumed": 0.0,
-    "subsumed_by_area_bucket": 58300937.059,
-    "trimmed": 77320600.0
+    "subsumed_by_area_bucket": 57148864.896,
+    "trimmed": 80707304.0
    }
   },
   "trim_sliver_ids": [],

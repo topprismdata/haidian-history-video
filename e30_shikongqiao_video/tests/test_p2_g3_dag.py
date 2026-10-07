@@ -557,17 +557,21 @@ def test_real_ledger_g3_fullchain():
         seqdoc = json.load(f)
     led = L.load_ledger(_LEDSEQ)
     events = seqdoc["events"]
-    assert len(events) == 4070
+    # [P2-T6b 相位协变重账] 4070→4118: in_void 手性修复(_kept_pieces 上穿
+    # 出界支)释放 48 块跨缘真石(12 孔×4: 2 面×SPANDREL/BACK, 归因见
+    # p2-task-6-report.md §8), 全部入日程 → +48 PLACE_STONE。面石/RING
+    # 账目计数不变(2290/2290/193), 砖谱 stones_pX.json 字节不变。
+    assert len(events) == 4118
 
     t0 = time.perf_counter()
     viols, stats = G3.check_dag_all(events, led)
     el = time.perf_counter() - t0
-    print("g3 真账 4070 事件 snapshot+check: %.2fs (含 in_void 推导)"
+    print("g3 真账 4118 事件 snapshot+check: %.2fs (含 in_void 推导)"
           % el)
     assert viols == [], viols[:10]     # 除 W1 白名单外零违例(清单不判红)
-    assert stats["n_snapshots"] == 4070
+    assert stats["n_snapshots"] == 4118
     assert el < 10.0, "性能闸: %.2fs ≥ 10s" % el
-    assert len(stats["final_present"]) == 3883
+    assert len(stats["final_present"]) == 3931
 
     # in_void 推导与 excluded_ids.json 逐位相等(幻影闸单源交叉核)
     in_void = G3.derive_in_void(led)

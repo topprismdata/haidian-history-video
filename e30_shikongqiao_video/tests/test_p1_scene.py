@@ -167,11 +167,14 @@ def test_clip_footprint_triage_and_mass_balance():
     void_area = hit / float(n * n) * (x1 - x0) * (z1 - z0)
     assert area == pytest.approx((x1 - x0) * (z1 - z0) - void_area, rel=0.05)
     # 保留片顶点不得落在净空内(折线近似 + z 带直切在边界上留 <=ARC_STEP 斜率
-    # 型残隙, 设计界 0.04m = 0.29px 亚像素; 深入净空者必红)
+    # 型残隙, 设计界 0.04m = 0.29px 亚像素; 深入净空者必红)。[P2-T6b] 冠钝
+    # soft-min 使 cutter 折线在拱肩钝化带内下潜(幅值 = facts.blunt_s 单源),
+    # 跨缘竖条保留片顶点允许再让 blunt_s —— 仍深入钝化包络者必红。
     def _near_bd(x, z):
         if z > band["springer"]:
-            return abs(F.arch_signed_r(x, z, band["xc"], band["springer"],
-                                       band["a"], band["b"])) < BS.ARC_STEP
+            r = abs(F.arch_signed_r(x, z, band["xc"], band["springer"],
+                                    band["a"], band["b"]))
+            return r < BS.ARC_STEP + F.blunt_s(band["a"], band["b"])
         return abs(abs(x - band["xc"]) - band["a"]) < BS.ARC_STEP
     for p in polys:
         for (x, z) in p:
@@ -285,7 +288,11 @@ def _independent_chain_count():
         for side in (1, -1):
             faces = M2.face_stones(spec, i, side, hw, course_h=ch)
             stones.extend(faces)
-            stones.extend(M2.backing_stones(faces, hw, seed=i))
+            # [P2-T6b] 背衬种子跨孔镜像锚(与 build_scene2 调用点同契约:
+            # 东半孔用镜像孔种子, backing_stones 内倒序消费)
+            stones.extend(M2.backing_stones(
+                faces, hw,
+                seed=(F.N_SPAN - 1 - i) if M2.bridge_mirror_phase(i) else i))
         x_lo = -F.BRIDGE_LEN / 2.0 if i == 0 else px[i]
         x_hi = F.BRIDGE_LEN / 2.0 if i == F.N_SPAN - 1 else px[i + 1]
         stones.extend(M2.core_cells(i, hw, BODY_BOTTOM, deck_z(xc),
@@ -614,3 +621,33 @@ def test_guarded_import_loud_when_bpy_present_but_body_modules_missing():
             else:
                 sys.modules[k] = v
         importlib.reload(BS)
+
+
+def test_clip_footprint_bridge_mirror_covariant():
+    """[P2-T6b] 跨缘石分类桥轴镜像协变 —— 弦线带内上行后上穿块顶的竖条,
+    保留片必须沿 z1 折返闭合(旧实现 2 点开环被 len>=3 丢弃 → 整片蒸发,
+    石被误判 in_void; station 网格按孔绝对 x 对齐, 镜像孔离散错位使该支
+    只在单侧触发 = 手性, 真账 ARCH07.C04.B00 四石误删, in_void 180 vs
+    176)。注: 陡肩段(斜率~9) cutter 折线矢高显著, 顶点对解析拱线的
+    残隙属 cutter 既有离散精度(两孔同措), 不在本测纪律内。"""
+    b6, b10 = BS.arch_band(6), BS.arch_band(10)
+    # 真账 ARCH07.EAST.SPANDREL.C04.B00 及其镜像(ARCH11.EAST...C04.B06)
+    x0, x1, z0, z1 = -24.084, -23.658, 2.092, 2.693
+    st6, polys6 = BS.clip_footprint(x0, x1, z0, z1, b6, 6)
+    st10, polys10 = BS.clip_footprint(-x1, -x0, z0, z1, b10, 10)
+    assert st6 == "clip" and st10 == "clip", (st6, st10)
+    a6 = sum(BS._poly_area(p) for p in polys6)
+    a10 = sum(BS._poly_area(p) for p in polys10)
+    assert a6 == pytest.approx(a10, rel=1e-6), (a6, a10)
+    # 保留片在各自石块矩形内、面积 ≤ 足印(闭合多边形而非开环)
+    for polys, rx0, rx1 in ((polys6, x0, x1), (polys10, -x1, -x0)):
+        for p in polys:
+            xs = [v[0] for v in p]
+            zs = [v[1] for v in p]
+            assert rx0 - 1e-9 <= min(xs) and max(xs) <= rx1 + 1e-9
+            assert z0 - 1e-9 <= min(zs) and max(zs) <= z1 + 1e-9
+            assert abs(BS._poly_area(p)) <= (rx1 - rx0) * (z1 - z0) + 1e-12
+    # 负控(判据不恒红): 洞心深竖条必是 inside 而非 clip
+    xc6 = b6["xc"]
+    st_deep, _ = BS.clip_footprint(xc6 - 1.0, xc6 + 1.0, 0.0, 0.5, b6, 6)
+    assert st_deep == "inside"

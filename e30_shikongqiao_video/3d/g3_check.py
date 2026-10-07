@@ -1050,7 +1050,10 @@ def pressure_line(ring_stones, extra_loads, band_in_out_fns, H_range,
         if not (xc - a - EPS_X <= x <= xc + a + EPS_X):
             dropped += 1
             continue
-        (right if x >= xc else left).append((w, x))
+        # [P2-T6b] 侧归属用 EPS_X: 冠顶跨块荷载(如核心冠列, 质心恰在 xc
+        # ±ulp)必须恒归右半环 —— 精确比较在镜像孔间因 1ulp 翻侧, 13.5 级
+        # 冠载左右横跳 = O(1) 手性(ARCH07/11 判定分裂根因之三)。
+        (right if x >= xc - EPS_X else left).append((w, x))
 
     all_st = [sorted(float(v) for v in (s["params"]["stations"][:2]))
               for s in ring_stones]
@@ -1243,8 +1246,17 @@ def stress_gate(ledger, r5a=None):
             if st is None:
                 continue
             n_r5a += 1
-            shoulder_loads.append({"x": float(st.get("transform", [0])[0]),
-                                   "weight": _stone_weight(st)})
+            # [P2-T6b] 荷载 x = 石质心(锚语义 H1 单源: slab=最小角锚,
+            # 质心 = bbox 中点; wedge-std = 中心锚 transform[0]) —— 旧实现
+            # 直用 transform[0], 对 min-corner slab 是左缘非质心, 跨孔镜像
+            # 下角↔角翻转使 CORE 肩载错位一个胞宽(O(1) 手性, C14.B01 级
+            # 大块即此)。同 masonry2.anchor_offset/_world_top_center_x
+            # 分派表语义, 禁第二套。
+            p_st = st.get("params") or {}
+            bb = p_st.get("bbox")
+            lx = (0.5 * (float(bb["x0"]) + float(bb["x1"]))
+                  if isinstance(bb, dict) else float(st["transform"][0]))
+            shoulder_loads.append({"x": lx, "weight": _stone_weight(st)})
         # [P2-T6 结构协同假设] 有胶结锁固带 → s 检验截面厚 ring_t+0.35
         # (径向结构带); 无带孔 acceptance≡robustness(裸环)。
         rt_eff = rt + (LOCK_BAND_M if n_r5a > 0 else 0.0)

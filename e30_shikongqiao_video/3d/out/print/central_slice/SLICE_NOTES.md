@@ -40,7 +40,7 @@ G2 门产物: 全石流形+壁厚+分批+装配图 (report verdict: PASS)
 单元, 谱系 meta.scope.run_units.parent_ids; 现行真总体 475 石全
 单 run, 机制为断料场景结构保证。试印包打包层遇多 run 石响亮拒绝
 (逐 run STL 归 T5/T7 打包轮)。
-- legacy clip 存量(check_stone.legacy_clip_survey, n=1520, n_fail=842): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, 本轮不修。
+- legacy clip 存量(check_stone.legacy_clip_survey, n=1568, n_fail=896): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, 本轮不修。
 
 ## 构成
 | 族 | 数量 | 体积 cm3(打印件) |
