@@ -213,7 +213,7 @@ class Snapshot(object):
 
     __slots__ = ("seq", "event", "present", "capacity", "by_hole", "holes",
                  "dirty", "violations", "in_void", "_edges", "_placed_at",
-                 "_heap", "_win_last")
+                 "_heap", "_win_last", "_lam")
 
     def __init__(self, edges, in_void):
         # type: (Dict[str, List[Dict[str, Any]]], frozenset) -> None
@@ -230,6 +230,7 @@ class Snapshot(object):
         self._placed_at = {}  # type: Dict[str, int]
         self._heap = []  # type: List[Tuple[int, str, int]]
         self._win_last = {}  # type: Dict[str, Optional[int]]
+        self._lam = {}  # type: Dict[str, float]
 
     def copy(self):
         # type: () -> Snapshot
@@ -249,6 +250,7 @@ class Snapshot(object):
         cl._placed_at = dict(self._placed_at)
         cl._heap = list(self._heap)
         cl._win_last = dict(self._win_last)
+        cl._lam = dict(self._lam)
         return cl
 
 
@@ -363,11 +365,23 @@ def snapshots(events, ledger, in_void=None):
             h = _ensure_hole(snap, zh)
             if h["dstart"] is None:
                 h["dstart"] = seq
-            _check_r6(snap, zh, seq, zone_order, rank_of)
+            _check_r6(snap, zh, seq, zone_order, rank_of,
+                      etype=et, lam_val=0.0)
+        elif et == "WEDGE_RELEASE":
+            # λ 轨迹(R6 对内同档判 + ④门消费): 非法值不推进本孔 λ(保守
+            # 延续上一档; 形制缺陷由 events.validate_event_ledger 判红)
+            v = ev.get("load_lambda")
+            if isinstance(v, (int, float)) and not isinstance(v, bool) \
+                    and 0.0 <= float(v) <= 1.0:
+                snap._lam[zh] = float(v)
+            _check_r6(snap, zh, seq, zone_order, rank_of,
+                      etype=et, lam_val=snap._lam.get(zh, 0.0))
         elif et == "CENTERING_CLEAR":
             h = _ensure_hole(snap, zh)
             if h["clear"] is None:
                 h["clear"] = seq
+            _check_r6(snap, zh, seq, zone_order, rank_of,
+                      etype=et, lam_val=1.0)
 
         _advance_knots(snap, seq)
         yield snap
@@ -445,13 +459,23 @@ def _decentering_at(h, s):
     return clear is None or clear > s
 
 
-def _check_r6(snap, zh, seq, zone_order, rank_of):
-    # type: (Snapshot, str, int, List[str], Dict[str, int]) -> None
-    """R6 前视 1(独立重建): 落架孔的每个既有邻孔须 ≥ 合龙持荷(禁跳孔),
-    且不得相邻孔同落架。邻接=排序孔表 i±1(空档孔参与判)。"""
+def _lam_at(snap, zh):
+    # type: (Snapshot, str) -> float
+    """孔 zh 在 snap 时刻的 λ(环已承载份额; 未落架/无记录 = 0 架上满承载)。"""
+    return snap._lam.get(zh, 0.0)
+
+
+def _check_r6(snap, zh, seq, zone_order, rank_of, etype=None, lam_val=None):
+    # type: (Snapshot, str, int, List[str], Dict[str, int], Optional[str], Optional[float]) -> None
+    """R6 前视 1(独立重建): 落架孔的每个既有邻孔须 ≥ 合龙持荷(禁跳孔);
+    相邻孔同落架须**档位锁定**(对内同档, 主控 2026-10-07 裁决: 多孔连拱
+    对称同步卸落 —— 逐孔串行在④墩不平衡门不可行): 任一 DECENTERING
+    事件时, 处于落架中的邻孔与本孔 λ 差 ≤ 一档(LAMBDA_GRID_STEP);
+    超档 = 乱序同落架仍红。邻接=排序孔表 i±1(空档孔参与判)。"""
     i = rank_of.get(zh)
     if i is None:
         return
+    own = lam_val if lam_val is not None else _lam_at(snap, zh)
     for j in (i - 1, i + 1):
         if not (0 <= j < len(zone_order)):
             continue
@@ -463,8 +487,12 @@ def _check_r6(snap, zh, seq, zone_order, rank_of):
                 % (CODE_R6_JUMP, zh, seq, nz))
             continue
         if _decentering_at(nh, seq):
-            snap.violations.append(
-                "%s 相邻孔 %s/%s 同落架(seq=%d)" % (CODE_R6_ADJ, zh, nz, seq))
+            nl = _lam_at(snap, nz)
+            if abs(own - nl) > LAMBDA_GRID_STEP + TOL:
+                snap.violations.append(
+                    "%s 相邻孔 %s/%s 同落架失档(λ %.2f vs %.2f, 差>一档, "
+                    "seq=%d) —— 对内同档" % (CODE_R6_ADJ, zh, nz, own, nl,
+                                             seq))
         elif not _supported_at(snap, nz, seq):
             snap.violations.append(
                 "%s 孔 %s 落架(seq=%d)时邻孔 %s 未达合龙持荷(跳孔落架)"
@@ -1413,13 +1441,20 @@ def plot_hole_pressure(hole, ledger, zone, path, title=None):
 # ---------------------------------------------------------------------------
 # T7 ④墩推力包络不平衡(λ 卸架档 + 核距双指标)
 # ---------------------------------------------------------------------------
-# 物理口径(冻结, 判据先行数字后置; G3 三层力学门的第三检):
+# 物理口径(冻结; 2026-10-07 主控包络连续性裁决修订, 判据先行数字后置;
+# G3 三层力学门的第三检):
 #   落一孔的架 → 该孔以水平推力外推其两侧墩顶; 邻孔仍驻架/未合龙 → 不回馈
 #   反向推力 → 墩身承受不平衡水平力+弯矩。sequencer 把 DECENTERING 建模为
-#   渐进(λ=环已承载份额∈[0,1], 架吸收 1−λ), 该孔对墩有效推力 H_eff=λ×H:
-#     事件孔(正在卸架): H_eff = λ × Hmax(H 区间上界, 保守最大推力)
-#     其余孔(含已清账): H_eff = λ × Hmin(区间下界, 保守最小反推力;
-#                       未落架 λ=0 → 0, 已清账 λ=1 → Hmin)
+#   渐进(λ=环已承载份额∈[0,1], 架吸收 1−λ), 有效推力全孔同式:
+#     H_eff = λ × Hmin(H 区间下界; Heyman 最小推力原理: 逐档缓释木楔时
+#     拱向最小推力收敛 —— 事件孔与已清账孔同式, λ=1 处无 Hmax→Hmin 突跳,
+#     与收账态连续)。旧"事件孔取 Hmax"口径降为保守敏感性对照(dH_hmax/
+#     ratio_hmax/e_kernel_hmax 仅记录不判红; 真账两口径并列见报告 §8)。
+#   卸架顺序(主控裁决采纳"对称同步落架"): sequencer 波2 改**全桥同波逐档**
+#   (每档全部孔 WEDGE_RELEASE 同 stage, 档差=0 —— 每对邻孔同 λ, 不平衡
+#   =λ×|Hmin_A−Hmin_B|, 相似跨≈0); R6_ADJ 相应改"对内同档": 相邻孔同落架
+#   须 λ 差 ≤ 一档(LAMBDA_GRID_STEP), 乱序同落架仍红(判据见 _check_r6/
+#   sequencer.check_frontier 两实现互证)。
 #   经典砌体墩验算双指标(独立输出, 阈值互不派生 —— 一个红一个绿要能表达):
 #     1) 倾覆裕度 ratio = M_res/M_unb ≥ 1.5 [现代裕度·敏感性, 非史料常数]:
 #        M_unb = |dH|×h_ref(h_ref=两侧作用高较大者, 保守单臂),
@@ -1441,8 +1476,8 @@ def plot_hole_pressure(hole, ledger, zone, path, title=None):
 #   fail-closed(禁静默钳位)。
 #   停车线(排程侧): run_g3 真账 gate_imbalance 红 → raise
 #   G3_DECENTER_ORDER_CONFLICT(点名墩/事件 + λ 临界 + 卸架顺序建议);
-#   修正走 sequencer 排程(对称孔同 stage 逐档同步落架/邻孔先落架),
-#   禁调 λ/裕度/核宽自救凑绿。红绿都是结论: 绿 = 史实卸架顺序力学可行。
+#   修正走 sequencer 排程, 禁调 λ/裕度/核宽自救凑绿。红绿都是结论:
+#   绿 = 史实卸架顺序力学可行。
 #
 # 独立性: 本节不 import sequencer(传递闭包测试钉死); λ 栅格语义与
 # sequencer.LAMBDA_LADDER/events.LAMBDA_GRID 同一裁决值各自声明(互证纪律)。
@@ -1585,16 +1620,27 @@ def _env_of(H_env_by_hole, zh):
 def _pier_calc(k, ev_hole, lam, H_env_by_hole, dims, ev_etype="?"):
     # type: (int, str, Dict[str, float], Dict[str, Any], Optional[Dict[str, Dict[str, float]]], str) -> Dict[str, Any]
     """墩 k(1..16, PIER_X[k] 中心, 两邻孔 ARCH0k/ARCH0k+1) 在当前 λ 态下
-    的双指标账(pure; pier_imbalance 与建议扫描共用)。"""
+    的双指标账(pure; pier_imbalance 与建议扫描共用)。
+
+    [主控 2026-10-07 包络连续性裁决] 有效推力一律 H_eff = λ × Hmin
+    (Heyman 最小推力原理: 逐档缓释木楔时拱向最小推力收敛 —— 事件孔与
+    已清账孔同式, λ=1 处无 Hmax→Hmin 突跳, 与收账态连续)。旧口径
+    "事件孔取 Hmax"降为**保守敏感性对照**: ratio_hmax/e_kernel_hmax/
+    dH_hmax 仅记录不判红(PASS 判据 = Hmin 物理口径)。"""
     zh_l, zh_r = "ARCH%02d" % k, "ARCH%02d" % (k + 1)
     env_l, env_r = _env_of(H_env_by_hole, zh_l), _env_of(H_env_by_hole, zh_r)
     lo_l, hi_l = env_l if env_l else (0.0, 0.0)
     lo_r, hi_r = env_r if env_r else (0.0, 0.0)
     lam_l, lam_r = _lam_of(lam, zh_l), _lam_of(lam, zh_r)
-    # 事件孔取区间上界(保守最大推力), 其余孔取下界(保守最小反推力)
-    h_l = lam_l * (hi_l if ev_hole == zh_l else lo_l)
-    h_r = lam_r * (hi_r if ev_hole == zh_r else lo_r)
+    # [Hmin 物理口径, PASS 判据] 全孔同式 λ×Hmin: 逐档缓释时拱向最小推力,
+    # 事件孔与已清账孔连续(λ=1 无间断), 与收账态全绿自洽
+    h_l = lam_l * lo_l
+    h_r = lam_r * lo_r
     dh = h_l - h_r                       # 净水平推力(+x 为正)
+    # [Hmax 敏感性对照, 仅记录不判红] 事件孔取区间上界的旧保守包络
+    h_lx = lam_l * (hi_l if ev_hole == zh_l else lo_l)
+    h_rx = lam_r * (hi_r if ev_hole == zh_r else lo_r)
+    dhx = h_lx - h_rx
     ha_l, ha_r = _h_app(zh_l), _h_app(zh_r)
     h_ref = max(ha_l, ha_r)              # 保守单臂
     m_unb = abs(dh) * h_ref
@@ -1612,10 +1658,15 @@ def _pier_calc(k, ev_hole, lam, H_env_by_hole, dims, ev_etype="?"):
         verdict = "+".join(
             t for t, v_ in (("RATIO_RED", v_r), ("KERNEL_RED", v_k))
             if v_ == "RED")
+    m_unb_x = abs(dhx) * h_ref
+    ratio_x = (m_res / m_unb_x) if m_unb_x > TOL else None
+    e_kernel_x = abs(h_lx * ha_l - h_rx * ha_r) / v
     return {"pier_id": "PIER%02d" % k, "hole": ev_hole, "etype": ev_etype,
             "H_L": h_l, "H_R": h_r, "dH": dh,
             "M_unb": m_unb, "M_center": m_center, "M_res": m_res,
             "ratio": ratio, "e_kernel": e_kernel, "kernel_half_w": half_w,
+            "dH_hmax": dhx, "M_unb_hmax": m_unb_x, "ratio_hmax": ratio_x,
+            "e_kernel_hmax": e_kernel_x,
             "h_L": ha_l, "h_R": ha_r, "h_ref": h_ref,
             "V": v, "base_w": b, "dims_source": src,
             "lam_L": lam_l, "lam_R": lam_r,

@@ -40,12 +40,15 @@
   不得砌肩 —— T5 需"锁固后才落架"), prereq ⊇ {合龙 seq}。
 - R5b 其余肩背胞: 其余 SPANDREL/BACK/CORE 排 CENTERING_CLEAR 后。
 - R6 frontier 状态机: 孔状态 UNBUILT < RING_CLOSED < CLOSED_SUPPORTED <
-  DECENTERING < CLEARED < FILLED; 跨孔组合表禁: 相邻孔同时 DECENTERING;
-  孔 i DECENTERING 而 i±1 < CLOSED_SUPPORTED(跳孔落架)。组合表只要求
-  **前视 1**: 落架孔的任一邻孔 ≥ CLOSED_SUPPORTED 即可 —— 两波日程并非
-  逻辑必然, 是 v1 的策略选择(任一时刻全孔同相, 快照面简单、叙事清晰);
-  前视-1 的流水列(砌孔 i+1 与落架孔 i 交错推进)同样满足组合表,
-  列为 P3 叙事可选项。
+  DECENTERING < CLEARED < FILLED; 跨孔组合表禁: 跳孔落架(孔 i
+  DECENTERING 而 i±1 < CLOSED_SUPPORTED); 相邻孔同落架须**对内同档**
+  (任一落架事件时两侧 λ 差 ≤ 一档 —— 主控 2026-10-07 裁决采纳多孔连拱
+  "对称同步卸落": 波2 改全桥同波逐档, 每档全部孔 WEDGE_RELEASE 同 stage
+  同档, 档差=0; 乱序同落架/单孔连升多档仍红。逐孔串行在 G3④墩不平衡门
+  不可行, 顺序邻孔对有对间过渡残红, 见 p2-task-7-report.md §8)。
+  组合表只要求**前视 1**: 落架孔的任一邻孔 ≥ CLOSED_SUPPORTED 即可 ——
+  两波日程并非逻辑必然, 是 v1 的策略选择; 前视-1 的流水列同样满足
+  组合表, 列为 P3 叙事可选项。
 - R7 面上最后: PAVING → RAIL/POST → CARVE 全局收尾(真账 5935 石暂无此四角色,
   形制就绪; 合成账钉测试)。
 
@@ -612,37 +615,63 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
             "ring_seq_by_stone": ring_seq_by_stone, "close_seq": close_seq,
             "hold_seqs": hold_seqs, "shoulders": shoulders, "rest": rest,
             "n_ring": len(ring_stones), "n_shoulder": len(shoulders),
+            "n_dm_hole": n_dm_hole,
             "n_fill": len(rest),
         }
 
-    # -- 波2: 逐孔落架(λ 全阶)→拆架→肩背胞(R5b) --
+    # -- 波2: 全桥对称同步落架(主控 2026-10-07 裁决: 多孔连拱"对称同步
+    #    卸落"工法; 逐孔串行在 G3④墩不平衡门不可行, 顺序邻孔对亦有对间
+    #    过渡残红 —— 探针见 p2-task-7-report.md §8)。档差=0: 每档全部孔
+    #    WEDGE_RELEASE 同 stage 同档(每对邻孔同 λ, 不平衡=λ·|Hmin_A−Hmin_B|,
+    #    相似跨≈0); λ 全阶后统一拆架, 再逐孔填筑肩背(R5b, 依赖各自 CLEAR)。
+    prev_stage = stages[-1]["id"] if stages else None
+    st = open_stage("DECENTER.DSTART.WAVE", evidence=EV_CEN)
+    lo = len(events) + 1
+    dseq_by = {}       # type: Dict[str, int]
+    wedge_by = {}      # type: Dict[str, List[int]]
     for zone in zones_sorted:
         w1 = wave1[zone]
-        cen = w1["cen"]
-        prev_stage = stages[-1]["id"] if stages else None
-        st = open_stage("%s.DECENTER" % zone, centering_id=cen["id"],
+        dseq_by[zone] = emit(zone, "DECENTER_START", stone_id=w1["cen"]["id"],
+                             prereq=[w1["close_seq"]] + w1["hold_seqs"],
+                             evidence=EV_CEN)
+        trace.append({"hole": zone, "state": "DECENTERING",
+                      "at_seq": dseq_by[zone]})
+        wedge_by[zone] = []
+    close_stage(st, lo, len(events), [prev_stage])
+    prev_stage = st["id"]
+    for k, lam in enumerate(LAMBDA_LADDER):
+        st = open_stage("DECENTER.WEDGE.%s.L%02d" % (k + 1, round(lam * 100)),
                         evidence=EV_CEN)
         lo = len(events) + 1
-        dseq = emit(zone, "DECENTER_START", stone_id=cen["id"],
-                    prereq=[w1["close_seq"]] + w1["hold_seqs"],
-                    evidence=EV_CEN)
-        trace.append({"hole": zone, "state": "DECENTERING", "at_seq": dseq})
-        wedge_seqs = []
-        for lam in LAMBDA_LADDER:
-            wedge_seqs.append(emit(zone, "WEDGE_RELEASE", stone_id=cen["id"],
-                                   prereq=[dseq] + wedge_seqs,
-                                   load_lambda=float(lam), evidence=EV_CEN))
-        cseq = emit(zone, "CENTERING_CLEAR", stone_id=cen["id"],
-                    prereq=[dseq, wedge_seqs[-1]] if wedge_seqs else [dseq],
-                    evidence=EV_CEN)
+        for zone in zones_sorted:
+            ws = wedge_by[zone]
+            ws.append(emit(zone, "WEDGE_RELEASE",
+                           stone_id=wave1[zone]["cen"]["id"],
+                           prereq=[dseq_by[zone]] + ws,
+                           load_lambda=float(lam), evidence=EV_CEN))
         close_stage(st, lo, len(events), [prev_stage])
         prev_stage = st["id"]
-        trace.append({"hole": zone, "state": "CLEARED", "at_seq": cseq})
+    st = open_stage("DECENTER.CLEAR.WAVE", evidence=EV_CEN)
+    lo = len(events) + 1
+    cseq_by = {}       # type: Dict[str, int]
+    for zone in zones_sorted:
+        ws = wedge_by[zone]
+        cseq_by[zone] = emit(zone, "CENTERING_CLEAR",
+                             stone_id=wave1[zone]["cen"]["id"],
+                             prereq=[dseq_by[zone], ws[-1]] if ws
+                             else [dseq_by[zone]],
+                             evidence=EV_CEN)
+        trace.append({"hole": zone, "state": "CLEARED", "at_seq": cseq_by[zone]})
+    close_stage(st, lo, len(events), [prev_stage])
+    prev_stage = st["id"]
 
-        # 支撑曲线回写(裁2: capacity=荷载分担份额, 任意事件点 Σcapacity≥1)
+    # 支撑曲线回写(裁2: capacity=荷载分担份额, 任意事件点 Σcapacity≥1)
+    for zone in zones_sorted:
+        w1 = wave1[zone]
         for s in w1["ring_stones"]:
             edge_plan[s["id"]] = _ring_support_edges(
-                w1["ring_seq_by_stone"][s["id"]], wedge_seqs, dseq, cseq)
+                w1["ring_seq_by_stone"][s["id"]], wedge_by[zone],
+                dseq_by[zone], cseq_by[zone])
         for s in w1["shoulders"]:
             # R5a 锁固肩: 只留 stone 自持边 1.0 全程(不坐木架, 落座即自持)
             edge_plan[s["id"]] = [{"type": "stone",
@@ -650,10 +679,13 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
                                        [[_shoulder_place_seq(events, s["id"]),
                                          1.0]]}]
 
-        # -- R5b: 其余肩背胞(CLEAR 后), z_bottom 升序; 单阶段一孔一拍
-        #    (13 层/孔会把 stage 数顶破 600 目标, 叙事上"填筑肩背"为一拍)
-        #    F4: 无肩背胞可填的孔不发 FILL 阶段、不记 FILLED(与
-        #    derive_frontier 同形); at_seq=本孔末个置放事件(非全局计数) --
+    # -- R5b: 其余肩背胞(各自 CLEAR 后; 全桥同波落架完毕再逐孔填筑),
+    #    z_bottom 升序; 单阶段一孔一拍(13 层/孔会把 stage 数顶破 600 目标,
+    #    叙事上"填筑肩背"为一拍) F4: 无肩背胞可填的孔不发 FILL 阶段、
+    #    不记 FILLED(与 derive_frontier 同形); at_seq=本孔末个置放事件 --
+    for zone in zones_sorted:
+        w1 = wave1[zone]
+        cseq = cseq_by[zone]
         rest = w1["rest"]
         if rest:
             st = open_stage("%s.FILL" % zone, evidence=EV_FILL)
@@ -668,10 +700,10 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
             prev_stage = st["id"]
             trace.append({"hole": zone, "state": "FILLED",
                           "at_seq": pseq})
-        hole_report.append({"zone": zone, "centering": cen["id"],
+        hole_report.append({"zone": zone, "centering": w1["cen"]["id"],
                             "n_ring": w1["n_ring"],
                             "n_shoulder": w1["n_shoulder"],
-                            "n_dm_excluded": n_dm_hole,
+                            "n_dm_excluded": w1["n_dm_hole"],
                             "n_fill": w1["n_fill"]})
 
     # -- R7: 面上最后 PAVING → RAIL/POST → CARVE --
@@ -1175,8 +1207,10 @@ def derive_frontier(events):
 
 def check_frontier(events, zones):
     # type: (List[Dict[str, Any]], List[str]) -> List[str]
-    """R6 跨孔组合表核(对任意事件流): 逐转移推进状态向量, 禁
-    相邻孔同 DECENTERING / 孔 i DECENTERING 而 i±1 < CLOSED_SUPPORTED。
+    """R6 跨孔组合表核(对任意事件流): 逐转移推进状态向量, 禁跳孔落架;
+    相邻孔同落架须**对内同档**(λ 差 ≤ 一档 —— 主控 2026-10-07 裁决采纳
+    多孔连拱"对称同步卸落": 全桥同波逐档合法, 乱序同落架仍红;
+    与 g3_check._check_r6 两实现互证)。
     zones 必须传全孔表(石账 ARCH zone 全集)——无任何转移的 UNBUILT 孔也要
     参与邻接判, 否则跳孔落架会从空档孔漏过。"""
     errs = []  # type: List[str]
@@ -1202,14 +1236,59 @@ def check_frontier(events, zones):
             nz = zones[j]
             nrank = _STATE_RANK[state[nz]]
             if st == "DECENTERING":
-                if state[nz] == "DECENTERING":
-                    errs.append("R6_ADJ_DECENTERING 相邻孔 %s/%s 同落架 "
-                                "(seq=%s)" % (z, nz, at))
-                elif nrank < _STATE_RANK["CLOSED_SUPPORTED"]:
+                if nrank < _STATE_RANK["CLOSED_SUPPORTED"]:
                     errs.append(
                         "R6_JUMP_DECENTER 孔 %s 落架时邻孔 %s 状态 %s "
                         "< CLOSED_SUPPORTED(跳孔落架, seq=%s)"
                         % (z, nz, state[nz], at))
+    errs.extend(_check_adj_rung_lock(events, zones, rank_of))
+    return errs
+
+
+def _check_adj_rung_lock(events, zones, rank_of):
+    # type: (List[Dict[str, Any]], List[str], Dict[str, int]) -> List[str]
+    """R6_ADJ 对内同档核(事件驱动; 与 g3_check._check_r6 同判据独立实现):
+    任一 DECENTERING 事件时, 处于落架中的邻孔与本孔 λ 差须 ≤ 一档
+    (LAMBDA_LADDER 步长)。全桥同波逐档(每档邻孔同 λ/差恰一事件拍 ≤一档)
+    合法; 一方连升多档他方未动 = 乱序同落架, 红。λ 轨迹: dstart=0,
+    WEDGE_RELEASE=load_lambda(非法值不推进, 形制由 events 判红), clear=1。"""
+    errs = []  # type: List[str]
+    tol = 1e-9
+    step = LAMBDA_LADDER[1] - LAMBDA_LADDER[0]
+    lam = {}      # type: Dict[str, float]
+    dstart = {}   # type: Dict[str, int]
+    clear = {}    # type: Dict[str, int]
+    for e in sorted(events, key=lambda x: x["seq"]):
+        zh = e.get("hole") or ""
+        et = e.get("etype")
+        i = rank_of.get(zh)
+        if i is None or et not in E.DECENTERING_TYPES:
+            continue
+        seq = e["seq"]
+        own = (0.0 if et == "DECENTER_START"
+               else 1.0 if et == "CENTERING_CLEAR"
+               else float(e.get("load_lambda") or 0.0))
+        for j in (i - 1, i + 1):
+            if not (0 <= j < len(zones)):
+                continue
+            nz = zones[j]
+            ds, cl = dstart.get(nz), clear.get(nz)
+            if ds is not None and seq >= ds and (cl is None or seq < cl):
+                nl = lam.get(nz, 0.0)
+                if abs(own - nl) > step + tol:
+                    errs.append(
+                        "R6_ADJ_DECENTERING 相邻孔 %s/%s 同落架失档 "
+                        "(λ %.2f vs %.2f, 差>一档, seq=%d) —— 对内同档"
+                        % (zh, nz, own, nl, seq))
+        if et == "DECENTER_START":
+            dstart[zh] = seq
+        elif et == "CENTERING_CLEAR":
+            clear[zh] = seq
+        else:
+            v = e.get("load_lambda")
+            if isinstance(v, (int, float)) and not isinstance(v, bool) \
+                    and 0.0 <= float(v) <= 1.0:
+                lam[zh] = float(v)
     return errs
 
 

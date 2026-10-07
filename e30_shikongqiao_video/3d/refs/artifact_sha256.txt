@@ -6,8 +6,9 @@
 # test_artifact_sha256_sidecar_matches_disk 钉"记录值 == 盘上实算"
 # (单文件缺失跳过该条, 全缺 skip, 不符 fail)。
 #
-# 记录时点: 2026-10-07, HEAD 17a7dc1a696850568c0ee0eeed75ed6512a369bf
-# (本文件随 fix commit 入库; 工件由下方命令链在该工作树生成)
+# 记录时点: 2026-10-07, P2-T7 包络连续性裁决重锚(全桥同波落架序:
+# sequence/ledger_sequenced 重出; ledger_full/core_hash/切片清单零漂移 ——
+# 波2 只重排卸架事件与 stage, 石账/几何/象限账零触碰)
 #
 # 生成命令链(顺序执行, 全部零错; 相对 e30_shikongqiao_video/ 根):
 #   1. blender -b --python 3d/p1a_slice.py -- --g2
@@ -26,8 +27,8 @@
 #
 # 格式: <sha256>  <e30 项目相对路径>
 80de7a45ff329c22bd907dacde0ec72b22df5aa6fab8f1371cb79523b113e9ce  3d/out/ledger_full.json
-55d9bdaae779401f528a4122eff973392955eb06ca0fad0b7417303c52fcb0c3  3d/out/sequence.json
-c3406d28d95e536fe7e3efb240c3a7782b39e5bd60438a30ce262b7f4aa7239e  3d/out/ledger_sequenced.json
+1cefc0717528380dc8ceefecc4cc48a88d819f4f2ecad4a125999ee6c2e56e04  3d/out/sequence.json
+f7e26c2f5db59d1c51492e7170d6357391757f6de509631251f4eb5b7344efb3  3d/out/ledger_sequenced.json
 513dfd9333e81df9702e675be720e69492fcf30a85540c0b2c27d75a5b48f377  3d/core_hash.json
 45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d  3d/out/print/central_slice/manifest.json
 fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/excluded_ids.json

@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 """P2-T7 g3_check.py ④墩推力包络不平衡(λ 卸架档 + 核距双指标)。
 
-物理口径(冻结, 判据先行数字后置; 详见 g3_check.py T7 节头注):
-  落架孔(事件孔)对墩顶有效推力 H_eff = λ × Hmax(区间上界, 保守最大);
-  其余孔回馈 λ × Hmin(区间下界, 保守最小反推力; 未落架 λ=0 → 0)。
+物理口径(冻结, 判据先行数字后置; 2026-10-07 主控包络连续性裁决; 详见
+g3_check.py T7 节头注):
+  有效推力全孔同式 H_eff = λ × Hmin(H 区间下界; Heyman 最小推力原理,
+  事件孔与已清账孔连续, λ=1 无间断); 旧"事件孔取 Hmax"口径降为敏感性
+  对照(entry 的 *hmax 字段, 仅记录不判红)。sequencer 波2 = 全桥同波
+  逐档(邻孔对档差=0), R6_ADJ 改"对内同档"(λ 差 ≤ 一档)。
   双指标独立输出(阈值互不派生, 一个红一个绿要能表达):
     倾覆裕度 ratio = M_res/M_unb ≥ 1.5 [现代裕度·敏感性]
       M_unb = |dH|×h_ref(h_ref=两侧作用高较大者, 保守), M_res = V×B/2
@@ -125,7 +128,7 @@ def test_step1_one_side_early_clear_other_unclosed_ratio_red():
     evs = _ladder(1, "ARCH01")          # ARCH01 落架到底
     # ARCH02 未合龙未落架(事件流中不存在) → 回馈 0(最不利)
     H_env = {"ARCH01": (10.45, 34.2), "ARCH02": (20.4, 48.2)}
-    slim = {"PIER01": {"base_w": 3.1, "weight": 60.0}}
+    slim = {"PIER01": {"base_w": 3.1, "weight": 20.0}}
     gate = _walk(evs, H_env, pier_dims=slim)
     mid = _entry_at(gate, "ARCH01", "WEDGE_RELEASE", 0.25)
     full = _entry_at(gate, "ARCH01", "WEDGE_RELEASE", 1.0)
@@ -189,6 +192,63 @@ def test_step1_ratio_red_kernel_green_balanced_moments():
     # 同流 dstart 事件核距红(M_center=HR·h2 大) —— 两指标逐事件独立表达
     at0 = _entry_at(gate, "ARCH01", "DECENTER_START")
     assert at0["verdict_kernel"] == "RED"
+
+
+def test_step1_lambda1_event_hole_equals_cleared_continuity():
+    """④c 包络连续性钉(主控裁决①): λ=1 事件孔与已清账孔同式(λ×Hmin) ——
+    同墩在"A01 末档 WEDGE_RELEASE(事件孔)"与"A01 已清账后他孔事件"两
+    时刻, H_L 与双指标逐位同(A01 λ 同为 1, 无 Hmax→Hmin 突跳)。"""
+    evs = [_ev(1, "ARCH01", "DECENTER_START"),
+           _ev(2, "ARCH01", "WEDGE_RELEASE", lam=1.0),
+           _ev(3, "ARCH01", "CENTERING_CLEAR"),
+           _ev(4, "ARCH02", "DECENTER_START")]
+    H_env = {"ARCH01": (10.45, 34.2), "ARCH02": (20.4, 48.2)}
+    gate = _walk(evs, H_env, pier_dims={"PIER01": {"base_w": 3.1,
+                                                   "weight": 60.0}})
+    at_w = _entry_at(gate, "ARCH01", "WEDGE_RELEASE", 1.0)
+    at_b = _entry_at(gate, "ARCH02", "DECENTER_START")   # A01 清账(λ=1) 非事件孔
+    for fld in ("H_L", "dH", "M_unb", "ratio", "e_kernel"):
+        assert at_w[fld] == at_b[fld], (fld, at_w[fld], at_b[fld])
+    assert at_w["H_L"] == pytest.approx(10.45)           # = Hmin×1, 非 Hmax
+
+
+def test_r6_adj_rung_lock_wave_legal_skew_red():
+    """主控裁决②机制钉(g3 侧独立重建): 相邻孔档差=0 同落架合法(全桥同波
+    的邻孔对核); 一方连升多档他方未动 = 乱序同落架, R6_ADJ 仍红。"""
+    def _block(seq0, hole):
+        evs = [_ev(seq0, hole, "CLOSE_RING")]
+        for k in range(3):
+            evs.append(_ev(seq0 + 1 + k, hole, "HOLD_EVENT"))
+        return evs
+    # 档差=0 交错(全桥同波的邻孔对): 双合龙持荷 → 双 dstart → 逐档交错
+    legal = (_block(1, "ARCH01") + _block(5, "ARCH02") +
+             [_ev(9, "ARCH01", "DECENTER_START"),
+              _ev(10, "ARCH02", "DECENTER_START")])
+    s = 11
+    for lam in (0.25, 0.5, 0.75, 1.0):
+        legal.append(_ev(s, "ARCH01", "WEDGE_RELEASE", lam=lam))
+        legal.append(_ev(s + 1, "ARCH02", "WEDGE_RELEASE", lam=lam))
+        s += 2
+    legal += [_ev(s, "ARCH01", "CENTERING_CLEAR"),
+              _ev(s + 1, "ARCH02", "CENTERING_CLEAR")]
+    H_env = {"ARCH01": (10.45, 34.2), "ARCH02": (20.4, 48.2)}
+    # R6 层核: snapshot 重建无 JUMP/ADJ 违例(档差=0 同落架合法)
+    led0 = {"stones": []}
+    viols = []
+    for snap in G3.snapshots(legal, led0, in_void=frozenset()):
+        viols.extend(G3.check_dag(snap))
+    assert not any(G3.CODE_R6_ADJ in v or G3.CODE_R6_JUMP in v
+                   for v in viols), viols[:8]
+    # 乱序: A02 连升两档(0.25→0.5)后 A01 才动 → 失档红
+    skew = (_block(1, "ARCH01") + _block(5, "ARCH02") +
+            [_ev(9, "ARCH02", "DECENTER_START"),
+             _ev(10, "ARCH02", "WEDGE_RELEASE", lam=0.25),
+             _ev(11, "ARCH02", "WEDGE_RELEASE", lam=0.5),
+             _ev(12, "ARCH01", "DECENTER_START")])
+    viols2 = []
+    for snap in G3.snapshots(skew, led0, in_void=frozenset()):
+        viols2.extend(G3.check_dag(snap))
+    assert any(G3.CODE_R6_ADJ in v for v in viols2), viols2[:8]
 
 
 # ---------------------------------------------------------------------------
@@ -402,13 +462,13 @@ _NEED = [_SEQ, _LEDSEQ]
 @pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
                     reason="out/sequence.json+ledger_sequenced.json 不在盘上")
 def test_real_ledger_gate_imbalance_fullchain():
-    """真账: H 区间(③acceptance 单源) → 逐 DECENTERING 事件全墩双指标。
-
-    判据先行数字后置: 红/绿都是结论 —— 红即"史实 R5 卸架顺序不可行"的
-    真发现(停车线: run_g3 raise G3_DECENTER_ORDER_CONFLICT 停报主控,
-    修正走 sequencer 排程, 禁调 λ/裕度/核宽自救)。本测钉协议与结构:
-    三节齐 / 门间独立(gate_dag/gate_stress 不受影响) / 建议可执行。
-    """
+    """真账(全桥同波落架序, P2-T7 包络连续性裁决重锚):
+    ① run_g3 三节齐且正常返回(gate_imbalance 绿 —— 史实对称同步卸落
+       力学可行; Hmin 物理口径 PASS);
+    ② Hmax 保守敏感性对照字段在册(仅记录不判红);
+    ③ 串行序 Hmin 口径仍深红 —— 头条发现的 robust 自证(卸架序决定性,
+       非包络口径伪影; 由同账卸架块重排为逐孔串行探针复现)。
+    判据先行数字后置: 红绿都是结论; 本测钉协议与结构。"""
     import ledger as L
     with open(_SEQ) as f:
         seqdoc = json.load(f)
@@ -422,40 +482,46 @@ def test_real_ledger_gate_imbalance_fullchain():
              if h["acceptance"].get("feasible")}
     assert len(H_env) == 17
 
-    gate = G3.imbalance_gate(events, H_env, ledger=led, in_void=frozenset())
-    assert gate["n_evals"] > 0
-    for key in ("violations", "violation_counts", "ok", "elapsed_s"):
-        assert key in gate
-    print("\n④真账 gate_imbalance: ok=%s n_evals=%d violations=%d"
-          % (gate["ok"], gate["n_evals"], len(gate["violations"])))
-    for pid, rec in sorted(gate["piers"].items()):
-        wr, wk = rec["worst_ratio"], rec["worst_kernel"]
-        print("  %s B=%.2f V=%.1f worst_ratio=%.2f@%s(seq=%d) "
-              "worst_e=%.3f/%.3f@%s(seq=%d)"
-              % (pid, rec["base_w"], rec["V"], wr["ratio"], wr["hole"],
-                 wr["seq"], wk["e_kernel"], wk["kernel_half_w"], wk["hole"],
-                 wk["seq"]))
-    for line in gate["advice"][:8]:
-        print("  ADVICE: %s" % line)
-
-    # 停车线协议: run_g3 红即 raise(排程冲突), 报告挂异常且三节齐、
-    # gate_dag/gate_stress 两门不受影响(独立性)
-    with pytest.raises(G3.G3_DECENTER_ORDER_CONFLICT) as ei:
-        G3.run_g3(events, led, in_void=frozenset(),
-                  rbo_ids=[], r5a=G3.load_r5a_shoulders())
-    rep = ei.value.report
+    # ① 波账全链: 正常返回(停车线解除), 三节齐, gate_imbalance 绿
+    rep = G3.run_g3(events, led, in_void=frozenset(),
+                    rbo_ids=[], r5a=G3.load_r5a_shoulders())
     for key in ("gate_dag", "gate_stress", "gate_imbalance"):
         assert key in rep, key                # 三节齐
     assert rep["gate_dag"]["ok"] is True
     assert rep["gate_stress"]["ok"] is True
-    assert rep["gate_imbalance"]["ok"] is False
-    assert rep["gate_imbalance"]["violations"] == gate["violations"]
-    # 建议可执行: 点名墩+事件+λ 临界+顺序动词
-    assert gate["advice"], "超阈必附具体顺序建议"
-    joined = " ".join(gate["advice"])
-    assert "PIER" in joined and "λ" in joined and "同步" in joined
-    if not gate["ok"]:
-        for pid in gate["piers"]:
-            rec = gate["piers"][pid]
-            for wr in (rec["worst_ratio"], rec["worst_kernel"]):
-                assert wr["seq"] > 0 and wr["hole"].startswith("ARCH")
+    gate = rep["gate_imbalance"]
+    assert gate["ok"] is True and gate["violations"] == []
+    assert gate["n_evals"] == 192             # 17 孔 × 6 卸架事件 × 邻墩(端孔 1)
+    assert gate["n_skipped_events"] == 0
+    # ② Hmax 敏感性对照在册(Hmin 判 PASS 的同账上界记录)
+    assert all("ratio_hmax" in e and "e_kernel_hmax" in e
+               for e in gate["events"])
+    worst_hmax_e = max(e["e_kernel_hmax"] for e in gate["events"])
+    print("\n④真账(全桥同波): ok=%s n_evals=%d; Hmax 对照 worst e=%.3f"
+          % (gate["ok"], gate["n_evals"], worst_hmax_e))
+    for pid in ("PIER08", "PIER09"):
+        rec = gate["piers"][pid]
+        wr = rec["worst_ratio"]
+        print("  %s worst e=%.3f/%.3f ratio=%.2f@%s(seq=%d)"
+              % (pid, rec["worst_kernel"]["e_kernel"],
+                 rec["worst_kernel"]["kernel_half_w"], wr["ratio"],
+                 wr["hole"], wr["seq"]))
+
+    # ③ 串行序 robust 自证: 同账卸架块重排为逐孔串行(史实序形态) →
+    #    Hmin 口径仍深红(ADJ 失档违例属 R6 层, 本探针只评④门判据)
+    blocks = {}
+    for e in events:
+        if e["etype"] in E.DECENTERING_TYPES:
+            blocks.setdefault(e["hole"], []).append(e)
+    serial = [dict(e, seq=i + 1) for i, e in enumerate(
+        [e for z in sorted(blocks)
+         for e in sorted(blocks[z], key=lambda x: x["seq"])])]
+    g_serial = G3.imbalance_gate(serial, H_env, ledger=led,
+                                 in_void=frozenset())
+    reds = sum(1 for e in g_serial["events"] if e["verdict"] != "ok")
+    worst_e = max(r["worst_kernel"]["e_kernel"]
+                  for r in g_serial["piers"].values() if r["worst_kernel"])
+    print("  串行序对照(Hmin 口径): red=%d/%d worst_e=%.3f (robust: 结论"
+          "不依赖包络口径)" % (reds, g_serial["n_evals"], worst_e))
+    assert reds > 30 and worst_e > 1.0, (reds, worst_e)
+    assert g_serial["ok"] is False
