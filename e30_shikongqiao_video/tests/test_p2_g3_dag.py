@@ -484,7 +484,12 @@ def test_real_ledger_g3_fullchain():
         assert any(G3.CODE_PHANTOM in v and victim in v for v in viols2)
 
     # W1 双建模债清单: ≥99% 吞没的 rbo 石进报告, 不判红, 单自持边合规
-    rep = G3.run_g3(events, led, in_void=in_void)
+    # (T6 起 run_g3 串 gate_stress; 真账中央 6 孔 acceptance 不可行 →
+    #  停车线 raise, 报告挂异常 .report —— 两门数据不受影响)
+    try:
+        rep = G3.run_g3(events, led, in_void=in_void)
+    except G3.G3_FROZEN_GEOMETRY_CONFLICT as exc:
+        rep = exc.report
     ph = rep["double_model_placeholders"]
     print("double_model_placeholders: %d 块" % len(ph))
     for p in ph:
