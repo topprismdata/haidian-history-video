@@ -47,13 +47,19 @@ T6 ③压力线(Heyman 刚块链; 见该节头注):
                 dzdx_fn=None, ring_t=None) -> dict
       brief 接口: {feasible, H:[min,max], polyline:[(x,z)...]}+诊断键。
       左右半环各扫 H(可行 y0 区间交), H 区间取两半环之交。
+      ring_t 覆盖参=缝检验截面厚(P2-T6 裁决: acceptance 传
+      ring_t+LOCK_BAND_M 结构带, 带石自重仍计入块链 W_k)。
   stress_gate(ledger, r5a=None) -> dict
-      逐孔 acceptance(RING+R5a 肩荷)/robustness(裸环) 双 case; 违例码
-      STRESS_ACCEPTANCE_INFEASIBLE 点名孔。H 区间表在 holes[zh]。
+      逐孔 acceptance(结构带=RING+胶结锁固带)/robustness(裸环) 双 case;
+      违例码 STRESS_ACCEPTANCE_INFEASIBLE 点名孔。H 区间表在 holes[zh]
+      (acceptance.band_t=0.35 为结构带加厚, robustness.band_t=0)。
   load_r5a_shoulders(path=None) -> {zone: [stone_id]}
-      R5a 锁固肩集合单源读取(out/sequence.json .SHOULDER. 阶段, 1307 石)。
+      R5a 锁固肩集合单源读取(out/sequence.json .SHOULDER. 阶段;
+      P2-T6 裁决收缩后 = 真锁固带: 足印距 extrados ≤0.35m 径向 ∧
+      非双建模占位, 计数测试常驻断言)。
   plot_hole_pressure(hole, ledger, zone, path) -> str
-      压力线诊断图(intrados/extrados/左右压力线叠画; matplotlib Agg)。
+      压力线诊断图(intrados/extrados/结构带外脸/左右压力线叠画;
+      matplotlib Agg)。
 
 违例码(全部点名石/孔+seq, 字符串前缀可 grep):
   DAG_UNSUPPORTED          Σcapacity < 1(荷载分担不完整/全无)
@@ -640,27 +646,42 @@ def double_model_scan(ledger, rbo_ids=None, threshold=SWALLOW_THRESHOLD):
 # ---------------------------------------------------------------------------
 # T6 ③压力线(Heyman 刚块链; acceptance/robustness 双 case)
 # ---------------------------------------------------------------------------
-# 物理口径(冻结, 停车线保护对象):
+# 物理口径(冻结, 停车线保护对象; P2-T6 裁决轮修订"结构带"假设):
 #   每孔左右半环(crown→springer)各为独立刚块链: 券石按 params 角域切块
 #   (重量=export_print.signed_volume×密度 体积单源; 质心=烘焙网格散度质心,
 #   与单源体积互证), 给定冠推力 H(水平, 作用高 y0 为自由参数)逐缝递推
 #   合力 R_k=R_{k-1}+W_k(等价闭式: V_j=ΣW, M_j=ΣW(x_j-x̄)), R_k 的作用线
 #   与块间放射缝(法向同 masonry._arch_normal = facts.arch_dzdx 单源)交点
-#   沿缝参数 s 必须 ∈[0, ring_t](带内), 即缝交点落在 [intrados,extrados]。
-#   每 H 下 y0 可行区间 = 各缝 y0-区间之交; H 可行 ⟺ 交非空。扫 H 网格
-#   (0.1-1.2×qL²/8f, q:=全孔荷载/跨长)取可行区间, 边界二分细化; 网格边
-#   被触及时自动外扩(删失防护, 覆盖机制非几何参数)。
-#   双 case: acceptance=RING+R5a 锁固肩重(质心 x 落到对应缝间, 超出
-#   [xc-a,xc+a] 的肩重直接入墩不进半环, 计数); robustness=裸环只记录。
+#   沿缝参数 s 必须 ∈[0, 截面厚], 即缝交点落在结构截面内。每 H 下 y0 可
+#   行区间 = 各缝 y0-区间之交; H 可行 ⟺ 交非空。扫 H 网格(0.1-1.2×qL²/8f,
+#   q:=全孔荷载/跨长)取可行区间, 边界二分细化; 网格边被触及时自动外扩
+#   (删失防护, 覆盖机制非几何参数)。
+#
+#   [P2-T6 主控裁决两层之二·结构协同假设] acceptance 的截面 = 结构带:
+#   锁固带石(sequencer 收缩后 R5a: 足印距 extrados ≤LOCK_BAND_M 径向 ∧
+#   非双建模占位)与券脸石餬灰胶结(C:A5 张嘉贞"餬灰璺"一手; 卢沟桥
+#   "石工鳞砌"通例), 受压单体内协同工作 —— 锁固带是拱截面的加厚部分,
+#   非铰接裸环上的外荷载(旧口径双重保守: 荷载全计 + 缝检验带只到
+#   extrados)。实现: 带石自重仍计入块链 W_k(移出"外荷载"≠从链消失,
+#   双重放松会失真), s 检验截面厚放宽为 ring_t + LOCK_BAND_M(该孔有
+#   胶结锁固带时); params.ring_t 零触碰。带以上满高拱肩余下部分
+#   (= 收缩后 R5b)按排程在 CENTERING_CLEAR 后砌, 不在落架工况在位。
+#   robustness 裸环 case 原样保留(永久对照, s∈[0,ring_t])。
+#   失效边界(显式): 若灰浆未结强度, 锁固带不参与截面, 落架时机须后移
+#   至拱肩近满("拱肩砌至大半再撤架"的历史工法力学解释) —— 届时由本门
+#   停车线红显形, 不许调带宽自救(0.35 唯一声明值)。
 #   停车线: acceptance 不可行 → run_g3 raise G3_FROZEN_GEOMETRY_CONFLICT
 #   (点名孔); 禁调封卷几何参数自救, 阈值不为绿而调。
 #
 # 独立性: 本节不 import sequencer(传递闭包被测试钉死)。石重按同一单源
 # (families.family_mesh + export_print.signed_volume)独立取数 —— 非第二套
 # 公式; 密度归一 STONE_DENSITY=1.0 同 sequencer 约定(结果对共同密度因子
-# 不变, 不发明无出处常数[三红线])。
+# 不变, 不发明无出处常数[三红线])。LOCK_BAND_M 与 sequencer.LOCK_BAND_M
+# 同一裁决值各自声明(互证纪律), 常驻测试钉同值。
 
 STONE_DENSITY = 1.0        # 密度归一(同 sequencer.STONE_DENSITY)[三红线]
+LOCK_BAND_M = 0.35         # [P2-T6 裁决] 径向锁固带宽(结构带加厚量; 与
+                           # sequencer.LOCK_BAND_M 同一裁决值, 测试钉同值)
 VOUSSOIR_INT_N = 64        # crown 跨块分件质心的垂直带积分 Simpson 结点数
 H_GRID_STEP = 0.01         # H 扫描网格步长(H_ref 份额; 0.1-1.2 → 111 点)
 H_REFINE_ITERS = 30        # 可行边界二分细化次数(初宽×2^-30)
@@ -1154,7 +1175,7 @@ def load_r5a_shoulders(path=None):
     # type: (Optional[str]) -> Dict[str, List[str]]
     """R5a 锁固肩集合(sequencer 单源产物): out/sequence.json 的
     .SHOULDER. 阶段 event_range 内 PLACE_STONE stone_id 按孔分组
-    (T4 meta.holes[].n_shoulder 合计 1307, 测试常驻断言)。
+    (P2-T6 裁决收缩后合计 1290 = 旧 1307 − 17 占位剔除; 测试常驻断言)。
     文件缺失/无阶段 → {}(调用方记 note, 不静默造数)。"""
     p = path or DEFAULT_SEQ_PATH
     if not os.path.exists(p):
@@ -1180,10 +1201,13 @@ def load_r5a_shoulders(path=None):
 
 def stress_gate(ledger, r5a=None):
     # type: (Dict[str, Any], Optional[Dict[str, List[str]]]) -> Dict[str, Any]
-    """G3③ 压力线门: 逐孔 acceptance(RING+R5a 肩荷)/robustness(裸环)
-    双 case。acceptance 不可行 → 违例码 STRESS_ACCEPTANCE_INFEASIBLE
-    (点名孔); run_g3 据此 raise 停车线。H_ref = W_half·L/(8f)
-    (q:=W_half/L 归一, 仅扫描标尺; 区间可能出格由删失防护外扩覆盖)。"""
+    """G3③ 压力线门: 逐孔 acceptance(结构带=RING+胶结锁固带)/robustness
+    (裸环) 双 case。[P2-T6 裁决] acceptance 截面厚 = ring_t + LOCK_BAND_M
+    (该孔存在胶结锁固带时; 带石自重仍计入块链 W_k —— 移出"外荷载"≠从链
+    消失), robustness 恒 s∈[0,ring_t]。acceptance 不可行 → 违例码
+    STRESS_ACCEPTANCE_INFEASIBLE(点名孔); run_g3 据此 raise 停车线。
+    H_ref = W_hole·L/(8f)(q:=W_hole/L 归一, 仅扫描标尺; 区间可能出格由
+    删失防护外扩覆盖)。"""
     t0 = time.perf_counter()
     if r5a is None:
         r5a = load_r5a_shoulders()
@@ -1191,13 +1215,12 @@ def stress_gate(ledger, r5a=None):
     for s in ledger.get("stones", []):
         if stone_role(s.get("id")) == RING_ROLE:
             by_zone.setdefault(hole_of_sid(s["id"]), []).append(s)
-    known = {s["id"] for s in ledger.get("stones", [])}
     holes = {}  # type: Dict[str, Any]
     viols = []  # type: List[str]
     skipped = []  # type: List[str]
     r5a_note = None
     if r5a is not None and not r5a:
-        r5a_note = "R5a 集合为空/sequence.json 不在盘上 —— acceptance 退化为裸环"
+        r5a_note = "R5a 集合为空/sequence.json 不在盘上 —— acceptance 退化为裸环(无胶结锁固带)"
     for zh in sorted(by_zone):
         ring = by_zone[zh]
         try:
@@ -1209,6 +1232,9 @@ def stress_gate(ledger, r5a=None):
             skipped.append("%s(%s)" % (zh, exc))
             continue
         bp = _hole_bands(idx, rt)
+        # 结构带荷载项: 锁固带石自重按质心 x 计入块链 W_k(截面自重,
+        # 非"外荷载"; 超出 [xc-a,xc+a] 者直接入墩不进半环, pressure_line
+        # 内计数)。
         shoulder_loads = []
         n_r5a = 0
         for sid in (r5a or {}).get(zh, []):
@@ -1219,6 +1245,9 @@ def stress_gate(ledger, r5a=None):
             n_r5a += 1
             shoulder_loads.append({"x": float(st.get("transform", [0])[0]),
                                    "weight": _stone_weight(st)})
+        # [P2-T6 结构协同假设] 有胶结锁固带 → s 检验截面厚 ring_t+0.35
+        # (径向结构带); 无带孔 acceptance≡robustness(裸环)。
+        rt_eff = rt + (LOCK_BAND_M if n_r5a > 0 else 0.0)
         w_hole = sum(_stone_weight(s) for s in ring) \
             + sum(l["weight"] for l in shoulder_loads)
         # H_ref = qL²/(8f), q:=W_hole/L(全孔荷载均摊全跨; 仅扫描标尺)
@@ -1227,22 +1256,27 @@ def stress_gate(ledger, r5a=None):
         span = (0.1 * h_ref, 1.2 * h_ref)
         acc = pressure_line(ring, shoulder_loads,
                             (bp["z_in"], bp["z_out"]), span,
-                            dzdx_fn=bp["dzdx"], ring_t=rt)
+                            dzdx_fn=bp["dzdx"], ring_t=rt_eff)
         rob = pressure_line(ring, [], (bp["z_in"], bp["z_out"]), span,
                             dzdx_fn=bp["dzdx"], ring_t=rt)
         acc["H_ref"] = h_ref
         acc["ring_t"] = rt
+        acc["band_t"] = rt_eff - rt
         rob["H_ref"] = h_ref
         rob["ring_t"] = rt
+        rob["band_t"] = 0.0
         holes[zh] = {"acceptance": acc, "robustness": rob,
-                     "n_ring": len(ring), "n_r5a": n_r5a}
+                     "n_ring": len(ring), "n_r5a": n_r5a,
+                     "w_band": sum(l["weight"] for l in shoulder_loads),
+                     "band_bonded": n_r5a > 0}
         if not acc["feasible"]:
             viols.append(
-                "%s hole=%s 无可行 H(sweep=[%.4g, %.4g]%s, W=%.3f, "
-                "n_r5a=%d) —— 冻结几何冲突, 停报主控"
-                % (CODE_STRESS_INFEASIBLE, zh, acc["sweep"][0],
-                   acc["sweep"][1], " 删失" if acc["censored"] else "",
-                   w_hole, n_r5a))
+                "%s hole=%s 结构带(ring_t+%.2f) acceptance 无可行 H"
+                "(sweep=[%.4g, %.4g]%s, W=%.3f, n_r5a=%d) —— 冻结几何冲突, "
+                "停报主控"
+                % (CODE_STRESS_INFEASIBLE, zh, acc["band_t"],
+                   acc["sweep"][0], acc["sweep"][1],
+                   " 删失" if acc["censored"] else "", w_hole, n_r5a))
     counts = {}  # type: Dict[str, int]
     for v in viols:
         code = v.split(" ", 1)[0]
@@ -1265,6 +1299,7 @@ def plot_hole_pressure(hole, ledger, zone, path, title=None):
     matplotlib.rcParams["axes.unicode_minus"] = False
     import matplotlib.pyplot as plt
     idx = int(zone[4:]) - 1
+    acc = hole["acceptance"]
     rt = hole["acceptance"]["ring_t"]
     bp = _hole_bands(idx, rt)
     xc, a = bp["xc"], bp["a"]
@@ -1278,7 +1313,17 @@ def plot_hole_pressure(hole, ledger, zone, path, title=None):
         off.append((x + rt * (-d / nl), bp["z_in"](x) + rt * (1.0 / nl)))
     ax.plot([p[0] for p in off], [p[1] for p in off], "b--", lw=1.2,
             label="extrados(+ring_t radial)")
-    acc = hole["acceptance"]
+    band_t = acc.get("band_t") or 0.0
+    if band_t > 0.0:
+        # [P2-T6 结构协同假设] 结构带外脸: acceptance 缝检验截面 = 环+胶结锁固带
+        off2 = []
+        for x in xs:
+            d = bp["dzdx"](x)
+            nl = math.hypot(d, 1.0)
+            off2.append((x + (rt + band_t) * (-d / nl),
+                         bp["z_in"](x) + (rt + band_t) * (1.0 / nl)))
+        ax.plot([p[0] for p in off2], [p[1] for p in off2], "c:",
+                lw=1.4, label="structural band(+%.2f)" % band_t)
     for key, lab, col in (("polyline", "thrust RIGHT", "red"),
                           ("polyline_left", "thrust LEFT", "darkorange")):
         poly = acc.get(key) or []
@@ -1310,9 +1355,10 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
            threshold=SWALLOW_THRESHOLD, r5a=None):
     # type: (List[Dict[str, Any]], Dict[str, Any], Optional[List[Dict[str, Any]]], Optional[Set[str]], Optional[List[str]], float, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
     """G3 报告: gate_dag(①)+double_model 清单(W1)+gate_stress(③压力线,
-    T6)。扩展点: T7④ 加同形 gate_thrust 节。③ acceptance(RING+R5a 肩荷)
-    不可行 → raise G3_FROZEN_GEOMETRY_CONFLICT 停报主控(停车线; 禁调封卷
-    几何参数自救)。快照面用 snapshots(...)/Snapshot.copy()。"""
+    T6)。扩展点: T7④ 加同形 gate_thrust 节。③ acceptance(结构带=环+
+    胶结锁固带; P2-T6 裁决)不可行 → raise G3_FROZEN_GEOMETRY_CONFLICT
+    停报主控(停车线; 禁调封卷几何参数自救)。快照面用 snapshots(...)/
+    Snapshot.copy()。"""
     viols, stats = check_dag_all(events, ledger, in_void=in_void)
     counts = {}  # type: Dict[str, int]
     for v in viols:

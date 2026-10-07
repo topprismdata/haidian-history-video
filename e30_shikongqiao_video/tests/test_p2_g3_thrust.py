@@ -14,17 +14,23 @@
   均布, 经 extra_loads) → funicular 抛物线 H*=qL²/(8f) 必须落在可行区间
   内, 且区间下界与 H* 相差 ≤5%(均布荷载的拱轴重合解; 上界由弹簧截面
   出带约束给出, 高于 H* 属带厚效应, 记录不判假)。
-- 双 case: acceptance=RING+R5a 锁固肩荷载(pre-strike, 肩重按质心 x 落到
-  对应块)必须 feasible; robustness=裸环只记录不判红。
-  真账实况(T6 首核): 裸环 17/17 全 feasible; acceptance 端/次端 11 孔
-  feasible、中央 6 孔(ARCH06-11)不可行 —— 停车线按红线 raise 停报主控。
+- 双 case(P2-T6 裁决后): acceptance=结构带(RING+胶结锁固带: s 检验截面
+  厚 ring_t+0.35, 带石自重仍计入块链 W_k)必须 feasible; robustness=裸环
+  (s∈[0,ring_t])只记录不判红。
+  真账实况(裁决轮实测): 裸环 17/17 全 feasible; acceptance(结构带)
+  16/17 feasible, ARCH07 仍不可行 —— 主控裁决第三条: 维持 raise 停报,
+  历史结论 = "券架须驻留至拱肩近满才可落架"(排程跟物理走); 旧口径
+  (截面不加厚, 带石当裸环外荷载)对照 {ARCH07..11} 五孔不可行 ——
+  结构带假设 load-bearing 由 A/B 负控钉死。
 - 停车线: acceptance 不可行 → run_g3 raise G3_FROZEN_GEOMETRY_CONFLICT
-  (点名孔), 禁调封卷参数自救; 阈值不为绿而调。
+  (点名孔), 禁调封卷参数自救; 阈值不为绿而调(0.35 唯一声明带宽)。
 
 五负控: ①楔块重心外移 0.3m → feasible 翻假 ②带缩(t×2/3)区间变窄 /
-带加厚(t×1.5)区间变宽 ③裸环退化路径(肩荷清空 acceptance≡robustness,
+带加厚(t×1.5)区间变宽 ③裸环退化路径(R5a 清空 acceptance≡robustness,
 停车线不误触) ④H 越界出带(过小 H 压力线下穿 intrados / 过大 H 上穿
-extrados, 逐缝 exit 点名) ⑤R5a 清空退化 + 注入超重肩 → 停车线真触发。
+extrados, 逐缝 exit 点名) ⑤R5a 清空退化 + 注入超重带石(自重入链) →
+停车线真触发; 另: 旧口径 A/B(LOCK_BAND_M→0 中央孔翻不可行) + 带界
+守恒(r5a 逐石径向 ≤0.35, 0.36m 外肩石不得混入)。
 
 微账几何同 test_p2_g3_dag(全部 GM 现算); 真账 17 孔(存在性 skip)为
 acceptance 全 feasible + gate_stress 同形节 + H 区间表 + A01/A08 压力线
@@ -294,18 +300,22 @@ def _excl_in_void():
 @pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
                     reason="out/sequence.json+ledger_sequenced.json 不在盘上")
 def test_real_17_holes_acceptance_feasible_and_report():
-    """真账 17 孔双 case + 停车线协议。
+    """真账 17 孔双 case + 停车线协议(P2-T6 裁决两层落地后)。
 
-    当前冻结几何下的实况(T6 首次核出, 主控裁决项):
-    - robustness(裸环): 17/17 全 feasible —— 环体本身全部自洽;
-    - acceptance(RING+R5a 肩荷): 端/次端 11 孔 feasible, 中央 6 孔
-      (ARCH06-11, R5a 肩重达环重 ~134%) 不可行 —— run_g3 按红线 raise
-      G3_FROZEN_GEOMETRY_CONFLICT 停报主控, 禁调封卷参数自救。
-    本测试钉住该裁决基线: 若砖谱/几何再冻结轮变动, 此处结论应被显式
+    裁决链(T6 首核停车线 → 主控两层裁决 → 本轮落地):
+    ① R5a 收缩真锁固带: 足印距 extrados ≤0.35m(径向, facts.arch_signed_r
+      单源; 竖直读法探针证伪 —— 拆拱脚稳定配重致 ARCH05/13 翻假) ∧
+      剔除双建模占位(0.985 吞没 28 石 → R5b)。R5a: 1307 → 1290。
+    ② 结构协同假设: 锁固带与券脸石餬灰胶结(C:A5 "餬灰璺"), 并入拱截面
+      (s 检验带厚 ring_t+0.35; 带重计入块链 W_k)。
+    实测: robustness(裸环) 17/17; acceptance(结构带) 16/17 —— ARCH07 仍
+    不可行, run_g3 维持 raise(主控裁决第三条), 历史结论 = 券架须驻留至
+    拱肩近满才可落架。旧口径 A/B(截面不加厚)对照 {ARCH07..11} 全翻假,
+    证明结构带假设 load-bearing。若砖谱/几何再冻结, 此处结论应被显式
     复核而非静默漂移。"""
     led, seqdoc = _real_chain()
     r5a = G3.load_r5a_shoulders()
-    assert sum(len(v) for v in r5a.values()) == 1307
+    assert sum(len(v) for v in r5a.values()) == 1290
     assert sorted(r5a) == ["ARCH%02d" % i for i in range(1, 18)]
 
     gate = G3.stress_gate(led, r5a=r5a)
@@ -314,29 +324,64 @@ def test_real_17_holes_acceptance_feasible_and_report():
         assert key in gate
     # robustness(裸环)17/17 全 feasible, 只记录不判红
     for zh in sorted(gate["holes"]):
-        assert gate["holes"][zh]["robustness"]["feasible"], zh
-    # acceptance 实况: 11 孔 feasible + 中央 6 孔触发停车线(当前冻结几何
-    # 的裁决基线; 几何/砖谱再冻结须显式复核本行)
+        h = gate["holes"][zh]
+        assert h["robustness"]["feasible"], zh
+        assert h["robustness"]["band_t"] == 0.0
+        assert h["band_bonded"] and h["n_r5a"] > 0
+        assert h["acceptance"]["band_t"] == pytest.approx(G3.LOCK_BAND_M)
+    # acceptance(结构带)实况: 16 孔 feasible + ARCH07 停车线(裁决基线;
+    # 几何/砖谱再冻结须显式复核本行)
     infeasible = sorted(zh for zh in gate["holes"]
                         if not gate["holes"][zh]["acceptance"]["feasible"])
-    assert infeasible == ["ARCH%02d" % i for i in range(6, 12)], infeasible
+    assert infeasible == ["ARCH07"], infeasible
     assert [v.split(" ", 1)[0] for v in gate["violations"]] == \
         [G3.CODE_STRESS_INFEASIBLE] * len(infeasible)
     assert [v.split("hole=")[1].split(" ", 1)[0]
             for v in gate["violations"]] == infeasible
     assert gate["skipped_zones"] == []
-    print("acceptance feasible 孔 H 区间表(供 T7):")
+    print("acceptance(结构带) H 区间表(供 T7):")
     for zh in sorted(gate["holes"]):
         h = gate["holes"][zh]
         acc = h["acceptance"]
         if acc["feasible"]:
-            print("  %s  H=[%.3f, %.3f]  H_ref=%.3f  n_r5a=%d"
-                  % (zh, acc["H"][0], acc["H"][1], acc["H_ref"], h["n_r5a"]))
+            print("  %s  H=[%.3f, %.3f]  H_ref=%.3f  band=+%.2f  n_r5a=%d"
+                  % (zh, acc["H"][0], acc["H"][1], acc["H_ref"],
+                     acc["band_t"], h["n_r5a"]))
         else:
             print("  %s  H=无可行区间(sweep=[%.3g, %.3g])  H_ref=%.3f  "
-                  "n_r5a=%d —— 停车线" % (zh, acc["sweep"][0],
-                                          acc["sweep"][1], acc["H_ref"],
-                                          h["n_r5a"]))
+                  "band=+%.2f  n_r5a=%d —— 停车线"
+                  % (zh, acc["sweep"][0], acc["sweep"][1], acc["H_ref"],
+                     acc["band_t"], h["n_r5a"]))
+
+    # 旧口径 A/B 负控: 截面不加厚(带石当裸环外荷载=修正前模型) → 中央 5 孔
+    # 全翻假 —— 结构带假设 load-bearing, 且否证"数据天然过"的恒真风险
+    old_gate = None
+    _saved = G3.LOCK_BAND_M
+    try:
+        G3.LOCK_BAND_M = 0.0
+        old_gate = G3.stress_gate(led, r5a=r5a)
+    finally:
+        G3.LOCK_BAND_M = _saved
+    old_infra = sorted(zh for zh in old_gate["holes"]
+                       if not old_gate["holes"][zh]["acceptance"]["feasible"])
+    assert old_infra == ["ARCH%02d" % i for i in range(7, 12)], old_infra
+
+    # 带界守恒(0.36m 外肩石不得混入): r5a 集合逐石足印径向距 ≤ 0.35
+    import sequencer as SQ
+    assert G3.LOCK_BAND_M == SQ.LOCK_BAND_M == 0.35
+    by_id = {s["id"]: s for s in led["stones"]}
+    for zh, ids in r5a.items():
+        ai = int(zh[4:]) - 1
+        xc = GM.arch_center_x(ai)
+        springer = GM.arch_springer_z(ai)
+        a2 = GM.SPANS[ai] / 2.0
+        b2 = GM.arch_rise(ai)
+        rt = gate["holes"][zh]["acceptance"]["ring_t"]
+        for sid in ids:
+            st = by_id[sid]
+            xm, zb, _z = SQ._stone_xz(st)
+            r = F.arch_signed_r(xm, zb, xc, springer, a2, b2) - rt
+            assert r <= G3.LOCK_BAND_M + 1e-9, (sid, r)
 
     # 体积单源互证(抽 1 石): 散度质心体积 == export_print.signed_volume
     ring08 = [s for s in led["stones"]
@@ -346,16 +391,16 @@ def test_real_17_holes_acceptance_feasible_and_report():
     v_mc, _cx, _cz = G3._mesh_centroid(*G3._ring_mesh(ring08[0]))
     assert v_mc == pytest.approx(v_sv, rel=1e-9)
 
-    # 停车线: run_g3 串接 gate_stress, acceptance 不可行 → raise 点名孔
+    # 停车线: run_g3 串接 gate_stress, ARCH07 不可行 → raise 点名孔
     with pytest.raises(G3.G3_FROZEN_GEOMETRY_CONFLICT) as ei:
         G3.run_g3(seqdoc["events"], led, in_void=_excl_in_void(),
                   rbo_ids=[], r5a=r5a)
     for zh in infeasible:
         assert zh in str(ei.value)
 
-    # 压力线图: 中央孔 A08(infeasible 注记) + 端孔 A01(feasible) 落盘
+    # 压力线图: 中央孔 A08(结构带内 FEASIBLE) + 停车线孔 A07(不可行注记)
     for zh, name in (("ARCH08", "g3_thrust_A08.png"),
-                     ("ARCH01", "g3_thrust_A01.png")):
+                     ("ARCH07", "g3_thrust_A07.png")):
         path = os.path.join(_CTRL, name)
         G3.plot_hole_pressure(gate["holes"][zh], led, zh, path)
         assert os.path.exists(path) and os.path.getsize(path) > 1000
@@ -364,9 +409,10 @@ def test_real_17_holes_acceptance_feasible_and_report():
 @pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
                     reason="out/sequence.json+ledger_sequenced.json 不在盘上")
 def test_neg3_neg5_r5a_degenerate_and_stop_line():
-    """③裸环退化路径: R5a 清空 → acceptance≡robustness(停车线不误触);
-    ⑤向当前可行孔 ARCH01 注入超重肩 → run_g3 raise
-    G3_FROZEN_GEOMETRY_CONFLICT 且点名注入孔(停车线真触发)。"""
+    """③裸环退化路径: R5a 清空 → acceptance≡robustness(无胶结带孔截面
+    不加厚, 停车线不误触); ⑤注入超重带石(自重入块链 W_k) → run_g3
+    raise G3_FROZEN_GEOMETRY_CONFLICT 且点名注入孔(停车线真触发 ——
+    截面自重侧的牙; P2-T6 结构带模型下 r5a 仍承载重量项)。"""
     led, seqdoc = _real_chain()
 
     # ③ R5a 清空: acceptance 退化为裸环, 与 robustness 全等, 不 raise
@@ -375,11 +421,12 @@ def test_neg3_neg5_r5a_degenerate_and_stop_line():
     for zh in ("ARCH01", "ARCH08"):
         h = gate["holes"][zh]
         assert h["acceptance"]["feasible"] == h["robustness"]["feasible"]
+        assert h["acceptance"]["band_t"] == 0.0
         assert h["acceptance"]["H"] == pytest.approx(h["robustness"]["H"],
                                                      abs=1e-12)
     assert gate["ok"], "裸环退化 case 误触停车线"
 
-    # ⑤ 停车线真触发: ARCH01(当前 feasible)注入一块超重肩石 → 不可行
+    # ⑤ 停车线真触发: ARCH01(当前 feasible)注入一块超重带石 → 不可行
     tam = copy.deepcopy(led)
     fake = dict(next(s for s in tam["stones"]
                      if s["id"] == "ARCH01.EAST.BACK.C00.B00"))
@@ -391,3 +438,37 @@ def test_neg3_neg5_r5a_degenerate_and_stop_line():
     with pytest.raises(G3.G3_FROZEN_GEOMETRY_CONFLICT, match="ARCH01"):
         G3.run_g3(seqdoc["events"], tam, in_void=_excl_in_void(),
                   rbo_ids=[], r5a=r5a)
+
+
+@pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
+                    reason="out/sequence.json+ledger_sequenced.json 不在盘上")
+def test_neg6_thin_ring_stop_line_and_band_widening_helps():
+    """⑥停车线的冻结几何牙(合成薄环): 环带薄到裸环即不可行 → run_g3
+    raise 点名该孔(不依赖注入, 真"冻结几何冲突"); 同一账把截面加厚到
+    结构带(ring_t+0.35) → 转 feasible —— 方向自证非恒红。"""
+    led, seqdoc = _real_chain()
+    tam = copy.deepcopy(led)
+    n = 0
+    for s in tam["stones"]:
+        if G3.stone_role(s["id"]) == "RING" and s["id"].startswith("ARCH01."):
+            s["params"] = dict(s["params"], ring_t=0.02)
+            n += 1
+    assert n >= 4, "前提失效: ARCH01 环石数异常"
+    empty_r5a = {zh: [] for zh in
+                 ("ARCH%02d" % i for i in range(1, 18))}
+    with pytest.raises(G3.G3_FROZEN_GEOMETRY_CONFLICT, match="ARCH01"):
+        G3.run_g3(seqdoc["events"], tam, in_void=_excl_in_void(),
+                  rbo_ids=[], r5a=empty_r5a)
+    # 方向自证: 同一薄环账, 有胶结锁固带 → 截面按结构带加厚(ring_t+带宽)
+    # → 回到可行域 —— 停车线非恒红, 且带宽与可行性的方向正确
+    band_id = next(s["id"] for s in tam["stones"]
+                   if G3.stone_role(s["id"]) == "BACK"
+                   and s["id"].startswith("ARCH01."))
+    _saved = G3.LOCK_BAND_M
+    try:
+        G3.LOCK_BAND_M = 2.0     # 薄环 + 足量结构带 → 截面加厚回可行域
+        gate = G3.stress_gate(tam, r5a={"ARCH01": [band_id]})
+    finally:
+        G3.LOCK_BAND_M = _saved
+    acc = gate["holes"]["ARCH01"]["acceptance"]
+    assert acc["band_t"] == pytest.approx(2.0) and acc["feasible"], acc

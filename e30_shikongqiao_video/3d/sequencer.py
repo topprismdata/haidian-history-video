@@ -29,11 +29,15 @@
   HOLD_EVENT → DECENTER_START → WEDGE_RELEASE×k 沿 λ 栅格 {0.25,.5,.75,1.0}
   逐档全走(load_lambda=已释放荷载份额) → CENTERING_CLEAR。
   min_hold=3 [工程参数·敏感性]。
-- R5a 环肩锁固: 环肩咬合石(params.clipped_by=="ring_band")与下部锁固肩
-  (判据: 石底 z ≤ 该孔 extrados[facts.arch_z+params.ring_t] ∧ 石 bbox 与券架
-  parts bbox[全局系] 无碰撞)排 CLOSE 后 **DECENTER_START 前**(修复轮 checker
-  收紧: 上界原为 CLEAR, 落架中途不得砌肩 —— T5 需"锁固后才落架"),
-  prereq ⊇ {合龙 seq}。
+- R5a 环肩锁固(P2-T6 裁决收缩): 环肩咬合石(params.clipped_by=="ring_band")
+  与下部锁固肩(判据: 石底 z ≤ 该孔 extrados[facts.arch_z+params.ring_t]
+  ∧ 足印距 extrados 面 ≤LOCK_BAND_M —— 径向距, facts.arch_signed_r 单源,
+  竖直 z 距在陡肩段(斜率~9)把切向偏移放大成假深度 ∧ 石 bbox 与券架
+  parts bbox[全局系] 无碰撞), 且**剔除双建模占位**(_double_model_ids:
+  rbo 桶逐石 V(stone∩RING∪)/V(stone) ≥ DM_SWALLOW_THRESHOLD 者 → R5b;
+  其重量 ≥98.5% 已在 RING 实体内, R5a 再计即双算)。排 CLOSE 后
+  **DECENTER_START 前**(修复轮 checker 收紧: 上界原为 CLEAR, 落架中途
+  不得砌肩 —— T5 需"锁固后才落架"), prereq ⊇ {合龙 seq}。
 - R5b 其余肩背胞: 其余 SPANDREL/BACK/CORE 排 CENTERING_CLEAR 后。
 - R6 frontier 状态机: 孔状态 UNBUILT < RING_CLOSED < CLOSED_SUPPORTED <
   DECENTERING < CLEARED < FILLED; 跨孔组合表禁: 相邻孔同时 DECENTERING;
@@ -66,11 +70,13 @@ curve 值回答"此时刻该支撑体分担这块石荷载的份额", 不变量:
 合龙/持荷=B14; 撞券石=C:A2; 背胞fill=C:A1; R7=C:A1。
 
 Python 3.9.6 纯 stdlib, blender-free; 几何禁第二套公式(消费 geom_math/facts)。
+例外: _double_model_ids 在 rbo 桶∩账非空时延迟 import numpy+p1a_slice
+(blender-free 段, P1 体素度量单源) —— 合成账交集空, 快速返回零依赖。
 """
 import copy
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import ledger as L
 import events as E
@@ -87,6 +93,10 @@ LAMBDA_LADDER = (0.25, 0.5, 0.75, 1.0)   # λ 档全走(spec 1/4 步进)
 STONE_DENSITY = 1.0         # R3 比值对共同密度不变, 不发明无出处常数[三红线]
 PAIR_MIRROR_TOL = 1e-6      # θ 镜像配对容差(度)
 EXTRADOS_EPS = 1e-9         # z 比较浮点容差
+# [P2-T6 裁决·两层] R5a 收缩为真锁固带: 足印距 extrados 面 ≤0.35m(径向) 且
+# 剔除双建模占位(0.985 吞没口径 28 石)。0.35 是唯一声明带宽, 不为绿而调。
+LOCK_BAND_M = 0.35
+DM_SWALLOW_THRESHOLD = 0.985
 
 # 角色分类(R0 fail-closed: 未登记角色报错, 不静默归类)
 IMPOST_ROLES = ("IMPOST", "PIER")            # R1: 墩肩/拱座, 立架前
@@ -304,18 +314,83 @@ def _hole_of(stone):
     return stone["id"].split(".")[0]
 
 
+def _double_model_ids(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
+    # type: (Dict[str, Any], Optional[List[str]], float) -> set
+    """P2-T6 裁决·双建模占位剔除: rbo 桶(ring_band_overlap)中
+    V(stone∩RING∪)/V(stone) ≥ threshold(0.985 口径, 真账 28 石)者 ——
+    它们 ≥98.5% 已被 RING 实体吞没, 重量在压力线模型里属 RING 已计部分,
+    R5a 再计即双算 → 剔出 R5a 落 R5b。
+
+    为何不 import g3_check 复用其 double_model_scan: g3 与本模块是两独立
+    实现互证(测试钉死 g3 导入闭包无 sequencer), 反向依赖成环; 故按同一
+    P1 度量单源(p1a_slice._voxel_unique_vol, 2cm 栅格, bbox 预筛,
+    pre-inset)自实现同法扫描 —— 度量单源不变, 实现各自独立, 结果互证。
+
+    rbo_ids=None 时读 out/print/excluded_ids.json 的 ring_band_overlap 桶;
+    桶空或与账交集空(合成账) → 空集, 不触重依赖。交集非空而
+    numpy/p1a_slice 缺失 → raise(度量无单源即拒绝出数, 不静默放空)。"""
+    if rbo_ids is None:
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "out", "print", "excluded_ids.json")
+        rbo_ids = []
+        if os.path.exists(p):
+            with open(p, encoding="utf-8") as f:
+                rbo_ids = list(json.load(f).get("buckets", {})
+                               .get("ring_band_overlap", []))
+    by_id = {s["id"]: s for s in ledger.get("stones", [])}
+    todo = sorted({sid for sid in (rbo_ids or ()) if sid in by_id})
+    if not todo:
+        return set()
+    import numpy as np  # 延迟重依赖: 仅真账扫描需要
+    import p1a_slice as P
+    rings_by_zone = {}  # type: Dict[str, List[str]]
+    for s in ledger.get("stones", []):
+        if _role(s.get("id", "")) == RING_ROLE:
+            rings_by_zone.setdefault(s["id"].split(".")[0], []).append(s["id"])
+    mesh_cache = {}  # type: Dict[str, Any]
+
+    def ring_mesh(rid):
+        # type: (str) -> Any
+        if rid not in mesh_cache:
+            rv, rf = P.world_mesh(by_id[rid], {rid: ("out", None)})
+            rv = np.asarray(rv, dtype=float)
+            tris = P._flat_tris(P.PC._face_tris(rv, rf))
+            mesh_cache[rid] = (rv, tris, rv.min(axis=0), rv.max(axis=0))
+        return mesh_cache[rid]
+
+    out = set()
+    for sid in todo:
+        st = by_id[sid]
+        sv, sf = P.world_mesh(st, {sid: ("out", None)})
+        SV = np.asarray(sv, dtype=float)
+        lo, hi = SV.min(axis=0), SV.max(axis=0)
+        rms = []
+        for rid in rings_by_zone.get(sid.split(".")[0], ()):
+            rv, tris, rlo, rhi = ring_mesh(rid)
+            if bool((rlo <= hi + 1e-9).all() and (rhi >= lo - 1e-9).all()):
+                rms.append((rv, tris))
+        v_stone, _v_hit, v_unique, _inside = P._voxel_unique_vol(sv, sf, rms)
+        ratio = (1.0 - v_unique / v_stone) if v_stone > 0 else 0.0
+        if ratio >= threshold:
+            out.add(sid)
+    return out
+
+
 def _arch_idx(zone):
     # type: (str) -> int
     return int(zone[4:]) - 1
 
 
 def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
-                   min_hold=MIN_HOLD_DEFAULT, ring_order=None):
-    # type: (Dict[str, Any], Any, float, int, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
+                   min_hold=MIN_HOLD_DEFAULT, ring_order=None, dm_ids=None):
+    # type: (Dict[str, Any], Any, float, int, Optional[Dict[str, List[str]]], Optional[Set[str]]) -> Dict[str, Any]
     """规则引擎主入口。ring_order: {zone: [ring stone id 顺序]} 可选显式券石
     顺序(负控注入位); None=按 θ 镜像配对自动派生。自检失败 raise SequencerError。
     裁1: in_void 幻影石(classify_stones 单源)不入日程。min_hold 必须 ≥1
     (F4: 0=免持荷 fail-open, 构造器拒绝)。
+    dm_ids: 双建模占位 id 集(None=按裁决阈值自扫, 真账 ~26s; 显式传空
+    set() 跳过) —— P2-T6 裁决第 2 闸, 集合内 FILL 石剔出 R5a 落 R5b
+    (其重量 ≥98.5% 已在 RING 实体内, 二次计荷即双算)。
     """
     if int(min_hold) < 1:
         raise SequencerError(
@@ -336,7 +411,13 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
             raise SequencerError("R0_UNKNOWN_ROLE 石 %s 角色未登记: %s"
                                  % (sid, _role(sid)))
     in_void = _in_void_ids(ledger)
+    if dm_ids is None:
+        dm_ids = _double_model_ids(ledger)
+    else:
+        dm_ids = set(dm_ids)
     stones = [s for s in stones_all if s["id"] not in in_void]
+    dm_hit = sum(1 for s in stones
+                 if s["id"] in dm_ids and _role(s["id"]) in FILL_ROLES)
     cen_by_zone = {}
     for c in (centerings or []):
         cen_by_zone[c["zone"]] = c
@@ -406,6 +487,11 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
         def extrados_z(gx):
             return F.arch_z(gx - xc, 0.0, springer, a, b) + ring_t
 
+        def band_dist(gx, gz):
+            # 足印到 extrados 面的径向距离(facts.arch_signed_r 单源;
+            # 竖直 z 距在陡肩段把切向偏移放大成假深度, 项目 discipline 用径向)
+            return F.arch_signed_r(gx, gz, xc, springer, a, b) - ring_t
+
         cen_boxes = _centering_boxes_global(cen)
 
         # -- R1: 墩肩/拱座 z 升序(立架前) --
@@ -471,13 +557,17 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
         trace.append({"hole": zone, "state": "RING_CLOSED",
                       "at_seq": close_seq})
 
-        # -- R5a: 环肩锁固(合龙后 CLEAR 前) --
+        # -- R5a: 环肩锁固(合龙后 CLEAR 前; P2-T6 裁决: 带闸+占位剔除) --
         shoulders = []
+        n_dm_hole = 0
         for s in holes[zone]:
             if _role(s["id"]) not in FILL_ROLES:
                 continue
+            if s["id"] in dm_ids:
+                n_dm_hole += 1
+                continue
             if s["params"].get("clipped_by") == "ring_band" \
-                    or _is_lock_shoulder(s, extrados_z, cen_boxes):
+                    or _is_lock_shoulder(s, extrados_z, cen_boxes, band_dist):
                 shoulders.append(s)
         shoulders = sorted(shoulders,
                            key=lambda s: (_stone_xz(s)[1], s["id"]))
@@ -571,6 +661,7 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
         hole_report.append({"zone": zone, "centering": cen["id"],
                             "n_ring": w1["n_ring"],
                             "n_shoulder": w1["n_shoulder"],
+                            "n_dm_excluded": n_dm_hole,
                             "n_fill": w1["n_fill"]})
 
     # -- R7: 面上最后 PAVING → RAIL/POST → CARVE --
@@ -605,6 +696,7 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
             "n_stones": len(stones),
             "n_stones_ledger": len(ledger.get("stones", [])),
             "n_stones_in_void": len(in_void),
+            "n_dm_excluded": dm_hit,
             "n_events": len(events),
             "eps": float(eps),
             "min_hold": int(min_hold),
@@ -663,11 +755,17 @@ def _check_r3_order(banks, eps):
                         % (placed, n_total, imb, eps, w_l, w_r))
 
 
-def _is_lock_shoulder(stone, extrados_z, cen_boxes):
-    # type: (Dict[str, Any], Any, List[tuple]) -> bool
-    """R5a 下部锁固肩判据: 石底 z ≤ 该孔 extrados 区 ∧ 石 bbox 与券架占位无碰撞。"""
+def _is_lock_shoulder(stone, extrados_z, cen_boxes, band_dist):
+    # type: (Dict[str, Any], Any, List[tuple], Any) -> bool
+    """R5a 下部锁固肩判据(P2-T6 裁决收缩): 石底 z ≤ 该孔 extrados 区 ∧
+    足印距 extrados 面 ≤ LOCK_BAND_M(径向, band_dist(x,z)=
+    facts.arch_signed_r−ring_t; 竖直 z 距在陡肩段(斜率~9)把切向偏移放大
+    成假深度 —— 实测竖直读法会拆掉拱脚稳定配重, ARCH05/13 翻不可行)
+    ∧ 石 bbox 与券架占位无碰撞。"""
     x_mid, z_bottom, _zm = _stone_xz(stone)
     if z_bottom > extrados_z(x_mid) + EXTRADOS_EPS:
+        return False
+    if band_dist(x_mid, z_bottom) > LOCK_BAND_M + EXTRADOS_EPS:
         return False
     sb = _stone_box(stone)
     return not any(_boxes_collide(sb, cb) for cb in cen_boxes)
@@ -711,20 +809,27 @@ def _shoulder_place_seq(events, sid):
 # ---------------------------------------------------------------------------
 
 def check_sequence(result, ledger, centerings, eps=EPS_DEFAULT,
-                   min_hold=MIN_HOLD_DEFAULT):
-    # type: (Dict[str, Any], Dict[str, Any], Any, float, int) -> List[str]
+                   min_hold=MIN_HOLD_DEFAULT, dm_ids=None):
+    # type: (Dict[str, Any], Any, Any, float, int, Optional[Set[str]]) -> List[str]
     """对 build_sequence 产物(或其篡改本)全量复核 R0-R7 + frontier。
     负控五组注入均经此入口判红。裁1: R0 恰一次核只对**入日程石**成立
     (in_void 幻影石按 classify_stones 同一单源重算, 且任何事件引用幻影石
     即 R0_IN_VOID_PHANTOM); result 带 _edge_plan 时加核 Σcapacity≥1 不变量
     (裁2, 采样点=每石自身 curve knot ∪ 本孔全部事件 seq, 分段线性下端点
-    覆盖即全程覆盖)。"""
+    覆盖即全程覆盖)。dm_ids: 双建模占位集(None=按裁决阈值重算 —— 篡改
+    防御默认; 与 build_sequence 传同一集可省一次扫描)。
+    R5a 分类镜像与构造器同判据(带闸+占位剔除): 占位石/带外深肩石被排进
+    合龙→落架窗 → R5A_WINDOW 必红(占位石混入 R5a 荷载的负控入口)。"""
     errs = []  # type: List[str]
     if int(min_hold) < 1:
         errs.append("R4_MIN_HOLD min_hold=%r 必须 ≥1(与构造器同闸, fail-open "
                     "禁止)" % (min_hold,))
     events = result.get("events", [])
     in_void = _in_void_ids(ledger)
+    if dm_ids is None:
+        dm_ids = _double_model_ids(ledger)
+    else:
+        dm_ids = set(dm_ids)
     stone_ids = [s["id"] for s in ledger.get("stones", [])
                  if s["id"] not in in_void]
     cen_ids = [c["id"] for c in (centerings or [])]
@@ -866,11 +971,16 @@ def check_sequence(result, ledger, centerings, eps=EPS_DEFAULT,
                     s = by_id.get(e["stone_id"])
                     if s is None:
                         continue
-                    locked = s["params"].get("clipped_by") == "ring_band" \
+                    locked = s["id"] not in dm_ids and (
+                        s["params"].get("clipped_by") == "ring_band"
                         or _is_lock_shoulder(
-                            s, lambda gx: F.arch_z(gx - xc, 0.0, springer,
-                                                   a, b) + ring_t,
-                            cen_boxes)
+                            s,
+                            lambda gx: F.arch_z(gx - xc, 0.0, springer,
+                                                a, b) + ring_t,
+                            cen_boxes,
+                            lambda gx, gz: F.arch_signed_r(gx, gz, xc,
+                                                           springer,
+                                                           a, b) - ring_t))
                     if locked:
                         # 修复轮收紧: 上界 CLEAR → DECENTER_START(落架中途
                         # 不得砌肩; T5 需"锁固后才落架")。负控: 肩石挪入
@@ -1125,8 +1235,9 @@ def main():
     zones = sorted(set(s["id"].split(".")[0] for s in led["stones"]))
     centerings = [CEN.build_centering_for_arch(_arch_idx(z)) for z in zones
                   if z.startswith("ARCH")]
-    res = build_sequence(led, centerings)
-    errs = check_sequence(res, led, centerings)
+    dm = _double_model_ids(led)
+    res = build_sequence(led, centerings, dm_ids=dm)
+    errs = check_sequence(res, led, centerings, dm_ids=dm)
     if errs:
         for m in errs[:40]:
             print("ERR", m)
@@ -1149,8 +1260,10 @@ def main():
               encoding="utf-8") as f:
         json.dump(seq_out, f, ensure_ascii=False, indent=1, sort_keys=True)
     n_stage = len(res["sequence"])
-    print("OK stones=%d(in_void 滤除 %d) events=%d stages=%d trace=%d holes=%d"
+    print("OK stones=%d(in_void 滤除 %d, dm 占位剔除 %d) events=%d stages=%d "
+          "trace=%d holes=%d"
           % (res["meta"]["n_stones"], res["meta"]["n_stones_in_void"],
+             res["meta"]["n_dm_excluded"],
              res["meta"]["n_events"], n_stage,
              len(res["frontier_trace"]), len(res["meta"]["hole_order"])))
     return 0

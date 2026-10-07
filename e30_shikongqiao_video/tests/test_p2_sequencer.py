@@ -165,8 +165,9 @@ def _zones(led):
     return sorted(set(s["id"].split(".")[0] for s in led["stones"]))
 
 
-def _errs(res, led, cens):
-    return SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD)
+def _errs(res, led, cens, dm_ids=None):
+    return SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD,
+                             dm_ids=dm_ids)
 
 
 def _by_hole(events, zone, etype):
@@ -414,6 +415,7 @@ def test_r4_negative_lambda_ladder_broken(built, micro):
 def test_r5a_shoulder_in_close_clear_window(built, micro):
     by_id = {s["id"]: s for s in micro["stones"]}
     cens = {c["zone"]: c for c in _micro_centerings()}
+    dm = SQ._double_model_ids(micro, rbo_ids=[])   # 合成账显式空(免扫描)
     n_shoulder = 0
     for zone in _zones(micro):
         close = _by_hole(built["events"], zone, "CLOSE_RING")[0]["seq"]
@@ -421,19 +423,24 @@ def test_r5a_shoulder_in_close_clear_window(built, micro):
         dstart = _by_hole(built["events"], zone, "DECENTER_START")[0]["seq"]
         assert close < dstart < clear
         ai = int(zone[4:]) - 1
+        xc = GM.arch_center_x(ai)
+        springer = GM.arch_springer_z(ai)
+        a = GM.SPANS[ai] / 2.0
+        b = GM.arch_rise(ai)
+        extrados_z = lambda gx: F.arch_z(gx - xc, 0.0, springer, a, b) \
+            + MICRO_RING_T
+        band_dist = lambda gx, gz: F.arch_signed_r(gx, gz, xc, springer,
+                                                   a, b) - MICRO_RING_T
+        cen_boxes = SQ._centering_boxes_global(cens[zone])
         for e in built["events"]:
             if e["hole"] != zone or e["etype"] != "PLACE_STONE":
                 continue
             s = by_id[e["stone_id"]]
             if s["id"].split(".")[2] not in SQ.FILL_ROLES:
                 continue
-            x_mid, z_bot, _ = SQ._stone_xz(s)
-            extr = F.arch_z(x_mid - GM.arch_center_x(ai), 0.0,
-                            GM.arch_springer_z(ai), GM.SPANS[ai] / 2.0,
-                            GM.arch_rise(ai)) + MICRO_RING_T
-            locked = z_bot <= extr and not any(
-                SQ._boxes_collide(SQ._stone_box(s), cb)
-                for cb in SQ._centering_boxes_global(cens[zone]))
+            locked = s["id"] not in dm and (
+                s["params"].get("clipped_by") == "ring_band"
+                or SQ._is_lock_shoulder(s, extrados_z, cen_boxes, band_dist))
             if locked:
                 n_shoulder += 1
                 # 修复轮收紧: 窗上界 CLEAR → DECENTER_START(落架中途不得砌肩)
@@ -797,43 +804,173 @@ def test_m9_check_sequence_requires_evidence(built, micro):
 
 
 def test_m2_frame_collision_excluded_from_r5a(built, micro):
-    """M2: _is_lock_shoulder 碰撞项专属负控 —— 注入底 z≤extrados 但 bbox
-    撞券架的石, 必被 R5a 排除(落 R5b, CLEAR 后置放), checker 全绿。"""
+    """M2: _is_lock_shoulder 碰撞项专属负控 —— 注入底 z≤extrados ∧ 足印
+    在锁固带内(径向) 但 bbox 撞券架的石, 必被 R5a 排除(落 R5b, CLEAR 后
+    置放), checker 全绿。带闸先放过(径向 0.118 ≤ 0.35), 碰撞支是唯一
+    否决项(P2-T6 裁决后判据三支仍各有专属负控)。"""
     led = _micro_ledger()
     cens = _micro_centerings()
-    cen = cens[0]
     ai = 0
     xc = GM.arch_center_x(ai)
-    part = min(cen["parts"], key=lambda p: p["bbox"][4])   # 最低的券架构件
-    bx = part["bbox"]
-    pw, pd, ph = bx[1] - bx[0], bx[3] - bx[2], bx[5] - bx[4]
-    cx = (bx[0] + bx[1]) / 2.0 + xc
-    cy = (bx[2] + bx[3]) / 2.0
-    cz = (bx[4] + bx[5]) / 2.0
+    springer = GM.arch_springer_z(ai)
+    a = GM.SPANS[ai] / 2.0
+    b = GM.arch_rise(ai)
+    # 跨缘外 0.30m(微账肩石同位), 底 z 压到 springer−0.55: 足印径向距
+    # ~+0.12(带内), 石身下探撞东端楔块(券架 x 向最外构件)。
     collider = L.new_stone(
         "ARCH01", "EAST", "SPANDREL", 5, 9, "wedge-std",
-        dict(_wstd(max(0.2, pw * 1.5), max(0.2, ph * 1.5), 0.0),
-             d=max(0.2, 4.0 * pd + 2.0 * abs(cy))),
-        [cx, cy, cz, 0.0, 0.0, 0.0], "qingshi")
+        dict(_wstd(0.38, 0.7, 1.2), d=2.0),
+        [xc + a + 0.30, 0.0, springer - 0.55 + 0.35, 0.0, 0.0, 0.0],
+        "qingshi")
     led["stones"].append(collider)
-    # 前提自证(判据两支: 底 z ≤ extrados ∧ 撞架; d 拉通墙厚向保证 y 向相交)
-    global_box = (bx[0] + xc, bx[1] + xc, bx[2], bx[3], bx[4], bx[5])
-    assert SQ._boxes_collide(SQ._stone_box(collider), global_box)
-    a = GM.SPANS[ai] / 2.0
+    cen_boxes = SQ._centering_boxes_global(cens[0])
+    # 前提自证(判据三支: 底 z ≤ extrados ∧ 足印在锁固带内 ∧ 撞架)
     x_mid, z_bot, _ = SQ._stone_xz(collider)
-    extr = F.arch_z(x_mid - xc, 0.0, GM.arch_springer_z(ai), a,
-                    GM.arch_rise(ai)) + MICRO_RING_T
-    assert z_bot <= extr, "前提失效: 撞架石底 z 高于 extrados, 判据测不到碰撞项"
+    extr = F.arch_z(x_mid - xc, 0.0, springer, a, b) + MICRO_RING_T
+    band_dist = (lambda gx, gz: F.arch_signed_r(gx, gz, xc, springer, a, b)
+                 - MICRO_RING_T)
+    r_foot = band_dist(x_mid, z_bot)
+    assert z_bot <= extr, "前提失效: 撞架石底 z 高于 extrados"
+    assert -1.0 <= r_foot <= SQ.LOCK_BAND_M, \
+        "前提失效: 撞架足印不在锁固带内(r=%.3f), 判据测不到碰撞项" % r_foot
+    assert any(SQ._boxes_collide(SQ._stone_box(collider), cb)
+               for cb in cen_boxes), "前提失效: 未撞任何券架构件"
     assert not SQ._is_lock_shoulder(
-        collider, lambda gx: F.arch_z(gx - xc, 0.0, GM.arch_springer_z(ai),
-                                      a, GM.arch_rise(ai)) + MICRO_RING_T,
-        [global_box]), "撞架石不得判锁固肩"
+        collider,
+        lambda gx: F.arch_z(gx - xc, 0.0, springer, a, b) + MICRO_RING_T,
+        cen_boxes, band_dist), "撞架石不得判锁固肩"
     res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
     clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
     place = next(e["seq"] for e in res["events"]
                  if e.get("stone_id") == collider["id"])
     assert place > clear, "撞架石必须落 R5b(CLEAR 后)"
     assert _errs(res, led, cens) == []
+
+
+# ---------------------------------------------------------------------------
+# P2-T6 裁决: 锁固带闸(径向) + 双建模占位剔除
+# ---------------------------------------------------------------------------
+
+def _band_fns(ai):
+    # type: (int) -> Any
+    xc = GM.arch_center_x(ai)
+    springer = GM.arch_springer_z(ai)
+    a = GM.SPANS[ai] / 2.0
+    b = GM.arch_rise(ai)
+    extrados_z = lambda gx: F.arch_z(gx - xc, 0.0, springer, a, b) \
+        + MICRO_RING_T
+    band_dist = lambda gx, gz: F.arch_signed_r(gx, gz, xc, springer,
+                                               a, b) - MICRO_RING_T
+    return extrados_z, band_dist
+
+
+def test_r5a_lock_band_gate_radial_boundary(micro):
+    """P2-T6 裁决带闸(单元): 足印距 extrados 面**径向** ≤0.35m 才锁固。
+    微账既有肩石自证在带内; 同形石竖直下移、二分定位带界两侧: 带外
+    (r>0.35)判 False, 带内(r≤0.35)判 True。竖直 z 距读法在陡肩段把切向
+    偏移放大成假深度(且实测拆拱脚配重致 ARCH05/13 翻假) —— 径向是
+    facts.arch_signed_r 单源 discipline, 本测钉死口径。"""
+    base = next(s for s in micro["stones"]
+                if s["id"] == "ARCH01.EAST.SPANDREL.C00.B00")
+    extrados_z, band_dist = _band_fns(0)
+    cen_boxes = []   # 单元测只测带闸; 碰撞支由 M2 专属负控覆盖
+    x_mid, z_bot, _ = SQ._stone_xz(base)
+    d0 = band_dist(x_mid, z_bot)
+    assert -1.0 <= d0 <= SQ.LOCK_BAND_M, \
+        "fixture 前提失效: 微账肩石足印不在锁固带内 r=%.3f" % d0
+    assert SQ._is_lock_shoulder(base, extrados_z, cen_boxes, band_dist)
+
+    def shift_down(stone, delta):
+        st = copy.deepcopy(stone)
+        t = list(st["transform"])
+        t[2] -= delta
+        st["transform"] = t
+        return st
+
+    lo, hi = 0.0, 6.0          # 竖直下移量二分: 找径向距过 0.35 的界
+    # (径向几何: 固定 x 下移先靠近弧心 —— 跨缘外 x=2.55 处圆心在
+    #  springer−e', 下移 ~3.2m 内 r 反而变小, 界外才单调增; hi 取宽)
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        st = shift_down(base, mid)
+        _xm, zb, _z = SQ._stone_xz(st)
+        if band_dist(_xm, zb) > SQ.LOCK_BAND_M:
+            hi = mid
+        else:
+            lo = mid
+    out_stone = shift_down(base, hi + 0.01)
+    in_stone = shift_down(base, max(lo - 0.01, 0.0))
+    for st in (out_stone, in_stone):
+        _xm, zb, _z = SQ._stone_xz(st)
+        assert zb <= extrados_z(_xm), "前提失效: 下移石底高于 extrados"
+    _xm, zb_out, _z = SQ._stone_xz(out_stone)
+    _xm, zb_in, _z = SQ._stone_xz(in_stone)
+    r_out, r_in = band_dist(_xm, zb_out), band_dist(_xm, zb_in)
+    assert r_out > SQ.LOCK_BAND_M, r_out
+    assert not SQ._is_lock_shoulder(out_stone, extrados_z, cen_boxes,
+                                    band_dist), "带外深肩石不得判锁固肩"
+    assert r_in <= SQ.LOCK_BAND_M, r_in
+    assert SQ._is_lock_shoulder(in_stone, extrados_z, cen_boxes, band_dist)
+    print("径向带界: r_in=%.4f / r_out=%.4f (LOCK_BAND_M=%.2f, 竖直下移界=%.3f)"
+          % (r_in, r_out, SQ.LOCK_BAND_M, lo))
+
+
+def test_r5a_band_gate_deep_shoulder_lands_r5b(micro):
+    """带闸构造级: 径向带外深肩石不入 SHOULDER 阶段(合龙→落架窗),
+    落 R5b 在 CLEAR 后, checker 全绿; 对照带内肩石仍在窗内。"""
+    led = _micro_ledger()
+    cens = _micro_centerings()
+    base = next(s for s in led["stones"]
+                if s["id"] == "ARCH01.EAST.SPANDREL.C00.B00")
+    extrados_z, band_dist = _band_fns(0)
+    deep = copy.deepcopy(base)
+    deep["id"] = "ARCH01.EAST.SPANDREL.5.5"
+    deep["transform"] = list(deep["transform"])
+    deep["transform"][2] -= 3.5     # 竖直压深 3.5m(过弧心垂足后径向出带)
+    x_mid, z_bot, _ = SQ._stone_xz(deep)
+    assert z_bot <= extrados_z(x_mid), "前提失效: 深肩石底高于 extrados"
+    assert band_dist(x_mid, z_bot) > SQ.LOCK_BAND_M, \
+        "前提失效: 深肩石仍在带内, 测不到带闸"
+    led["stones"].append(deep)
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
+    close = _by_hole(res["events"], "ARCH01", "CLOSE_RING")[0]["seq"]
+    dstart = _by_hole(res["events"], "ARCH01", "DECENTER_START")[0]["seq"]
+    clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
+    place = next(e["seq"] for e in res["events"]
+                 if e.get("stone_id") == deep["id"])
+    assert place > clear, "带外深肩石必须落 R5b(CLEAR 后)"
+    assert not (close < place < dstart)
+    base_place = next(e["seq"] for e in res["events"]
+                      if e.get("stone_id") == base["id"])
+    assert close < base_place < dstart, "对照带内肩石应在 SHOULDER 窗"
+    assert _errs(res, led, cens) == []
+
+
+def test_dm_placeholder_excluded_from_r5a_and_tamper_red(micro):
+    """裁决第 2 闸·双建模占位剔除: 完全吞没石(体素口径, 同 g3
+    double_model_scan 单源)判占位 → build 不入 SHOULDER(落 R5b CLEAR 后);
+    checker 带 dm_ids 全绿; **不带** dm_ids 的 checker(按 rbo 桶重算,
+    合成石不在桶内 → 集合空)将其视为锁固肩, 而它实际排 CLEAR 后 →
+    R5A_WINDOW 必红 —— 占位石混入 R5a 荷载的负控入口。"""
+    led = _micro_ledger()
+    cens = _micro_centerings()
+    ring = next(s for s in led["stones"]
+                if s["id"].startswith("ARCH01.EAST.RING."))
+    fake = L.new_stone("ARCH01", "EAST", "BACK", 8, 8, "wedge-std",
+                       _wstd(0.10, 0.10, 0.10), list(ring["transform"]),
+                       "qingshi")
+    led["stones"].append(fake)
+    dm = SQ._double_model_ids(led, rbo_ids=[fake["id"]])
+    assert dm == {fake["id"]}, "体素吞没扫描未识别全吞没合成石: %r" % dm
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=dm)
+    clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
+    place = next(e["seq"] for e in res["events"]
+                 if e.get("stone_id") == fake["id"])
+    assert place > clear, "占位石必须剔出 R5a 落 R5b"
+    assert _errs(res, led, cens, dm_ids=dm) == []
+    errs2 = _errs(res, led, cens)          # 重算: 合成石不在真 rbo 桶 → 空
+    assert any(m.startswith("R5A_WINDOW") and fake["id"] in m
+               for m in errs2), errs2[:8]
 
 
 def test_m7_r6_right_neighbor_unbuilt_red(built, micro):
@@ -934,9 +1071,13 @@ def test_real_ledger_fullchain():
     zones = sorted(set(s["id"].split(".")[0] for s in led["stones"]))
     assert len(zones) == 17
     cens = [CEN.build_centering_for_arch(int(z[4:]) - 1) for z in zones]
-    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
+    # P2-T6 裁决: 双建模占位集一次扫描, build/check 共用(省一次 ~26s 体素扫)
+    dm = SQ._double_model_ids(led)
+    assert len(dm) == 28, "0.985 吞没口径占位集应为 28 石(裁决声明值), 实得 %d" % len(dm)
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=dm)
     # 交付闸: require_evidence=True 硬约束
-    errs = SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD)
+    errs = SQ.check_sequence(res, led, cens, eps=EPS, min_hold=MIN_HOLD,
+                             dm_ids=dm)
     assert errs == [], "真账 check_sequence 违例(前 10): %s" % errs[:10]
     # 裁1: 幻影石过滤 —— 事件量级 6122→4070(=5935-2052 砌置放+187 券架事件);
     # in_void 滤除数与 excluded_ids.json 同源同值
@@ -951,8 +1092,10 @@ def test_real_ledger_fullchain():
         got = SQ._in_void_ids(led)
         assert got == want, "in_void 滤除集与旁挂全表不一致: %d vs %d, 差集=%r" \
             % (len(got), len(want), list(got ^ want)[:8])
-    # R5a 锁固肩量级(修复轮实测 1307 = 1042 环带裁片 + 265 实体墙肩;
-    # 修复轮前 3187 含 1880 幻影石 —— 主控预估 ~400-600 未计保留裁片)
+    # P2-T6 裁决收缩: R5a = 1290(旧 1307 − 17 占位剔除; 其余 11 块占位石
+    # 本就非锁固肩)。带闸(径向 0.35m)在真账零额外剔除 —— 实体墙肩全部
+    # 径向贴环, 收缩量全部来自占位剔除(两轮探针见 T6 报告"裁决与发现")。
+    assert res["meta"]["n_dm_excluded"] == 28
     r5a = 0
     for e in res["events"]:
         if e["etype"] != "PLACE_STONE" or not e.get("stone_id"):
@@ -964,7 +1107,7 @@ def test_real_ledger_fullchain():
                       if x["hole"] == zh and x["etype"] == "DECENTER_START")
         if close < e["seq"] < dstart:
             r5a += 1
-    assert 1100 <= r5a <= 1500, r5a
+    assert r5a == 1290, r5a
     # frontier 轨迹合法
     assert SQ.check_frontier(res["events"], zones) == []
     # stage 叙事分组目标 200-600
