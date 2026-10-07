@@ -31,6 +31,7 @@ import math
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import facts as _F
+import geom_math as _GM   # D3(P2-T2 修复轮): SPANS/起拱线/桥面/孔心表单源, 禁止第二套公式
 from assumptions import BODY_BOTTOM as _BODY_BOTTOM
 
 # --- [工程参数] 排架与堆叠 ---
@@ -58,8 +59,8 @@ def bottom_z():
     return _BODY_BOTTOM
 
 
-SPANS = list(_F.SPAN_DISTINCT) + list(reversed(_F.SPAN_DISTINCT[:-1]))
-"""17 孔净跨表(=facts.SPAN_DISTINCT 对称展开; bridge_geom2 同一形态)。"""
+SPANS = list(_GM.SPANS)
+"""17 孔净跨表(D3: 单源 geom_math.SPANS; bridge_geom2 同一形态)。"""
 
 
 def span_of(arch_idx):
@@ -67,16 +68,11 @@ def span_of(arch_idx):
     return SPANS[arch_idx]
 
 
-def _u(arch_idx):
-    return abs(2 * arch_idx - (_F.N_SPAN - 1)) / float(_F.N_SPAN - 1)
-
-
 def arch_springer_z(arch_idx):
-    """第 arch_idx 孔起拱线高: 由桥面/拱肩/矢跨比反推(中央孔恒等 facts.SPRINGER:
-    7.30−1.40−0.56*8.50=1.14)。孔中桥面以 DECK_Z_TOP..DECK_Z_END 按同一 u 线性
-    内插 —— 孔内 camber 二阶效应属表现层, 券架高度容差内不计。"""
-    deck_c = _F.DECK_Z_TOP + (_F.DECK_Z_END - _F.DECK_Z_TOP) * _u(arch_idx)
-    return deck_c - _F.spandrel(arch_idx) - _F.rise_ratio(arch_idx) * span_of(arch_idx)
+    """第 arch_idx 孔起拱线(D3 委托 geom_math.arch_springer_z: 桥面抛物线在孔心
+    的值 − 拱肩 − 矢高; 中央孔恒等 facts.SPRINGER=1.14)。旧本地"DECK_Z_TOP..END
+    按 u 线性内插"变体已废除 —— 第二套纵剖公式与 geom_math 单源裁决不容。"""
+    return _GM.arch_springer_z(arch_idx)
 
 
 def _box(x0, x1, y0, y1, zb0, zb1, zt0, zt1, kind):
@@ -181,13 +177,14 @@ def build_centering_for_arch(arch_idx, ring_t=None, lift=0.0):
     # type: (int, Optional[float], float) -> Dict
     """按孔号从 facts 单源取参建券架(sequencer 便捷入口):
     span=SPANS[i], ring_t=facts.RING_T, springer=arch_springer_z(i),
-    孔内桥面取跨中值常数(见 arch_springer_z 注)。"""
+    桥面 = geom_math.deck_z 真抛物线(孔心全局 x + 孔局部 x) —— 夹持/DECK_CLASH
+    判的是真桥面, 不再是"跨中值常数"近似(D3 消费 geom_math 后免费获得)。"""
     ring_t = _F.RING_T if ring_t is None else ring_t
     span = span_of(arch_idx)
     springer = arch_springer_z(arch_idx)
-    deck_c = _F.DECK_Z_TOP + (_F.DECK_Z_END - _F.DECK_Z_TOP) * _u(arch_idx)
+    xc0 = _GM.arch_center_x(arch_idx)
 
-    def _deck(_x):
-        return deck_c
+    def _deck(local_x):
+        return _GM.deck_z(xc0 + local_x)
 
     return build_centering(arch_idx, span, ring_t, lift, springer, _deck)

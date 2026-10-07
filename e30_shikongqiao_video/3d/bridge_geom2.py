@@ -12,6 +12,7 @@ from mathutils import Vector, Matrix
 
 # ── 单一事实来源: 数值一律来自 facts.py(本体节, M2.5 冻结) ──
 import facts as _F
+import geom_math as _GM   # D3(P2-T2 修复轮 2026-10-07): 纵剖/收分纯数学单源, 本文件一行委托
 BRIDGE_LEN, N_SPAN = _F.BRIDGE_LEN, _F.N_SPAN
 DECK_UP_W, DECK_DOWN_W = _F.DECK_UP_W, _F.DECK_DOWN_W
 SPRINGER = _F.SPRINGER
@@ -36,10 +37,8 @@ spandrel = _F.spandrel   # [M19] 逐孔拱肩厚剖面(单一数据源 facts.spa
 
 
 def arch_crown_z(i):
-    """M12/M19: 第 i 孔拱冠标高 = 该孔中心处桥面标高 - 该孔拱肩厚(冠线跟随桥面
-    camber; 拱肩 M19 起为逐孔剖面 facts.spandrel, 中央 1.4 → 端 0.5)。"""
-    xc = (PIER_X[i] + PIER_X[i + 1]) / 2.0
-    return deck_z(xc) - spandrel(i)
+    """D3 委托: 公式单源 geom_math.arch_crown_z(语义逐位不变, core_hash 硬门)。"""
+    return _GM.arch_crown_z(i)
 
 
 def arch_rise_ratio(i):
@@ -48,15 +47,15 @@ def arch_rise_ratio(i):
 
 
 def arch_rise(i):
-    return arch_rise_ratio(i) * SPANS[i]
+    return _GM.arch_rise(i)
 
 
 def arch_springer_z(i):
-    """第 i 孔起拱线 = 冠 - 矢高。端孔自动贴近水面(真实小端孔)。"""
-    return arch_crown_z(i) - arch_rise(i)
+    """D3 委托: 公式单源 geom_math.arch_springer_z(第 i 孔起拱线 = 冠 - 矢高)。"""
+    return _GM.arch_springer_z(i)
 
 
-SPANS = list(SPAN_DISTINCT) + list(reversed(SPAN_DISTINCT[:-1]))
+SPANS = list(_GM.SPANS)
 
 
 # [M14 归一] 两圆心尖拱纯数学移至 facts(与 PIER_W_INT 同模式: 规则即数据,
@@ -78,62 +77,13 @@ def pier_w(i):
     return PIER_W_INT[i - 1]
 
 
-PIER_X = []
-_acc = -BRIDGE_LEN / 2.0
-for i in range(N_SPAN + 1):
-    w = BRIDGE_ABUT if i in (0, N_SPAN) else pier_w(i)
-    PIER_X.append(_acc + w / 2.0)
-    _acc += w
-    if i < N_SPAN:
-        _acc += SPANS[i]
-
-# 六审四刀#2 硬门: 变宽剖面上 PIER_X 累加必须严格回到 +BRIDGE_LEN/2(总长守恒)。
-assert abs(_acc - BRIDGE_LEN / 2.0) < 1e-9, \
-    "桥长闭合破坏: 墩台累加终点 %.9f != +%.1f (PIER_W_INT 总和须恒等 (N_SPAN-1)*PIER_W)" \
-    % (_acc, BRIDGE_LEN / 2.0)
+PIER_X = list(_GM.PIER_X)   # D3 委托: 累加规则+桥长闭合断言单源 geom_math(逐位同表)
 
 
 def deck_z(x):
-    """桥面标高: 以**抛物线**为母曲线, 中央最高, 两端最低。
-
-    z(x) = DECK_Z_TOP - K_DECK * x^2,  K_DECK 使 z(±75) = DECK_Z_END。
-    (GPT v4 给定公式 z=7.55-0.0004267x^2; 用参数化写法便于调两端高度)
-
-    ⚠ 此前版本用"控制点 smoothstep 插值", 数组未正确居中, 导致
-      x=0 反而是最低点(5.15)、x=±60 最高 —— 桥面弧度**方向反了**。
-      该错误由 GPT 看图发现(它说"读成中间低两头高"), 我未自查出来。
-      故此处改为显式抛物线, 并加断言防止再次反向。
-    """
-    half = BRIDGE_LEN / 2.0
-    ax = min(abs(x), half)
-    k = (DECK_Z_TOP - DECK_Z_END) / (half * half)
-    return DECK_Z_TOP - k * ax * ax
-
-
-# ── 自检: 桥面必须中央最高 ──
-def _assert_deck_correct():
-    half = BRIDGE_LEN / 2.0
-    hi = int(half)
-    vals = [deck_z(float(x)) for x in range(-hi, hi + 1)]
-    mx = max(vals)
-    arg = vals.index(mx) - hi
-    if abs(deck_z(0.0) - DECK_Z_TOP) > 0.01 or abs(mx - DECK_Z_TOP) > 0.01 or abs(arg) > 3:
-        raise AssertionError(
-            "桥面弧度反向! z(0)=%.2f (应=%.2f), 最大值在 x=%d" % (deck_z(0.0), DECK_Z_TOP, arg))
-    if abs(deck_z(half) - DECK_Z_END) > 0.01:
-        raise AssertionError("两端标高错: z(75)=%.2f 应=%.2f" % (deck_z(half), DECK_Z_END))
-
-
-_assert_deck_correct()
-
-
-def _width_at(z, z_bot, z_top, w_bot, w_top):
-    """线性收分: 高度 z 处的横向半宽。"""
-    if z_top - z_bot < 1e-9:
-        return w_top / 2.0
-    f = (z - z_bot) / (z_top - z_bot)
-    f = max(0.0, min(1.0, f))
-    return (w_bot + (w_top - w_bot) * f) / 2.0
+    """桥面标高(抛物线母曲线, 中央最高): D3 委托, 公式单源 geom_math.deck_z
+    (历史反向事故的防再发自检随公式迁入 geom_math, 导入即验)。"""
+    return _GM.deck_z(x)
 
 
 def build_body_bm():
@@ -151,7 +101,7 @@ def build_body_bm():
             elif k == 1: yy, zz =  1.0, BODY_BOTTOM
             elif k == 2: yy, zz =  1.0, zt
             else:        yy, zz = -1.0, zt
-            hw = _width_at(zz, BODY_BOTTOM, zt, DECK_DOWN_W, DECK_UP_W)
+            hw = _GM.width_at(x, zz)   # D3 委托: 收分公式单源 geom_math(逐位同式)
             ring.append(bm.verts.new((x, yy * hw, zz)))
         rows.append(ring)
     for s in range(NSEG_X):
@@ -193,14 +143,12 @@ def build_void_bm():
             prof.append((xx, arch_z(xx, xc, springer, a, b)))
         prof.append((xc - a, springer))
         n = len(prof)
-        deck_c = deck_z(xc)
 
         def hw_at(z):
             """该高度处桥体半宽 + 穿透余量 VOID_CUT_MARGIN(assumptions, 0.60m):
-            确保切刀完全贯穿前后双侧收分墙面; 自相交轮廓修复后大余量不再产生残面横杠。"""
-            f = (z - BODY_BOTTOM) / (deck_c - BODY_BOTTOM)
-            f = max(0.0, min(1.0, f))
-            return (DECK_DOWN_W + (DECK_UP_W - DECK_DOWN_W) * f) / 2.0 + VOID_CUT_MARGIN
+            确保切刀完全贯穿前后双侧收分墙面; 自相交轮廓修复后大余量不再产生残面横杠。
+            D3 委托: 收分公式单源 geom_math.width_at(xc, z)(逐位同式)。"""
+            return _GM.width_at(xc, z) + VOID_CUT_MARGIN
 
         A = [bm.verts.new((px, -hw_at(pz), pz)) for px, pz in prof]
         B = [bm.verts.new((px,  hw_at(pz), pz)) for px, pz in prof]

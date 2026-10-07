@@ -383,3 +383,14 @@
 - **E8**: 体积口径声明(耳切对角约定 6.2e-3 实测复现/129h 实心体上界/CORE 非加和)、装箱旋转(fit_diagonal)、SLICE_NOTES 重写。
 - **红门现状**(主控 2A 预授权 FAIL 交付): verdict=FAIL —— check_stone 106(全部为带裁片 SELF_INTERSECT 1-2 面对级, 耳切在折线密采样+抽稀后的薄片三角伪交叉, 属本轮新裁片网格质量)、gap 216(全部 spandrel-back-bounds, 与 SELF_INTERSECT 石同 id 集合——被自交片污染的面级判)、ring↔链残留 87/903。归因: 裁片耳切网格化质量, T9 范围输入; 判据/桶/阈值零放宽(主控禁令)。
 - **冻结影响**: build_scene2 仅 cap_to_deck ledger 链改动, 本体 bridge_body/voussoir/coursing 三对象几何零变化(freeze_hash 实测见 p1-task-8-report 修复轮节); p1a_slice/export_print 不在冻结清单。
+
+## 2026-10-07 P2-T2 修复轮 D3 geom_math 纵剖/收分纯数学单源提取 —— 本体零几何
+
+**主控裁决**: D3(审查 BLOCK 修复, 与 D1/D2/D4-D7 同轮; 本条只记 D3 本体侧)。
+
+**改动文件**: `geom_math.py`(新建, 零 bmesh: deck_z/arch_crown_z/arch_springer_z/arch_rise/arch_center_x/width_at + PIER_X/SPANS 表, 公式自 bridge_geom2 **原样搬移**, 常数读 facts/assumptions, 桥面反向自检与桥长闭合断言随公式迁入)、`bridge_geom2.py`(一行委托+收分消费转发: deck_z/arch_crown_z/arch_springer_z/arch_rise 转发, PIER_X/SPANS 引 geom_math 表, 删本地 `_width_at`(build_body_bm/build_void_bm.hw_at 改消费 geom_math.width_at 同式))、`centering.py`(D3 消费侧: SPANS/arch_springer_z 委托 geom_math, 旧"DECK 线性内插"第二套纵剖公式废除; wrapper 桥面改真抛物线 _GM.deck_z(孔心全局 x+局部 x))、`tests/test_p2_geom_math.py`(新建 8 条: 单元独立锚/委托逐位断言/零 bmesh 子进程证/石账跨源钉)、`refs/freeze_manifest.md`(§2 bridge_geom2 哈希重锚 + geom_math 建行)。
+
+**跨源钉(D3 主控要求)**: geom_math vs 石账(out/ledger_full.json) RING 龙门石 transform z 逐孔 ±1e-9 —— 纯 python 重放账本 params(孔心/ stations/环厚/预抬)×geom_math(springer=arch_springer_z(i), a=SPANS[i]/2, b=arch_rise(i))×masonry 缝宽常量, bmesh float32 顶点量化后取包围盒中心; **实测 17 孔 Δ=0 逐位相等**, 且带 ring_t+1cm 扰动负控(钉非恒真)。
+
+**冻结影响**: blender 重建零错 SAVED v2, freeze_hash 三对象(bridge_body/voussoir/coursing) sha_sorted/sha_order/nverts/nfaces/bbox **逐位不变(CORE_HASH_IDENTICAL: True)**; qa_l2 正检 QA_L2_OK、负控 NEG_CAUGHT 10/10。几何值逐位未动 —— 委托只改公式住址, 不改数值。
+
