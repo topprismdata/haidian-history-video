@@ -16,7 +16,7 @@
 | R1 墩身自下而上 | 每墩列带 z 升序；丁顺层间依赖 | C:B组 砌体通则 |
 | R2 券架先行 | 每孔 RING 石依赖该孔 centering 已立；支撑边 type=centering，携 `capacity_curve`=[(立架事件,1.0),(卸架各档,f↓),(CLEAR,0)]（v2: 时窗二值升级为容量曲线） | B14 孔庆普实证：无架拱圈不能自持 |
 | R3 对称砌筑 | **荷载平衡度**判据：\|W_L−W_R\|/(W_L+W_R) ≤ ε（默认 0.15），不锁 L-R-L-R 严格交替（无史料的伪精度）；负控=一侧前沿大幅领先必红 | B14 + v2 |
-| R4 合龙→持荷→**分级卸架** | 龙门石=该孔 RING 末件；`MIN_HOLD_EVENTS=3`（事件数非时长，无史料养护值不冒充）；卸架=DECENTER_START→WEDGE_RELEASE_×k→CENTERING_CLEAR 事件链，支撑边 `capacity_curve` 1.0→0 阶梯（**curve 首点前容量=0**：架未立即无支撑，T1 审查 I1 采纳），λ∈{0,.25,.5,.75,1} 逐档核（事件词表见 §3：DECENTER_START/WEDGE_RELEASE/CENTERING_CLEAR） | C:A2 + B14 + v2 |
+| R4 合龙→持荷→**分级卸架** | 龙门石=该孔 RING 末件；`MIN_HOLD_EVENTS=3`（**该孔显式 HOLD_EVENT 计数**，非全局事件数——T3 裁决：防邻孔事件稀释本孔养护窗；无史料养护值不冒充）；卸架=DECENTER_START→WEDGE_RELEASE_×k→CENTERING_CLEAR 事件链，支撑边 `capacity_curve` 1.0→0 阶梯（**curve 首点前容量=0**：架未立即无支撑，T1 审查 I1 采纳），λ∈{0,.25,.5,.75,1} 逐档核（事件词表见 §3：DECENTER_START/WEDGE_RELEASE/CENTERING_CLEAR） | C:A2 + B14 + v2 |
 | R5a **pre-strike 锁固肩** | 合龙后、架上仍承载时，先砌满足四条件的下部拱肩/背衬：RING 完成∧不与券架实体冲突∧有确定下承/侧承∧左右荷载增量近对称（含 475 环肩咬合石） | v2 裁决: 裸环脱架=人为最不利态; 环肩本非独立体系 |
 | R5b post-strike 回填 | 卸架完成后才砌受架占位的上部背衬/芯胞/余肩 | 空间约束 |
 | R6 孔序由中向外 | ARCH09→两侧交替；**并行度显式化**：每孔携 frontier 状态 OPEN→CENTERED→RING_BUILDING→CLOSED_SUPPORTED→PREBACKED→DECENTERING→SELF_SUPPORTING→FILLED，允许的跨孔状态组合是序列器约束（不是隐含在排序里） | [推断] 主控签署（v2: 状态机取代序字符串） |
@@ -37,7 +37,7 @@
 - **冻结防污染红线**：若出现"裸环与带锁固肩都过不了"——**停下报主控**，严禁回调封卷的 0.56 矢跨/墩宽/券厚来凑门
 - **CORE 满墙胞**：全属 R5b post-strike（落架前禁砌——占架空间且无承托），依赖=该孔 CENTERING_CLEAR
 - **④推力来源（v2 定稿，cot 式作废）**：每孔每 snapshot 由③压力线求可行推力区间 H∈[Hmin,Hmax]（无拉应力约束下包络）；墩不平衡 ΔH=max|H_L−H_R|，对侧取下界/本侧取上界为保守组合；卸架中按 λ∈{0,.25,.5,.75,1} 逐档（H_eff=λ·H_full 与架上余载分担）；报告标[现代工程分析]非清代判据
-- **MIN_HOLD_EVENTS=3**：合龙后至少 3 个结构事件才准 DECENTER_START（事件数非时长；B15 灰浆通例只作背景注，敏感性 1/3/6 记报告）
+- **MIN_HOLD_EVENTS=3**：该孔 CLOSE_RING 后须有 ≥3 个**本孔显式 HOLD_EVENT** 才准 DECENTER_START（T3 裁决口径；B15 灰浆通例只作背景注，敏感性 1/3/6 记报告）
 - **ε=0.15（R3 荷载平衡度）**：[工程参数·主控签署] 无史料值，取"一事件内单石增重占比 << ε"的保守离散；敏感性 0.10/0.15/0.25 记报告
 
 ## 5. 验收
