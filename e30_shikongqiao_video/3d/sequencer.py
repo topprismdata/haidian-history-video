@@ -340,16 +340,22 @@ def _double_model_ratios(ledger, rbo_ids=None, threshold=DM_SWALLOW_THRESHOLD):
     pre-inset)自实现同法扫描 —— 度量单源不变, 实现各自独立, 结果互证。
 
     rbo_ids=None 时读 out/print/excluded_ids.json 的 ring_band_overlap 桶;
-    桶空或与账交集空(合成账) → 空集, 不触重依赖。交集非空而
-    numpy/p1a_slice 缺失 → raise(度量无单源即拒绝出数, 不静默放空)。"""
+    桶空或与账交集空(合成账) → 空集, 不触重依赖。**[T7b R4.6] rbo_ids=None
+    且该文件缺失 → raise fail-closed**: rbo 桶是双建模剔除的输入单源, 静默
+    空集会产出"另一种合法"账目(clean-clone 隐形依赖, 出口审查 C4 附带
+    发现) —— 拒绝出数而非放空。交集非空而 numpy/p1a_slice 缺失 → raise
+    (度量无单源即拒绝出数, 不静默放空)。"""
     if rbo_ids is None:
         p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "out", "print", "excluded_ids.json")
-        rbo_ids = []
-        if os.path.exists(p):
-            with open(p, encoding="utf-8") as f:
-                rbo_ids = list(json.load(f).get("buckets", {})
-                               .get("ring_band_overlap", []))
+        if not os.path.exists(p):
+            raise SequencerError(
+                "_double_model_ratios: rbo_ids=None 且 %s 缺失 —— 双建模"
+                "剔除输入单源不在盘, 拒绝出数(fail-closed; 合成账请显式传 "
+                "rbo_ids=[]) —— clean-clone 隐形依赖防线" % p)
+        with open(p, encoding="utf-8") as f:
+            rbo_ids = list(json.load(f).get("buckets", {})
+                           .get("ring_band_overlap", []))
     by_id = {s["id"]: s for s in ledger.get("stones", [])}
     todo = sorted({sid for sid in (rbo_ids or ()) if sid in by_id})
     if not todo:
@@ -619,11 +625,14 @@ def build_sequence(ledger, centerings, eps=EPS_DEFAULT,
             "n_fill": len(rest),
         }
 
-    # -- 波2: 全桥对称同步落架(主控 2026-10-07 裁决: 多孔连拱"对称同步
-    #    卸落"工法; 逐孔串行在 G3④墩不平衡门不可行, 顺序邻孔对亦有对间
-    #    过渡残红 —— 探针见 p2-task-7-report.md §8)。档差=0: 每档全部孔
-    #    WEDGE_RELEASE 同 stage 同档(每对邻孔同 λ, 不平衡=λ·|Hmin_A−Hmin_B|,
-    #    相似跨≈0); λ 全阶后统一拆架, 再逐孔填筑肩背(R5b, 依赖各自 CLEAR)。
+    # -- 波2: 全桥对称同步落架([工程推断·非史料]: 17 孔同波无 G0 锚 ——
+    #    C:A3 原文"则例无工序教科书, 序列细节靠通例+实物反推", 本桥施工
+    #    档案在未找到清单; 规则号勘误: 卸架序属 R4 λ 全阶 + R6 frontier
+    #    组合表, 非 R5)。主控 2026-10-07 裁决采纳: 逐孔串行在 G3④墩不
+    #    平衡门不可行(图式结论, δ/μ0 敏感性见 p2-task-7-report.md §9),
+    #    顺序邻孔对亦有对间过渡残红 —— 档差=0: 每档全部孔 WEDGE_RELEASE
+    #    同 stage 同档(每对邻孔同 λ, 不平衡=λ·|Hmin_A−Hmin_B|, 相似跨
+    #    ≈0); λ 全阶后统一拆架, 再逐孔填筑肩背(R5b, 依赖各自 CLEAR)。
     prev_stage = stages[-1]["id"] if stages else None
     st = open_stage("DECENTER.DSTART.WAVE", evidence=EV_CEN)
     lo = len(events) + 1

@@ -416,9 +416,10 @@ def test_real_17_holes_acceptance_feasible_and_report():
     assert v_mc == pytest.approx(v_sv, rel=1e-9)
 
     # 停车线解除: ③正常返回口径下 17/17(T6b 成果不回退)。
-    # [P2-T7] ④gate_imbalance 起新停车线: 真账史实卸架序(逐孔串行)在
-    # 推力包络口径下超阈 → run_g3 raise G3_DECENTER_ORDER_CONFLICT(排程
-    # 冲突, 报告挂异常, 结论见 p2-task-7-report.md); 本测只钉③两门数据
+    # [P2-T7] ④gate_imbalance 起新停车线: 真账卸架序(逐孔串行 [工程推断·
+    #  非史料]) 在首轮包络口径下超阈 → run_g3 raise
+    #  G3_DECENTER_ORDER_CONFLICT(排程冲突, 报告挂异常, 演进见
+    #  p2-task-7-report.md §8/§9); 本测只钉③两门数据
     # 不受④影响(报告三节齐, gate_stress/gate_dag ok 照旧断言)。
     try:
         rep = G3.run_g3(seqdoc["events"], led, in_void=_excl_in_void(),

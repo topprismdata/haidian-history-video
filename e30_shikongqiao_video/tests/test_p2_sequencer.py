@@ -157,7 +157,7 @@ def micro_fixture():
 @pytest.fixture(name="built")
 def built_fixture(micro):
     res = SQ.build_sequence(micro, _micro_centerings(), eps=EPS,
-                            min_hold=MIN_HOLD)
+                            min_hold=MIN_HOLD, dm_ids=[])
     return res
 
 
@@ -209,7 +209,8 @@ def test_r0_unknown_role_fail_closed(micro):
                       [0.0, 0.0, R7_Z, 0.0, 0.0, 0.0], "qingshi")
     led2 = {"meta": micro["meta"], "stones": micro["stones"] + [bad]}
     with pytest.raises(SQ.SequencerError, match="R0_UNKNOWN_ROLE"):
-        SQ.build_sequence(led2, _micro_centerings())
+        SQ.build_sequence(led2, _micro_centerings(),
+                          dm_ids=[])
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +238,7 @@ def test_phantom_in_void_not_scheduled(built, micro):
             "stones": micro["stones"] + [_mid_void_stone("ARCH02", 1)]}
     phantom = led2["stones"][-1]["id"]
     res = SQ.build_sequence(led2, _micro_centerings(), eps=EPS,
-                            min_hold=MIN_HOLD)
+                            min_hold=MIN_HOLD, dm_ids=[])
     assert res["meta"]["n_stones_in_void"] == 1
     assert res["meta"]["n_stones"] == len(micro["stones"])
     assert not any(e.get("stone_id") == phantom for e in res["events"])
@@ -256,7 +257,7 @@ def test_phantom_in_void_in_stream_red(built, micro):
             "stones": micro["stones"] + [_mid_void_stone("ARCH02", 1)]}
     phantom = led2["stones"][-1]["id"]
     res = SQ.build_sequence(led2, _micro_centerings(), eps=EPS,
-                            min_hold=MIN_HOLD)
+                            min_hold=MIN_HOLD, dm_ids=[])
     evs = copy.deepcopy(res["events"])
     evs.append(E.new_event(len(evs) + 1, "ARCH02", "PLACE_STONE",
                            stone_id=phantom, prereq=[], evidence="C:A1"))
@@ -350,7 +351,8 @@ def test_r3_negative_one_side_leads(micro, built):
     by_hole_ring_order["ARCH02"] = moved
     with pytest.raises(SQ.SequencerError, match="R3_IMBALANCE"):
         SQ.build_sequence(micro, _micro_centerings(), eps=EPS,
-                          min_hold=MIN_HOLD, ring_order=by_hole_ring_order)
+                          min_hold=MIN_HOLD, ring_order=by_hole_ring_order,
+                          dm_ids=[])
 
 
 def test_r3_density_invariance(micro):
@@ -358,13 +360,13 @@ def test_r3_density_invariance(micro):
     判定逐位不变 —— R3 判的是比值; 管线任何位置消费绝对重量都在此显形。
     末尾断言权重确已放大, 防不变量退化成恒真(密度根本没生效的假绿)。"""
     cens = _micro_centerings()
-    base = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD)
+    base = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=[])
     assert SQ.check_sequence(base, micro, cens, eps=EPS,
                              min_hold=MIN_HOLD) == []
     old = SQ.STONE_DENSITY
     try:
         SQ.STONE_DENSITY = 2600.0
-        heavy = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD)
+        heavy = SQ.build_sequence(micro, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=[])
         errs_heavy = SQ.check_sequence(heavy, micro, cens, eps=EPS,
                                        min_hold=MIN_HOLD)
     finally:
@@ -762,7 +764,7 @@ def test_cap_invariant_catches_unshared_load(built, micro):
 def test_f4_min_hold_zero_rejected(micro):
     """F4: min_hold=0 原为 fail-open(免持荷直接落架), 构造器现要求 ≥1。"""
     with pytest.raises(SQ.SequencerError, match="R4_MIN_HOLD"):
-        SQ.build_sequence(micro, _micro_centerings(), eps=EPS, min_hold=0)
+        SQ.build_sequence(micro, _micro_centerings(), eps=EPS, min_hold=0, dm_ids=[])
 
 
 def test_f4_filled_trace_hole_local_and_derivable(micro):
@@ -775,7 +777,7 @@ def test_f4_filled_trace_hole_local_and_derivable(micro):
                      if not (s["id"].startswith("ARCH03.")
                              and any(t in s["id"] for t in rest_tokens))]
     res = SQ.build_sequence(led, _micro_centerings(), eps=EPS,
-                            min_hold=MIN_HOLD)
+                            min_hold=MIN_HOLD, dm_ids=[])
     trace = res["frontier_trace"]
     by_hole = {}
     for t in trace:
@@ -839,7 +841,7 @@ def test_m2_frame_collision_excluded_from_r5a(built, micro):
         collider,
         lambda gx: F.arch_z(gx - xc, 0.0, springer, a, b) + MICRO_RING_T,
         cen_boxes, band_dist), "撞架石不得判锁固肩"
-    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=[])
     clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
     place = next(e["seq"] for e in res["events"]
                  if e.get("stone_id") == collider["id"])
@@ -932,7 +934,7 @@ def test_r5a_band_gate_deep_shoulder_lands_r5b(micro):
     assert band_dist(x_mid, z_bot) > SQ.LOCK_BAND_M, \
         "前提失效: 深肩石仍在带内, 测不到带闸"
     led["stones"].append(deep)
-    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD)
+    res = SQ.build_sequence(led, cens, eps=EPS, min_hold=MIN_HOLD, dm_ids=[])
     close = _by_hole(res["events"], "ARCH01", "CLOSE_RING")[0]["seq"]
     dstart = _by_hole(res["events"], "ARCH01", "DECENTER_START")[0]["seq"]
     clear = _by_hole(res["events"], "ARCH01", "CENTERING_CLEAR")[0]["seq"]
@@ -1148,3 +1150,98 @@ def test_real_ledger_fullchain():
     for w in wedges:
         assert L.edge_capacity(cen_edge, w) + L.edge_capacity(stone_edge, w) \
             == pytest.approx(1.0)
+
+
+# ---------------------------------------------------------------------------
+# T7b 出口审查 R4 钉(λ 常数跨文件 / dm 逐孔回归 / sidecar 重建==记录)
+# ---------------------------------------------------------------------------
+
+def test_lambda_grid_constants_cross_file_pinned():
+    """R4.3: λ 栅格三处常数同一裁决值跨文件钉 —— events.LAMBDA_GRID(档数)
+    / sequencer.LAMBDA_LADDER(λ 全阶) / g3_check.LAMBDA_GRID_STEP(R6 对内
+    同档容差) 互证, 改任一处即红(防静默错位④判据与 R6 容差)。"""
+    import events as E2
+    import g3_check as G3
+    assert E2.LAMBDA_GRID == 4
+    assert SQ.LAMBDA_LADDER == (0.25, 0.5, 0.75, 1.0)
+    assert len(SQ.LAMBDA_LADDER) == E2.LAMBDA_GRID
+    assert SQ.LAMBDA_LADDER[0] == pytest.approx(1.0 / E2.LAMBDA_GRID)
+    assert SQ.LAMBDA_LADDER[-1] == pytest.approx(1.0)
+    assert G3.LAMBDA_GRID_STEP == pytest.approx(1.0 / E2.LAMBDA_GRID)
+    assert abs(SQ.LAMBDA_LADDER[1] - SQ.LAMBDA_LADDER[0]) \
+        == pytest.approx(G3.LAMBDA_GRID_STEP)
+
+
+def test_real_dm_per_hole_counts_match_top_level():
+    """R4.1 回归钉: meta.holes[].n_dm_excluded 逐孔值 == meta.dm_excluded
+    按孔分组计数 ∧ 逐孔和 == 顶层 —— 防波1 循环残留变量类缺陷复发
+    (T7b 前 per-hole 恒 0 的陈旧账目, 出口审查 C4)。"""
+    import collections
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "..", "3d", "out", "sequence.json")
+    if not os.path.exists(p):
+        pytest.skip("out/sequence.json 不在盘上")
+    with open(p, encoding="utf-8") as f:
+        sq = json.load(f)
+    meta = sq["meta"]
+    per = {h["zone"]: h["n_dm_excluded"] for h in meta["holes"]}
+    cnt = collections.Counter(d["id"].split(".")[0]
+                              for d in meta["dm_excluded"])
+    assert per == {z: cnt.get(z, 0) for z in per}, (per, dict(cnt))
+    assert sum(per.values()) == len(meta["dm_excluded"]) \
+        == meta["n_dm_excluded"] == 29
+
+
+@pytest.mark.skipif(
+    not (os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "..", "3d", "out", "ledger_full.json"))
+         and os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "..", "3d", "out", "print",
+                                         "excluded_ids.json"))
+         and os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "..", "3d", "refs",
+                                         "artifact_sha256.txt"))),
+    reason="真账 untracked 输入(ledger_full/excluded_ids)或 sidecar 不在盘上")
+def test_sidecar_clean_clone_rebuild_matches_recorded(tmp_path):
+    """R4.6 后半: sidecar 不只'记录==盘', 还要'干净克隆重建==记录' ——
+    git archive HEAD(tracked 集)→ 拷两份 untracked 真账输入 → 重跑
+    sequencer → sequence.json sha256 == sidecar 记录。钓 clean-clone
+    隐形依赖(excluded_ids.json 缺失曾产出'另一种合法'账目 sha 70c90849,
+    出口审查 F7; 现 _double_model_ratios 对缺失输入 fail-closed)。"""
+    import hashlib
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.abspath(os.path.join(here, "..", ".."))
+    proj = "e30_shikongqiao_video"
+    # sidecar 记录值
+    rec = {}
+    with open(os.path.join(here, "..", "3d", "refs",
+                           "artifact_sha256.txt"), encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("#") or "  " not in line:
+                continue
+            sha, path = line.split()
+            rec[path] = sha
+    key = "3d/out/sequence.json"
+    assert key in rec, "sidecar 缺 sequence.json 记录"
+    # 干净克隆: archive 只含 tracked
+    r = subprocess.run(["git", "archive", "HEAD", proj], cwd=root,
+                       capture_output=True)
+    assert r.returncode == 0, r.stderr
+    import tarfile
+    t = tarfile.open(fileobj=__import__("io").BytesIO(r.stdout))
+    t.extractall(str(tmp_path))
+    # 拷 untracked 真账输入(重建的合法前提; 缺失会被 sequencer fail-closed 拒)
+    for rel in ("out/ledger_full.json", "out/print/excluded_ids.json"):
+        dst = tmp_path / proj / "3d" / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        with open(os.path.join(root, proj, "3d", rel), "rb") as fi, \
+                open(dst, "wb") as fo:
+            fo.write(fi.read())
+    r2 = subprocess.run([sys.executable, "sequencer.py"],
+                        cwd=str(tmp_path / proj / "3d"), capture_output=True,
+                        text=True, timeout=600)
+    assert r2.returncode == 0, r2.stdout[-2000:] + r2.stderr[-2000:]
+    out_seq = tmp_path / proj / "3d" / "out" / "sequence.json"
+    h = hashlib.sha256(out_seq.read_bytes()).hexdigest()
+    assert h == rec[key], "干净克隆重建 sequence.json sha != sidecar 记录"
