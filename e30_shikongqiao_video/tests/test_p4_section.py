@@ -1,5 +1,5 @@
 # P4-T2: export_print zones 参数化 + 段包(section5)出图单测。
-# 三判据(plan T2 Step1): ①zones=None 对盘上 central manifest(45fed1e8)零漂移
+# 三判据(plan T2 Step1): ①zones=None 对盘上 central manifest(494d5393, 445fd90 返工后重出)零漂移
 # (STL/ledger_print 逐字节 + manifest 语义等值, 除时间字段); ②段守恒
 # 2747 = Σstones + Σskipped(skipped 带 reason 不静默); ③deferred(12 孔)∪
 # section(5 孔) = 17 孔全集不交。附: zones 过滤语义(合成)、两连跑逐字节幂等。
@@ -26,14 +26,14 @@ from families import family_mesh  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRINT_DIR = os.path.join(REPO, "3d", "out", "print")
 CENTRAL = os.path.join(PRINT_DIR, "central_slice")
-CENTRAL_SHA = "45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d"
+CENTRAL_SHA = "494d5393fc47a4b987b25ff408f7260f2dd479041a2f67efe4aa34ef5f19fb01"
 EXCLUDED_PATH = os.path.join(PRINT_DIR, "excluded_ids.json")
 
-# 真账实测(P1 G2 门口径): 段(ARCH07-11)账面石 2747, 打印单元 1123,
-# ARCH09 子集 245 == 盘上 central manifest 石数。
+# 真账实测(P1 G2 门口径, 445fd90 返工后): 段(ARCH07-11)账面石 2747,
+# 打印单元 1047, ARCH09 子集 217 == 盘上 central manifest 石数。
 SEC_STONES_TOTAL = 2747
-SEC_UNITS_MEASURED = 1123
-ARCH09_UNITS = 245
+SEC_UNITS_MEASURED = 1047
+ARCH09_UNITS = 217
 
 
 # ---------------------------------------------------------------- 工具
@@ -58,11 +58,15 @@ def _assert_same(a, b, path="manifest", rel=1e-12):
 
 
 def _strip_volatile(man):
-    """除时间字段: created_utc 由门时刻生成; slice 键为 export_slice 增强
+    """除时间/生成噪声字段: created_utc 由门时刻生成; 石 uuid 为 ledger
+    generation 噪声(uuid4 逐次生成, 随账重代整体换 —— sidecar P4T6 噪声
+    类换锚注记同源), 内容对拍双侧剥除; slice 键为 export_slice 增强
     (非 export_ledger 产物), 对拍时双侧剥除。"""
     m = copy.deepcopy(man)
     m["meta"].pop("created_utc", None)
     m.pop("slice", None)
+    for s in m.get("stones", []):
+        s.pop("uuid", None)
     return m
 
 
@@ -152,7 +156,7 @@ def pack_pair(print_view, tmp_path_factory):
 # ---------------------------------------------------------------- 判据① 零漂移
 
 def test_default_zone_none_reproduces_central(tmp_path, print_view):
-    """zones=None(默认)重跑中央孔: 与盘上 45fed1e8 除时间字段外语义等值;
+    """zones=None(默认)重跑中央孔: 与盘上 494d5393 除时间字段外语义等值;
     ledger_print 逐字节 + STL 数值等值(1e-6 mm, 负控在测) —— 参数化零漂移
     门(P1 行为回归)。"""
     led, statuses, scope_ids, _buckets = print_view
@@ -167,11 +171,18 @@ def test_default_zone_none_reproduces_central(tmp_path, print_view):
     man = EP.export_ledger(sub, mesh_fn=P._to_bed_mesh_fn(statuses),
                            out_dir=out, scale=P.G2_SCALE)    # zones=None 默认路径
     _assert_same(_strip_volatile(man), _strip_volatile(ref))
-    # ledger_print 逐字节(输入子账 = 盘上真账, 处置标只打在副本)
-    assert filecmp.cmp(os.path.join(out, "ledger_print.json"),
-                       os.path.join(CENTRAL, "ledger_print.json"),
-                       shallow=False)
-    # (c) STL 数值等值(全 245 石): 门时几何产自 blender 捆绑 numpy, 与本机
+    # ledger_print 语义等值(双侧剥 uuid 生成噪声后逐字段): 输入子账 = 盘上
+    # 真账, 处置标只打在副本。(跨 generation 逐字节不可复现 —— uuid4 噪声
+    # 类, 同 sidecar P4T6 换锚注记; 同代两跑逐字节由 idempotent 测兜住。)
+    with open(os.path.join(out, "ledger_print.json"), encoding="utf-8") as fh:
+        lp_run = json.load(fh)
+    with open(os.path.join(CENTRAL, "ledger_print.json"), encoding="utf-8") as fh:
+        lp_ref = json.load(fh)
+    for d in (lp_run, lp_ref):
+        for s in d.get("stones", []):
+            s.pop("uuid", None)
+    _assert_same(lp_run, lp_ref)
+    # (c) STL 数值等值(全 217 石): 门时几何产自 blender 捆绑 numpy, 与本机
     #     numpy 在裁剪面重合处的近零相消坐标上差 ~1e-13 mm(实测最大
     #     6.1e-14), 恰逢 float32 舍入边界 -> 逐字节比较在物理零差异上翻红。
     #     门改判: 结构同(尺寸/三角数) + 全坐标 |delta|<=1e-6 mm(打印精度
@@ -189,8 +200,7 @@ def test_default_zone_none_reproduces_central(tmp_path, print_view):
     man_z = EP.export_ledger(sub, mesh_fn=P._to_bed_mesh_fn(statuses),
                              out_dir=out_z, scale=P.G2_SCALE, zones=["ARCH09"])
     assert man_z["meta"]["zones"] == ["ARCH09"]
-    mz = copy.deepcopy(man_z)
-    mz["meta"].pop("created_utc")
+    mz = _strip_volatile(man_z)
     mz["meta"].pop("zones")
     _assert_same(mz, _strip_volatile(ref))
 
@@ -217,7 +227,7 @@ def test_section5_counts_conservation_basic(print_view, pack_pair):
     assert not (set(exported) & set(skipped))
     assert set(exported) | set(skipped) == set(zone_ids)
 
-    # 实测钉值: 段打印单元 1123(spec ~913 估算的实测修正), ARCH09=245=central
+    # 实测钉值: 段打印单元 1047(spec ~913 估算的实测修正), ARCH09=217=central
     assert len(exported) == SEC_UNITS_MEASURED
     assert sum(1 for i in exported if i.startswith("ARCH09.")) == ARCH09_UNITS
     with open(os.path.join(CENTRAL, "manifest.json"), encoding="utf-8") as fh:
@@ -290,7 +300,7 @@ def test_deferred_complement(print_view, tmp_path):
     assert doc["zones"] == [z for z in all_zones if z not in set(SEC.SEGMENT)]
     assert not (set(doc["zones"]) & set(SEC.SEGMENT))
     assert set(doc["zones"]) | set(SEC.SEGMENT) == set(all_zones)
-    # 计数合账: 石 5935 = 段 2747 + 留续; 单元 2113 = 段 1123 + 留续
+    # 计数合账: 石 5935 = 段 2747 + 留续; 单元 2037 = 段 1047 + 留续
     assert doc["stones_total"] == len(led["stones"]) - SEC_STONES_TOTAL
     assert doc["units_total"] == len(scope_ids) - SEC_UNITS_MEASURED
     assert doc["unit_ids"] == sorted(

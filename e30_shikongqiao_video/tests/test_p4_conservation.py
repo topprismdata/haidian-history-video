@@ -5,11 +5,13 @@
   1. 石级三方恒等(逐 id 集合): section_kept ⊎ deferred ⊎ excluded ==
      ledger 5935, 两两不交; 分段原料数 2747/3188 同钉(稳定不变量);
   2. 单元级口径钉: 1 单元 = 1 账面石(print_scope 存活, 无合并),
-     1123+990=2113 == 重算 print_units == 盘上 g2_report counts;
-     1974 vs 2113 口径考古结论钉进 pack_verify docstring 与本测
+     1047+990=2037 == 重算 print_units == 盘上 g2_report counts;
+     口径代际考古结论钉进 pack_verify docstring 与本测
      (1974=P1-T8 原始轮 04f2e54, 排除 3961; T8b 体量宇宙处置后
      ring_band 305→182/thin_merge 84→68 回打印域 139 石 → 2113/排除
-     3822; P1 收官 T9 即 2113。1974 不作判据)。
+     3822; P1 收官 T9 即 2113; 445fd90 拱线返工 ring_band 182→222/
+     in_void 2004→2028/void_cut 1568→1580 → 2037/排除 3898。
+     1974/2113 均为历史口径, 不作判据)。
   3. 负控: deferred 抽一 id 塞 section → 红(偷挪); 删一 unit 三处都不
      出现 → 红(丢失)。
   4. import 隔离: pack_verify 不 import section_pack/export_print 装箱码
@@ -40,14 +42,14 @@ EXCLUDED_PATH = os.path.join(PRINT_DIR, "excluded_ids.json")
 G2REPORT_PATH = os.path.join(PRINT_DIR, "g2_report.json")
 LEDGER_PATH = os.path.join(_3D, "out", "ledger_full.json")
 
-# 真账实测钉(现行 G2/T8b+ 口径, 2026-10-07 P1 收官态)
+# 真账实测钉(现行 445fd90 拱线返工后口径, 2026-10-08 P4-T6 关账态)
 UNIVERSE = 5935          # 全桥账面石
-SEC_UNITS = 1123         # 段(ARCH07-11)打印单元 == 段 manifest.stones
+SEC_UNITS = 1047         # 段(ARCH07-11)打印单元 == 段 manifest.stones
 SEC_RAW = 2747           # 段账面石(含排除)
 DEF_UNITS = 990          # 留续 12 孔打印单元
 DEF_RAW = 3188           # 留续账面石(含排除)
-EXCLUDED = 3822          # 排除石(in_void 2004/void_cut 1568/ring_band 182/thin 68)
-UNITS_CURRENT = 2113     # 现行全桥打印单元 = 1123+990
+EXCLUDED = 3898          # 排除石(in_void 2028/void_cut 1580/ring_band 222/thin 68)
+UNITS_CURRENT = 2037     # 现行全桥打印单元 = 1047+990 (返工前 2113=1123+990)
 # P1-T8 原始轮历史口径(04f2e54, 已被 T8b 更替, 只作考古对账)
 UNITS_T8_ORIG = 1974
 EXCL_T8_ORIG = 3961
@@ -129,14 +131,18 @@ def test_unit_level_caliber_documented(conservation_pack):
     for token in ("1974", "3961", "2113", "04f2e54", "T8b",
                   "ring_band_overlap", "thin_merge"):
         assert token in src, "口径考古缺 token: %s" % token
-    # 两代口径各自守恒(证明是口径差不是丢账): 1974+3961 == 2113+3822 == 5935
+    # 三代口径各自守恒(证明是口径差不是丢账):
+    #   1974+3961 == 2113+3822 == 2037+3898 == 5935
     assert UNITS_T8_ORIG + EXCL_T8_ORIG == UNIVERSE
     assert UNITS_CURRENT + EXCLUDED == UNIVERSE
-    # 差 139 归因: ring_band 305→182(123 石) + thin_merge 84→68(16 石)
-    assert UNITS_CURRENT - UNITS_T8_ORIG == (305 - 182) + (84 - 68) == 139
+    # 第一代差 139(T8→T8b): ring_band 305→182(123 石) + thin_merge 84→68(16 石)
+    assert 2113 - UNITS_T8_ORIG == (305 - 182) + (84 - 68) == 139
+    # 第二代差 -76(445fd90 拱线返工): ring_band +40 + in_void +24 + void_cut +12
+    assert UNITS_CURRENT - 2113 == -((222 - 182) + (2028 - 2004)
+                                     + (1580 - 1568)) == -76
     # 不变量声明字符串: 声明石级恒等 + 现行单元口径 + 1974 历史口径
     inv = rep["不变量"]
-    assert "石级" in inv and "2113" in inv and "1974" in inv
+    assert "石级" in inv and "2037" in inv and "1974" in inv
     assert "口径" in inv
 
 

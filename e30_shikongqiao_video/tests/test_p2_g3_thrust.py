@@ -599,6 +599,14 @@ _SIDEAR_EXPECTED = frozenset([
     # P3-T8(2026-10-08): pace.json 单一节奏源入 sidecar(序幕 5s 重生成,
     # sha 随重生成同轮更新; BLK-1: sidecar+本钉同轮扩)
     "3d/out/film/pace.json",
+    # P4-T6(2026-10-08): 段包关账五件入 sidecar —— 薄特征审计/段 manifest/
+    # 留续清单/施工卡/进度账 init 模板(现行口径 2113=段 1123+留续 990;
+    # BLK-1: sidecar+本钉同轮扩; 生成命令链见 sidecar P4-T6 节)
+    "3d/out/print/thin_features.json",
+    "3d/out/print/section5/manifest.json",
+    "3d/out/print/deferred_holes.json",
+    "3d/out/print/section5/construction_cards.md",
+    "3d/out/print/print_status.json",
 ])
 
 
