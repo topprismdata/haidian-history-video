@@ -48,7 +48,8 @@ RING/IMPOST)=ledger params.bake 同源还原(p1a_slice 单一真相)。in_void=
 excluded 2004; 末帧场景可见实例 3931 == 选择记录 == 状态机 == 账面日程
 (四层一线, 主控 T5b 裁决定稿)。该 blend 无相机/无灯/无券架/楔石物体 ——
 由本驱动建 work 副本时生成执行脚手架([设计选择], 几何锚取 geom_math
-单源; SUN+天光为冒烟可见性脚手架)。
+单源; SUN+天穹+卡面石色为 P3 灯光定版脚手架, 参数见
+ensure_light_world/ensure_scaffold_material 与 p3-light-report)。
 P1 工件(e30_layout.blend / e30_bridge.blend / families.blend)全程只读,
 作对照基准, sha 由测试钉。
 
@@ -282,13 +283,32 @@ def ensure_camera(scene):
     return cam
 
 
+SUN_LIGHT_ENERGY = 2.0                        # P3 灯光定版(T8 建议 3.0→2.0)
+SUN_LIGHT_COLOR = (1.0, 0.94, 0.84)           # 暖阳(P1 Key 同源, build_scene2 RM-123108)
+# 光行向 ESE 下 = 太阳 WNW 仰 35°(P1 实拍口径): 相机侧南面近掠射(R2 探针:
+# sun-only 全桥响应 0.7/255), 太阳只做顶缘/西端 modeling, 主光=天穹。
+SUN_LIGHT_DIR = (0.760, -0.307, -0.574)       # build_scene2 Key 逐字同源
+SKY_STRENGTH = 0.49                           # 天穹重标: AgX 标定曲线插值(见 p3-light-report)
+VIEW_TRANSFORM = 'AgX'                        # blender 5.2 内置(layout blend 同值, 显式钉)
+STONE_ALBEDO = (0.21, 0.20, 0.185)            # 线性 0.20 中暗石色: 卡面 ≈ 天空的
+                                              # 0.25 辐亮度比(R2 实测 0.8 默认灰=0.94 比值,
+                                              # 对比度结构性封顶 ~10/255, 见报告根因节)
+
+
 def ensure_light_world(scene):
-    """冒烟可见性脚手架: P1 layout blend 无灯无 world(渲染全黑)。"""
+    """P3 灯光定版脚手架: P1 layout blend 无灯无 world(渲染全黑)。
+
+    T8 试帧近全白根因链(探针定位): ①天光 1.0 全穹顶巨量环境填充;
+    ②日悬南侧把相机面照得比天空还亮; ③impost 卡无材质(默认 0.8 白灰),
+    桥体辐亮度 ≈ 0.94×天空, 任何灯参都出不了对比。定版: WNW 暖阳 2.0
+    (南面入影, 只做 modeling) + 天穹 0.49 + 卡面石色 0.20 + AgX。"""
     if not any(o.type == 'LIGHT' for o in bpy.data.objects):
         ld = bpy.data.lights.new("SUN_P3", 'SUN')
-        ld.energy = 3.0
+        ld.energy = SUN_LIGHT_ENERGY
+        ld.color = SUN_LIGHT_COLOR
         lo = bpy.data.objects.new("SUN_P3", ld)
-        lo.rotation_euler = (math.radians(55), 0.0, math.radians(35))
+        lo.rotation_euler = mathutils.Vector(SUN_LIGHT_DIR) \
+            .to_track_quat('-Z', 'Y').to_euler()
         scene.collection.objects.link(lo)
     w = scene.world
     if w is None:
@@ -298,7 +318,29 @@ def ensure_light_world(scene):
     bg = w.node_tree.nodes.get("Background")
     if bg is not None:
         bg.inputs[0].default_value = (0.75, 0.82, 0.92, 1.0)
-        bg.inputs[1].default_value = 1.0
+        bg.inputs[1].default_value = SKY_STRENGTH
+
+
+def ensure_scaffold_material(scene):
+    """impost 卡材质定版: layout blend 的 fam 卡全部无材质槽(N_MAT=0 实测),
+    EEVEE 默认 Principal 0.8 白灰把桥面钉死在天空亮度旁。挂单一石色材质
+    (线性 0.20 中暗, 粗糙 0.9), 只补无材质槽的卡, 幂等。返回补卡数。"""
+    mat = bpy.data.materials.get("MAT_P3_STONE_SCAFFOLD")
+    if mat is None:
+        mat = bpy.data.materials.new("MAT_P3_STONE_SCAFFOLD")
+        mat.use_nodes = True
+        bsdf = next(n for n in mat.node_tree.nodes
+                    if n.type == 'BSDF_PRINCIPLED')
+        bsdf.inputs["Base Color"].default_value = \
+            (STONE_ALBEDO[0], STONE_ALBEDO[1], STONE_ALBEDO[2], 1.0)
+        bsdf.inputs["Roughness"].default_value = 0.9
+    n = 0
+    for ob in bpy.data.objects:
+        if ob.type == 'MESH' and ob.name.startswith("fam_") \
+                and not ob.data.materials:
+            ob.data.materials.append(mat)
+            n += 1
+    return n
 
 
 def setup_render(scene, out_dir, samples, fps):
@@ -309,6 +351,7 @@ def setup_render(scene, out_dir, samples, fps):
     scene.render.resolution_y = RES_H
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
+    scene.view_settings.view_transform = VIEW_TRANSFORM   # AgX 显式钉(灯光定版)
     scene.eevee.taa_render_samples = samples         # 冒烟低采样
     scene.render.fps = fps                           # pace 单源节奏
     scene.render.filepath = out_dir
@@ -452,12 +495,13 @@ def main():
     wedges, cens = ensure_stage_geometry(scene)
     cam = ensure_camera(scene)
     ensure_light_world(scene)
+    n_matted = ensure_scaffold_material(scene)
     engine = setup_render(scene, a.out, a.samples, pace["fps"])
     bpy.ops.wm.save_as_mainfile(filepath=a.work)     # 另存 work, 原件不动
     done_lo = done_domain(pace, sequence)
     init_s = time.time() - t0
-    print("INIT gn=%s points=%d wedges=%d cen=%d engine=%s init_s=%.2f"
-          % (gn_ident, n_pts, len(wedges), len(cens), engine, init_s),
+    print("INIT gn=%s points=%d wedges=%d cen=%d matted=%d engine=%s init_s=%.2f"
+          % (gn_ident, n_pts, len(wedges), len(cens), n_matted, engine, init_s),
           flush=True)
 
     sel_path = os.path.join(a.out, "selection.jsonl")
