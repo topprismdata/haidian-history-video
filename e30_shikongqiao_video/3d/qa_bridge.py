@@ -40,17 +40,33 @@ def derive(f):
         return f.DECK_Z_TOP - k * ax * ax
     return SimpleNamespace(SPANS=spans, PIER_X=pier_x, deck_z=deck_z)
 
-def circle_fit_residual(pts):
-    """C2/G2 核心增补: 圆拟合残差(证明'是圆', 而非只测 f/l 标量)。
-    pts: [(x,z)] 拱腹采样点。返回 max| |P-C| - R | / R。代数拟合(Kasa)即可。"""
+def _kasa_circle(pts):
+    """Kasa 代数圆拟合核心: 返回 (cx, cz, r)。"""
     import numpy as np
     A = np.array([[x, z, 1.0] for x, z in pts])
     b = np.array([x * x + z * z for x, z in pts])
     sol, *_ = np.linalg.lstsq(A, b, rcond=None)
     cx, cz = sol[0] / 2.0, sol[1] / 2.0
     r = math.sqrt(sol[2] + cx * cx + cz * cz)
+    return cx, cz, r
+
+
+def circle_fit_residual(pts):
+    """C2/G2 核心增补: 圆拟合残差(证明'是圆', 而非只测 f/l 标量)。
+    pts: [(x,z)] 拱腹采样点。返回 max| |P-C| - R | / R。代数拟合(Kasa)即可。"""
+    cx, cz, r = _kasa_circle(pts)
     err = max(abs(math.hypot(x - cx, z - cz) - r) for x, z in pts)
     return err / r, (cx, cz, r)
+
+
+def circle_fit_rms(pts):
+    """MET_ARCH_SHAPE 归一化残差: rms(|P-C|-R)/r(Kasa 拟合)。
+    与 circle_fit_residual(max 型)同一拟合核心, 阈值语义见 assumptions.CIRCLE_FIT_RTOL
+    —— 两口径并存: max 抓单点离群, rms 是 MET_ARCH_SHAPE 的判据量(返工裁决口径)。"""
+    cx, cz, r = _kasa_circle(pts)
+    errs = [math.hypot(x - cx, z - cz) - r for x, z in pts]
+    rms = math.sqrt(sum(e * e for e in errs) / len(errs)) if errs else 0.0
+    return rms / r, (cx, cz, r)
 
 def _is_num(v):
     """实数(排除 bool —— bool 是 int 的子类, 必须显式排除; 与 bridge3d.schema.is_number 同口径)。"""
@@ -129,7 +145,7 @@ def check_body(f):
             "(n-1 拓扑: 17 孔之间是 16 个墩; 蓝本文献佐证 卢沟桥10墩11孔/宝带桥53孔52墩。"
             " 基线 107.3+16×2.50+2×1.35=150.0 精确闭合, 若此判据触发说明 facts 偏离基线)"
             % (total - f.BRIDGE_LEN, total, f.BRIDGE_LEN))
-    # ── MET 券族: 圆拟合残差(G2: f/l 只是必要条件) ──
+    # ── MET 券族: 单心圆弧 + 圆拟合残差 ──
     # 防御: N_SPAN 与 SPAN_DISTINCT 展开长度不一致时(INV_N_SPAN/INV_SPANS_LEN 已报 fail),
     # 本循环必须仍能返回完整判据报告而非 IndexError 崩溃 —— 判据必须"报告", 不能"崩溃"。
     # 全一致(N_SPAN=17)时 n_arch=17, 与逐孔遍历完全等价。
@@ -137,16 +153,20 @@ def check_body(f):
     for i in range(n_arch):
         xc = (d.PIER_X[i] + d.PIER_X[i + 1]) / 2.0
         a = d.SPANS[i] / 2.0
-        # [M14] 旧 MET_ARCH_FAMILY 是恒真闸门: 它采样"合成半圆点集"再拟合圆,
-        # 残差恒 0, 与真实拱线无关。M12 后拱为逐孔两圆心 ogee, 单圆前提作废。
-        # 改测真实剖面 f.arch_z 的结构性不变量: 肩点归零/对称/单峰/冠高一致。
+        # [拱线族返工 2026-10-08] 全 17 孔单心圆弧拱(ogee 两圆心路径已删)。
+        # MET_ARCH_FAMILY 改测圆弧族结构性不变量: 锚点圆归零(b>a 孔起拱点经
+        # horseshoe 外鼓段归圆, 径向距离恒 0)/对称/单峰/冠高一致。圆"是不是
+        # 单个圆"的正面证明 = MET_ARCH_SHAPE(下方, 拱腹采样 Kasa 拟合)。
         b_i = f.rise_ratio(i) * d.SPANS[i]
         sp_i = d.deck_z(xc) - f.spandrel(i) - b_i
-        zl = f.arch_z(xc - a, xc, sp_i, a, b_i)
-        zr = f.arch_z(xc + a, xc, sp_i, a, b_i)
-        if abs(zl - sp_i) > 1e-3 or abs(zr - sp_i) > 1e-3:
-            add("fail", "MET_ARCH_FAMILY", "孔%d 肩点不归位 z(±a)=(%.3f,%.3f) spz=%.3f"
-                % (i + 1, zl, zr, sp_i))
+        rl = f.arch_signed_r(xc - a, sp_i, xc, sp_i, a, b_i)
+        rr = f.arch_signed_r(xc + a, sp_i, xc, sp_i, a, b_i)
+        if abs(rl) > 1e-6 or abs(rr) > 1e-6:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 起拱锚点离圆 r(±a)=(%.2e,%.2e)"
+                % (i + 1, rl, rr))
+        rc = f.arch_signed_r(xc, sp_i + b_i, xc, sp_i, a, b_i)
+        if abs(rc) > 1e-6:
+            add("fail", "MET_ARCH_FAMILY", "孔%d 冠锚点离圆 r=%.2e" % (i + 1, rc))
         ts = [a * k / 40.0 for k in range(1, 40)]
         sym = max(abs(f.arch_z(xc + t, xc, sp_i, a, b_i)
                       - f.arch_z(xc - t, xc, sp_i, a, b_i)) for t in ts)
@@ -159,17 +179,30 @@ def check_body(f):
            any(zs[k + 1] - zs[k] > 1e-9 for k in range(half, 40)):
             add("fail", "MET_ARCH_FAMILY", "孔%d 拱线非左升右降(多峰?)" % (i + 1,))
         crown_z = f.arch_z(xc, xc, sp_i, a, b_i)
-        # [M19/七审P1-1 期望更新 2026-10-06] 冠部钝化(facts.CROWN_BLUNT_K/CAP, s=K·e
-        # 封顶 CAP·a)是已登记的设计特征(目标 cusp 13°->~9°): 冠顶两弧等高(lo=hi),
-        # log-sum-exp 精确下沉 s·ln2 —— 冠高期望由 spz+矢 修正为 spz+矢−s·ln2。
-        # 这不是放松: 扣减量完全由 facts 钝化参数经 facts.blunt_s 导出(单一数据源),
-        # 阈值仍 1e-3 —— 钝化被删(K=0 而肩点仍圆化)或被放大越界都会被同一判据抓。
-        # M19 前 SPANDREL/RISE 剖面无钝化路径, 旧期望 spz+矢 对孔8/9/10 系统性
-        # 偏高 s·ln2(中央 0.08·ln2≈0.056), 即本次基线红的全部来源。
-        s_blunt = f.blunt_s(a, b_i)
-        crown_expect = sp_i + b_i - s_blunt * math.log(2.0)
+        crown_expect = sp_i + b_i
         if abs(crown_z - crown_expect) > 1e-3:
-            add("fail", "MET_ARCH_FAMILY", "孔%d 冠高%.3f≠spz+矢−钝化%.3f" % (i + 1, crown_z, crown_expect))
+            add("fail", "MET_ARCH_FAMILY", "孔%d 冠高%.3f≠spz+矢%.3f" % (i + 1, crown_z, crown_expect))
+        # MET_ARCH_SHAPE([拱线族返工 2026-10-08] 新闸门, 负控制纪律红先绿后):
+        # 逐孔对拱腹采样点做单圆 Kasa 拟合, 归一化残差 rms/r < CIRCLE_FIT_RTOL
+        # (assumptions 0.01, G2 已登记)。"是圆弧族"的正面证明 —— 两圆心 ogee
+        # 在中央孔(b>a, cusp 13°)残差 rms/r=0.0144 红(返工前实测, 见
+        # refs/arch_shape_redgreen.txt); 圆弧族全 17 孔 < 1e-9 绿。
+        # 阈值缺位 → skip(未执行不算通过, 与 MET_CLOSURE 同契约)。
+        shape_tol = getattr(A, "CIRCLE_FIT_RTOL", None)
+        if shape_tol is None:
+            add("skip", "MET_ARCH_SHAPE", "assumptions 未声明 CIRCLE_FIT_RTOL, 未执行")
+        elif not _is_num(shape_tol) or shape_tol <= 0:
+            add("fail", "IMP_TOLERANCE", "CIRCLE_FIT_RTOL=%r 须为正数(坏容差让形状门形同虚设)" % (shape_tol,))
+        else:
+            pts = [(xc - a + 2.0 * a * k / 40.0,
+                    f.arch_z(xc - a + 2.0 * a * k / 40.0, xc, sp_i, a, b_i))
+                   for k in range(41)]
+            rr_shape, _circ = circle_fit_rms(pts)
+            if rr_shape >= shape_tol:
+                add("fail", "MET_ARCH_SHAPE",
+                    "孔%d 拱腹单圆拟合 rms/r=%.5f >= %.3f(非单心圆弧; 拟合圆心半径 %s)"
+                    % (i + 1, rr_shape, shape_tol,
+                       tuple(round(v, 3) for v in _circ)))
         # f/l 设计意图(终审 I12): 消费 facts.ARCH_RATIO_TARGET±ARCH_RATIO_TOL(原 0.50±0.05 硬写)。
         # 缺任一 → skip(未执行不算通过); 与框架 met_arch_ratio 同语义。
         ratio_target = getattr(f, "ARCH_RATIO_TARGET", None)
