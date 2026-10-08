@@ -309,7 +309,8 @@ def main():
                   engine="CYCLES/METAL-GPU", denoise="OPENIMAGEDENOISE")
 
     if cfg["kind"] == "pose":
-        pose = json.load(open(os.path.join(HERE, cfg["pose"])))
+        pose_rel = os.environ.get("M23_POSE_OVERRIDE") or cfg["pose"]
+        pose = json.load(open(os.path.join(HERE, pose_rel)))
         w, h = cfg["res"]
         f_px = pose["f"]                     # 标定画幅下的焦距(px)
         f_scale = w / float(pose["w"])       # 渲染分辨率换算(px/px, 保持视场)
@@ -336,7 +337,7 @@ def main():
         cam.data.clip_end = max(1000.0, dist * 4.0)  # 雾盒出射面不裁
         cam.location = C_world
         cam.rotation_euler = Rbl.to_euler()
-        params.update(camera=dict(type="perspective_pose", pose_json=cfg["pose"],
+        params.update(camera=dict(type="perspective_pose", pose_json=pose_rel,
                                   pose_tag=pose.get("tag", ""), pose_rms_px=pose.get("rms"),
                                   pose_n=pose.get("n"), lens_mm=round(lens, 3),
                                   f_px_at_cal=round(f_px, 1), cal_wh=[pose["w"], pose["h"]],
@@ -439,6 +440,10 @@ def main():
         view_transform=sc.view_settings.view_transform,
         blend="e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)")
 
+    if os.environ.get("M23_PARAMS_ONLY"):
+        print("M23_PARAMS " + json.dumps(params, ensure_ascii=False))
+        print("M23_DONE(dryrun)", out)
+        return
     os.makedirs(os.path.dirname(out), exist_ok=True)
     sc.render.filepath = out
     bpy.ops.render.render(write_still=True)

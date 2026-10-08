@@ -105,36 +105,40 @@ def pair_a():
 
 
 def pair_arch(lab, ftag, crop_json):
+    GOLDEN = os.environ.get("GOLDEN") == "1"
     photo = Image.open(os.path.join(HERE, f"real_券洞{lab}.jpg")).convert("RGB")
     grp = {"A": "b", "B": "c", "C": "d"}[lab]
-    ren = Image.open(os.path.join(REN, f"{grp}_{ftag}.png")).convert("RGB")
+    ren = Image.open(os.path.join(REN, f"{'golden_' if GOLDEN else ''}{grp}_{ftag}.png")).convert("RGB")
     box = crop_json[lab]["crop"]  # 1920x1080 标定画幅坐标
     rw, rh = ren.size
     s = rw / 1920.0
     rbox = tuple(int(v * s) for v in box)
     rc = ren.crop(rbox).resize(photo.size, Image.LANCZOS)
     arch = crop_json[lab]["arch"]
+    lit = ("金光对齐版 v3(日沿桥轴低角+拱腹暖面光+暖渐变天穹)=对照主图" if GOLDEN
+           else "中性光版=材质判读基准")
     return compose_pair(
         f"组{grp} 券洞特写 (券洞{lab}) | 照片: real_券洞{lab}.jpg (M0研究裁片, 无EXIF/无标定位姿) | "
-        f"渲染: m20B 位姿相机 {ftag} (CCTV帧 solvePnP, RMS={crop_json[lab].get('rms', '?')}px), 孔位 a{arch}",
+        f"渲染: m20B 位姿相机 {ftag} 水线约束修正版 (solvePnP+wlfit), 孔位 a{arch} | 光照: {lit}",
         photo, rc,
         f"照片 real_券洞{lab}.jpg ({photo.size[0]}x{photo.size[1]}, 来源未登记)",
-        f"渲染 {ftag} 位姿 孔a{arch} 裁窗 (仅量级对照: 位姿非本照片标定)",
-        f"pair_{grp}_quandong{lab}_{ftag}.jpg")
+        f"渲染 {'金光v3 ' if GOLDEN else '中性 '}{ftag} 位姿 孔a{arch} 裁窗 (仅量级对照: 位姿非本照片标定)",
+        f"pair_{grp}_quandong{lab}_{ftag}{'_GOLDEN' if GOLDEN else ''}.jpg")
 
 
 def pair_e():
+    GOLDEN = os.environ.get("GOLDEN") == "1"
     photo = Image.open(WINTER_FULL).convert("RGB").resize((3552, 2368), Image.LANCZOS)
-    ren = Image.open(os.path.join(REN, "e_winter.png")).convert("RGB")
+    ren = Image.open(os.path.join(REN, "golden_e_winter.png" if GOLDEN else "e_winter.png")).convert("RGB")
     if ren.size != photo.size:
         ren = ren.resize(photo.size, Image.LANCZOS)
     return compose_pair(
         "组e 冬照端视全景 | 照片: winter_20201221160537.jpg (2020-12-21 冬至金光, 7106x4737) | "
-        "渲染: m20C_pose_winter solvePnP 位姿相机 (M19 冬照 Z 基准标定, n=7, RMS=5.3px), seed=20261004",
+        "渲染: m20C_pose_winter 位姿相机 (M19 冬照 Z 基准, n=7 强退化如实声明), seed=20261004 | 光照: "+("金光对齐版=对照主图" if os.environ.get("GOLDEN")=="1" else "中性光版=材质判读基准"),
         photo, ren,
         "照片 冬照全景 (金光穿洞时段, 湖面冰封)",
         "渲染 同位姿全画幅 (标注位: 光照时段未复现→见待改进清单)",
-        "pair_e_winter.jpg")
+        "pair_e_winter%s.jpg" % ("_GOLDEN" if os.environ.get("GOLDEN") == "1" else ""))
 
 
 def pair_e2(ext_renders=None):

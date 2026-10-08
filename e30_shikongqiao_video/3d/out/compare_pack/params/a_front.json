@@ -1,6 +1,6 @@
 {
  "group": "a_front",
- "out": "out/compare_pack/renders/a_front.png",
+ "out": "/Volumes/macstudio/video-projects/e30_shikongqiao_video/3d/out/compare_pack/renders/a_front.png",
  "samples": 512,
  "seed": 20261004,
  "engine": "CYCLES/METAL-GPU",
@@ -23,6 +23,20 @@
   1920,
   1080
  ],
+ "m23_fix": {
+  "stone_body": 23,
+  "stone_course": 23,
+  "stone_ring": 23,
+  "marble": 23,
+  "deck_marble": 23,
+  "fog_density": 0.00027,
+  "recalc_voussoir": true,
+  "recalc_coursing": true,
+  "perstone_noise_stone_body": true,
+  "perstone_noise_stone_course": true,
+  "perstone_noise_stone_ring": true
+ },
+ "lighting_variant": "neutral(材质判读版)",
  "scene": {
   "materials": {
    "abut_stone": {
@@ -56,17 +70,17 @@
     "base_rgb": "linked"
    },
    "stone_body": {
-    "nodes": 78,
+    "nodes": 82,
     "users": 1,
     "base_rgb": "linked"
    },
    "stone_course": {
-    "nodes": 90,
+    "nodes": 94,
     "users": 2,
     "base_rgb": "linked"
    },
    "stone_ring": {
-    "nodes": 78,
+    "nodes": 82,
     "users": 2,
     "base_rgb": "linked"
    },
@@ -95,6 +109,7 @@
   "view_transform": "AgX",
   "blend": "e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)"
  },
- "render_sec": 41.9,
- "png_bytes": 1646268
+ "render_sec": 28.8,
+ "png_bytes": 1635397,
+ "blend_sha16": "adc59a5a43868795"
 }

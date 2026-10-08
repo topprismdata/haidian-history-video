@@ -1,6 +1,6 @@
 {
  "group": "e_winter",
- "out": "/Volumes/macstudio/video-projects/e30_shikongqiao_video/3d/out/compare_pack/renders/e_winter.png",
+ "out": "/Volumes/macstudio/video-projects/e30_shikongqiao_video/3d/out/compare_pack/renders/golden_e_winter.png",
  "samples": 512,
  "seed": 20261004,
  "engine": "CYCLES/METAL-GPU",
@@ -46,7 +46,36 @@
   "perstone_noise_stone_course": true,
   "perstone_noise_stone_ring": true
  },
- "lighting_variant": "neutral(材质判读版)",
+ "lighting_variant": "golden",
+ "golden_light": {
+  "sun": {
+   "dir": [
+    0.519,
+    -0.854,
+    -0.035
+   ],
+   "energy": 30.0,
+   "color": [
+    1.0,
+    0.42,
+    0.12
+   ],
+   "angle_deg": 0.8,
+   "travel_az_deg": 58.7,
+   "travel_el_deg": 2.0,
+   "note": "[按照片受光反推·量级] 金光穿洞几何: 面受光36.7°+穿洞11.5m"
+  },
+  "sky": {
+   "elev_deg": 2.0,
+   "rot_deg": 292.0,
+   "aerosol": 1.2
+  },
+  "world_strength": 0.05,
+  "fog_density": 0.0,
+  "contrast_boost_stone_body": true,
+  "contrast_boost_stone_course": true,
+  "contrast_boost_stone_ring": true
+ },
  "scene": {
   "materials": {
    "abut_stone": {
@@ -108,18 +137,18 @@
    {
     "name": "Key",
     "type": "SUN",
-    "energy": 3.9
+    "energy": 30.0
    }
   ],
   "sky": {
    "type": "PREETHAM",
-   "sun_elev_deg": 35.0,
+   "sun_elev_deg": 2.0,
    "sun_rot_deg": 292.0
   },
   "view_transform": "AgX",
   "blend": "e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)"
  },
- "render_sec": 237.5,
- "png_bytes": 7875156,
+ "render_sec": 261.9,
+ "png_bytes": 8291173,
  "blend_sha16": "adc59a5a43868795"
 }

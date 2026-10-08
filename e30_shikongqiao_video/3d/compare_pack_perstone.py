@@ -78,7 +78,93 @@ def stone_at(courses, x, z):
     return None
 
 
+def main_npz(npz_path, pose_path, stones_path, tag):
+    """raylabel 标签图 -> 逐石 IoU/偏移表。design=描摹多边形投影, actual=标签图。"""
+    from PIL import ImageDraw
+    d = np.load(npz_path, allow_pickle=True)
+    label = d["label"]
+    ids = [str(x) for x in d["ids"]]
+    roi = d["roi"]
+    step = int(d["step"])
+    side = int(d["side"])
+    Rw = np.array(d["rw"])
+    pose = json.load(open(pose_path))
+    rects = stones_to_rects(stones_path)
+    model = Model(load_ctrl())
+    H, W = label.shape
+    sx = pose["w"] / float(pose["w"])  # 标签图即标定画幅 ROI 重采样
+    K = Kmat(pose["f"], pose["w"], pose["h"])
+    rv = np.array(pose["rvec"], np.float64)
+    tv = np.array(pose["tvec"], np.float64)
+
+    rows = []
+    overlay = np.full((H, W, 3), 18, np.uint8)
+    lid = {sid: k for k, sid in enumerate(ids)}
+    for r in rects:
+        sid = r["id"]
+        corners = [(r["x0"], r["z0"]), (r["x1"], r["z0"]), (r["x1"], r["z1"]), (r["x0"], r["z1"])]
+        pts3d = [(x, side * model.hw(x, z), z) for x, z in corners]
+        uv = project(np.array(pts3d), K, rv, tv)
+        uv[:, 0] = (uv[:, 0] - roi[0]) / step
+        uv[:, 1] = (uv[:, 1] - roi[1]) / step
+        if uv[:, 0].min() < 0 or uv[:, 0].max() >= W or uv[:, 1].min() < 0 or uv[:, 1].max() >= H:
+            continue
+        design = np.zeros((H, W), np.uint8)
+        cv2.fillPoly(design, [np.round(uv).astype(np.int32)], 1)
+        actual = (label == lid[sid]).astype(np.uint8) if sid in lid else np.zeros((H, W), np.uint8)
+        if actual.sum() == 0 or design.sum() == 0:
+            rows.append(dict(stone_id=sid, iou=None, off_mean_px=None, off_max_px=None,
+                             verdict="NOT_VISIBLE"))
+            continue
+        inter = int(((design == 1) & (actual == 1)).sum())
+        union = int(((design == 1) | (actual == 1)).sum())
+        iou = inter / union if union else 0.0
+        dt_i = cv2.distanceTransform((actual == 1).astype(np.uint8), cv2.DIST_L2, 3)
+        dt_o = cv2.distanceTransform((actual == 0).astype(np.uint8), cv2.DIST_L2, 3)
+        poly = np.round(uv).astype(np.int32)
+        offs = []
+        for k in range(4):
+            a, b = poly[k], poly[(k + 1) % 4]
+            for t in np.linspace(0.15, 0.85, 5):
+                p = (a * (1 - t) + b * t).astype(int)
+                inside = actual[p[1], p[0]] == 1
+                # 内点: 到 actual 外边界的距离为正(dt_i); 外点: 到 actual 的距离为负(dt_o)
+                offs.append((dt_i[p[1], p[0]] if inside else -dt_o[p[1], p[0]]))
+        offs = np.array(offs)
+        rms = float(pose.get("rms", 5.2)) * step
+        ok = (iou >= IOU_PASS) or (np.abs(offs).mean() <= OFF_RMS_MULT * rms)
+        rows.append(dict(stone_id=sid, iou=round(iou, 4), off_mean_px=round(float(offs.mean()) / step, 2),
+                         off_max_px=round(float(np.abs(offs).max()) / step, 2),
+                         verdict="PASS" if ok else "FAIL"))
+        col = (0, 200, 0) if ok else (220, 40, 40)
+        cv2.polylines(overlay, [poly], True, col, 1)
+    out_dir = os.path.join(HERE, "out", "compare_pack", "perstone")
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "%s_report.csv" % tag), "w") as f:
+        f.write("stone_id,iou,off_mean_px,off_max_px,verdict\n")
+        for r in rows:
+            f.write("%s,%s,%s,%s,%s\n" % (r["stone_id"],
+                                          r["iou"] if r["iou"] is not None else "",
+                                          r["off_mean_px"] if r["off_mean_px"] is not None else "",
+                                          r["off_max_px"] if r["off_max_px"] is not None else "",
+                                          r["verdict"]))
+    cv2.imwrite(os.path.join(out_dir, "%s_overlay.png" % tag), overlay)
+    npass = sum(1 for r in rows if r["verdict"] == "PASS")
+    judged = [r for r in rows if r["verdict"] != "NOT_VISIBLE"]
+    summary = dict(tag=tag, stones=len(rows), visible=len(ids), pass_n=npass,
+                   judged=len(judged), not_visible=len(rows) - len(judged),
+                   pass_rate=round(npass / max(1, len(judged)), 4),
+                   iou_median=round(float(np.median([r["iou"] for r in judged])), 4) if judged else None,
+                   thresholds=dict(iou_pass=IOU_PASS, off_rms_mult=OFF_RMS_MULT, pose_rms_px=pose.get("rms")),
+                   note="design=stones_pX 描摹 rect 投影; actual=raylabel 标签图(被摄面带+法线过滤); "
+                        "偏移已按 step 折算标定画幅 px; 整体平移=位姿残差单列")
+    json.dump(summary, open(os.path.join(out_dir, "%s_summary.json" % tag), "w"), ensure_ascii=False, indent=1)
+    print("PERSTONE_DONE", tag, "pass %d/%d" % (npass, len(rows)))
+
+
 def main():
+    if sys.argv[1] == "--npz":
+        return main_npz(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     pose_path, aov_path, tag = sys.argv[1], sys.argv[2], sys.argv[3]
     stones_path = sys.argv[4]
     photo_path = sys.argv[5] if len(sys.argv) > 5 and not sys.argv[5].startswith("--") else None
