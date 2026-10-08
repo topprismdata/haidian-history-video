@@ -138,6 +138,32 @@ def main():
                       "msg": "未采到拱腹面, 判据未执行(skip≠通过); 检查采样带参数/网格"})
     elif neg > 0:
         fail("WALL_NORMAL", "拱腹法线偏离朝心超容差 %d/%d 面" % (neg, tot))
+    # ── ARCH_MESH_OPENING(拱线族返工 2026-10-08 网格级洞形闸门) ──
+    # 动机: 深夜事故——分析层(MET_ARCH_SHAPE 解析圆拟合)全绿 + 网格层洞形
+    # 破损可以共存(布尔折线自交 bowtie, M14 EXACT 静默失败近亲), 目检才抓到。
+    # 本闸在【网格顶点】上闭环: 桥身顶点不得侵入任一孔净空圆内(负 2mm 容差,
+    # 洞缘切割顶点恰在圆上不计)。像素/目检不再是洞形的唯一防线。
+    bad_open = []
+    for v in me.vertices:
+        x, z = v.co.x, v.co.z
+        if z <= 0.05:
+            continue
+        for i in range(G.N_SPAN):
+            xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
+            a = G.SPANS[i] / 2.0
+            spz = G.arch_springer_z(i)
+            b = G.arch_rise(i)
+            if abs(x - xc) >= a - 0.02:
+                continue
+            if z <= spz + 0.05 or z >= spz + b:
+                continue
+            if G.arch_signed_r(x, z, xc, spz, a, b) < -0.02:
+                bad_open.append((i + 1, round(x, 2), round(z, 2)))
+                break
+    if bad_open:
+        fail("ARCH_MESH_OPENING",
+             "桥身顶点侵入净空圆内 %d 个(示例 %s; 解析↔网格闭环被破坏)"
+             % (len(bad_open), bad_open[:4]))
     body_ev.to_mesh_clear()
     # (M12: IMPOST_ANCHOR 判据随 impost 立体构件一并移除; 起拱线改材质表达)
     _emit(fails, warns, skips, tot=tot, neg=neg, flipped=flipped)

@@ -256,7 +256,7 @@ def _good_report():
                                                     {"subsumed": 0.0,
                                                      "trimmed": 0.0}},
                        "trimmed_ids": [], "subsumed_ids": [],
-                       # n_pairs=903: T9b(B2c) 起结构闸门有复测对数地板
+                       # n_pairs=827: T9b(B2c) 起结构闸门有复测对数地板(903→827 拱线族返工实测)
                        # (>= counts.ring_total), 合成底座同吃真总体口径。
                        "final_scope_check": {"n_pairs": 903,
                                              "n_colliding": 0,
@@ -450,11 +450,11 @@ def test_g2_report_shipped_artifact_pins():
     assert P.validate_g2_report(rep) == []
     assert rep["verdict"] == "PASS"
     counts = rep["meta"]["counts"]
-    assert counts["print_stones"] == 2113
-    assert counts["print_units"] == 2113
+    assert counts["print_stones"] == 2037  # [拱线族返工清债] 2113→2037(排除 +76: in_void +24/void_cut +12/ring_band +40)
+    assert counts["print_units"] == 2037  # 同上
     assert counts["run_units"] == 0
     # M1 后生产者必须自带 scope.print_stones 真键(盘上工件同步钉)
-    assert rep["meta"]["scope"]["print_stones"] == 2113
+    assert rep["meta"]["scope"]["print_stones"] == 2037  # 同上
     assert rep["meta"]["scope"]["run_units"] == []
     fsc = rep["ring_dedup"]["final_scope_check"]
     assert fsc["n_pairs"] == FINAL_SCOPE_N_PAIRS
@@ -1048,8 +1048,11 @@ def real_ring_trim_state():
     return by_id, statuses, trim_ids, rd
 
 
-RING_TRIM_POPULATION = 475   # T8c 复测钉死: 传播守卫后真总体(漂移=总体变)
-FINAL_SCOPE_N_PAIRS = 903    # T9b(B2a/b): ring↔链 bbox 预筛宇宙全量对数
+RING_TRIM_POPULATION = 435   # T8c 复测钉死: 传播守卫后真总体(漂移=总体变)
+                             # [拱线族返工清债] 475→435 新实测(圆弧族环带重推导)
+FINAL_SCOPE_N_PAIRS = 827    # T9b(B2a/b): ring↔链 bbox 预筛宇宙全量对数
+                             # [拱线族返工清债 2026-10-08] 903→827 新实测(重出 g2_report;
+                             # 圆弧族环带几何变化 → ring∩链 bbox 预筛宇宙收缩 76 对)
                              # (漂移=总体变; 入库报告与真重放同源钉)
 
 

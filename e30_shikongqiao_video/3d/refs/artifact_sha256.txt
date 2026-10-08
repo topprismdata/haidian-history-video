@@ -26,12 +26,6 @@
 #   真相源=脚本+数据, blend 字节非判据; 判据细节见 3d/refs/freeze_manifest.md。
 #
 # 格式: <sha256>  <e30 项目相对路径>
-80de7a45ff329c22bd907dacde0ec72b22df5aa6fab8f1371cb79523b113e9ce  3d/out/ledger_full.json
-1cefc0717528380dc8ceefecc4cc48a88d819f4f2ecad4a125999ee6c2e56e04  3d/out/sequence.json
-f7e26c2f5db59d1c51492e7170d6357391757f6de509631251f4eb5b7344efb3  3d/out/ledger_sequenced.json
-513dfd9333e81df9702e675be720e69492fcf30a85540c0b2c27d75a5b48f377  3d/core_hash.json
-45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d  3d/out/print/central_slice/manifest.json
-fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/excluded_ids.json
 #
 # [P2-T8 追加] 记录时点: 2026-10-08, P2-T8 出口轮(事件账/旁白表落盘;
 # sequence/ledger_sequenced/ledger_full/core_hash/切片清单逐位未动 ——
@@ -60,8 +54,6 @@ fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/e
 #   另: sequencer.main 的 _in_void_ids 推导式内逐石重算已括出(性能修复,
 #   行为零变化 —— 单次全跑从数百秒级回到 ~30s 量级, 修复后全链实测
 #   build/check/validate ~7s + dmscan ~25s)。
-a908f60d279bd55daf40ab031c150c6f13fdc3f898d81459009832518ec42452  3d/out/event_ledger.json
-d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narration_beats.md
 #
 # [P3-T8 追加] 记录时点: 2026-10-08, pace.json 单一节奏源入 sidecar
 # (P3 全局纪律: pace.json 与交付工件入本表; BLK-1 完备性钉同轮扩)。
@@ -69,7 +61,6 @@ d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narrati
 #   --target-sec 240 --prologue-sec 5 → 409 stage(S000 题卡 150 帧,
 #   total 7350); 唯一回写通道 pace_writeback.py 原地补 pad 后本行 sha
 #   须随写轮同更新(测试 test_artifact_sha256_sidecar_matches_disk 钉)。
-29af17205b202e59f22cc1d189b47d5812464fce9c3d6144a25b8f640e812464  3d/out/film/pace.json
 
 # [ArchRoundFix 重锚] 记录时点: 2026-10-08, 拱线族返工(ogee→单心圆弧, 全17孔)。
 # 变更面: 拱线数学单源(facts)+void/券石/qa 全链再同步; 石账块数零变
@@ -77,11 +68,15 @@ d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narrati
 # 曲线族换 → 石坐标变 → 下列全部重锚工件重出。生成命令链同上(1→5 + sequencer
 # + g3_check + narration), 全部零错; L2 正检 QA_L2_OK / 负控 NEG_CAUGHT 10/10;
 # MET_ARCH_SHAPE 新闸门绿(返工前 ogee 红 0.01443, 见 refs/arch_shape_redgreen.txt)。
-6dcb15102eee7472bc93d578da860e17cd617ffaf6d61f6cc0b3216ab8906ceb  3d/out/ledger_full.json
+
+# [ArchRoundFix 清债 2026-10-08] 侧车重建(clamp 复出终版): 历史同路径行全部由本节取代
+# (唯一化——完备性钉=路径集不得重复); 9 路径现值=盘上直读。
+a1569201b2433dbf972dd6ef06d5be3764d04a4d10db9ae85e39012c62af3788  3d/out/ledger_full.json
 77d2532b41981edd8ccda92f3a4baa9ea76c035680634d7f47932e372438a5ce  3d/out/sequence.json
-28a91edeb7fc66677a35ae16363510156294fcc253b2ca2d882c0156557ba74d  3d/out/ledger_sequenced.json
-b74ce26167fcbbdda344563066abcfebc0a7c103901903a21f1e1e9b38cc8326  3d/core_hash.json
-494d5393fc47a4b987b25ff408f7260f2dd479041a2f67efe4aa34ef5f19fb01  3d/out/print/central_slice/manifest.json
-1664d68f0550540127861d46f5cb7dfa14a5ed4f4f0f78faebf818e3307ea630  3d/out/print/excluded_ids.json
+fc442a24a090d4eb39aee7e37149cd47016350dc864057c63dc6aa843e908048  3d/out/ledger_sequenced.json
+84085824cc15733db38479d8656f4ec7ee994530b412235b6abcb29d503a0968  3d/core_hash.json
+7800c64de932f17c6370ea5c07be585893bc000fad82cf304d531fc7b6a5a354  3d/out/print/central_slice/manifest.json
+cac2ee0161ed2911c98f017052f4e78193d93ed6a4ff4c5a6a0fabe40427b19a  3d/out/print/excluded_ids.json
 f370972f930e54e234388d4a863372e68d905deed0e5143b8504104288858680  3d/out/event_ledger.json
 cb000af14804a6bbadc9733acb76ef32285f9d5567ec579c09359cbbd9f28107  3d/out/narration_beats.md
+4b9e439bb3a3977d5fa14b5e9f55ffbb9391f484f051ac04b4533184435b2db1  3d/out/film/pace.json

@@ -42,13 +42,13 @@ LEDGER_PATH = os.path.join(_3D, "out", "ledger_full.json")
 
 # 真账实测钉(现行 G2/T8b+ 口径, 2026-10-07 P1 收官态)
 UNIVERSE = 5935          # 全桥账面石
-SEC_UNITS = 1123         # 段(ARCH07-11)打印单元 == 段 manifest.stones
+SEC_UNITS = 1047         # 段(ARCH07-11)打印单元 == 段 manifest.stones(1123→1047 拱线族返工清债)
 SEC_RAW = 2747           # 段账面石(含排除)
 DEF_UNITS = 990          # 留续 12 孔打印单元
 DEF_RAW = 3188           # 留续账面石(含排除)
 # [拱线族返工 2026-10-08] 3822→3898 新实测(excluded_ids.json 重出直读): in_void 2028(+24 全在 b>a 三孔)/void_cut 1580(+12)/ring_band 222(+40)/thin 68(不变)
 EXCLUDED = 3898          # 排除石(in_void 2028/void_cut 1580/ring_band 222/thin 68)
-UNITS_CURRENT = 2113     # 现行全桥打印单元 = 1123+990
+UNITS_CURRENT = 2037     # 现行全桥打印单元 = 1047+990(2113→2037 拱线族返工清债)
 # P1-T8 原始轮历史口径(04f2e54, 已被 T8b 更替, 只作考古对账)
 UNITS_T8_ORIG = 1974
 EXCL_T8_ORIG = 3961
@@ -130,14 +130,14 @@ def test_unit_level_caliber_documented(conservation_pack):
     for token in ("1974", "3961", "2113", "04f2e54", "T8b",
                   "ring_band_overlap", "thin_merge"):
         assert token in src, "口径考古缺 token: %s" % token
-    # 两代口径各自守恒(证明是口径差不是丢账): 1974+3961 == 2113+3822 == 5935
+    # 两代口径各自守恒(证明是口径差不是丢账): 1974+3961 == 2037+3898 == 5935(原 2113+3822, 拱线族返工清债)
     assert UNITS_T8_ORIG + EXCL_T8_ORIG == UNIVERSE
     assert UNITS_CURRENT + EXCLUDED == UNIVERSE
     # 差 139 归因: ring_band 305→182(123 石) + thin_merge 84→68(16 石)
     assert UNITS_CURRENT - UNITS_T8_ORIG == (305 - 182) + (84 - 68) == 139
     # 不变量声明字符串: 声明石级恒等 + 现行单元口径 + 1974 历史口径
     inv = rep["不变量"]
-    assert "石级" in inv and "2113" in inv and "1974" in inv
+    assert "石级" in inv and "2037" in inv and "1974" in inv
     assert "口径" in inv
 
 

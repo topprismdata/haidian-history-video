@@ -146,3 +146,20 @@ def test_ogee_symbols_deleted():
     for sym in ("arch_e", "_arc_pair", "blunt_s",
                 "CROWN_BLUNT_K", "CROWN_BLUNT_CAP"):
         assert sym not in names, "bridge_geom2.py 仍引用 %s" % sym
+
+
+def test_mesh_level_opening_gate_present():
+    """[拱线族返工清债 2026-10-08] 网格级洞形闸门必须存在(qa_l2
+    ARCH_MESH_OPENING): 深夜事故——解析层(MET_ARCH_SHAPE)全绿 + 网格层
+    洞形破损(bowtie 自交切割折线 → 矩形槽)共存, 目检才抓到。本钉锁
+    "解析↔网格闭环"的网格侧闸门不被静默移除; blender-free 用源级 AST 检查。
+    变异红证据: 孔9 冠下 0.5m 注入探针顶点 → 闸门抓到(blender 实测,
+    /tmp/probe_meshgate.py 输出 MUTATION_PROBE bad=1)。"""
+    import ast
+    src_path = os.path.join(os.path.dirname(__file__), "..", "3d", "qa_l2.py")
+    tree = ast.parse(open(src_path, encoding="utf-8").read())
+    names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    names |= {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
+    assert "ARCH_MESH_OPENING" in names, \
+        "qa_l2 网格级洞形闸门(ARCH_MESH_OPENING)被移除 —— 禁止"
+    assert "arch_signed_r" in names, "qa_l2 径向闭环调用缺失"

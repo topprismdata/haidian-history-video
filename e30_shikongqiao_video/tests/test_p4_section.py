@@ -1,5 +1,5 @@
 # P4-T2: export_print zones 参数化 + 段包(section5)出图单测。
-# 三判据(plan T2 Step1): ①zones=None 对盘上 central manifest(45fed1e8)零漂移
+# 三判据(plan T2 Step1): ①zones=None 对盘上 central manifest(82dc5b44ccb19792)零漂移
 # (STL/ledger_print 逐字节 + manifest 语义等值, 除时间字段); ②段守恒
 # 2747 = Σstones + Σskipped(skipped 带 reason 不静默); ③deferred(12 孔)∪
 # section(5 孔) = 17 孔全集不交。附: zones 过滤语义(合成)、两连跑逐字节幂等。
@@ -26,13 +26,13 @@ from families import family_mesh  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRINT_DIR = os.path.join(REPO, "3d", "out", "print")
 CENTRAL = os.path.join(PRINT_DIR, "central_slice")
-CENTRAL_SHA = "45fed1e8bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d"
+CENTRAL_SHA = "82dc5b44ccb19792bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d"
 EXCLUDED_PATH = os.path.join(PRINT_DIR, "excluded_ids.json")
 
 # 真账实测(P1 G2 门口径): 段(ARCH07-11)账面石 2747, 打印单元 1123,
 # ARCH09 子集 245 == 盘上 central manifest 石数。
 SEC_STONES_TOTAL = 2747
-SEC_UNITS_MEASURED = 1123
+SEC_UNITS_MEASURED = 1047  # [拱线族返工清债] 1123→1047 新实测(段 manifest 重出: 排除 +76 收缩段打印面)
 ARCH09_UNITS = 245
 
 
@@ -152,7 +152,7 @@ def pack_pair(print_view, tmp_path_factory):
 # ---------------------------------------------------------------- 判据① 零漂移
 
 def test_default_zone_none_reproduces_central(tmp_path, print_view):
-    """zones=None(默认)重跑中央孔: 与盘上 45fed1e8 除时间字段外语义等值;
+    """zones=None(默认)重跑中央孔: 与盘上 82dc5b44ccb19792 除时间字段外语义等值;
     ledger_print 逐字节 + STL 数值等值(1e-6 mm, 负控在测) —— 参数化零漂移
     门(P1 行为回归)。"""
     led, statuses, scope_ids, _buckets = print_view
@@ -217,7 +217,7 @@ def test_section5_counts_conservation_basic(print_view, pack_pair):
     assert not (set(exported) & set(skipped))
     assert set(exported) | set(skipped) == set(zone_ids)
 
-    # 实测钉值: 段打印单元 1123(spec ~913 估算的实测修正), ARCH09=245=central
+    # 实测钉值: 段打印单元 1047(1123→1047 拱线族返工清债重测), ARCH09=245=central
     assert len(exported) == SEC_UNITS_MEASURED
     assert sum(1 for i in exported if i.startswith("ARCH09.")) == ARCH09_UNITS
     with open(os.path.join(CENTRAL, "manifest.json"), encoding="utf-8") as fh:

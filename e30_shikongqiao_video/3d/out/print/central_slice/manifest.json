@@ -320,7 +320,7 @@
    220.0,
    220.0
   ],
-  "created_utc": "2026-10-08T13:55:46Z",
+  "created_utc": "2026-10-08T15:41:02Z",
   "curve_hash": "e30-p1t8-full",
   "roles": [
    "RING",
@@ -361,7 +361,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C09_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C09_B00.3mf",
-   "uuid": "a50093ef-d76c-4109-8026-659b9d3b49b3",
+   "uuid": "25780984-6d97-4d61-95a1-43a099d64968",
    "volume_cm3": 7.369480341321307
   },
   {
@@ -375,7 +375,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B00.3mf",
-   "uuid": "28d67c6e-2bc5-45b6-99aa-16b1fb59105d",
+   "uuid": "bdfd1c0e-6f88-42c3-adec-fbc70c7e0a3e",
    "volume_cm3": 0.8598193611573235
   },
   {
@@ -389,7 +389,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B01.3mf",
-   "uuid": "78a8cafc-e024-4075-92bb-974a840a307b",
+   "uuid": "c56165f6-00e6-496c-9949-69bfb7446e50",
    "volume_cm3": 1.2821931830307327
   },
   {
@@ -403,7 +403,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B02.3mf",
-   "uuid": "e2492f9d-582f-40d3-9452-b825ea432074",
+   "uuid": "6dfea9df-833b-4b8d-84e7-4a057b48cd49",
    "volume_cm3": 1.671899766704984
   },
   {
@@ -417,7 +417,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B08.3mf",
-   "uuid": "7d2842a4-321c-42af-b678-b48bc958ded1",
+   "uuid": "fabc8d61-d1b0-4cf0-a14b-dd130e693e6d",
    "volume_cm3": 1.0171027799079069
   },
   {
@@ -431,7 +431,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B09.3mf",
-   "uuid": "7e2e27cc-b695-447f-acbc-5ef4b72b3aed",
+   "uuid": "a323f0ba-1811-4d58-baf0-cfc53b903db0",
    "volume_cm3": 3.94358766010064
   },
   {
@@ -445,7 +445,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B00.3mf",
-   "uuid": "e36cf867-d7e5-4ff8-a84d-4eaf7861f3fa",
+   "uuid": "6d09b45c-df73-4fb2-b0e3-250e803a982f",
    "volume_cm3": 7.364174967225205
   },
   {
@@ -459,7 +459,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B04.3mf",
-   "uuid": "7ca685de-b2c8-4c37-b369-163bf8783cea",
+   "uuid": "aba5835c-9725-48b0-a2e5-1532ab9b526d",
    "volume_cm3": 2.071369190620795
   },
   {
@@ -473,7 +473,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B05.3mf",
-   "uuid": "d547847e-7502-41d1-b29b-a418e9b33c8e",
+   "uuid": "9ac154ba-caa6-43e5-a014-ec94cd777ba0",
    "volume_cm3": 2.917093535442728
   },
   {
@@ -487,7 +487,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B00.3mf",
-   "uuid": "50832b9e-e8fb-4470-9f19-dc5ac0c7a18f",
+   "uuid": "a8ad5685-d0fa-4a4d-a513-e98c0a318183",
    "volume_cm3": 4.354858913158509
   },
   {
@@ -501,7 +501,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B01.3mf",
-   "uuid": "d8ea9c19-259f-416b-837e-9098db3cac69",
+   "uuid": "bcfe0a71-8699-42d5-8014-b5e0d2d4f2be",
    "volume_cm3": 2.4665575344642723
   },
   {
@@ -515,7 +515,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B05.3mf",
-   "uuid": "bf6a04e0-2a67-41fd-915d-70b4b5803c12",
+   "uuid": "8d34ba21-970a-4448-a213-a4f979f539b9",
    "volume_cm3": 2.1649367141433555
   },
   {
@@ -529,7 +529,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B06.3mf",
-   "uuid": "a8ed315e-42b1-437e-8e29-43624f96e189",
+   "uuid": "dc1eb667-d78d-4768-b687-9cc23ded6391",
    "volume_cm3": 4.26650624628773
   },
   {
@@ -543,7 +543,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B00.3mf",
-   "uuid": "9589c9ef-7bff-4be5-8da4-0cc6414b2378",
+   "uuid": "91878033-504b-4a32-a06e-620960f0b6b3",
    "volume_cm3": 4.995926762532867
   },
   {
@@ -557,7 +557,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B01.3mf",
-   "uuid": "cdc7e03d-945d-462f-816a-8a69c9d39f34",
+   "uuid": "f8cc38a5-0a22-4bdf-b8a8-036c60350376",
    "volume_cm3": 4.011434108838241
   },
   {
@@ -571,7 +571,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B02.3mf",
-   "uuid": "fd52b25f-2f93-4978-9e56-d65b834aa116",
+   "uuid": "67c18554-19ad-43ed-8836-8fea55997b8d",
    "volume_cm3": 5.128467797602137
   },
   {
@@ -585,7 +585,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B04.3mf",
-   "uuid": "5e9a96b3-e64e-4016-9260-22dbb595c779",
+   "uuid": "b0ecba4c-0d30-4637-b619-c831cfc87c12",
    "volume_cm3": 5.281169245177467
   },
   {
@@ -599,7 +599,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B05.3mf",
-   "uuid": "d1f9155a-0852-4976-a265-7d053ccce473",
+   "uuid": "06df7e1a-6278-4b26-9f3a-eef33cb380f2",
    "volume_cm3": 2.141789186475493
   },
   {
@@ -613,7 +613,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B06.3mf",
-   "uuid": "9bc88f54-0bde-4291-a6b7-d9569dd49b6a",
+   "uuid": "d638062c-1bfe-43fa-af7c-2ec5880f7a7a",
    "volume_cm3": 4.924397604270196
   },
   {
@@ -627,7 +627,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B07.3mf",
-   "uuid": "da180150-9d85-4866-bc2c-c1f4e37d4a9d",
+   "uuid": "a52b32b2-6b80-4bb3-ab74-6c25e843f5a1",
    "volume_cm3": 2.02749252463681
   },
   {
@@ -641,7 +641,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B00.3mf",
-   "uuid": "c67fb0cc-54d4-44df-bc7f-55047e9fb62e",
+   "uuid": "354ab622-ea70-4e17-9d10-d3b16d4fe584",
    "volume_cm3": 1.036109780009332
   },
   {
@@ -655,7 +655,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B01.3mf",
-   "uuid": "cd12d026-a7b9-46ac-b010-eaf0ae6e48b0",
+   "uuid": "50957af9-6fcf-4a13-8fc7-540d5814a088",
    "volume_cm3": 2.971204940719349
   },
   {
@@ -669,7 +669,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B02.3mf",
-   "uuid": "7b52de2a-7c12-4095-8241-0ea94b5dca5f",
+   "uuid": "528e38e2-a23d-4f90-a29b-e740c18ce42d",
    "volume_cm3": 3.3054085472208627
   },
   {
@@ -683,7 +683,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B03.3mf",
-   "uuid": "847b80f4-050f-466f-a651-71db9a774cc0",
+   "uuid": "46399164-9f70-442d-9245-1e0b05f12447",
    "volume_cm3": 5.902562300810024
   },
   {
@@ -697,7 +697,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B04.3mf",
-   "uuid": "edebd0d0-a253-41a9-88c1-f6b9deccc58a",
+   "uuid": "36d4fb15-3436-4308-b9e0-0426db682add",
    "volume_cm3": 2.3368694758878794
   },
   {
@@ -711,7 +711,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B05.3mf",
-   "uuid": "5c6d3987-50c0-4c3f-abb2-9d9260c8ffb0",
+   "uuid": "674e8956-e810-4333-9c51-3e0ea24c5923",
    "volume_cm3": 7.262939684458274
   },
   {
@@ -725,7 +725,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B06.3mf",
-   "uuid": "58b12fc5-29c7-4d2b-a8dd-ba9c1b8dd627",
+   "uuid": "c6c91694-62c5-46be-9320-9bde60f05ff4",
    "volume_cm3": 1.0023202419262391
   },
   {
@@ -739,7 +739,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B07.3mf",
-   "uuid": "651d43cd-8522-4ee3-981f-ee76135409d3",
+   "uuid": "f566e830-953e-4bc6-9d63-d79a424e7984",
    "volume_cm3": 2.954127276697565
   },
   {
@@ -753,7 +753,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B08.3mf",
-   "uuid": "d052138e-f5df-4fbb-88ed-f294648815d5",
+   "uuid": "dda53218-cf2a-43fc-95c2-282479f55623",
    "volume_cm3": 3.0998761008989373
   },
   {
@@ -767,7 +767,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B09.3mf",
-   "uuid": "ec95c3c8-8baa-4101-81d6-d9c9d16a8cbd",
+   "uuid": "0ea94b27-517f-4e33-9e7b-6bfa19a4b167",
    "volume_cm3": 3.7054681767600988
   },
   {
@@ -781,7 +781,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B10.3mf",
-   "uuid": "c1e4c3b6-84c1-4fe9-add4-0ca7f22ccb94",
+   "uuid": "7b7ca440-48ea-4584-937f-4f742bf9567e",
    "volume_cm3": 0.9460133054804987
   },
   {
@@ -795,7 +795,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B00.3mf",
-   "uuid": "90fab482-30b3-40c2-9a29-e2855305dc88",
+   "uuid": "8913a9f4-6352-4336-a4ae-b050c35e0ac1",
    "volume_cm3": 5.06610230888297
   },
   {
@@ -809,7 +809,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B01.3mf",
-   "uuid": "d37e9006-e662-42c7-a447-fff8e16a768e",
+   "uuid": "0cf6a5c9-6631-4c98-8655-260b4508caee",
    "volume_cm3": 3.358710471070239
   },
   {
@@ -823,7 +823,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B02.3mf",
-   "uuid": "52db79d4-c39b-4aee-89d3-7f8f7af50031",
+   "uuid": "046c9608-4fb7-4918-83c4-ecc0fa1c979d",
    "volume_cm3": 4.633327531382439
   },
   {
@@ -837,7 +837,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B03.3mf",
-   "uuid": "ff985d91-c208-4f11-b59f-c2ab30cda016",
+   "uuid": "a1bae376-d630-4440-b22b-6f26d4d02854",
    "volume_cm3": 1.3107126797615662
   },
   {
@@ -851,7 +851,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B04.3mf",
-   "uuid": "85a628a2-8585-4907-b415-5d7fed3eb7f8",
+   "uuid": "8c2448dd-e3cd-4163-8843-cfc11075aa1f",
    "volume_cm3": 3.487565920712986
   },
   {
@@ -865,7 +865,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B05.3mf",
-   "uuid": "57d1d4d4-abc0-4c45-82e3-fe92e92f3e27",
+   "uuid": "a8d5b74f-0785-4251-818a-5ed715d1d48f",
    "volume_cm3": 3.834314532092217
   },
   {
@@ -879,7 +879,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B06.3mf",
-   "uuid": "e62050d0-3fb6-4b89-b02b-bdbdc057444f",
+   "uuid": "27cc23de-55d0-4ffb-ab7c-7e323025d2e8",
    "volume_cm3": 6.7342615980288
   },
   {
@@ -893,7 +893,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B07.3mf",
-   "uuid": "7d9214b8-e2d9-47df-8966-fe7c8272fc8f",
+   "uuid": "b717cf6f-75b0-4cf0-85b5-f67ca5b23ff9",
    "volume_cm3": 0.9965751238509261
   },
   {
@@ -907,7 +907,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B08.3mf",
-   "uuid": "e5189db4-aa07-4b1b-892b-481aa8b8f623",
+   "uuid": "33fdc2bb-6900-4c8a-bc55-34decfe8000c",
    "volume_cm3": 2.3180260083272053
   },
   {
@@ -921,7 +921,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B09.3mf",
-   "uuid": "7a57daa3-f3fb-442e-881a-56335ba39fb9",
+   "uuid": "a4573cf6-5586-48c9-860e-553531050ac8",
    "volume_cm3": 1.3012781409465328
   },
   {
@@ -935,7 +935,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B10.3mf",
-   "uuid": "482f91d5-6fac-4301-a553-3265c6f4c27f",
+   "uuid": "f26b7284-ad80-4f45-b02e-5e1ec78bfb09",
    "volume_cm3": 4.6959074120135345
   },
   {
@@ -949,7 +949,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C09_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C09_B00.3mf",
-   "uuid": "ef00dfe2-0e0f-4e72-b5af-1d9f62fb9d4e",
+   "uuid": "2e07d874-f0a0-43a5-b4a4-36e51edbb260",
    "volume_cm3": 3.2779480781345183
   },
   {
@@ -963,7 +963,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B00.3mf",
-   "uuid": "e0130ccb-cc91-4856-8548-ecf3f472e8b1",
+   "uuid": "89e9664d-e4aa-4e92-a972-e749ed2a96a9",
    "volume_cm3": 0.6793562416166474
   },
   {
@@ -977,7 +977,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B01.3mf",
-   "uuid": "493fbd80-f75f-4318-93e6-c8be56a5d629",
+   "uuid": "ebb3d20d-6a07-48d6-b98d-287a7cea72cf",
    "volume_cm3": 0.601937594844261
   },
   {
@@ -991,7 +991,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B02.3mf",
-   "uuid": "50fb570f-2cd9-44da-88d7-bbb164e970b1",
+   "uuid": "e1bfe455-a0df-4fe0-9c6f-a1c5f29dd386",
    "volume_cm3": 1.610764822625229
   },
   {
@@ -1005,7 +1005,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B08.3mf",
-   "uuid": "d8cccaac-34ef-4bf2-9daa-a1effb55582a",
+   "uuid": "25c9b880-39dc-489a-b15a-38b788de1e06",
    "volume_cm3": 0.7436513779263534
   },
   {
@@ -1019,7 +1019,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B09.3mf",
-   "uuid": "ec4e8d86-3a41-4e7e-b91b-19584264920d",
+   "uuid": "26dff594-f0f9-4ebf-9bc7-727411a27bc6",
    "volume_cm3": 1.8065405136244206
   },
   {
@@ -1033,7 +1033,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B00.3mf",
-   "uuid": "186c82e8-a736-43b6-a994-53e49401811e",
+   "uuid": "29a95ed2-3432-4b39-a501-1777da6c4532",
    "volume_cm3": 2.7982635393569666
   },
   {
@@ -1047,7 +1047,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B04.3mf",
-   "uuid": "a0a8dc26-f223-4140-8fc2-74df032f750f",
+   "uuid": "0a78187a-5fda-4b5c-abcb-d2719fd05ac4",
    "volume_cm3": 0.742042127368031
   },
   {
@@ -1061,7 +1061,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B05.3mf",
-   "uuid": "a3bcfb11-875a-4043-9e31-63ae0eb55113",
+   "uuid": "69a8bc4f-0b7d-41b6-a204-a81693c26b2f",
    "volume_cm3": 2.362488126613992
   },
   {
@@ -1075,7 +1075,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B00.3mf",
-   "uuid": "1ec987eb-14f1-4cad-9d29-870eaf346dab",
+   "uuid": "07374f63-5e44-4219-8e3b-c013d187b837",
    "volume_cm3": 3.228109462242702
   },
   {
@@ -1089,7 +1089,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B01.3mf",
-   "uuid": "37d38a4a-c322-403a-b3e2-b83b1b97838c",
+   "uuid": "b045c186-4d9c-4df0-a441-a0b8cdc112ad",
    "volume_cm3": 0.9828124039577081
   },
   {
@@ -1103,7 +1103,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B05.3mf",
-   "uuid": "1d77ed1d-ea8b-4537-8274-6844362c7343",
+   "uuid": "bb1c2f35-e887-4986-9275-4ac792d4ae7a",
    "volume_cm3": 0.8186446136020269
   },
   {
@@ -1117,7 +1117,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B06.3mf",
-   "uuid": "333c68a3-72bd-4ff2-b9c1-b8b549e4f314",
+   "uuid": "271ee2c8-3933-4c92-84be-23338fbc3f87",
    "volume_cm3": 2.9664290392764854
   },
   {
@@ -1131,7 +1131,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B00.3mf",
-   "uuid": "344fc7bc-ed6b-49e5-a336-6dec1852b912",
+   "uuid": "0d3d360d-23ef-4f22-8acf-3b817e4f9762",
    "volume_cm3": 1.702726828267806
   },
   {
@@ -1145,7 +1145,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B01.3mf",
-   "uuid": "883222b1-f2fc-46a4-9d45-2ad4e7251cd4",
+   "uuid": "9216e721-6b9d-4f31-82e7-eb69e359d9dc",
    "volume_cm3": 2.7930756711268625
   },
   {
@@ -1159,7 +1159,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B02.3mf",
-   "uuid": "341422fd-2041-40b6-8f40-b903199deeb5",
+   "uuid": "14ab2b04-d640-4dad-8f23-51cdb46e1836",
    "volume_cm3": 2.123372752276974
   },
   {
@@ -1173,7 +1173,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B04.3mf",
-   "uuid": "1a4aec06-0bcf-40ca-ab8a-8bf5ae8f11a0",
+   "uuid": "291f2e8d-cafe-42a2-9b7f-13f51786c5f7",
    "volume_cm3": 2.4412982873713585
   },
   {
@@ -1187,7 +1187,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B05.3mf",
-   "uuid": "dc0fb9b0-b008-4d78-97aa-5aa9b6551464",
+   "uuid": "aa138d8c-d017-4fa4-b7ab-6894e471c373",
    "volume_cm3": 1.781184225391707
   },
   {
@@ -1201,7 +1201,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B06.3mf",
-   "uuid": "f2b16d78-6d60-4e94-a3a4-d76553ce84df",
+   "uuid": "e705a891-a66d-4d3e-a83a-12c5450d2e31",
    "volume_cm3": 2.193938516429455
   },
   {
@@ -1215,7 +1215,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B07.3mf",
-   "uuid": "095e6ee9-dd66-46d9-a4bb-e600db773e76",
+   "uuid": "372c2bb5-1ff0-4fb3-9466-f23d2aad83c4",
    "volume_cm3": 2.013746410438121
   },
   {
@@ -1229,7 +1229,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B00.3mf",
-   "uuid": "dfd527d0-172d-4437-aecf-3321bdad5d07",
+   "uuid": "ec1069de-3b0c-44b9-a541-d8c38144fcf1",
    "volume_cm3": 0.7061513856976461
   },
   {
@@ -1243,7 +1243,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B01.3mf",
-   "uuid": "910ec11f-e72b-49d5-bd34-954d52b8de7f",
+   "uuid": "8d36fbec-12fd-4dd7-9801-126dab1188ac",
    "volume_cm3": 0.9786972834997304
   },
   {
@@ -1257,7 +1257,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B02.3mf",
-   "uuid": "7c5d6e12-5149-4e2d-8226-bc13134e0ff5",
+   "uuid": "ac8335b2-0b03-40f7-b7a6-2e8f7464d88a",
    "volume_cm3": 2.3396384950206963
   },
   {
@@ -1271,7 +1271,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B03.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B03.3mf",
-   "uuid": "fe7908f5-52e5-43a4-beb4-954c417d35e4",
+   "uuid": "6dd1509e-2f71-48f6-90d2-938585bbf39a",
    "volume_cm3": 2.310508977490567
   },
   {
@@ -1285,7 +1285,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B04.3mf",
-   "uuid": "041da8d6-9b74-4ba3-a228-9606d6ab4cac",
+   "uuid": "6af822bd-ff68-42c5-8f4a-4921083f088b",
    "volume_cm3": 1.9980792362843114
   },
   {
@@ -1299,7 +1299,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B05.3mf",
-   "uuid": "1df20d66-d82a-4cef-9559-af7d2a859903",
+   "uuid": "42d080a4-d67d-4935-97ba-2e384799a0e1",
    "volume_cm3": 3.2794846020089907
   },
   {
@@ -1313,7 +1313,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B06.3mf",
-   "uuid": "12496e34-448c-487f-8b9e-32e04e8e3f23",
+   "uuid": "620c27a2-c0f2-40a4-93a5-e5b3dc751205",
    "volume_cm3": 0.7813115762724989
   },
   {
@@ -1327,7 +1327,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B07.3mf",
-   "uuid": "ab30a7b2-d77e-4092-8c0b-f20f0745fffa",
+   "uuid": "900baf3e-2654-43fd-838e-e60b324a75df",
    "volume_cm3": 1.4438321628330146
   },
   {
@@ -1341,7 +1341,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B08.3mf",
-   "uuid": "fa70db4e-a828-4c8b-9c1d-f40800c3cdba",
+   "uuid": "43b97091-2792-489e-9473-b471d6ccc619",
    "volume_cm3": 2.049528356388059
   },
   {
@@ -1355,7 +1355,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B09.3mf",
-   "uuid": "8e93582d-7e18-40c9-8eb0-ebf05ca2dc1d",
+   "uuid": "cd014ae1-1ff3-43ee-a145-71124da56635",
    "volume_cm3": 1.7304570410882394
   },
   {
@@ -1369,7 +1369,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B10.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B10.3mf",
-   "uuid": "81f9451c-a511-481e-9eef-71c48f23d092",
+   "uuid": "2ff84489-ca6d-4bde-a3be-16d40d3eb723",
    "volume_cm3": 0.6919966290139828
   },
   {
@@ -1383,7 +1383,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B00.3mf",
-   "uuid": "b0b60dcb-071b-4f7a-a5f6-948709c4ea9d",
+   "uuid": "6d04a702-544a-4a0f-b8be-ed22432b0ee0",
    "volume_cm3": 2.3996365925881338
   },
   {
@@ -1397,7 +1397,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B01.3mf",
-   "uuid": "c1c7e455-69f2-45fd-b95b-baa67981d32c",
+   "uuid": "3eb39388-be2d-4d0c-a877-2eb61920b22b",
    "volume_cm3": 2.255274067663791
   },
   {
@@ -1411,7 +1411,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B02.3mf",
-   "uuid": "aadd2021-bb07-48cd-b8a0-334a1f5df408",
+   "uuid": "5716779a-cf8d-41a6-bad1-f81c70332296",
    "volume_cm3": 2.264907357852887
   },
   {
@@ -1425,7 +1425,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B03.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B03.3mf",
-   "uuid": "f94fb582-e0fd-4e5e-a07c-fdc6fb4240b8",
+   "uuid": "608c6972-8579-478f-9ae1-5acc62bdc147",
    "volume_cm3": 1.203472635248346
   },
   {
@@ -1439,7 +1439,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B04.3mf",
-   "uuid": "e5c951a7-89fd-4618-892c-79b8283de7f7",
+   "uuid": "0473c6ad-b602-4725-b3ac-f3e003869afa",
    "volume_cm3": 1.7196899035498676
   },
   {
@@ -1453,7 +1453,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B05.3mf",
-   "uuid": "6791311d-983a-4730-b9a5-6ea72e90767e",
+   "uuid": "9010c13b-4692-40dc-b08a-988b9b799c1e",
    "volume_cm3": 3.286835708158587
   },
   {
@@ -1467,7 +1467,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B06.3mf",
-   "uuid": "eb8a385b-f48d-4232-bdaa-119107d14dd2",
+   "uuid": "71a96220-de13-4a89-b347-7ea168847cae",
    "volume_cm3": 2.4005724170718565
   },
   {
@@ -1481,7 +1481,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B07.3mf",
-   "uuid": "dcaefb7e-99f0-4016-bc9c-02d77a55ce51",
+   "uuid": "838bbad8-9bac-494d-8019-1b3bd210ac82",
    "volume_cm3": 0.9863626062802867
   },
   {
@@ -1495,7 +1495,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B08.3mf",
-   "uuid": "52471e93-f7cb-4eeb-893e-d6a8264cb112",
+   "uuid": "b48ed19e-ba77-415d-b754-0f44c4b1b05d",
    "volume_cm3": 0.9289803142465717
   },
   {
@@ -1509,7 +1509,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B09.3mf",
-   "uuid": "340e76a5-78e5-4d3b-a4b7-2f45e630d5c1",
+   "uuid": "950671be-b452-4a90-8d7e-9d11368f3227",
    "volume_cm3": 0.8959396764686475
   },
   {
@@ -1523,7 +1523,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B10.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B10.3mf",
-   "uuid": "03e808dc-9324-4959-811a-7ec5eada03de",
+   "uuid": "8e1d370f-2ab9-45b2-b9e5-d21ab42a9daf",
    "volume_cm3": 2.0112199433577977
   },
   {
@@ -1537,7 +1537,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C09_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C09_B00.3mf",
-   "uuid": "d1e54555-7cfd-4ad8-be06-c591a635633b",
+   "uuid": "309bd3c4-fb75-496b-8b66-49a2e265527a",
    "volume_cm3": 7.369480341321307
   },
   {
@@ -1551,7 +1551,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B00.3mf",
-   "uuid": "7442c08a-478e-4d04-8925-cf1ce1a038cb",
+   "uuid": "6c75f3b1-030a-457d-948b-409ebb1e89a9",
    "volume_cm3": 0.8598193611573235
   },
   {
@@ -1565,7 +1565,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B01.3mf",
-   "uuid": "38845095-fe87-4402-8a41-5df980f32b73",
+   "uuid": "c1ee5e86-188e-4c07-bc46-c1e98edad5b1",
    "volume_cm3": 1.2821931830307327
   },
   {
@@ -1579,7 +1579,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B02.3mf",
-   "uuid": "3616b0d2-f5cd-4d37-8531-f16f67dbd951",
+   "uuid": "87f71720-9bfe-4bd7-8e64-3ae0ba787fe2",
    "volume_cm3": 1.6718997667049842
   },
   {
@@ -1593,7 +1593,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B08.3mf",
-   "uuid": "27888bb4-f86d-46c0-b54d-54d6ee031ea0",
+   "uuid": "5a195767-2100-4035-8342-f5a40151e6b7",
    "volume_cm3": 1.017102779907907
   },
   {
@@ -1607,7 +1607,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B09.3mf",
-   "uuid": "31149250-c8e7-46e8-8b6f-2b55bb759c2e",
+   "uuid": "c6bc5487-6292-4f57-ae1f-242f80d7d20f",
    "volume_cm3": 3.94358766010064
   },
   {
@@ -1621,7 +1621,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B00.3mf",
-   "uuid": "8a019a8f-27a8-4c50-bb26-f4247e91a0a3",
+   "uuid": "e13fe04c-ef1b-4262-a6b8-688707feb48c",
    "volume_cm3": 7.364174967225204
   },
   {
@@ -1635,7 +1635,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B04.3mf",
-   "uuid": "9068ba56-d859-4e42-927d-eb89a1696b9d",
+   "uuid": "963fda98-c222-40ec-b912-8de177f7a42a",
    "volume_cm3": 2.0713691906207945
   },
   {
@@ -1649,7 +1649,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B05.3mf",
-   "uuid": "4366885d-b800-49b7-8b61-9e0d785138d6",
+   "uuid": "dee9c5a7-4d10-4b99-96b5-079ed966d055",
    "volume_cm3": 2.917093535442727
   },
   {
@@ -1663,7 +1663,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B00.3mf",
-   "uuid": "3a382cad-ed14-4cce-b5f2-9c9807b03188",
+   "uuid": "d3daccc1-7bbb-4f5d-99cb-dbdd14776d81",
    "volume_cm3": 4.354858913158507
   },
   {
@@ -1677,7 +1677,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B01.3mf",
-   "uuid": "6acb86c9-eed5-4bd0-8e23-f8eb797a3754",
+   "uuid": "74895244-0c11-4be0-a934-8d41e271fcd7",
    "volume_cm3": 2.4665575344642723
   },
   {
@@ -1691,7 +1691,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B05.3mf",
-   "uuid": "6ae456c5-5813-462a-b642-1634be4b3de7",
+   "uuid": "2050d9dd-f0a2-4c6b-a4f5-d19016513685",
    "volume_cm3": 2.1649367141433555
   },
   {
@@ -1705,7 +1705,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B06.3mf",
-   "uuid": "53b544d8-dee1-4b3c-b61e-d0260a402d64",
+   "uuid": "45602f57-4a26-4416-8ab4-cc0c818e89ce",
    "volume_cm3": 4.26650624628773
   },
   {
@@ -1719,7 +1719,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B00.3mf",
-   "uuid": "c28bfaaf-7e81-4763-9371-c34fa1a82e59",
+   "uuid": "088ccb2f-fd4a-44c3-8a97-bf55cdb429d6",
    "volume_cm3": 4.995926762532867
   },
   {
@@ -1733,7 +1733,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B01.3mf",
-   "uuid": "1e59f91b-391f-44e0-8c29-8bd7dc6ba3f1",
+   "uuid": "4c49f0e5-7a42-49b5-a23b-21672da3c543",
    "volume_cm3": 4.011434108838241
   },
   {
@@ -1747,7 +1747,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B02.3mf",
-   "uuid": "8ba98e5d-e315-4853-bba0-17b63365bf33",
+   "uuid": "6d0949f7-8f52-4453-a145-34c873bbcb05",
    "volume_cm3": 5.128467797602137
   },
   {
@@ -1761,7 +1761,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B04.3mf",
-   "uuid": "0ee38666-74b7-46cf-930c-b659ad08e286",
+   "uuid": "c62e64c8-7ddb-4a10-a974-1b21b238b1db",
    "volume_cm3": 5.281169245177468
   },
   {
@@ -1775,7 +1775,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B05.3mf",
-   "uuid": "b2f349cc-cefa-4e73-a310-f8bda59f838a",
+   "uuid": "274ae4cc-1a64-460c-8453-ebcd3bca752b",
    "volume_cm3": 2.141789186475493
   },
   {
@@ -1789,7 +1789,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B06.3mf",
-   "uuid": "67bd68d1-2e26-496e-b626-c4e660c326fe",
+   "uuid": "cf1ce886-bbfc-407e-afa2-b801b9befc52",
    "volume_cm3": 4.924397604270196
   },
   {
@@ -1803,7 +1803,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B07.3mf",
-   "uuid": "0daf3be7-c981-40db-a3b6-d281069b8b1b",
+   "uuid": "f53d2e2a-9358-45ac-b810-09568a6f608f",
    "volume_cm3": 2.02749252463681
   },
   {
@@ -1817,7 +1817,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B00.3mf",
-   "uuid": "a994d3b9-ee25-40c7-942e-6931cf5f0568",
+   "uuid": "29cd6f16-f59e-430e-87aa-2ada55a752e4",
    "volume_cm3": 1.036109780009332
   },
   {
@@ -1831,7 +1831,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B01.3mf",
-   "uuid": "f7ae8c5c-c9e3-4699-bb63-d0f7e5b74010",
+   "uuid": "a8425a53-ff16-4418-b3d4-37c0c4e10789",
    "volume_cm3": 2.971204940719349
   },
   {
@@ -1845,7 +1845,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B02.3mf",
-   "uuid": "90db9b9b-b595-427e-82ad-6601c1a0699c",
+   "uuid": "3097ce96-754e-441c-b7a8-66821b4ecc85",
    "volume_cm3": 3.305408547220863
   },
   {
@@ -1859,7 +1859,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B03.3mf",
-   "uuid": "8ae796b2-cc8b-462d-8716-8d5f3f615c53",
+   "uuid": "0441cee6-6f61-413d-b64e-0103c5baa07b",
    "volume_cm3": 5.902562300810024
   },
   {
@@ -1873,7 +1873,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B04.3mf",
-   "uuid": "eccf804e-acb2-4fcd-b8c8-f89f638a1700",
+   "uuid": "c0f00485-c3eb-41a0-b631-3a3402af5f3a",
    "volume_cm3": 2.3368694758878794
   },
   {
@@ -1887,7 +1887,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B05.3mf",
-   "uuid": "5253cb47-e4c6-4bf2-a6e8-94231c9f0fd9",
+   "uuid": "4657e2fe-7072-4d6f-9d00-8e9be02493a8",
    "volume_cm3": 7.262939684458274
   },
   {
@@ -1901,7 +1901,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B06.3mf",
-   "uuid": "f319c0e0-3fbb-404c-ac91-ccddadf5972c",
+   "uuid": "47805502-5874-4f5a-b18b-3034a59e0e5f",
    "volume_cm3": 1.0023202419262394
   },
   {
@@ -1915,7 +1915,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B07.3mf",
-   "uuid": "1221fa77-0e15-419f-8542-9da93ef64993",
+   "uuid": "42e2fc1a-efa2-48b0-8480-610cf93aa1e9",
    "volume_cm3": 2.954127276697565
   },
   {
@@ -1929,7 +1929,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B08.3mf",
-   "uuid": "fa5cd929-bb74-4b3d-b2e2-afef3592ecf9",
+   "uuid": "b987301d-dc29-4194-a244-2ea46a9559fa",
    "volume_cm3": 3.099876100898938
   },
   {
@@ -1943,7 +1943,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B09.3mf",
-   "uuid": "1793d14a-21df-44d0-89dc-eaa5e03f1c28",
+   "uuid": "e9bdde6c-1a34-4cd5-bc02-b6919e159a78",
    "volume_cm3": 3.7054681767601
   },
   {
@@ -1957,7 +1957,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B10.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B10.3mf",
-   "uuid": "25a2b44e-2039-46c2-8342-a9fb214c90b1",
+   "uuid": "c349c399-e962-4f48-9ac1-5d03ff939b94",
    "volume_cm3": 0.9460133054804989
   },
   {
@@ -1971,7 +1971,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B00.3mf",
-   "uuid": "aa187747-fdb4-41a8-9334-3ed4aad5ccbb",
+   "uuid": "287eb746-0a32-44da-a758-103fce254a88",
    "volume_cm3": 5.0661023088829715
   },
   {
@@ -1985,7 +1985,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B01.3mf",
-   "uuid": "08cde108-f608-4bda-9872-d77adcce0f95",
+   "uuid": "c0d5b831-93d1-442b-9ad1-2fc55901df3b",
    "volume_cm3": 3.3587104710702382
   },
   {
@@ -1999,7 +1999,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B02.3mf",
-   "uuid": "80e5c187-7d4f-4d02-9d8e-91749049eeeb",
+   "uuid": "1971ad40-2267-4da3-a8e8-645d3146721d",
    "volume_cm3": 4.633327531382439
   },
   {
@@ -2013,7 +2013,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B03.3mf",
-   "uuid": "2d6b8f67-7084-489a-a28a-36bae706d8f7",
+   "uuid": "fa0cc521-5370-48db-b6e1-a9b32498dc8b",
    "volume_cm3": 1.3107126797615662
   },
   {
@@ -2027,7 +2027,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B04.3mf",
-   "uuid": "dcb3785e-21c2-4009-a3bf-aaae9fced5d3",
+   "uuid": "9ace7e85-6eb9-4a90-b5b1-3d204e8a63ed",
    "volume_cm3": 3.487565920712986
   },
   {
@@ -2041,7 +2041,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B05.3mf",
-   "uuid": "54be44ef-9cb0-41e8-af1b-bd30c8c9360d",
+   "uuid": "a1fe4c89-6cbb-4e36-a36b-4b25044d9bf4",
    "volume_cm3": 3.834314532092217
   },
   {
@@ -2055,7 +2055,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B06.3mf",
-   "uuid": "0af5a7f3-5e03-43bd-920b-a8380cd0dd81",
+   "uuid": "196c40ea-db77-4c85-ab07-76460acf8704",
    "volume_cm3": 6.7342615980288025
   },
   {
@@ -2069,7 +2069,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B07.3mf",
-   "uuid": "902261d9-8f75-4c23-8cc7-44c7faf92700",
+   "uuid": "2461d595-56d8-4a5a-a2ef-79fe50d945b5",
    "volume_cm3": 0.9965751238509257
   },
   {
@@ -2083,7 +2083,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B08.3mf",
-   "uuid": "8c285f7a-58dc-4dc1-96cc-69143d3dec55",
+   "uuid": "6349f236-5c4e-4c38-a3b3-14b9753b5a99",
    "volume_cm3": 2.3180260083272053
   },
   {
@@ -2097,7 +2097,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B09.3mf",
-   "uuid": "ed1d8d64-4c13-4046-8f55-a955383b26ad",
+   "uuid": "7c4e87fe-b338-4975-93f2-ac06241c53ca",
    "volume_cm3": 1.3012781409465326
   },
   {
@@ -2111,7 +2111,7 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B10.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B10.3mf",
-   "uuid": "bd7f6ace-fff3-415a-a9fc-312a04d91076",
+   "uuid": "2c8e591a-2749-4449-a8fc-0f12920a4d9a",
    "volume_cm3": 4.6959074120135345
   },
   {
@@ -2125,7 +2125,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C09_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C09_B00.3mf",
-   "uuid": "1abc9c4c-d28d-4fb1-86e3-aee1cfd197a2",
+   "uuid": "ee87399f-b5fd-4395-837e-95c66876a82b",
    "volume_cm3": 3.2779480781345187
   },
   {
@@ -2139,7 +2139,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B00.3mf",
-   "uuid": "9b7754bc-a69e-4d9a-a02e-dbb9e8b53377",
+   "uuid": "ad1d38a6-2905-44b5-aaf3-e41e85c4edc5",
    "volume_cm3": 0.6793562416166476
   },
   {
@@ -2153,7 +2153,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B01.3mf",
-   "uuid": "437d9779-9753-4bcb-86c8-91896c75e58f",
+   "uuid": "f56bdac3-4d9f-44e4-983f-91fd94de17ae",
    "volume_cm3": 0.601937594844261
   },
   {
@@ -2167,7 +2167,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B02.3mf",
-   "uuid": "278d9bb9-f1f7-4e45-8bc3-ad856d065e49",
+   "uuid": "52d15573-bc39-4c66-8564-42c6f0ff7c74",
    "volume_cm3": 1.6107648226252291
   },
   {
@@ -2181,7 +2181,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B08.3mf",
-   "uuid": "1f11e823-97eb-404a-b54c-56a83877ae2e",
+   "uuid": "8caae2ae-e9b7-4f56-a1cf-30eaa2e74e79",
    "volume_cm3": 0.7436513779263533
   },
   {
@@ -2195,7 +2195,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B09.3mf",
-   "uuid": "bb36c820-aa22-40fc-bcdb-08e6f032ac4b",
+   "uuid": "1a691e11-1a23-46b1-921c-8a979ad27290",
    "volume_cm3": 1.8065405136244206
   },
   {
@@ -2209,7 +2209,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B00.3mf",
-   "uuid": "6bfc3739-d0dd-4acb-ada1-b26da8930ef9",
+   "uuid": "e1f28ab3-1708-44a4-8198-5fe0f1a11b6a",
    "volume_cm3": 2.7982635393569666
   },
   {
@@ -2223,7 +2223,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B04.3mf",
-   "uuid": "6de7e49a-99ca-4d23-9514-d5b44568b8e6",
+   "uuid": "95ab5d0e-9f46-462d-ae2a-29b7419bf8ee",
    "volume_cm3": 0.7420421273680309
   },
   {
@@ -2237,7 +2237,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B05.3mf",
-   "uuid": "8b8192ff-d6fd-4800-a77a-9a97fcd3da34",
+   "uuid": "38e5950f-ee07-4d16-9bf7-900035495f66",
    "volume_cm3": 2.362488126613992
   },
   {
@@ -2251,7 +2251,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B00.3mf",
-   "uuid": "29d69e15-9254-4701-b762-0e7d826b1699",
+   "uuid": "26f66916-ade3-4891-babb-af0e2c40f72f",
    "volume_cm3": 3.228109462242702
   },
   {
@@ -2265,7 +2265,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B01.3mf",
-   "uuid": "77703b75-7c3b-4a86-b64a-a595741efd2b",
+   "uuid": "831c79c3-4b11-463e-b434-8eebcf748abf",
    "volume_cm3": 0.9828124039577083
   },
   {
@@ -2279,7 +2279,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B05.3mf",
-   "uuid": "1e2ae9d7-54d8-45c8-8a92-4beffa2432cd",
+   "uuid": "0a4dba05-d8e4-47e6-9eb4-b4f583db4ee8",
    "volume_cm3": 0.8186446136020269
   },
   {
@@ -2293,7 +2293,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B06.3mf",
-   "uuid": "1ac82925-f60e-4990-beaf-c64613eb560d",
+   "uuid": "65332a87-5892-49a7-8d3a-f92b735b8d18",
    "volume_cm3": 2.966429039276484
   },
   {
@@ -2307,7 +2307,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B00.3mf",
-   "uuid": "24cf27da-e453-4a84-8135-ecfd185505b9",
+   "uuid": "f15e1602-7836-4b18-a3d1-63c4405b0e2d",
    "volume_cm3": 1.702726828267806
   },
   {
@@ -2321,7 +2321,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B01.3mf",
-   "uuid": "4458a72c-3682-4155-b550-8e500657e662",
+   "uuid": "d2b877a8-88d9-40ff-9fc4-7a30366d79d2",
    "volume_cm3": 2.7930756711268625
   },
   {
@@ -2335,7 +2335,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B02.3mf",
-   "uuid": "c095eb7d-6720-464c-a777-2880c6b4864a",
+   "uuid": "65cc6eba-3499-4739-8615-9d0bd898a1ca",
    "volume_cm3": 2.123372752276974
   },
   {
@@ -2349,7 +2349,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B04.3mf",
-   "uuid": "63dd2684-bc2c-483a-b4e2-236f34e66096",
+   "uuid": "e487cc80-595f-4175-8953-87afb6057e08",
    "volume_cm3": 2.441298287371359
   },
   {
@@ -2363,7 +2363,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B05.3mf",
-   "uuid": "b5b80bba-1627-4c6c-8a02-844096eaee42",
+   "uuid": "c55faea4-54c2-4dc6-acad-08cd27db9ffd",
    "volume_cm3": 1.7811842253917065
   },
   {
@@ -2377,7 +2377,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B06.3mf",
-   "uuid": "93392bca-df7a-4a26-8979-24e9271b468b",
+   "uuid": "8c71e898-b7f8-442f-90d8-baf9947c0427",
    "volume_cm3": 2.193938516429455
   },
   {
@@ -2391,7 +2391,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B07.3mf",
-   "uuid": "9017c11b-f66e-4880-900a-b7129780ce48",
+   "uuid": "714564f1-d844-4d62-b006-0fed0be408a3",
    "volume_cm3": 2.0137464104381206
   },
   {
@@ -2405,7 +2405,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B00.3mf",
-   "uuid": "3c601eec-cca7-4444-bebc-bd1b206f9e00",
+   "uuid": "6f32789b-0a04-41ef-bb42-7cd608079650",
    "volume_cm3": 0.7061513856976461
   },
   {
@@ -2419,7 +2419,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B01.3mf",
-   "uuid": "9efe6c14-50a1-4dfa-a0ef-aa67528fc279",
+   "uuid": "7c17df3c-02a7-4bd3-b8b1-220e5dc23f02",
    "volume_cm3": 0.9786972834997306
   },
   {
@@ -2433,7 +2433,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B02.3mf",
-   "uuid": "b43a2c52-8c35-4324-a56b-e84a9395e7b9",
+   "uuid": "7ed43992-1bdb-4aeb-b0af-5625556fd19f",
    "volume_cm3": 2.3396384950206963
   },
   {
@@ -2447,7 +2447,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B03.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B03.3mf",
-   "uuid": "1eac8ebb-5002-4dc8-b350-fd466a7ecee2",
+   "uuid": "98a6ba9f-50d5-4928-963d-b68adcb69e5b",
    "volume_cm3": 2.310508977490567
   },
   {
@@ -2461,7 +2461,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B04.3mf",
-   "uuid": "0a3341d7-c4be-4875-baa7-ba9ca161e6f3",
+   "uuid": "72317512-a887-4e18-bb9b-59d6b1626736",
    "volume_cm3": 1.9980792362843114
   },
   {
@@ -2475,7 +2475,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B05.3mf",
-   "uuid": "55e21f3a-e6c3-4994-89a5-1ec0c383f91e",
+   "uuid": "924afd3f-6bb6-47fd-965a-76e3977f1a8d",
    "volume_cm3": 3.2794846020089894
   },
   {
@@ -2489,7 +2489,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B06.3mf",
-   "uuid": "19cc4d55-f4bc-464e-9eb9-cb8854577b12",
+   "uuid": "d422c4bd-cfa9-4d49-b263-bd8b69cc7744",
    "volume_cm3": 0.7813115762724989
   },
   {
@@ -2503,7 +2503,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B07.3mf",
-   "uuid": "36156a18-814b-48df-adff-53d0681d240c",
+   "uuid": "fce471cf-e935-4932-8f7a-676e17f8a9b7",
    "volume_cm3": 1.4438321628330146
   },
   {
@@ -2517,7 +2517,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B08.3mf",
-   "uuid": "f635787f-ee39-4fdb-b94a-593e487f76c6",
+   "uuid": "3b194dd8-c26d-4424-a536-fd56b2edef26",
    "volume_cm3": 2.049528356388059
   },
   {
@@ -2531,7 +2531,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B09.3mf",
-   "uuid": "11b1f79f-10a2-4c7d-a33d-ed18a1b40ac0",
+   "uuid": "d767bb19-74c6-4894-aa6a-0058cd074c5c",
    "volume_cm3": 1.7304570410882394
   },
   {
@@ -2545,7 +2545,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B10.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B10.3mf",
-   "uuid": "6fc853db-9241-42e6-8625-27788192480d",
+   "uuid": "1c2fd093-5457-4809-bb0e-9e5cbcdd64c5",
    "volume_cm3": 0.6919966290139828
   },
   {
@@ -2559,7 +2559,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B00.3mf",
-   "uuid": "58e0c1a9-b94f-49b9-8d35-9d595946eb93",
+   "uuid": "43ed351f-472f-4c62-9319-07bccdf51105",
    "volume_cm3": 2.3996365925881338
   },
   {
@@ -2573,7 +2573,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B01.3mf",
-   "uuid": "a4911ade-8ab6-4446-ad66-b022ea2b7841",
+   "uuid": "a449e85c-1950-4e4b-b569-a4b96eee0255",
    "volume_cm3": 2.255274067663791
   },
   {
@@ -2587,7 +2587,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B02.3mf",
-   "uuid": "65a5d03f-9819-4ea2-98bd-640350ed4cd5",
+   "uuid": "bf81d9b7-2695-4848-bddf-4e974d8166a4",
    "volume_cm3": 2.264907357852887
   },
   {
@@ -2601,7 +2601,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B03.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B03.3mf",
-   "uuid": "71a281bb-1867-4335-b209-d8ac1963d4d8",
+   "uuid": "7f1ae9f1-1a3e-4d00-8d05-5e976daf7553",
    "volume_cm3": 1.203472635248346
   },
   {
@@ -2615,7 +2615,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B04.3mf",
-   "uuid": "127e6b55-b53a-4a23-82f8-7e4ec6ae9de3",
+   "uuid": "08f46973-ec26-4662-9733-85f351affbab",
    "volume_cm3": 1.719689903549868
   },
   {
@@ -2629,7 +2629,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B05.3mf",
-   "uuid": "e864feaf-be6f-4b8f-97a4-b65f61dc99e7",
+   "uuid": "ed4ddfdd-8085-45e1-a398-c50b2cb2b2c4",
    "volume_cm3": 3.286835708158586
   },
   {
@@ -2643,7 +2643,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B06.3mf",
-   "uuid": "407fbfbe-6d48-46f6-ae7e-e641496f489f",
+   "uuid": "fc6d5f22-c020-4792-9724-873f61f86fc3",
    "volume_cm3": 2.4005724170718565
   },
   {
@@ -2657,7 +2657,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B07.3mf",
-   "uuid": "bd123525-1143-4bb1-8c3e-548bc417cac5",
+   "uuid": "614d2980-46b9-459b-85dc-82c5f127ecc0",
    "volume_cm3": 0.9863626062802867
   },
   {
@@ -2671,7 +2671,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B08.3mf",
-   "uuid": "6fc27c5c-fbbf-4136-a654-e9160427cf47",
+   "uuid": "5cc29314-4f5b-42e9-882b-667a963d95d6",
    "volume_cm3": 0.9289803142465717
   },
   {
@@ -2685,7 +2685,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B09.3mf",
-   "uuid": "29c1758e-7eb0-48e2-a602-a9e930568540",
+   "uuid": "81909130-34a2-40ff-ab92-2f7e0d683e56",
    "volume_cm3": 0.8959396764686475
   },
   {
@@ -2699,7 +2699,7 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B10.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B10.3mf",
-   "uuid": "08720f2b-f515-4972-801f-5d3407ee1228",
+   "uuid": "cc7cdd41-1979-4be3-ad25-81bf36501130",
    "volume_cm3": 2.0112199433577977
   },
   {
@@ -2713,7 +2713,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C13_B00.3mf",
-   "uuid": "8bd8b627-2ff4-461f-bb86-6fb860c67556",
+   "uuid": "e66e1681-1d2f-4c59-9e82-1f011c43f939",
    "volume_cm3": 108.11367894189559
   },
   {
@@ -2727,7 +2727,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C13_B02.3mf",
-   "uuid": "d1cab1b5-638e-4926-93c9-032fc06218a2",
+   "uuid": "04cc4bc6-f3aa-4dd3-8527-e81953e5c2bf",
    "volume_cm3": 67.66404178473056
   },
   {
@@ -2741,7 +2741,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B00.3mf",
-   "uuid": "78f8498f-8c6b-426e-a954-15e6abdc730b",
+   "uuid": "a3ed7fc7-be12-4414-927c-a119055588d5",
    "volume_cm3": 115.75781244836077
   },
   {
@@ -2755,7 +2755,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B01.3mf",
-   "uuid": "761a2b59-16e7-436e-abcc-c2f01dd43a7b",
+   "uuid": "0b0cc46a-84cc-4c6e-b96c-d13532b6f702",
    "volume_cm3": 82.8163895819821
   },
   {
@@ -2769,7 +2769,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B02.3mf",
-   "uuid": "3b3b28fb-d31b-4ac3-a5ad-3a534382864f",
+   "uuid": "a2101e85-e479-4df2-87a6-09a16496fec6",
    "volume_cm3": 115.75781244836077
   },
   {
@@ -2783,7 +2783,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B00.3mf",
-   "uuid": "9c95e942-47fa-4ff5-b5fa-834476a12730",
+   "uuid": "a1374891-1929-413a-b5ee-4d8d3a4643c7",
    "volume_cm3": 87.09124650822493
   },
   {
@@ -2797,7 +2797,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B01.3mf",
-   "uuid": "8713301f-9e2d-4242-90d3-ac18d82b2cef",
+   "uuid": "ae0a101a-9e6d-4bbc-b8bd-24d6ea0edcdf",
    "volume_cm3": 89.39513459649127
   },
   {
@@ -2811,7 +2811,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B02.3mf",
-   "uuid": "f7517742-88a7-4655-acb5-00305432a261",
+   "uuid": "8879b8c8-9e81-4682-b93b-894ed039880b",
    "volume_cm3": 87.09124650822493
   },
   {
@@ -2825,7 +2825,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B01.3mf",
-   "uuid": "1e8dfc3a-3cdd-4dd0-ab2f-b2702d0f5b53",
+   "uuid": "4e591244-a024-45f5-b9f6-4ec41eeab522",
    "volume_cm3": 30.026426435997575
   },
   {
@@ -2839,7 +2839,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B02.3mf",
-   "uuid": "76c71cb8-7365-4423-8163-2305f4890469",
+   "uuid": "8eff9c2a-364e-498a-9b5a-32543d0f5564",
    "volume_cm3": 30.556783717626544
   },
   {
@@ -2853,7 +2853,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B03.3mf",
-   "uuid": "54991d94-d55d-4269-86a7-d6975c266bd0",
+   "uuid": "0428f74b-79c9-45ce-ba1e-2df3820bf93b",
    "volume_cm3": 29.597423506670285
   },
   {
@@ -2867,7 +2867,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B04.3mf",
-   "uuid": "1b401527-9903-4b18-b856-7f298fcfd345",
+   "uuid": "9f35936e-051a-413d-84ea-30cf20966d4c",
    "volume_cm3": 28.28071775400226
   },
   {
@@ -2881,7 +2881,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B05.3mf",
-   "uuid": "3521de66-ee24-490e-898e-ade03a873361",
+   "uuid": "95fdd867-f683-451e-82d0-6e0b247891d3",
    "volume_cm3": 26.979200611242078
   },
   {
@@ -2895,7 +2895,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B06.3mf",
-   "uuid": "d71b9cfe-d838-41b5-95bc-485bc511fab8",
+   "uuid": "33f6c2f2-a3bc-41f7-9840-899a2e7f7563",
    "volume_cm3": 25.823002392191107
   },
   {
@@ -2909,7 +2909,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B07.3mf",
-   "uuid": "f0384152-e698-4cf0-8c56-87a7dfedc513",
+   "uuid": "17d0e6c2-ff0f-4b44-87bc-c2f74d0f2752",
    "volume_cm3": 24.880459294902867
   },
   {
@@ -2923,7 +2923,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B08.3mf",
-   "uuid": "d6b93d93-f4cb-455a-a204-c4f98f294a7b",
+   "uuid": "c380f94e-7288-4cef-a00a-1404fc2ae436",
    "volume_cm3": 24.172210624781897
   },
   {
@@ -2937,7 +2937,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B09.3mf",
-   "uuid": "33f1a696-a481-4cc3-848a-a256081f50a7",
+   "uuid": "89eb5e22-13f5-4e99-8934-b627f0eb0e25",
    "volume_cm3": 26.95425747358245
   },
   {
@@ -2951,7 +2951,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B10.3mf",
-   "uuid": "1cc1f4d4-47c5-485d-acfb-cf5ec6efdb80",
+   "uuid": "fb8ffe1e-7f9a-45fb-8db9-5ec88e43c257",
    "volume_cm3": 24.171872329475498
   },
   {
@@ -2965,7 +2965,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B11.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B11.3mf",
-   "uuid": "e373f1f3-9809-4b7d-92e4-4d4d90650510",
+   "uuid": "af27c791-59f2-4a2e-bed7-d25f6d002b7c",
    "volume_cm3": 24.879712043130738
   },
   {
@@ -2979,7 +2979,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B12.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B12.3mf",
-   "uuid": "4e1dd305-5135-446c-a1de-9c3dfec728e8",
+   "uuid": "8580b8bd-84bf-42a7-9073-cd24a92d1466",
    "volume_cm3": 25.82167610509638
   },
   {
@@ -2993,7 +2993,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B13.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B13.3mf",
-   "uuid": "933538e8-668d-40e5-a57b-48d20702eb68",
+   "uuid": "a90f2713-80d2-4d78-a43f-db594c08d8ab",
    "volume_cm3": 26.97694010537326
   },
   {
@@ -3007,7 +3007,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B14.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B14.3mf",
-   "uuid": "737ab527-49eb-48e3-8666-e5066585228c",
+   "uuid": "8b3c8064-c360-4642-9707-0c7d468e5ffd",
    "volume_cm3": 28.276776648626637
   },
   {
@@ -3021,7 +3021,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B15.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B15.3mf",
-   "uuid": "da9f14ae-c33b-4d08-8fbd-66403c69bffd",
+   "uuid": "da64ad8c-540a-46cb-b883-0fca522e27fe",
    "volume_cm3": 29.589910942038273
   },
   {
@@ -3035,7 +3035,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B16.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B16.3mf",
-   "uuid": "0f3e966b-fba5-47fd-bc6d-b875c1f9969b",
+   "uuid": "9f64484b-bf2c-4b29-a30b-f304294966a5",
    "volume_cm3": 30.53971227237361
   },
   {
@@ -3049,7 +3049,7 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B17.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B17.3mf",
-   "uuid": "081d4722-a06c-4e0e-8b9d-6562ca9fe84b",
+   "uuid": "71f501d1-16b6-489b-82aa-dd87daaac09e",
    "volume_cm3": 29.967366395419027
   },
   {
@@ -3063,7 +3063,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B01.3mf",
-   "uuid": "29c3f04c-25c7-45da-ab19-f25ff2d854e6",
+   "uuid": "d7e6c8f0-cbf7-4bc6-a00a-08a00c9b4c26",
    "volume_cm3": 0.22528250833787128
   },
   {
@@ -3077,7 +3077,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B02.3mf",
-   "uuid": "fb13ac8a-2b82-4eaa-a812-eb3a0a43fe1a",
+   "uuid": "09a56406-791c-4814-ab97-74d0d1cd4797",
    "volume_cm3": 0.22527290745350295
   },
   {
@@ -3091,7 +3091,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B03.3mf",
-   "uuid": "de717730-7b4b-4b34-b736-9632218bbeca",
+   "uuid": "847b7201-8c9b-4976-924d-e1c89bed7d2c",
    "volume_cm3": 0.2252631651109348
   },
   {
@@ -3105,7 +3105,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B04.3mf",
-   "uuid": "0ff88232-5297-43a1-a9d8-8b46762492cf",
+   "uuid": "44f967db-e561-481c-8488-99eb744eb217",
    "volume_cm3": 0.225270494538407
   },
   {
@@ -3119,7 +3119,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B01.3mf",
-   "uuid": "3b03dbf1-e087-451c-8012-35f6834cc88c",
+   "uuid": "b1aebf4d-bfb3-43bd-b915-19b059ab5c80",
    "volume_cm3": 0.2486365588899483
   },
   {
@@ -3133,7 +3133,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B02.3mf",
-   "uuid": "ae0bd242-e5a8-401e-9c21-a00e80f4e67a",
+   "uuid": "d4a509ac-28bc-4493-916d-db09e5b36a3e",
    "volume_cm3": 0.13932082617406372
   },
   {
@@ -3147,7 +3147,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B03.3mf",
-   "uuid": "7b676db8-4dea-4ead-992b-c92c228b796e",
+   "uuid": "b91d20b4-e3f0-49af-83c7-afe207fa2675",
    "volume_cm3": 0.24862580938968976
   },
   {
@@ -3161,7 +3161,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B04.3mf",
-   "uuid": "6fbee705-dfac-4cd1-8ed5-a06155755087",
+   "uuid": "65ac8eae-2355-4ab7-8777-467ab191be28",
    "volume_cm3": 0.1393217174866504
   },
   {
@@ -3175,7 +3175,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B01.3mf",
-   "uuid": "fa73dfd9-cc7a-482a-8223-cd098d0245fc",
+   "uuid": "623e2137-dc01-4d49-9d91-52cd49bc6ab8",
    "volume_cm3": 0.2720152777225707
   },
   {
@@ -3189,7 +3189,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B02.3mf",
-   "uuid": "6611770c-c8b1-4efa-a9d1-66c1f767be72",
+   "uuid": "285e0d1c-42b3-47ae-b7bd-e22b873a1219",
    "volume_cm3": 0.27200711069397365
   },
   {
@@ -3203,7 +3203,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B03.3mf",
-   "uuid": "031c6513-5430-4f88-8fdd-7f0c2464da92",
+   "uuid": "6d7d2b05-6b7d-488d-a559-7176d42aa04d",
    "volume_cm3": 0.2719975447398967
   },
   {
@@ -3217,7 +3217,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B04.3mf",
-   "uuid": "d6845528-d57f-45ba-89f6-8ec91a2f5a24",
+   "uuid": "7c5d642f-ade7-4489-80a0-c5c6ede17b90",
    "volume_cm3": 0.2720033334364928
   },
   {
@@ -3231,7 +3231,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B01.3mf",
-   "uuid": "81f76f16-a493-4ab2-b469-29e7cb4190b5",
+   "uuid": "600272a2-3846-47aa-82af-82e05bc10f56",
    "volume_cm3": 0.22528250833787128
   },
   {
@@ -3245,7 +3245,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B02.3mf",
-   "uuid": "38072da0-4b7b-4a47-b2ae-0c19fd6e17f9",
+   "uuid": "f53b373c-ff4d-43a6-90c8-e179d73ca572",
    "volume_cm3": 0.22527290745350295
   },
   {
@@ -3259,7 +3259,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B03.3mf",
-   "uuid": "c45da0f6-5765-4cd6-99ea-2c57c0634d04",
+   "uuid": "1ec30178-ef67-4f80-b6ff-7d80a7825c37",
    "volume_cm3": 0.22526316511093475
   },
   {
@@ -3273,7 +3273,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B04.3mf",
-   "uuid": "377c16ee-743e-4364-b855-a52845cb80ab",
+   "uuid": "c1ad4570-c7fb-43b1-9eb9-32e502ee149e",
    "volume_cm3": 0.22527049453840703
   },
   {
@@ -3287,7 +3287,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B01.3mf",
-   "uuid": "3f8eda1d-5868-46c6-a9a4-243abc89e0e0",
+   "uuid": "183d001c-489a-4486-ad99-dd285a8a2575",
    "volume_cm3": 0.24863655888994823
   },
   {
@@ -3301,7 +3301,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B02.3mf",
-   "uuid": "2c7fba3d-c8a6-4327-82bf-d64b0d8ef63e",
+   "uuid": "056586cb-8685-4c7f-abfa-08a0a00a1d7f",
    "volume_cm3": 0.13932082617406372
   },
   {
@@ -3315,7 +3315,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B03.3mf",
-   "uuid": "f5b338c3-f27c-4072-b54d-d26bcaef94dc",
+   "uuid": "20b2a166-d81f-4aa4-827d-c8cdba7f5084",
    "volume_cm3": 0.24862580938968976
   },
   {
@@ -3329,7 +3329,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B04.3mf",
-   "uuid": "a8e5977b-1f0f-478b-96c0-2d4dd2438fc9",
+   "uuid": "96f850e3-4fa5-46a6-bd12-48459ef24549",
    "volume_cm3": 0.1393217174866504
   },
   {
@@ -3343,7 +3343,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B01.3mf",
-   "uuid": "4a14f8e5-e648-4026-a222-891c9f6f9ca7",
+   "uuid": "1012d69b-8726-48cd-a841-ef5a7dbaa8bf",
    "volume_cm3": 0.2720152777225707
   },
   {
@@ -3357,7 +3357,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B02.3mf",
-   "uuid": "dc83e98f-f6ff-4888-acab-7ec1bb44165f",
+   "uuid": "417701ff-d596-44d8-9fe1-cf3a3e242d49",
    "volume_cm3": 0.27200711069397365
   },
   {
@@ -3371,7 +3371,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B03.3mf",
-   "uuid": "bbc87d75-9ef9-4df7-bae6-7b8f794a985e",
+   "uuid": "5750199c-f905-4b40-bd0a-3da6713ab396",
    "volume_cm3": 0.2719975447398967
   },
   {
@@ -3385,7 +3385,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B04.3mf",
-   "uuid": "d96656e8-5fe3-4850-bfa1-1b8e2dcdcb0d",
+   "uuid": "c5073873-70a0-4127-a617-bcc45fe33e20",
    "volume_cm3": 0.2720033334364928
   }
  ]
