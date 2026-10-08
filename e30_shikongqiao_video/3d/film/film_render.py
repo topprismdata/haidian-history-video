@@ -26,19 +26,17 @@
   timing.json      每帧耗时秒 —— T8 预算表输入。
 原料 blend 只读打开, 手术后另存 work.blend, 原件 sha 不变(测试钉)。
 
-═══ 场景结构(探针实测, 见 p3-task-5-report §场景结构) ═══
-3d/out/e30_layout.blend = build_scene2 --layout 产物: 20 个 points_XXX
-点云(域属性 sid/fam/fam_idx/rot/in_void) × 共享 GN 树 P1_LAYOUT_INSTANCES
-(in_void 剔点 → CollectionInfo Pick Instance)。该 blend 无相机/无灯/无
-券架/楔石物体 —— 后三者由本驱动在建 work 副本时生成执行脚手架:
-  - CEN-ARCHxx/WEDGE-ARCHxx 为 [设计选择·执行脚手架] 占位体(券架=起拱线
-    下支箱, 楔=起拱线下楔块), 几何锚取 geom_math 单源, 非考古复原,
-    T8 灯光/材质轮再细化。
-  - SUN 灯 + 天光 world 为冒烟可见性脚手架(P1 blend 无灯, 无灯渲染全黑)。
-计划偏差声明: 计划 Task 5 写"消费 e30_bridge.blend", 但该文件是 proxy
-合并网格场景(无石级实例, 无法表达逐石显隐); GN 实例装配场景是
-e30_layout.blend(P1 结论: 石不入 master scene)。驱动消费后者, 测试对
-两个原料都断言 sha 不变。证据链见 p3-task-5-report §场景结构。
+═══ 场景结构(T5b 点云扩容, 见 p3-task-5-report §T5b) ═══
+本驱动消费 3d/out/film/layout_film.blend(film_layout_build.py 产物, 非本
+脚本职责): 5935 石全量点云 × P1_LAYOUT_INSTANCES 同源 GN 树(append 自 P1
+layout blend)。A 族(5250 spec 石)=families.blend link 网格; B 族(685
+RING/IMPOST)=ledger params.bake 同源还原(p1a_slice 单一真相)。in_void=
+excluded 2004; 末帧场景可见实例 3931 == 选择记录 == 状态机 == 账面日程
+(四层一线, 主控 T5b 裁决定稿)。该 blend 无相机/无灯/无券架/楔石物体 ——
+由本驱动建 work 副本时生成执行脚手架([设计选择], 几何锚取 geom_math
+单源; SUN+天光为冒烟可见性脚手架)。
+P1 工件(e30_layout.blend / e30_bridge.blend / families.blend)全程只读,
+作对照基准, sha 由测试钉。
 
 Python 3.9 语法兼容(本文件只在 blender 内置解释器执行); P2/P3 工件只读。
 """
@@ -64,7 +62,7 @@ from geom_math import arch_center_x, arch_springer_z  # noqa: E402  几何锚单
 
 __all__ = ["main"]
 
-DEFAULT_BLEND = os.path.join(_PARENT, "out", "e30_layout.blend")
+DEFAULT_BLEND = os.path.join(_PARENT, "out", "film", "layout_film.blend")
 DEFAULT_PACE = os.path.join(_PARENT, "out", "film", "pace.json")
 DEFAULT_SEQ = os.path.join(_PARENT, "out", "sequence.json")
 DEFAULT_WORK = os.path.join(_PARENT, "out", "film", "work.blend")
@@ -156,13 +154,9 @@ def install_vis_threshold():
 
 
 def write_vis_ranks(ranks):
-    """逐点写 vis_rank; 幂等按 sid 覆盖。
-
-    规则(执行映射, 非判据): 点有 PLACE_STONE 事件 → 事件全局秩;
-    无事件(in_void 或账外变体) → 哨兵(永隐)。in_void 支在阈值支之前
-    (P1 原树), 已排程但几何内藏的石照 P1 口径不渲染(与成桥出图一致)。
-    跨链缺口(已排程无实例/账外 sid)清点打印上报, 不静默也不硬失败
-    —— P1 几何人口(5250)与 P2 账人口(5935)的差异属主控裁决事项。
+    """逐点写 vis_rank; 结构硬断言(四层一线的 scene 层证据):
+    非 void 点集 == 已排程集双射(无缺失/无重复/无账外), void = excluded。
+    任何失配 raise —— 陈旧/劣质点云在此响亮失败, 不静默。
     """
     seen = {}
     n_void = 0
@@ -197,17 +191,14 @@ def write_vis_ranks(ranks):
     if dup:
         raise RuntimeError("石多实例: %s" % sorted(dup)[:5])
     missing = sorted(set(ranks) - set(seen))
-    print("VIS_RANK points=%d void=%d instanced_sched=%d "
-          "sched_without_instance=%d unsched_nonvoid=%d"
-          % (total, n_void, len(seen), len(missing), len(unsched_nv)),
-          flush=True)
     if missing:
-        print("GAP sched_without_instance sample=%s"
-              % missing[:8], flush=True)
+        raise RuntimeError("已排程石无实例点: %d 如 %s"
+                           % (len(missing), missing[:5]))
     if unsched_nv:
-        print("GAP unsched_nonvoid sample=%s" % sorted(unsched_nv)[:8],
-              flush=True)
-    return total
+        raise RuntimeError("账外非 void 点: %s" % sorted(unsched_nv)[:5])
+    print("VIS_RANK points=%d void=%d scene_instances=%d sched=%d"
+          % (total, n_void, len(seen), len(ranks)), flush=True)
+    return total, len(seen)
 
 
 def _box(name, size, center):
@@ -348,7 +339,8 @@ def apply_camera(cam, phase, f, done_lo, total):
             "track": FG.CAMERA_TRACKS[phase].get("cam_id", phase)}
 
 
-def apply_frame(scene, f, st, gn_ident, wedges, cens, cam, done_lo, total):
+def apply_frame(scene, f, st, gn_ident, wedges, cens, cam, done_lo, total,
+                n_scene):
     """状态 → 场景态(纯执行), 返回场景回读 probe(负控取证源)。"""
     vis_idx = len(st["visible"])
     for ob in bpy.data.objects:
@@ -370,6 +362,7 @@ def apply_frame(scene, f, st, gn_ident, wedges, cens, cam, done_lo, total):
     cam_probe = apply_camera(cam, st["phase"], f, done_lo, total)
     scene.frame_set(f)
     return {"frame": f, "vis_idx": vis_idx,
+            "scene_instances": n_scene,
             "wedge_z": {h: round(p[0].location.z, 6)
                         for h, p in wedges.items()},
             "wedge_base_z": {h: round(p[1], 6) for h, p in wedges.items()},
@@ -416,7 +409,7 @@ def main():
 
     t0 = time.time()
     gn_ident = install_vis_threshold()
-    n_pts = write_vis_ranks(ranks)
+    n_pts, n_scene = write_vis_ranks(ranks)
     wedges, cens = ensure_stage_geometry(scene)
     cam = ensure_camera(scene)
     ensure_light_world(scene)
@@ -436,7 +429,7 @@ def main():
         t_f = time.time()
         st = FS.state_at_frame(pace, sequence, f)     # 在场判定单源
         probe = apply_frame(scene, f, st, gn_ident, wedges, cens,
-                            cam, done_lo, pace["total_frames"])
+                            cam, done_lo, pace["total_frames"], n_scene)
         scene.render.filepath = os.path.join(a.out, "f%06d.png" % f)
         bpy.ops.render.render(write_still=True)
         dt = time.time() - t_f

@@ -11,10 +11,11 @@
   3. 券架显隐负控: CEN-ARCHxx 在 centering_up 帧可见、BUILD 首帧与
      CLEAR 末帧全隐藏(同样读场景回读, 非记录)。
 
-原料 blend = 3d/out/e30_layout.blend(build_scene2 --layout 产物, GN 实例
-装配场景; 3d/e30_bridge.blend 是 proxy 合并网格场景, 无石级实例, 探针
-结论见 .superpowers/sdd/p3-task-5-report.md §场景结构)。测试对两个原料
-都断言 sha 不变(只读打开纪律)。
+原料 blend = 3d/out/film/layout_film.blend(P3-T5b 点云扩容 5935 全量,
+film_layout_build.py 产物, 由 session 夹具保证存在且新鲜)。四层一线
+(主控 T5b 裁决定稿): 末帧场景可见实例==选择记录==状态机==账面日程 3931。
+测试对全部只读输入(P1 layout/families/账/序/bridge blend)断言 sha 不变
+(只读打开纪律)。
 
 驱动薄纪律: 在场判定单源 import film_state, 本文件只做对拍裁判。
 """
@@ -40,13 +41,13 @@ import film_state as FS             # noqa: E402  在场判定单源
 HAS_BLENDER = shutil.which("blender") is not None
 BLENDER = shutil.which("blender") or "blender"
 RENDER_PY = os.path.join(_ROOT, "3d", "film", "film_render.py")
-PACE = FS.load_pace(os.path.join(_ROOT, "3d", "out", "film", "pace.json"))
-with open(os.path.join(_ROOT, "3d", "out", "sequence.json"),
-          encoding="utf-8") as _fh:
+PACE = FS.load_pace(os.path.join(_3D, "out", "film", "pace.json"))
+SEQ_PATH = os.path.join(_3D, "out", "sequence.json")
+with open(SEQ_PATH, encoding="utf-8") as _fh:
     SEQ = json.load(_fh)
-LAYOUT_BLEND = os.path.join(_ROOT, "3d", "out", "e30_layout.blend")
+FILM_BLEND = os.path.join(_3D, "out", "film", "layout_film.blend")
 BRIDGE_BLEND = os.path.join(_ROOT, "3d", "e30_bridge.blend")
-WORK_BLEND = os.path.join(_ROOT, "3d", "out", "film", "work.blend")
+WORK_BLEND = os.path.join(_3D, "out", "film", "work.blend")
 TOTAL = PACE["total_frames"]
 
 
@@ -92,16 +93,21 @@ def _read_jsonl(path):
 
 
 @pytest.fixture(scope="module")
-def smoke(tmp_path_factory):
+def smoke(tmp_path_factory, film_layout_blend):
     """3 帧真跑一次, 冒烟+两负控共享产物(避免重复 blender 启动)。"""
     if not HAS_BLENDER:
         pytest.skip("blender-free CI")
+    assert film_layout_blend == FILM_BLEND
     out_dir = str(tmp_path_factory.mktemp("film_frames"))
-    sha_layout = _sha256(LAYOUT_BLEND)
-    sha_bridge = _sha256(BRIDGE_BLEND)
+    sha_film = _sha256(FILM_BLEND)
+    sha_inputs = {p: _sha256(p) for p in (
+        os.path.join(_3D, "out", "e30_layout.blend"),
+        os.path.join(_3D, "out", "families.blend"),
+        os.path.join(_3D, "out", "ledger_sequenced.json"),
+        SEQ_PATH, BRIDGE_BLEND)}
     runs = {f: _run_blender(f, out_dir) for f in FRAMES}
     return {"out_dir": out_dir, "runs": runs,
-            "sha_layout_before": sha_layout, "sha_bridge_before": sha_bridge}
+            "sha_film_before": sha_film, "sha_inputs_before": sha_inputs}
 
 
 def _fail_tail(proc):
@@ -129,14 +135,18 @@ def test_render_3frames_smoke(smoke):
             "frame %d 选择记录 != 状态机" % f
         assert rec["phase"] == st["phase"]
         assert rec["wedge_lambda"] == st["wedge_lambda"]
-    # 4) 末帧 visible == 入日程集 3931
+    # 4) 四层一线(T5b 定稿): 末帧场景实例==记录==状态机==账面日程 3931
     assert len(recs[TOTAL - 1]["selected"]) == 3931
-    # 5) work.blend 落盘, 两个原料 blend sha 不变(只读打开纪律)
-    assert os.path.isfile(WORK_BLEND)
-    assert _sha256(LAYOUT_BLEND) == smoke["sha_layout_before"]
-    assert _sha256(BRIDGE_BLEND) == smoke["sha_bridge_before"]
-    # 6) 相机接线: BUILD 帧=侧视正射, DONE 末帧=推到 loc_end 透射
     probe = _read_jsonl(os.path.join(smoke["out_dir"], "probe.jsonl"))
+    probeL = probe[TOTAL - 1]
+    assert probeL["scene_instances"] == 3931
+    assert probeL["vis_idx"] == 3931
+    # 5) work.blend 落盘, film blend 与全部只读输入 sha 不变(只读纪律)
+    assert os.path.isfile(WORK_BLEND)
+    assert _sha256(FILM_BLEND) == smoke["sha_film_before"]
+    after = {p: _sha256(p) for p in smoke["sha_inputs_before"]}
+    assert after == smoke["sha_inputs_before"]
+    # 6) 相机接线: BUILD 帧=侧视正射, DONE 末帧=推到 loc_end 透射
     cam0 = probe[0]["camera"]
     assert cam0["type"] == "ORTHO"
     assert cam0["ortho_scale"] == pytest.approx(
