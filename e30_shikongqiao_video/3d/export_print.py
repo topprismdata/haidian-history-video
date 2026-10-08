@@ -289,21 +289,28 @@ def _materialize_to_bed(stone):
     return [(v[0] - mn[0], v[1] - mn[1], v[2] - mn[2]) for v in verts], faces
 
 
-def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0):
-    # type: (Dict[str, Any], Optional[Callable[[Dict[str, Any]], Tuple[list, list]]], str, Optional[Sequence[str]], float) -> Dict[str, Any]
+def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0,
+                  zones=None):
+    # type: (Dict[str, Any], Optional[Callable[[Dict[str, Any]], Tuple[list, list]]], str, Optional[Sequence[str]], float, Optional[Sequence[str]]) -> Dict[str, Any]
     """整账导出。mesh_fn=None(默认)走 _materialize_to_bed(U2: 材料化唯一
     放置算子, 平移回床原点) -> 基础校验(过不了即 raise) -> 角色白名单(默认 MASONRY_ROLES,
     雕件归 P4, 过滤件记 manifest.skipped 不静默消失) -> 逐石 fit 自动分档 +
     clearance 双值置值(账本记模型侧 inset, manifest 记打印/模型双值; 只置在
     导出账本 ledger_print.json 上, 原账目不改写) -> STL/3MF(材质分组目录) ->
     床装箱 -> manifest.json。账本落盘后双验(W2): 置值内存验 + save 后
-    load_ledger 回读再验(顺带覆盖原子写损坏面)。返回 manifest dict。"""
+    load_ledger 回读再验(顺带覆盖原子写损坏面)。返回 manifest dict。
+    zones(P4-T2 扩型, 默认 None=全账现行为逐字节不变): 选孔过滤, 只出 id 首
+    段(孔 zone, 与 p1a_slice.slice_ledger 同一口径 "ARCH%02d")在 zones 内的
+    石, 区外石记 manifest.skipped 且带 reason="zone_not_selected"(不静默);
+    选区键值同时记 manifest.meta.zones。过滤点只在账遍历处 —— 分档/装箱/
+    FIT 约定零改动。"""
     errs = L.validate_ledger(led)
     if errs:
         raise ValueError("base ledger invalid: %s" % errs[:5])
     if roles is None:
         roles = MASONRY_ROLES
     roles = tuple(roles)
+    zone_sel = None if zones is None else set(zones)
     if out_dir is None:
         raise ValueError("export_ledger: out_dir required")
     if mesh_fn is None:
@@ -314,6 +321,10 @@ def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0):
     skipped = []        # type: List[Dict[str, Any]]
     footprint = []      # type: List[Tuple[float, float, str]]
     for src, dst in zip(led["stones"], led_print["stones"]):
+        if zone_sel is not None and src["id"].split(".")[0] not in zone_sel:
+            skipped.append({"id": src["id"], "role": src.get("role_struct"),
+                            "reason": "zone_not_selected"})
+            continue
         if src.get("role_struct") not in roles:
             skipped.append({"id": src["id"], "role": src.get("role_struct")})
             continue
@@ -362,13 +373,16 @@ def export_ledger(led, mesh_fn=None, out_dir=None, roles=None, scale=1 / 50.0):
         f["count"] += 1
         f["volume_cm3"] += s["volume_cm3"]
         mats[s["material"]] = mats.get(s["material"], 0) + 1
+    meta = {"schema": 1, "scale": float(scale),
+            "bed_mm": list(PRINT_BED_MM), "roles": list(roles),
+            "curve_hash": led.get("meta", {}).get("curve_hash"),
+            "seed": led.get("meta", {}).get("seed"),
+            "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                         time.gmtime())}
+    if zone_sel is not None:
+        meta["zones"] = list(zones)
     manifest = {
-        "meta": {"schema": 1, "scale": float(scale),
-                 "bed_mm": list(PRINT_BED_MM), "roles": list(roles),
-                 "curve_hash": led.get("meta", {}).get("curve_hash"),
-                 "seed": led.get("meta", {}).get("seed"),
-                 "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ",
-                                              time.gmtime())},
+        "meta": meta,
         "materials": mats,
         "families": fams,
         "stones": stones_out,
