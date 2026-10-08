@@ -241,22 +241,52 @@ def apply_golden_light():
     sun = next((o for o in bpy.data.objects if o.type == 'LIGHT' and o.data.type == 'SUN'), None)
     d = mathutils.Vector((0.760, -0.307, -0.574)).normalized()
     if sun:
+        # v2: 日沿桥轴低角(travel az 58.7° el 2°, 即日自 WSW 238.7°), 光穿券洞打拱腹
+        # (金光穿洞几何: FACE az202 与 sun from238.7 夹 36.7°=受光; 洞轴22 与 travel 夹36.7°=穿洞11.5m)
+        import os as _os_g
+        _az = float(_os_g.environ.get("M23_TRAVEL_AZ", "58.7"))
+        _el = float(_os_g.environ.get("M23_TRAVEL_EL", "2.0"))
+        d = mathutils.Vector((math.cos(-math.radians(_az)) * math.cos(math.radians(_el)),
+                              math.sin(-math.radians(_az)) * math.cos(math.radians(_el)),
+                              -math.sin(math.radians(_el)))).normalized()
         sun.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()  # -Z 对齐行进方向
-        sun.data.energy = 26.0
-        sun.data.color = (1.0, 0.50, 0.20)          # 低角深金橙(探针 G4 定版)
-        sun.data.angle = math.radians(0.8)          # 低角锐影
-        changes["sun"] = dict(dir=[round(v, 3) for v in d], energy=26.0,
-                              color=[1.0, 0.50, 0.20], angle_deg=0.8)
+        sun.data.energy = 30.0
+        sun.data.color = (1.0, 0.42, 0.12)          # 低角深金橙(v2)
+        sun.data.angle = math.radians(0.8)          # 低角锐影(拉层理阴影对比)
+        changes["sun"] = dict(dir=[round(v, 3) for v in d], energy=30.0,
+                              color=[1.0, 0.42, 0.12], angle_deg=0.8,
+                              travel_az_deg=_az, travel_el_deg=_el,
+                              note="[按照片受光反推·量级] 金光穿洞几何: 面受光36.7°+穿洞11.5m")
     sky = next((n for n in sc.world.node_tree.nodes if n.bl_idname == 'ShaderNodeTexSky'), None)
     if sky:
-        sky.sun_elevation = math.radians(4.0)
+        sky.sun_elevation = math.radians(2.0)
         sky.sun_rotation = math.radians(292.0)      # 原 WNW 口径
         sky.aerosol_density = 1.2                   # 地平线暖霾
-        changes["sky"] = dict(elev_deg=4.0, rot_deg=292.0, aerosol=1.2)
+        changes["sky"] = dict(elev_deg=2.0, rot_deg=292.0, aerosol=1.2)
     bgw = next((n for n in sc.world.node_tree.nodes if n.bl_idname == 'ShaderNodeBackground'), None)
     if bgw:
         bgw.inputs['Strength'].default_value = 0.05
         changes["world_strength"] = 0.05
+    # 天穹斜线穿帮修: 金光变体下雾体清零(斜线=雾盒几何边缘), 暖霾由 sky aerosol 承担
+    fm = bpy.data.materials.get("fog")
+    if fm:
+        for n in fm.node_tree.nodes:
+            for inp in n.inputs:
+                if inp.type == 'VALUE' and not inp.is_linked and inp.name == 'Density':
+                    inp.default_value = 0.0
+        changes["fog_density"] = 0.0
+    # 质感对比加强: 逐石微差 ramp 拉宽(0.78..1.10)
+    for mn in ("stone_body", "stone_course", "stone_ring"):
+        m = bpy.data.materials.get(mn)
+        if not m:
+            continue
+        for n in m.node_tree.nodes:
+            if n.bl_idname == 'ShaderNodeValToRGB' and abs(n.color_ramp.elements[0].position - 0.42) < 1e-6:
+                n.color_ramp.elements[0].position = 0.36
+                n.color_ramp.elements[0].color = (1.10, 1.10, 1.10, 1.0)
+                n.color_ramp.elements[1].position = 0.66
+                n.color_ramp.elements[1].color = (0.78, 0.78, 0.78, 1.0)
+        changes["contrast_boost_" + mn] = True
     return changes
 
 
