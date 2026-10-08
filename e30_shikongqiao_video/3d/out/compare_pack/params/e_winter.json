@@ -1,0 +1,110 @@
+{
+ "group": "e_winter",
+ "out": "out/compare_pack/renders/e_winter.png",
+ "samples": 512,
+ "seed": 20261004,
+ "engine": "CYCLES/METAL-GPU",
+ "denoise": "OPENIMAGEDENOISE",
+ "camera": {
+  "type": "perspective_pose",
+  "pose_json": "m20_ctrl/m20C_pose_winter.json",
+  "pose_tag": "m20C_winter_v3",
+  "pose_rms_px": 5.292062208618907,
+  "pose_n": 7,
+  "lens_mm": 34.736,
+  "f_px_at_cal": 6856.6,
+  "cal_wh": [
+   7106,
+   4737
+  ],
+  "frame": "模型系->世界系(Rz(-112°), bridge_body 实测旋转)",
+  "cam_pos_model": [
+   121.792,
+   -25.234,
+   28.196
+  ],
+  "cam_pos": [
+   -69.02,
+   -103.471,
+   28.196
+  ]
+ },
+ "res": [
+  3552,
+  2368
+ ],
+ "scene": {
+  "materials": {
+   "abut_stone": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "deck_marble": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "deck_mortar": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "fog": {
+    "nodes": 2,
+    "users": 1,
+    "base_rgb": null
+   },
+   "marble": {
+    "nodes": 78,
+    "users": 12,
+    "base_rgb": "linked"
+   },
+   "shore_earth": {
+    "nodes": 12,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "stone_body": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "stone_course": {
+    "nodes": 90,
+    "users": 2,
+    "base_rgb": "linked"
+   },
+   "stone_ring": {
+    "nodes": 78,
+    "users": 2,
+    "base_rgb": "linked"
+   },
+   "water": {
+    "nodes": 25,
+    "users": 1,
+    "base_rgb": [
+     0.05,
+     0.11,
+     0.14
+    ]
+   }
+  },
+  "lights": [
+   {
+    "name": "Key",
+    "type": "SUN",
+    "energy": 3.9
+   }
+  ],
+  "sky": {
+   "type": "PREETHAM",
+   "sun_elev_deg": 35.0,
+   "sun_rot_deg": 292.0
+  },
+  "view_transform": "AgX",
+  "blend": "e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)"
+ },
+ "render_sec": 393.4,
+ "png_bytes": 7638953
+}

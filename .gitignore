@@ -93,6 +93,8 @@
 !e30_shikongqiao_video/3d/ab_water/
 !e30_shikongqiao_video/3d/ab_water/*.py
 
+!e30_shikongqiao_video/.superpowers/
+!e30_shikongqiao_video/.superpowers/**
 !e30_shikongqiao_video/3d/*.txt
 !e30_shikongqiao_video/3d/refs/
 !e30_shikongqiao_video/3d/refs/*.md
@@ -230,6 +232,13 @@ e30_shikongqiao_video/3d/ledger_cache/
 !e30_shikongqiao_video/3d/out/print/central_slice/SLICE_NOTES.md
 
 # ── 放行：P3-T8 试渲预算表（2026-10-08）─────────────────────────────────
+# ── M23 照片对照包(多角度贴图渲染vs原图): 拼图+索引+参数入库; renders PNG 可复现不入库 ──
+!e30_shikongqiao_video/3d/out/compare_pack/
+!e30_shikongqiao_video/3d/out/compare_pack/*
+!e30_shikongqiao_video/3d/out/compare_pack/pairs/
+!e30_shikongqiao_video/3d/out/compare_pack/pairs/*.jpg
+!e30_shikongqiao_video/3d/out/compare_pack/params/
+!e30_shikongqiao_video/3d/out/compare_pack/params/*.json
 # ⚠ 夜跑签字材料(绿灯材料本体, 用户只看这一页拍板); 其余 3d/out/film/**
 #   (blend/PNG/jsonl/pace.json)仍不入库(可由脚本重出, sha 走 sidecar)。
 !e30_shikongqiao_video/3d/out/film/

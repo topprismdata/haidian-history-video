@@ -1,0 +1,107 @@
+{
+ "group": "f_side",
+ "out": "out/compare_pack/renders/f_side.png",
+ "samples": 512,
+ "seed": 20261004,
+ "engine": "CYCLES/METAL-GPU",
+ "denoise": "OPENIMAGEDENOISE",
+ "camera": {
+  "type": "ortho_side",
+  "hppm": 80.0,
+  "vppm": 80.0,
+  "window_x": [
+   -35.37,
+   -4.44
+  ],
+  "window_z": [
+   0.0,
+   7.75
+  ],
+  "ortho_scale_m": 30.92,
+  "water_row_px": 1331,
+  "registered_to": "m20B_ortho_a5+a6+a7 拼接窗口",
+  "cam_pos": [
+   -466.39,
+   180.39,
+   7.93
+  ]
+ },
+ "res": [
+  2474,
+  1392
+ ],
+ "scene": {
+  "materials": {
+   "abut_stone": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "deck_marble": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "deck_mortar": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "fog": {
+    "nodes": 2,
+    "users": 1,
+    "base_rgb": null
+   },
+   "marble": {
+    "nodes": 78,
+    "users": 12,
+    "base_rgb": "linked"
+   },
+   "shore_earth": {
+    "nodes": 12,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "stone_body": {
+    "nodes": 78,
+    "users": 1,
+    "base_rgb": "linked"
+   },
+   "stone_course": {
+    "nodes": 90,
+    "users": 2,
+    "base_rgb": "linked"
+   },
+   "stone_ring": {
+    "nodes": 78,
+    "users": 2,
+    "base_rgb": "linked"
+   },
+   "water": {
+    "nodes": 25,
+    "users": 1,
+    "base_rgb": [
+     0.05,
+     0.11,
+     0.14
+    ]
+   }
+  },
+  "lights": [
+   {
+    "name": "Key",
+    "type": "SUN",
+    "energy": 3.9
+   }
+  ],
+  "sky": {
+   "type": "PREETHAM",
+   "sun_elev_deg": 35.0,
+   "sun_rot_deg": 292.0
+  },
+  "view_transform": "AgX",
+  "blend": "e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)"
+ },
+ "render_sec": 261.6,
+ "png_bytes": 2883780
+}
