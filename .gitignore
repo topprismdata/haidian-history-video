@@ -228,3 +228,9 @@ e30_shikongqiao_video/3d/ledger_cache/
 !e30_shikongqiao_video/3d/out/print/central_slice/
 !e30_shikongqiao_video/3d/out/print/central_slice/manifest.json
 !e30_shikongqiao_video/3d/out/print/central_slice/SLICE_NOTES.md
+
+# ── 放行：P3 建造动画 film 子包(pace 单一节奏源; 2026-10-08)──────────────
+# 全局 * 只放行 3d/*.py 直属文件, 子包须先放行目录; 不加则 pace/film_state
+# 等静默失联(P2 终审 C1 同机制)。
+!e30_shikongqiao_video/3d/film/
+!e30_shikongqiao_video/3d/film/*.py
