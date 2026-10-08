@@ -161,9 +161,9 @@ def test_mesh_level_opening_gate_present():
     ast.parse(src)  # 语法自检
     assert "ARCH_MESH_OPENING" in src, \
         "qa_l2 网格级洞形闸门(ARCH_MESH_OPENING)被移除 —— 禁止"
-    assert "ARCH_THROUGH_RAY" in src, \
-        "qa_l2 透射闸(ARCH_THROUGH_RAY)被移除 —— 禁止(实心未切墙无顶点在\"
-        "净空圆内, 顶点闸会空转, 射线透射是唯一网格级真闸)"
+    assert "ARCH_THROUGH_RAY" in src, (
+        "qa_l2 透射闸(ARCH_THROUGH_RAY)被移除 —— 禁止"
+        "(实心未切墙无顶点在净空圆内, 顶点闸会空转, 射线透射是唯一网格级真闸)")
     assert "arch_signed_r" in src, "qa_l2 径向闭环调用缺失"
     bs_path = os.path.join(os.path.dirname(__file__), "..", "3d", "build_scene2.py")
     bs_src = open(bs_path, encoding="utf-8").read()
