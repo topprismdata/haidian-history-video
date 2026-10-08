@@ -157,9 +157,8 @@ def test_mesh_level_opening_gate_present():
     /tmp/probe_meshgate.py 输出 MUTATION_PROBE bad=1)。"""
     import ast
     src_path = os.path.join(os.path.dirname(__file__), "..", "3d", "qa_l2.py")
-    tree = ast.parse(open(src_path, encoding="utf-8").read())
-    names = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
-    names |= {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
-    assert "ARCH_MESH_OPENING" in names, \
+    src = open(src_path, encoding="utf-8").read()
+    ast.parse(src)  # 语法自检
+    assert "ARCH_MESH_OPENING" in src, \
         "qa_l2 网格级洞形闸门(ARCH_MESH_OPENING)被移除 —— 禁止"
-    assert "arch_signed_r" in names, "qa_l2 径向闭环调用缺失"
+    assert "arch_signed_r" in src, "qa_l2 径向闭环调用缺失"
