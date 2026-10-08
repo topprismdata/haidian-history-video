@@ -164,6 +164,24 @@ def main():
         fail("ARCH_MESH_OPENING",
              "桥身顶点侵入净空圆内 %d 个(示例 %s; 解析↔网格闭环被破坏)"
              % (len(bad_open), bad_open[:4]))
+    # ── ARCH_THROUGH_RAY(透射闸; 弥补顶点采样的盲区: 实心未切墙上没有
+    #    顶点落在净空圆内, 顶点闸会空转——M23 2026-10-08 实证)。逐孔洞心
+    #    中高沿 ±y 场景射线: 命中 bridge_body = 洞未透(布尔静默失败)。
+    dg2 = bpy.context.evaluated_depsgraph_get()
+    n_not_through = 0
+    for i in range(G.N_SPAN):
+        xc = (G.PIER_X[i] + G.PIER_X[i + 1]) / 2.0
+        spz = G.arch_springer_z(i)
+        zmid = spz + G.arch_rise(i) * 0.5
+        for dy in (-1.0, 1.0):
+            hit, loc, _n, _idx, ob, _mw = bpy.context.scene.ray_cast(
+                dg2, Vector((xc, 0.0, zmid)), Vector((0.0, dy, 0.0)))
+            if hit and ob is not None and ob.name == "bridge_body":
+                n_not_through += 1
+    if n_not_through:
+        fail("ARCH_THROUGH_RAY",
+             "洞心射线未穿透 %d/34(bridge_body 实体命中 = 布尔挖洞静默失败)"
+             % n_not_through)
     body_ev.to_mesh_clear()
     # (M12: IMPOST_ANCHOR 判据随 impost 立体构件一并移除; 起拱线改材质表达)
     _emit(fails, warns, skips, tot=tot, neg=neg, flipped=flipped)
