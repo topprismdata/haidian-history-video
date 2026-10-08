@@ -43,3 +43,16 @@
 - 终审四组WARNING处置: 券架注册表落盘(event_ledger.json meta.centerings 17副id/zone/arch_idx/xc/family=wood-<zone>, 生成器单源, 石账零触碰; test_event_ledger_artifact扩17副逐字段钉+ledger_sequenced无CEN-/无centering params纯度钉); FILL/R5a缺口升级为带判据票(.superpowers/sdd/p2-carryover-tickets.md 票1-4); G3承诺口径收口(已证范围: 券石除架外无悬空=真判据摘边必红; 每石支撑已存在=构造自证z升序+事件时序R5A_PREREQ/R0非几何支承校验——回写spec:44-45+narration_beats口径注记+本节, 禁路线图原句无条件引用); IMPOST fail-loud(_stone_weight无w/h/d石raise, ③④消费面IMPOST不在积分集测试钉); run_g3死参数centerings删除(docstring注接口位→票4); stage_hint恒None+注册表事实入beats P3交接注记; T6报告§0 SUPERSEDED横幅+§1图件行更正(生产者=A08/A01, A07按最终模型重生成FEASIBLE带窗); clean-clone测timeout 600→900+串行注记(W-1)
 - **P2终态口径(P3交接)**: 交付=3931入日程+2004裁1幻影+17副券架注册(meta.centerings); 三门读数以盘上g3_report.json为唯一出处; 遗留=票1支承在位判据/票2 R5b填筑期9163.9单位未评(=已评顶载4.8倍)/票3 IMPOST计重/票4券架消费细则, 全部带验收判据见carryover-tickets
 - P2FinalFix环境+性能注记: 本机后台/派生长进程被限流至~2.4% CPU(主控通报+实测复核), 长跑命令一律前景短跑/内核内分块; 排障中定位 sequencer.main 真实瓶颈=_in_void_ids 在 sched_ids 推导式内逐石重算(5935×classify_stones≈4 小时纯CPU, 此前"真树直测380s未完/clean-clone 197s"的真因之一) —— 已括出单次求值(行为零变化, 纯性能), 修复后全链 build/check/validate ~7s+dmscan ~25s; sidecar 重锚纪律=被取代记录降为注释行, 活动记录恒 8 条唯一路径(完备性钉要求)
+
+## P2 关账(2026-10-08)
+
+**终审修复落地(130bf4f+e903feb), merge_ready 三条主控独立复核全中**:
+1. 全量 474 passed 零红(主控前台无争用 300s 亲跑)
+2. sidecar 活跃 8 条逐条==盘上实算(主控独立 sha256; 两条 MISMATCH 系显式标注的被取代注释行, 正则误抓); 三门 ok=True + viol_uniform_hmax=1; event_ledger meta.centerings 17 副注册(石账纯度钉在测)
+3. BLK-1/2/3 变异负控入测(端到端摘支撑边→CLI rc≠0+beats 无"全 ok"走真 run_g3 链)
+
+**意外收获**: 修复者揪出 sequencer.main `_in_void_ids` 推导式内逐石重算=5935×2.5s 的 O(n²) CPU 炸弹(此前"380s 未完/爬行"部分真因, 非纯限流), 括出单次求值行为零变化, clean-clone 子进程 35s 过。
+
+**G3 出口门终态口径(已证范围, 三处文档一致)**: 券石除架外无悬空时刻=真判据(有牙); 每石就位支撑已存在=构造自证+事件时序(R5A_PREREQ/R0), 非几何支承校验。四项未建模缺口带判据入票: p2-carryover-tickets.md(票1 肩背胞几何支承/票2 R5b 填筑不平衡 9163.9 未评/票3 IMPOST 恒0重/票4 券架消费细则)。
+
+**P2 数字总账**: 8 task, 21+ commit, 3d 侧 ~1.3 万行新增, 474 测试(其中 P2 系 221), 真账 4118 事件/408 stages/5935 石/3931 入日程, 三门全绿。三层力学门各经独立出口审查: T5 WARNING→修, T6 ACCEPT+5W→修(主控主张层找绿认错一次), T7 4CRITICAL→条件化重写, 整支终审 3BLK→全修。**下一步**: P3 建造动画(消费 sequence/event_ledger/narration_beats+四叙事铁律) 与 P4 打印工程可并行。
