@@ -444,7 +444,10 @@ def test_real_17_holes_acceptance_feasible_and_report():
         G3._crown_wedge = _saved_wedge
     abl_infra = sorted(zh for zh, h in abl_gate["holes"].items()
                        if not h["acceptance"]["feasible"])
-    assert abl_infra == ["ARCH08", "ARCH09", "ARCH10",
+    # [拱线族返工清债 2026-10-08] {08,09,10,11}→{08,09,11}: 新实测——单心圆弧
+    # 跨内分支比两圆心弧高, ARCH10 截面杠杆带内容变化后消融下仍可行; 消融负控
+    # 语义不变(分摊 load-bearing: 至少一孔翻红), 精确集随族重测钉死。
+    assert abl_infra == ["ARCH08", "ARCH09",
                          "ARCH11"], abl_infra
 
     # 压力线图: 中央孔 A08(结构带内 FEASIBLE) + 端孔 A01(FEASIBLE)

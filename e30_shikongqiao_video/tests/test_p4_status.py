@@ -2,7 +2,7 @@
 # 判据(plan T5 Step1 + 任务书): ①全合法迁移表驱动遍历(pending→printed→
 # checked→glued 主链 + printed→redo→pending 重打改派); ②非法迁移 raise
 # (pending→glued 等, 且失败不落盘); ③幂等: init 两连跑逐字节同(真 manifest
-# 1123 单元)+advance 同态两跑逐字节同; ④query --phase 过滤正确; ⑤BASE_SPEC
+# 1047 单元, 原 1123)+advance 同态两跑逐字节同; ④query --phase 过滤正确; ⑤BASE_SPEC
 # 规格数字与盘上工件重算一致(manifest/ledger_full+facts 单源, 手写数字与
 # 推导差>1mm 必红 —— 禁手编数字的钉)。
 # blender-free: bbox/券环走 p1a_slice.world_mesh 纯逻辑路径(与 T4 段总图同源),
@@ -25,8 +25,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(REPO, "3d", "out", "print", "section5", "manifest.json")
 BASE_SPEC = os.path.join(REPO, "3d", "out", "print", "section5", "BASE_SPEC.md")
 SCALE = 0.02                     # manifest.meta.scale (1:50)
-UNIT_N = 1123                    # manifest.conservation.exported 实测
-BATCH_N = 34                     # manifest.conservation.batches 实测
+UNIT_N = 1047                    # manifest.conservation.exported 实测(1123→1047 拱线族返工清债重出)
+BATCH_N = 31                     # manifest.conservation.batches 实测(34→31 拱线族返工清债重出)
 
 
 # ---------------------------------------------------------------- 工具
@@ -316,7 +316,7 @@ def test_base_spec_numbers_from_manifest():
 
     # -- 口径标记与计数钉
     for tag in ("[设计选择]", "[估算]", "M5(a)", "不打印",
-                "1123", "34 批", "639", "484"):
+                "1047", "31 批", "601", "446"):  # [拱线族返工清债] 随段包重出同步
         assert tag in text, "BASE_SPEC 缺口径标记/计数: %s" % tag
     # 端槽规格(设计定案常数, 防漂移钉): 宽18/深5/距端24 (=段总图 0.9m×20 同参)
     assert re.search(r"槽宽\s*18\.0\s*mm", text)

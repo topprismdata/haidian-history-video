@@ -26,14 +26,14 @@ from families import family_mesh  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRINT_DIR = os.path.join(REPO, "3d", "out", "print")
 CENTRAL = os.path.join(PRINT_DIR, "central_slice")
-CENTRAL_SHA = "82dc5b44ccb19792bb64608af6e946944022e9d2913f525f894d13396ddb10de774b9e8d"
+CENTRAL_SHA = "7800c64de932f17c6370ea5c07be585893bc000fad82cf304d531fc7b6a5a354"
 EXCLUDED_PATH = os.path.join(PRINT_DIR, "excluded_ids.json")
 
 # 真账实测(P1 G2 门口径): 段(ARCH07-11)账面石 2747, 打印单元 1123,
 # ARCH09 子集 245 == 盘上 central manifest 石数。
 SEC_STONES_TOTAL = 2747
 SEC_UNITS_MEASURED = 1047  # [拱线族返工清债] 1123→1047 新实测(段 manifest 重出: 排除 +76 收缩段打印面)
-ARCH09_UNITS = 245
+ARCH09_UNITS = 217  # [拱线族返工清债] 245→217 新实测(段包重出)
 
 
 # ---------------------------------------------------------------- 工具

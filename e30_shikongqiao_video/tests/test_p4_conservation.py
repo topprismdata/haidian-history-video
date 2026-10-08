@@ -51,7 +51,9 @@ EXCLUDED = 3898          # 排除石(in_void 2028/void_cut 1580/ring_band 222/th
 UNITS_CURRENT = 2037     # 现行全桥打印单元 = 1047+990(2113→2037 拱线族返工清债)
 # P1-T8 原始轮历史口径(04f2e54, 已被 T8b 更替, 只作考古对账)
 UNITS_T8_ORIG = 1974
+UNITS_T8B = 2113                  # T8b 口径(拱线族返工前一代, 考古对账)
 EXCL_T8_ORIG = 3961
+EXCL_T8B = 3822                    # T8b 排除总数(同上考古)
 
 
 @pytest.fixture(scope="session")
@@ -134,7 +136,12 @@ def test_unit_level_caliber_documented(conservation_pack):
     assert UNITS_T8_ORIG + EXCL_T8_ORIG == UNIVERSE
     assert UNITS_CURRENT + EXCLUDED == UNIVERSE
     # 差 139 归因: ring_band 305→182(123 石) + thin_merge 84→68(16 石)
-    assert UNITS_CURRENT - UNITS_T8_ORIG == (305 - 182) + (84 - 68) == 139
+    # [拱线族返工清债 2026-10-08] 三代账: T8b(2113/3822) → ArchRoundFix
+    # (2037/3898): 单元 −76 = 排除 +76(in_void +24 / void_cut +12 /
+    # ring_band +40; 全部源于 b>a 三孔净空边界上移, 见 test_p2_sequencer)。
+    # 逐桶现值: in_void 2028 / void_cut 1580 / ring_band 222 / thin 68。
+    assert UNITS_T8B - UNITS_CURRENT == 24 + 12 + 40 == 76
+    assert EXCLUDED - 3822 == 76
     # 不变量声明字符串: 声明石级恒等 + 现行单元口径 + 1974 历史口径
     inv = rep["不变量"]
     assert "石级" in inv and "2037" in inv and "1974" in inv
