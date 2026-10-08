@@ -234,3 +234,14 @@ e30_shikongqiao_video/3d/ledger_cache/
 # 等静默失联(P2 终审 C1 同机制)。
 !e30_shikongqiao_video/3d/film/
 !e30_shikongqiao_video/3d/film/*.py
+
+# ── 放行：E30 Remotion 合成工程 src/e30film(P3-T7 pace 同源接线)──────────
+# ⚠ 全局 * 先拒后开; 不加此洞 src/e30film 整树静默失联(P2 终审 C1 同机制)。
+!/src/
+!/src/**
+# 依赖/渲染产物/运行时接线物不入库(bun install / remotion render / ln -s 重建)
+src/e30film/node_modules/
+src/e30film/out/
+src/e30film/public/frames
+src/e30film/public/audio/*.mp3
+src/e30film/public/audio/*.wav

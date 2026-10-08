@@ -1,0 +1,21 @@
+{
+  "name": "e30film",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E30 十七孔桥逐石建造动画 Remotion 合成(P3; pace.json 单一节奏源, 禁 TS 自算时间轴)",
+  "scripts": {
+    "studio": "remotion studio src/index.tsx",
+    "render": "remotion render src/index.tsx E30Film out/e30film.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.3",
+    "typescript": "5.6.3"
+  }
+}
