@@ -4,6 +4,11 @@
 
 ## 0. 主控裁决项(先读): 真账 acceptance 触发停车线
 
+> **[SUPERSEDED 就地注记, P2 终审面4]** 本节"11/17 feasible, 中央 6 孔
+> 不可行"读数已被 §8.3 取代(T6b 相位协变 + T6c 质心锚 + T6d 字面杠杆
+> 分摊后 **17/17 全 feasible, 停车线解除**); 本节保留为裁决演化记录,
+> **勿据本节取数/取图** —— 现行读数唯一出处=§8.3 与盘上 g3_report.json。
+
 **真账 17 孔: robustness(裸环) 17/17 全 feasible; acceptance(RING+R5a 肩荷) 11/17 feasible, 中央 6 孔(ARCH06-11)不可行** —— `run_g3` 已按红线 `raise G3_FROZEN_GEOMETRY_CONFLICT`(异常携带完整报告 `.report`)停报主控。本任务**未调任何封卷几何参数/阈值自救**(红线遵行见 §5)。
 
 - 失稳机理(已诊断): 中央孔 R5a 肩重达环重 ~134%(ARCH08: 肩 84.6 / 环 63.4), 其中贴冠~内肩段填充(冠侧 0.2-2.0m)使侧腹缝交点的 y0 需求(=z_in+M_j/H)抬过冠缝带顶 → 压力线自左(或右)侧腹**上穿 extrados** 出带, 全 H 域无解(扫 H 自动外扩至 ~3×H_ref 仍无交)。
@@ -19,6 +24,14 @@
 | `tests/test_p2_g3_thrust.py`(新, 7 测) | 解析对照 + 带厚单调 + 五负控 + 真账双 case(存在性 skip) |
 | `tests/test_p2_g3_dag.py`(1 处) | T5 真账测的 `run_g3` 调用按新协议捕停车线(`exc.report` 取报告, T5 断言全保留) |
 | `3d/m20_ctrl/g3_thrust_A08.png` / `g3_thrust_A01.png` | 中央/端孔压力线图(intrados/extrados/左右压力线叠画; A08 注记 NO FEASIBLE H, A01 注记 FEASIBLE+H 区间) —— **§7 裁决轮起被取代**: 现为 A08(结构带 FEASIBLE)/A07(停车线), A01 已撤 |
+
+> **[图件行更正, P2 终审面4]** 上表"现为 A08/A07, A01 已撤"一句已过时。
+> 实际生产者=tests/test_p2_g3_thrust.py::test_real_17_holes…(G3.plot_hole_pressure),
+> 每轮真账测试重写 **A08(中央孔, 结构带 FEASIBLE 带窗) + A01(端孔,
+> FEASIBLE)**; `g3_thrust_A07.png` 已按最终模型重生成(**FEASIBLE+H 窗**,
+> 替换 10-07 19:26 的 NO FEASIBLE 孤儿旧图, 存档用) —— 三图注记均与
+> §8.3"17/17 全 feasible, 停车线解除"一致, P3 按本行取图不会再拿到被
+> 推翻的读数。
 
 Commit: `feat(e30): P2-T6 G3③压力线刚块链(双case+H区间+停车线)`
 

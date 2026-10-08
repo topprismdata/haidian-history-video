@@ -41,7 +41,8 @@
 - **ε=0.15（R3 荷载平衡度）**：[工程参数·主控签署] 无史料值，取"一事件内单石增重占比 << ε"的保守离散；敏感性 0.10/0.15/0.25 记报告
 
 ## 5. 验收
-- sequence/event ledger：5935 石+17 副券架全覆盖、DAG 无环、stage 单调、每孔 frontier 状态轨迹合法（允许组合表校验）；validate_ledger v2：stone 账 schema 升 minor（capacity_curve+evidence 枚举），event_ledger 独立 schema（validate_event_ledger）
+- sequence/event ledger：5935 石账全覆盖=**3931 入日程 + 2004 裁1 幻影(in_void 不排程, excluded_ids 逐位)**、DAG 无环、stage 单调、每孔 frontier 状态轨迹合法（允许组合表校验）；17 副券架注册落盘=event_ledger.json `meta.centerings`（id/zone/arch_idx/xc/family=wood-\<zone\>；只进事件簿 meta，**石账零触碰**——P2 终审 W-3 兑现）；validate_ledger v2：stone 账 schema 升 minor（capacity_curve+evidence 枚举），event_ledger 独立 schema（validate_event_ledger）
+- **G3 承诺口径=已证范围（P2 终审面1 收口, 禁引路线图原句的无条件版）**：①门真判据=「**券石除架外无悬空时刻**」（摘支撑边必红, 端到端负控在测）；「每石就位时其支撑已存在」对 3246 肩背胞是**构造自证**（同 stage z 升序排序）+事件时序（R5A_PREREQ/R0_STONE_ONCE），**非几何支承校验** —— 肩背/FILL 置放期缺口与支承在位判据见 `.superpowers/sdd/p2-carryover-tickets.md` 票1/票2
 - g3_report：①③④ 全 PASS（acceptance+robustness 双 case）+ 五组负控（悬空石/提前 CLEAR/跳孔落架/一侧前沿领先/λ 档推力破坏）逐组注入必红
 - 旁白 lint：红线禁词 0 命中
 - 全门：e30 239+新增 / bridge3d 312 / L2 / 33 断言 / freeze 逐位（P2 零触本体）
