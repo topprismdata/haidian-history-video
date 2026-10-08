@@ -187,13 +187,14 @@ def _real():
 
 def test_load_pace_real_schema():
     pace = load_pace(_PACE_PATH)
-    # 序幕 5s 后重钉: 7200+150=7350 帧, 408+1=409 stage(S000 题卡)
+    # 序幕 5s 后重钉: 7200+150=7350 帧, 407+1=408 stage(S000 题卡)
+    # [拱线族返工 2026-10-08] 409→408 新实测(真段 408→407, 见 test_p3_pace)
     assert pace["fps"] == 30 and pace["total_frames"] == 7350
-    assert len(pace["stages"]) == 409
+    assert len(pace["stages"]) == 408
     assert pace["stages"][0]["start"] == 0
     with pytest.raises(IndexError):
         stage_at_frame(pace, 7350)
-    assert stage_at_frame(pace, 7349) == 408
+    assert stage_at_frame(pace, 7349) == 407  # # [拱线族返工 2026-10-08] 新实测: b>a 三孔 +24 入 in_void → −24 PLACE_STONE → 真段 408→407(pace 含 S000 题卡 409→408), 逐孔分解见 test_p2_sequencer
 
 
 def test_real_prologue_s000_empty():
@@ -217,8 +218,8 @@ def test_real_last_frame_pin_3931():
     """末帧 = 终态回归口径: 在场集 3931, 券架全卸, λ 全 1, DONE."""
     pace, seq = _real()
     st = state_at_frame(pace, seq, pace["total_frames"] - 1)
-    assert st["stage"] == 408 and st["event_cursor"] == 4118  # 序幕 5s 后重钉
-    assert len(st["visible"]) == 3931
+    assert st["stage"] == 407 and st["event_cursor"] == 4094  # 序幕 5s 后重钉; [拱线族返工 2026-10-08] 4118→4094 新实测(+24 入 in_void)
+    assert len(st["visible"]) == 3907  # [拱线族返工 2026-10-08] 新实测重钉: b>a 三孔(8/9/10)净空边界上移 → in_void 2004→2028 / 日程 3931→3907 / 事件 4118→4094(逐孔分解 ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差; 推导见 test_p2_sequencer)
     assert st["phase"] == "DONE"
     assert st["centering_up"] == frozenset()
     assert len(st["wedge_lambda"]) == 17
@@ -234,8 +235,8 @@ def test_real_phantom_2004_never_visible():
     sched = set(e["stone_id"] for e in seq["events"]
                 if e["etype"] == "PLACE_STONE")
     phantom = ledger_ids - sched
-    assert len(sched) == 3931
-    assert len(phantom) == 2004
+    assert len(sched) == 3907
+    assert len(phantom) == 2028
     total = pace["total_frames"]
     for f in list(range(0, total, 97)) + [total - 1]:
         assert not (state_at_frame(pace, seq, f)["visible"] & phantom), f

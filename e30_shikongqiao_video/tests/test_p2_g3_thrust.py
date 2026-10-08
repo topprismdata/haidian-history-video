@@ -332,7 +332,9 @@ def test_real_17_holes_acceptance_feasible_and_report():
     # [P2-T6b 相位协变重账] R5a 1290→1342 (+52): in_void 手性修复释放 48 块
     # (12 孔×4, 全部入本孔 R5a) + dm/rbo 0.985 体素口径边界移位 +4
     # (A13 +2, A15 +2; dm 总数 28→29)。归因表见 p2-task-6-report.md §8。
-    assert sum(len(v) for v in r5a.values()) == 1342
+    # [拱线族返工清债 2026-10-08] 1342→1382(+40=ring_band_overlap 182→222,
+    # 全在 b>a 三孔; 与 test_p2_sequencer 同源推导)
+    assert sum(len(v) for v in r5a.values()) == 1382
     assert sorted(r5a) == ["ARCH%02d" % i for i in range(1, 18)]
 
     gate = G3.stress_gate(led, r5a=r5a)
@@ -387,10 +389,9 @@ def test_real_17_holes_acceptance_feasible_and_report():
     # infeasible=[] 下退化为"old_infra 非空"近恒真)。出货口径(字面杠杆)
     # LOCK_BAND_M=0 下不可行集实测 = {07..11}; 50/50 前身模型下为 {06..12}
     # 7 孔(出口审查实测) —— 差异来自杠杆带变宽, 随口径重测并在此钉死。
-    print("旧口径(截面不加厚) infeasible:", old_infra)
-    assert old_infra == ["ARCH07", "ARCH08", "ARCH09", "ARCH10",
-                         "ARCH11"], old_infra
-
+    # [拱线族返工清债 2026-10-08] {07..11}→{07,08,10,11}: 新实测——圆弧族
+    # 中央孔(ARCH09)旧口径下转可行(跨内分支比两圆心弧高, 杠杆带内容变),
+    assert old_infra == ["ARCH07", "ARCH08", "ARCH10", "ARCH11"], old_infra
     # 带界守恒(0.36m 外肩石不得混入): r5a 集合逐石足印径向距 ≤ 0.35
     import sequencer as SQ
     assert G3.LOCK_BAND_M == SQ.LOCK_BAND_M == 0.35
@@ -595,6 +596,9 @@ _SIDEAR_EXPECTED = frozenset([
     "3d/out/print/central_slice/manifest.json",
     "3d/out/print/excluded_ids.json",
     "3d/out/event_ledger.json",
+    # [拱线族返工清债 2026-10-08] pace.json 单一节奏源入完备性钉(P3-T8 侧车行
+    # 随 sequence 重锚同轮更新; 侧车重建为 9 路径唯一化)
+    "3d/out/film/pace.json",
     "3d/out/narration_beats.md",
     # P3-T8(2026-10-08): pace.json 单一节奏源入 sidecar(序幕 5s 重生成,
     # sha 随重生成同轮更新; BLK-1: sidecar+本钉同轮扩)

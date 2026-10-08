@@ -39,8 +39,9 @@ def test_dual_impl_frame_by_frame_real():
     pace = load_pace(_PACE_PATH)
     seq = json.load(open(_SEQ_PATH))
     total = pace["total_frames"]
-    # 序幕 5s 后重钉: 7350 帧, 409 stage(S000 题卡, 桶宽 0)
-    assert total == 7350 and len(pace["stages"]) == 409
+    # 序幕 5s 后重钉: 7350 帧, 408 stage(S000 题卡, 桶宽 0)
+    # [拱线族返工 2026-10-08] 409→408 新实测(真段 408→407, 见 test_p3_pace)
+    assert total == 7350 and len(pace["stages"]) == 408
     n = 0
     for f in range(0, total, 7):
         ref = state_at_frame(pace, seq, f)
@@ -66,14 +67,14 @@ def test_phantom_never_visible_real():
                     if e["etype"] == "PLACE_STONE")
     phantom = universe - scheduled
     assert len(universe) == 5935                          # 石账口径钉
-    assert len(scheduled) == 3931 and len(phantom) == 2004
+    assert len(scheduled) == 3907 and len(phantom) == 2028  # [拱线族返工 2026-10-08] 新实测重钉: b>a 三孔(8/9/10)净空边界上移 → in_void 2004→2028 / 日程 3931→3907 / 事件 4118→4094(逐孔分解 ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差; 推导见 test_p2_sequencer)
     total = pace["total_frames"]
     for label, getter in (
             ("film_state", lambda f: state_at_frame(pace, seq, f)),
             ("film_verify",
              lambda f: film_verify.expected_state(f, _PACE_PATH, _SEQ_PATH))):
         vis = getter(total - 1)["visible"]
-        assert len(vis) == 3931, label                    # 末帧恰日程集
+        assert len(vis) == 3907, label                    # 末帧恰日程集 [拱线族返工 2026-10-08] 3931→3907
         assert vis == scheduled, label                    # 不多不少
         assert vis & phantom == frozenset(), label        # 交集空
 

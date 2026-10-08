@@ -151,7 +151,11 @@ def arch_x_extent(a, b):
 
 def arch_z(x, xc, springer, a, b):
     """单心圆弧拱 intrados 高度 z(x), x∈[xc-a, xc+a](上分支; b>a 时该式给
-    跨内分支, 起拱点 horseshoe 外鼓段由 arch_x_extent/arch_arc_pts 处理)。"""
+    跨内分支, 起拱点 horseshoe 外鼓段由 arch_x_extent/arch_arc_pts 处理)。
+    跨外(|x-xc|>a)哨兵=起拱线(恢复 M15 前旧契约: 拱腹面止于起拱线, 肩外
+    高度不随圆外推)—— sequencer/centering 锁固带语义依赖此约定。"""
+    if abs(x - xc) > a:
+        return springer
     d, R = arch_circle(a, b)
     dd = R * R - (x - xc) ** 2
     return springer + d + _math.sqrt(dd) if dd > 0.0 else springer + d
@@ -183,7 +187,10 @@ def arch_arc_pts(xc, springer, a, b, n):
     if b <= a:
         right = arch_half_arc(xc, springer, a, b, 1, n)
         left = arch_half_arc(xc, springer, a, b, -1, n)
-        return right + left[1:]          # 冠点不重复
+        # 左半须【逆序】拼接(冠→左起拱点): 直接 left[1:] 会从冠跳回左弧下段
+        # 再升回冠, 折线自交成 bowtie —— 布尔后券洞被切成矩形槽(2026-10-08
+        # 深夜事故, 见 body_changelog ArchRoundFix 节"网格级洞形闸门")。
+        return right + list(reversed(left))[1:]   # 冠点不重复
     # b>a: 右端 = 起拱点 -> 赤道端点(单弦), 再 θ∈(0, π/2] 角度采样上冠
     right = [(xc + a, springer), (xc + R, springer + d)]
     for k in range(1, n + 1):

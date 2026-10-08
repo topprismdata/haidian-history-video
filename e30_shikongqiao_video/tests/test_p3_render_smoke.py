@@ -136,11 +136,11 @@ def test_render_3frames_smoke(smoke):
         assert rec["phase"] == st["phase"]
         assert rec["wedge_lambda"] == st["wedge_lambda"]
     # 4) 四层一线(T5b 定稿): 末帧场景实例==记录==状态机==账面日程 3931
-    assert len(recs[TOTAL - 1]["selected"]) == 3931
+    assert len(recs[TOTAL - 1]["selected"]) == 3907  # [拱线族返工 2026-10-08] 新实测重钉: b>a 三孔(8/9/10)净空边界上移 → in_void 2004→2028 / 日程 3931→3907 / 事件 4118→4094(逐孔分解 ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差; 推导见 test_p2_sequencer)
     probe = _read_jsonl(os.path.join(smoke["out_dir"], "probe.jsonl"))
     probeL = probe[TOTAL - 1]
-    assert probeL["scene_instances"] == 3931
-    assert probeL["vis_idx"] == 3931
+    assert probeL["scene_instances"] == 3907
+    assert probeL["vis_idx"] == 3907
     # 5) work.blend 落盘, film blend 与全部只读输入 sha 不变(只读纪律)
     assert os.path.isfile(WORK_BLEND)
     assert _sha256(FILM_BLEND) == smoke["sha_film_before"]

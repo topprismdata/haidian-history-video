@@ -1087,7 +1087,13 @@ def test_real_ledger_fullchain():
     # in_void 滤除数与 excluded_ids.json 同源同值
     # [P2-T6b] 2052→2004: in_void 手性修复(_kept_pieces 上穿出界支)释放
     # 48 块跨缘真石(12 孔×4), 误删归零且两半桥对称(176/176)。
-    assert res["meta"]["n_stones_in_void"] == 2004
+    # [拱线族返工 2026-10-08] 2004→2028: 新实测(重出 out/ledger_full.json +
+    # out/sequence.json 直读, 非凑绿)——单心圆弧跨内分支在 b>a 三孔(8/9/10,
+    # 起拱 horseshoe)比旧两圆心弧高, 净空边界上移吃进更多砧石; 逐孔分解
+    # ARCH08 +4 / ARCH09 +16 / ARCH10 +4(合计 +24), 其余 14 孔逐位零差
+    # (b<a 两族曲线恒等自证边界语义保持)。flare 细节见 body_changelog
+    # ArchRoundFix 节"已知账"。
+    assert res["meta"]["n_stones_in_void"] == 2028
     assert 3900 <= len(res["events"]) <= 4250
     # 真账 in_void 过滤交叉核: 被滤石集合 == excluded_ids.json["in_void"] 逐位
     _excl = os.path.join(os.path.dirname(__file__), "..", "3d", "out",
@@ -1125,7 +1131,10 @@ def test_real_ledger_fullchain():
                       if x["hole"] == zh and x["etype"] == "DECENTER_START")
         if close < e["seq"] < dstart:
             r5a += 1
-    assert r5a == 1342, r5a
+    # [拱线族返工 2026-10-08] 1342→1382 新实测: +40 = excluded_ids 桶
+    # ring_band_overlap 182→222(全部在 b>a 三孔, 环带随拱线族上移),
+    # 推导同 n_stones_in_void 2028 条目。
+    assert r5a == 1382, r5a
     # frontier 轨迹合法
     assert SQ.check_frontier(res["events"], zones) == []
     # stage 叙事分组目标 200-600
