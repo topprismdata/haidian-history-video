@@ -1172,6 +1172,24 @@ def test_lambda_grid_constants_cross_file_pinned():
         == pytest.approx(G3.LAMBDA_GRID_STEP)
 
 
+def test_dm_swallow_threshold_cross_file_pinned(monkeypatch):
+    """[P2 终审 BLK-3] W1 交接口径单值钉: g3_check.SWALLOW_THRESHOLD ==
+    sequencer.DM_SWALLOW_THRESHOLD == 0.985(承重模型实际剔除集口径)。
+    无条件跑(不寄生真账 skipif —— 终审面2: 那样钉在 clean clone 永不跑);
+    双实现同阈值逐位同集已由终审实测(EQUAL=True, 比率差 4.3e-7 属 6 位
+    舍入), 漂移面只在常数 —— 改任一侧即红。monkeypatch 腿自证钉读的是
+    活属性非字面复制(判据非恒真)。"""
+    import g3_check as G3
+    assert SQ.DM_SWALLOW_THRESHOLD == pytest.approx(0.985)
+    assert G3.SWALLOW_THRESHOLD == pytest.approx(SQ.DM_SWALLOW_THRESHOLD)
+    # 旧 0.99 口径只准作 info 对照常量, 不得回坐交接口径
+    assert G3.SWALLOW_THRESHOLD_INFO == pytest.approx(0.99)
+    assert G3.SWALLOW_THRESHOLD_INFO != G3.SWALLOW_THRESHOLD
+    monkeypatch.setattr(SQ, "DM_SWALLOW_THRESHOLD", 0.99)
+    assert G3.SWALLOW_THRESHOLD != SQ.DM_SWALLOW_THRESHOLD, \
+        "跨文件钉失牙: 改一侧后两值仍相等(钉读的不是活属性)"
+
+
 def test_real_dm_per_hole_counts_match_top_level():
     """R4.1 回归钉: meta.holes[].n_dm_excluded 逐孔值 == meta.dm_excluded
     按孔分组计数 ∧ 逐孔和 == 顶层 —— 防波1 循环残留变量类缺陷复发
@@ -1207,7 +1225,12 @@ def test_sidecar_clean_clone_rebuild_matches_recorded(tmp_path):
     git archive HEAD(tracked 集)→ 拷两份 untracked 真账输入 → 重跑
     sequencer → sequence.json sha256 == sidecar 记录。钓 clean-clone
     隐形依赖(excluded_ids.json 缺失曾产出'另一种合法'账目 sha 70c90849,
-    出口审查 F7; 现 _double_model_ratios 对缺失输入 fail-closed)。"""
+    出口审查 F7; 现 _double_model_ratios 对缺失输入 fail-closed)。
+    预算注记(P2 终审 W-1): 子进程 timeout=900s —— 独占实测 ~200s, ×4.5
+    并发余量; 并发时段勿与全套同跑(600s 曾在加载机上 flake, 定性环境
+    争用非回归), 本测单独串行跑。本机后台通道 CPU 限流至 ~2.4% 时本测
+    必超时(限流下 ~10 倍爬行), 不可用 —— 须 bash 前台独占跑
+    (pytest -k sidecar_clean_clone 或单独 pytest tests/test_p2_sequencer.py::本测)。"""
     import hashlib
     import subprocess
     here = os.path.dirname(os.path.abspath(__file__))
@@ -1240,7 +1263,7 @@ def test_sidecar_clean_clone_rebuild_matches_recorded(tmp_path):
             fo.write(fi.read())
     r2 = subprocess.run([sys.executable, "sequencer.py"],
                         cwd=str(tmp_path / proj / "3d"), capture_output=True,
-                        text=True, timeout=600)
+                        text=True, timeout=900)
     assert r2.returncode == 0, r2.stdout[-2000:] + r2.stderr[-2000:]
     out_seq = tmp_path / proj / "3d" / "out" / "sequence.json"
     h = hashlib.sha256(out_seq.read_bytes()).hexdigest()

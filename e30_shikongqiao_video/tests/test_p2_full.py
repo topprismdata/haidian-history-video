@@ -313,20 +313,37 @@ def test_event_ledger_artifact_valid_and_idempotent(chain, tmp_path):
                  if s["id"] not in chain["excl"]]
     cen_ids = [c["id"] for c in chain["centerings"]]
     # 交付闸(与 sequencer.main 同一校验单源)
-    doc = SQ.event_ledger_doc(res)
+    doc = SQ.event_ledger_doc(res, chain["centerings"])
     assert E.validate_event_ledger(doc, cen_ids, sched_ids,
                                    require_evidence=True) == []
     with open(_EVOUT, "rb") as f:
         disk = f.read()
     # 幂等两连跑 cmp(独立两次序列化, 逐字节相同)
     b1 = SQ.dump_event_ledger(doc)
-    b2 = SQ.dump_event_ledger(SQ.event_ledger_doc(res))
+    b2 = SQ.dump_event_ledger(SQ.event_ledger_doc(res, chain["centerings"]))
     assert b1 == b2
     assert disk == b1, "盘上 event_ledger.json != 重生成字节(重出后再测)"
     with open(os.path.join(str(tmp_path), "ev1.json"), "wb") as f:
         f.write(b1)
     assert json.loads(disk)["schema"] == SQ.EVENT_LEDGER_SCHEMA
     assert json.loads(disk)["meta"]["n_events"] == N_EVENTS
+    # 券架注册表(spec §3/§4 承诺兑现, P2 终审 W-3): meta.centerings 17 副,
+    # 生成器单源逐字段钉(id/zone/arch_idx/xc/family) —— 只进事件簿 meta。
+    cen_meta = json.loads(disk)["meta"]["centerings"]
+    assert len(cen_meta) == 17
+    assert [c["id"] for c in cen_meta] == cen_ids
+    for c, cm in zip(chain["centerings"], cen_meta):
+        assert cm["id"] == c["id"] and cm["zone"] == c["zone"], cm
+        assert cm["arch_idx"] == c["arch_idx"]
+        assert cm["xc"] == pytest.approx(float(c["xc"]), abs=1e-9)
+        assert cm["family"] == "wood-" + c["zone"]
+    # 石账纯度红线(BLK 轮复核): centerings 注册不外溢石账 ——
+    # ledger_sequenced 无 CEN- 石 id、无 centering 类 params/字段残留。
+    led_seq = L.load_ledger(os.path.join(_OUT, "ledger_sequenced.json"))
+    assert all(not s["id"].startswith("CEN-") for s in led_seq["stones"])
+    for s in led_seq["stones"]:
+        assert not (set(s.get("params", {}) or {})
+                    & {"centering", "centering_id", "cen_id"}), s["id"]
 
 
 def test_g3_report_artifact_three_sections_and_digest():
@@ -384,6 +401,34 @@ def test_narration_beats_artifact_matches_generator_and_selfclean(chain):
     # 规则号勘误钉: 卸架波行规则=R4/R6, 不是 R5
     assert all("R4/R6" in ln and "R5" not in ln.split("规则=")[1].split("|")[0]
                for ln in dstart + wedge)
+
+
+def test_narration_gate_summary_derived_from_report_ok_bits(chain):
+    """[P2 终审 BLK-2 旁白牙] 三门摘要行从报告 ok 位派生, 禁硬编码
+    "全 ok" 常量: 全绿印逐门 ok; ①红印红点名+违例码(红账绿文案矛盾件
+    不许出厂); 红文本仍过自身 lint(narration CLI 拒收=交付链断裂, 不许)。"""
+    rep = chain["report"]
+    assert rep["gate_dag"]["ok"] and rep["gate_stress"]["ok"] \
+        and rep["gate_imbalance"]["ok"]
+    assert os.path.exists(_SEQOUT)
+    with open(_SEQOUT, encoding="utf-8") as f:
+        seqdoc = json.load(f)
+    green = NR.build_beats_text(seqdoc, rep)
+    gline = next(ln for ln in green.splitlines() if ln.startswith("数据源:"))
+    assert "dag=ok" in gline and "stress=ok" in gline \
+        and "imbalance=ok" in gline, gline
+    assert "全 ok" not in green, "硬编码『三门全 ok』字样仍在 beats 里"
+    red = copy.deepcopy(rep)
+    red["gate_dag"]["ok"] = False
+    red["gate_dag"]["violations"] = [
+        "DAG_UNSUPPORTED ARCH09.EAST.RING.C04.B02 (seq=1234 支撑 Σ=0)"]
+    red["gate_dag"]["violation_counts"] = {"DAG_UNSUPPORTED": 1}
+    rtext = NR.build_beats_text(seqdoc, red)
+    rline = next(ln for ln in rtext.splitlines() if ln.startswith("数据源:"))
+    assert "dag=红" in rline and "DAG_UNSUPPORTED" in rline, rline
+    assert "stress=ok" in rline and "非全绿" in rline, rline
+    assert NR.narration_lint(rtext) == [], \
+        "红报告派生的 beats 必须仍过 lint(否则 narration CLI 拒收, 链断)"
 
 
 def test_lint_banned_words_red_with_position():
@@ -469,3 +514,79 @@ def test_lint_word_table_pinned():
         assert w in NR.BANNED_WORDS, w
     for w in ("压力线", "倾覆裕度", "中三分"):
         assert w in NR.MODERN_TERMS, w
+
+
+# ---------------------------------------------------------------------------
+# [P2 终审 BLK-2] 端到端负控: ①红 → g3 CLI rc!=0 + beats 无"全 ok"
+# (走真 run_g3 链的 CLI 子进程 —— T8 五负控直调子门, 恰是本契约漏测因)
+# ---------------------------------------------------------------------------
+
+_E2E_SKIP = pytest.mark.skipif(
+    not (os.path.exists(os.path.join(_OUT, "ledger_sequenced.json"))
+         and os.path.exists(_SEQOUT)
+         and os.path.exists(os.path.join(_OUT, "print",
+                                         "excluded_ids.json"))),
+    reason="真账 untracked 输入(ledger_sequenced/sequence/excluded_ids)"
+           "不在盘上")
+
+
+@_E2E_SKIP
+def test_e2e_support_edge_removal_cli_blocks_delivery(tmp_path):
+    """真账副本摘 ARCH09 一块券石 centering 支撑边 → 全链 CLI 断言:
+    (a) g3_check.py 子进程 rc!=0(①停车线) 且红报告落盘点名违例石;
+    (b) narration.py 子进程读同一红账 → beats 无"三门全 ok"字样、
+        违例码被点名、门读数行如实标红 —— "红账+绿文案"矛盾件不可出厂。
+    沙盒=3d/*.py 副本 + 最小 out 输入; 真树零触碰。慢测(~40s 子进程),
+    并发时段勿与 clean-clone 重建测同跑。"""
+    import shutil
+    import subprocess
+    sandbox = tmp_path / "3d"
+    sandbox.mkdir()
+    for py in os.listdir(_3D):
+        if py.endswith(".py"):
+            shutil.copyfile(os.path.join(_3D, py), sandbox / py)
+    (sandbox / "out").mkdir()
+    (sandbox / "out" / "print").mkdir()
+    shutil.copyfile(os.path.join(_OUT, "sequence.json"),
+                    sandbox / "out" / "sequence.json")
+    shutil.copyfile(os.path.join(_OUT, "print", "excluded_ids.json"),
+                    sandbox / "out" / "print" / "excluded_ids.json")
+    with open(os.path.join(_OUT, "ledger_sequenced.json"),
+              encoding="utf-8") as f:
+        led = json.load(f)
+    victim = None
+    for s in led["stones"]:
+        if (s["id"].startswith("ARCH09.") and G3.stone_role(s["id"]) == "RING"
+                and any(e["type"] == "centering"
+                        for e in s.get("support_edges", []))):
+            victim = s
+            break
+    assert victim is not None, "前提失效: ARCH09 无带 centering 边的券石"
+    victim["support_edges"] = [e for e in victim["support_edges"]
+                               if e["type"] != "centering"]
+    with open(sandbox / "out" / "ledger_sequenced.json", "w",
+              encoding="utf-8") as f:
+        json.dump(led, f, ensure_ascii=False, sort_keys=True)
+    # (a) g3 CLI: rc!=0 + STOP 行 + 红报告落盘点名
+    r1 = subprocess.run([sys.executable, "g3_check.py"], cwd=str(sandbox),
+                        capture_output=True, text=True, timeout=600)
+    assert r1.returncode != 0, \
+        "①红未阻断交付链(rc=0) —— BLK-2 回归: %s" % r1.stdout[-800:]
+    assert "STOP" in r1.stdout, r1.stdout[-800:]
+    with open(sandbox / "out" / "g3_report.json", encoding="utf-8") as f:
+        red_rep = json.load(f)
+    assert red_rep["gate_dag"]["ok"] is False
+    assert red_rep["gate_dag"]["violation_counts"], red_rep["gate_dag"]
+    assert any(victim["id"] in v
+               for v in red_rep["gate_dag"]["violations"]), \
+        red_rep["gate_dag"]["violations"][:4]
+    # (b) narration CLI: 同一红账 → beats 派生红读数, 无"全 ok"
+    r2 = subprocess.run([sys.executable, "narration.py"], cwd=str(sandbox),
+                        capture_output=True, text=True, timeout=300)
+    assert r2.returncode == 0, r2.stdout[-800:] + r2.stderr[-800:]
+    with open(sandbox / "out" / "narration_beats.md", encoding="utf-8") as f:
+        beats = f.read()
+    assert "全 ok" not in beats, "①红 beats 仍印『全 ok』—— BLK-2 回归"
+    assert "dag=红" in beats and "DAG_UNSUPPORTED" in beats
+    assert victim["id"] in beats, \
+        "红 beats 未点名违例石(首违例点名链断): " + victim["id"]

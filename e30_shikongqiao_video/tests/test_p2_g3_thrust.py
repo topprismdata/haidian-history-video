@@ -44,6 +44,7 @@ import json
 import math
 import os
 import sys
+from typing import List, Tuple
 
 import pytest
 
@@ -583,18 +584,25 @@ def test_crown_wedge_derivation_pin_and_band_boundary_insensitivity():
 
 _SIDE = os.path.join(_HERE, "..", "3d", "refs", "artifact_sha256.txt")
 
+# [P2 终审 BLK-1] sidecar 完备性显式钉: 重锚工件全集合 8 条(新增重锚
+# 工件必须 sidecar+本钉同轮扩; 删行/漏登记即红 —— 取代旧 `len>=6` 无牙
+# 判据: 实测删两行仍 1 passed)。
+_SIDEAR_EXPECTED = frozenset([
+    "3d/out/ledger_full.json",
+    "3d/out/sequence.json",
+    "3d/out/ledger_sequenced.json",
+    "3d/core_hash.json",
+    "3d/out/print/central_slice/manifest.json",
+    "3d/out/print/excluded_ids.json",
+    "3d/out/event_ledger.json",
+    "3d/out/narration_beats.md",
+])
 
-def test_artifact_sha256_sidecar_matches_disk():
-    """[审查 W5] tracked sha sidecar 逐条与盘上文件实算一致。
 
-    重锚工件(ledger/sequence/core_hash 等)全部 untracked → 冻结门此前
-    只能本机自证, clean clone 无从核对(同类历史事故: 未跟踪文件=隐形
-    依赖)。sidecar 把 6 个重锚工件 sha256 记进 git; 本测试钉"记录值 ==
-    盘上实算": 单文件缺失 → 跳过该条(大工件不入库的 clean clone 场景),
-    全部缺失 → skip, 任何一条不符 → fail。"""
-    assert os.path.exists(_SIDE), "sidecar 不在盘上(须随仓库交付)"
+def _parse_sidecar(path):
+    # type: (str) -> List[Tuple[str, str]]
     entries = []
-    with open(_SIDE, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         for ln in fh:
             ln = ln.strip()
             if not ln or ln.startswith("#"):
@@ -602,20 +610,95 @@ def test_artifact_sha256_sidecar_matches_disk():
             parts = ln.split(None, 1)
             assert len(parts) == 2, ln
             entries.append((parts[0], parts[1].strip()))
-    assert len(entries) >= 6, entries
-    base = os.path.join(_HERE, "..")
-    checked = 0
+    return entries
+
+
+def _assert_sidecar_set(entries):
+    # type: (List[Tuple[str, str]]) -> None
+    """记录集 == 钉集合(纯集合判据, clean clone 亦可跑): 删行/漏登记/
+    重复登记一律红 —— sidecar 是"哪些工件入库可核"的契约, 不锁清单则
+    P3 新工件漏登记永不红(BLK-1)。"""
+    paths = [rel for _sha, rel in entries]
+    assert len(paths) == len(set(paths)), "sidecar 重复路径: %r" % paths
+    assert set(paths) == _SIDEAR_EXPECTED, \
+        "sidecar 路径集 != 完备性钉集合(删行/漏登记即红): 差集 %r" \
+        % (set(paths) ^ _SIDEAR_EXPECTED,)
+
+
+def _assert_sidecar_present_and_matching(entries, base):
+    # type: (List[Tuple[str, str]], str) -> None
+    """在盘工件逐条 fail-loud(B2b 纪律, tests/test_p1_slice.py:439 同族):
+    已录路径盘上缺失 = 半重出树, 红(不许静默 continue); 记录值 ==
+    sha256 盘上实算, 任何一条不符红。"""
+    missing = [rel for _sha, rel in entries
+               if not os.path.exists(os.path.normpath(
+                   os.path.join(base, rel)))]
+    assert not missing, (
+        "sidecar 已录工件盘上缺失(fail-loud, 不许静默跳过; 全缺=clean "
+        "clone 由上层 skip): %r" % (missing,))
     for sha, rel in entries:
-        p = os.path.normpath(os.path.join(base, rel))
-        if not os.path.exists(p):
-            continue
         h = hashlib.sha256()
-        with open(p, "rb") as f:
+        with open(os.path.normpath(os.path.join(base, rel)), "rb") as f:
             for chunk in iter(lambda: f.read(1 << 20), b""):
                 h.update(chunk)
         assert h.hexdigest() == sha, \
             "%s: sidecar=%s 盘上=%s" % (rel, sha, h.hexdigest())
-        checked += 1
-    if checked == 0:
+
+
+def test_artifact_sha256_sidecar_matches_disk():
+    """[审查 W5→P2 终审 BLK-1] tracked sha sidecar: 完备性 + 逐条一致。
+
+    两段牙(旧判据 len>=6 + 缺失 continue 已废): (1) 记录集合显式钉 8
+    路径(删一行/漏登记即红); (2) 已录工件盘上缺失即红 + 记录值==盘上
+    实算。全 8 件都不在盘 = clean clone(untracked 大工件不入库) →
+    skip, 按各生成命令链重出后可核。变异负控见
+    test_sidecar_completeness_mutation_red(tmp 副本, 真账零触碰)。"""
+    assert os.path.exists(_SIDE), "sidecar 不在盘上(须随仓库交付)"
+    entries = _parse_sidecar(_SIDE)
+    _assert_sidecar_set(entries)
+    base = os.path.join(_HERE, "..")
+    on_disk = [rel for _sha, rel in entries
+               if os.path.exists(os.path.normpath(os.path.join(base, rel)))]
+    if not on_disk:
         pytest.skip("sidecar 所列工件均不在盘上(clean clone); "
                     "按 sidecar 生成命令链重出后可核")
+    _assert_sidecar_present_and_matching(entries, base)
+
+
+def test_sidecar_completeness_mutation_red(tmp_path):
+    """[P2 终审 BLK-1 变异负控] sidecar 副本删一行 → 完备性判据必红
+    (判据非恒真自证; tmp 副本验证, tracked sidecar 零触碰)。"""
+    assert os.path.exists(_SIDE), "sidecar 不在盘上(须随仓库交付)"
+    entries = _parse_sidecar(_SIDE)
+    _assert_sidecar_set(entries)          # 完整记录集: 绿
+    mutilated = entries[:-1]              # 删末一条(event_ledger/beats 族)
+    assert len(mutilated) == len(entries) - 1
+    with pytest.raises(AssertionError, match="钉集合|删行|漏登记"):
+        _assert_sidecar_set(mutilated)
+
+
+# ---------------------------------------------------------------------------
+# [P2 终审 W-6] IMPOST 恒 0 重静默漏计 → _stone_weight fail-loud 哨兵
+# ---------------------------------------------------------------------------
+
+@pytest.mark.skipif(not all(os.path.exists(p) for p in _NEED),
+                    reason="out/sequence.json+ledger_sequenced.json 不在盘上")
+def test_impost_never_in_load_integral_and_weight_fails_loud():
+    """IMPOST(492 块, 无 w/h/d 断面键)不在承重积分集(③环块链/④孔顶
+    荷载=RING ∪ R5a 两消费面), 且 _stone_weight 对无断面键石 raise
+    (fail-loud 取代静默 0 —— 静默 0 曾使 IMPOST 恒 0 重且两实现同式
+    互证不报警; 治本=票3 计重口径)。角色集漂移即红。"""
+    led = L.load_ledger(_LEDSEQ)
+    impost = next(s for s in led["stones"]
+                  if G3.stone_role(s["id"]) == "IMPOST")
+    assert "d" not in (impost.get("params") or {}), \
+        "前提失效: IMPOST 已补 d 键, 本钉应随票3 同轮退役"
+    with pytest.raises(ValueError, match="w/h/d"):
+        G3._stone_weight(impost)
+    r5a = G3.load_r5a_shoulders()
+    roles = {G3.stone_role(sid) for ids in r5a.values() for sid in ids}
+    assert "IMPOST" not in roles, \
+        "R5a 积分集混入 IMPOST: %r" % sorted(roles)
+    # ③另一消费面=ring 构造(stone_role==RING 过滤)与④ _hole_top_loads
+    # (RING ∪ r5a)同单源, 由 _stone_weight 的 raise 兜底: 误喂 IMPOST
+    # 必响, 不再有静默 0 路径。

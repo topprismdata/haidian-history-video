@@ -1326,16 +1326,25 @@ EVENT_LEDGER_SCHEMA = "event-ledger-v1"   # 事件簿容器形制(词表/校验�
 # events.py; 与石账 L.SCHEMA 无关 —— 券架/事件永不进石账, 石账纯度红线)
 
 
-def event_ledger_doc(res):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+def event_ledger_doc(res, centerings):
+    # type: (Dict[str, Any], List[Dict[str, Any]]) -> Dict[str, Any]
     """build_sequence 产物 → 事件簿容器(events 原样, 无派生字段 ——
-    交付闸 validate_event_ledger 与 G3 消费同一事件流, 不出第二套)。"""
+    交付闸 validate_event_ledger 与 G3 消费同一事件流, 不出第二套)。
+    meta.centerings(P2 终审 W-3, spec §3/§4 承诺兑现·最小实现): 17 副
+    券架注册 {id, arch_idx, xc, zone, family="wood-<zone>"}(生成器单源
+    取数) —— 只进事件簿 meta, **不进石账**(5935 纯度红线); P3 消费细则
+    见 .superpowers/sdd/p2-carryover-tickets.md 票4。"""
     return {
         "schema": EVENT_LEDGER_SCHEMA,
         "meta": {
             "n_events": len(res["events"]),
             "hole_order": list(res["meta"]["hole_order"]),
             "generated_by": "sequencer.py P2-T8 真账接线",
+            "centerings": [
+                {"id": c["id"], "zone": c["zone"],
+                 "arch_idx": c["arch_idx"], "xc": c["xc"],
+                 "family": "wood-" + c["zone"]}
+                for c in centerings],
         },
         "events": res["events"],
     }
@@ -1396,9 +1405,13 @@ def main():
               encoding="utf-8") as f:
         json.dump(seq_out, f, ensure_ascii=False, indent=1, sort_keys=True)
     # [P2-T8 出口] 事件账落盘: 交付闸(require_evidence=True)不过不写盘
-    ev_led = event_ledger_doc(res)
+    ev_led = event_ledger_doc(res, centerings)
+    # [P2FinalFix 性能修复] _in_void_ids 原在推导式内逐石重算(5935 ×
+    # classify_stones 全账分类 = 隐性 O(n·m) 炸弹, 单次全跑被拖数百秒);
+    # 括出一次求值, 集合值不变 —— 行为零变化, 只消重复计算。
+    in_void_ids = _in_void_ids(led)
     sched_ids = [s["id"] for s in led2["stones"]
-                 if s["id"] not in _in_void_ids(led)]
+                 if s["id"] not in in_void_ids]
     ev_errs = E.validate_event_ledger(
         ev_led, [c["id"] for c in centerings], sched_ids,
         require_evidence=True)

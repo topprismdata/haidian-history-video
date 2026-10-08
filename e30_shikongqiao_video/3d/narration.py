@@ -248,47 +248,98 @@ def _stage_n_stones(seqdoc, st):
     return n
 
 
+def _gate_bits(dag, stress, imb):
+    # type: (Dict[str, Any], Dict[str, Any], Dict[str, Any]) -> str
+    """三门读数摘要(BLK-2 修复: 从报告 ok 位派生, 不再硬编码"全 ok")。
+    全绿: "dag=ok stress=ok imbalance=ok"; 任一红: 红门点名 + 违例码×
+    计数; 缺节(前置门红未评): "未评" —— 旁白文案不许与账目门读数矛盾
+    出厂, 也不许对红报告缺节 KeyError 断链。"""
+    def _bit(name, sec):
+        if not sec:
+            return "%s=未评(前置停车线, 报告无此节)" % name
+        if sec.get("ok"):
+            return "%s=ok" % name
+        codes = sec.get("violation_counts") or {}
+        detail = "/".join("%s %d" % (c, n)
+                          for c, n in sorted(codes.items())) \
+            or "%d 条" % len(sec.get("violations") or [])
+        return "%s=红(%s)" % (name, detail)
+    bits = " ".join([_bit("dag", dag), _bit("stress", stress),
+                     _bit("imbalance", imb)])
+    if dag.get("ok") and stress.get("ok") and imb.get("ok"):
+        return bits + "(读数见下节)"
+    return bits + " —— 非全绿: 红门=停车线(BLK-2), 本表如实引红账"
+
+
+def _red_first_violations(dag, stress, imb):
+    # type: (Dict[str, Any], Dict[str, Any], Dict[str, Any]) -> str
+    """红门首违例点名(取证件; 数据源行=元数据前缀豁免 lint)。全绿返回
+    空串 —— 违例石/孔逐字进 beats, 红账可归因不靠人肉翻报告。"""
+    parts = []
+    for name, sec in (("dag", dag), ("stress", stress), ("imbalance", imb)):
+        if sec.get("ok"):
+            continue
+        v0 = (sec.get("violations") or [""])[0]
+        if v0:
+            parts.append("%s首违例: %s" % (name, v0))
+    return (" | " + "; ".join(parts)) if parts else ""
+
+
 def build_beats_text(seqdoc, report):
     # type: (Dict[str, Any], Dict[str, Any]) -> str
-    """逐 stage 旁白素材表(纯函数; 只读计数字段, 与计时无关)。"""
+    """逐 stage 旁白素材表(纯函数; 只读计数字段, 与计时无关)。
+    红报告容错: ③④在①红/前置停车线下可能缺节(g3 CLI 红报告如实落盘)
+    —— 缺节印"未评", 不许 KeyError 断链(BLK-2 同族: 红账也要能出表)。"""
     stages = seqdoc["sequence"]
     n_ev = len(seqdoc["events"])
     n_st = len(stages)
-    holes = report["gate_stress"]["holes"]
+    stress = report.get("gate_stress") or {}
+    holes = stress.get("holes") or {}
     n_acc = sum(1 for h in holes.values() if h["acceptance"]["feasible"])
     n_rob = sum(1 for h in holes.values() if h["robustness"]["feasible"])
-    imb = report["gate_imbalance"]
-    dag = report["gate_dag"]
+    imb = report.get("gate_imbalance") or {}
+    dag = report.get("gate_dag") or {}
+    holes_note = ("%d/%d" % (n_acc, len(holes))) if holes else "未评"
+    rob_note = ("%d/%d" % (n_rob, len(holes))) if holes else "未评"
     lines = [
         "# E30 十七孔桥 P2 建造序列·旁白素材表(narration beats)",
         "",
         "生成命令: python3 3d/narration.py(读 3d/out/sequence.json + "
         "3d/out/g3_report.json; P3 逐 stage 取材, 引用即锁本表)",
-        "数据源: sequence.json events=%d stages=%d; G3 三门全 ok(读数见下节)"
-        % (n_ev, n_st),
+        "数据源: sequence.json events=%d stages=%d; G3 三门: %s%s"
+        % (n_ev, n_st, _gate_bits(dag, stress, imb),
+           _red_first_violations(dag, stress, imb)),
         "",
         "## 四叙事铁律(全片口径; 对应 stage 行内有行级标注)",
-        "1. 唯一硬结论=裸环合龙即自承: robustness(裸环 case) %d/%d 孔可行"
-        " [现代分析]" % (n_rob, len(holes)),
-        "2. acceptance %d/%d 是模型族结论: 依赖「餬灰胶结协同+冠缝共享支点」"
-        "两假设, 失效边界见 p2-task-6-report §7.2/§9 [现代分析]"
-        % (n_acc, len(holes)),
+        "1. 唯一硬结论=裸环合龙即自承: robustness(裸环 case) %s 孔可行"
+        " [现代分析]" % rob_note,
+        "2. acceptance %s 是模型族结论: 依赖「餬灰胶结协同+冠缝共享支点」"
+        "两假设, 失效边界见 p2-task-6-report §7.2/§9 [现代分析]" % holes_note,
         "3. 卸架序是 [工程推断·非史料]: C:A3 明言则例无工序教科书; 串行序是"
         "本门图式下的临界定(6/192 组合违例, util 1.009, p2-task-7-report "
         "§9.2), 非不可行证明 [现代分析]",
         "4. 对称同步卸架=安全族: 全桥同波逐档 %d/%d 组合违例(最小推力读数)"
-        " [现代分析]" % (len(imb["violations"]), imb["n_evals"]),
+        " [现代分析]" % (len(imb.get("violations") or []),
+                         imb.get("n_evals", 0)),
         "",
         "## G3 三门读数(引用即锁本报告)",
         "- gate_dag(①支撑活跃): %d 事件全 snapshot %d 违例 [现代分析]"
-        % (dag["n_snapshots"], len(dag["violations"])),
-        "- gate_stress(③压力线): acceptance %d/%d 孔可行; robustness(裸环)"
-        " %d/%d 孔可行 [现代分析]" % (n_acc, len(holes), n_rob, len(holes)),
+        % (dag.get("n_snapshots", 0), len(dag.get("violations") or [])),
+        "- 口径注记(已证范围, P2 终审收口): 券石除架外无悬空时刻=真判据"
+        "(摘支撑边必红, 端到端负控在测); 每石就位支撑已存在=构造自证"
+        "(肩背胞 z 升序排序)+事件时序(R5A_PREREQ/R0), 非几何支承校验"
+        " [现代分析]",
+        "- gate_stress(③压力线): acceptance %s 孔可行; robustness(裸环)"
+        " %s 孔可行 [现代分析]" % (holes_note, rob_note),
         "- gate_imbalance(④墩不平衡·最小推力读数): %d 事件-墩组合 %d 违例; "
         "viol_uniform_hmax=%d(一致 Hmax 读数下违例组合数, 条件性在册——"
         "不违例≠可行证明) [现代分析]"
-        % (imb["n_evals"], len(imb["violations"]),
-           imb["viol_uniform_hmax"]),
+        % (imb.get("n_evals", 0), len(imb.get("violations") or []),
+           imb.get("viol_uniform_hmax", 0)),
+        "- P3 交接注记: stage 显隐分组以 sequence.json 的 stages 驱动"
+        "(ledger.stage_hint 恒 None, 勿依赖 blend 属性); 券架几何注册表="
+        "event_ledger.json meta.centerings(17 副, id/zone/arch_idx/xc/"
+        "family; 石账零触碰) [现代分析]",
         "",
         "## 逐 stage beats(规则号 R0-R7; 卸架序=R4/R6 非 R5 —— T7 勘误)",
     ]

@@ -34,15 +34,18 @@
       W1 交接: ring_band_overlap 石被 RING∪ 实体体积吞没率(P1 同栅格度量
       p1a_slice._voxel_unique_vol 单源, bbox 预筛+面级栅格), ≥threshold 者
       进 placeholders。**g3 不判它们红**(单自持边 Σ=1.0 合规), 清单仅供
-      P3 视觉隐藏。注: 主控口径 28 块(T4 修复轮会话内实测未落盘)与本扫描
-      复现口径在阈值敏感带(0.985-0.99)内有出入, 以本扫描落盘清单为准
-      (幂等可复现, 报告附敏感带明细)。
+      P3 视觉隐藏。口径(P2 终审 BLK-3): 缺省 0.985 = sequencer
+      DM_SWALLOW_THRESHOLD 同值钉(跨文件钉 test_p2_sequencer); 0.99 旧
+      口径只作报告 info 对照(scan["info_099"])。
   run_g3(events, ledger, ..., r5a=None) -> report dict
       串 gate_dag(本文件)+double_model 清单(W1)+gate_stress(③压力线)
-      +gate_imbalance(④墩不平衡·最小推力读数, T7; 键名沿④包络期保持兼容)。gate_stress.ok=False →
-      raise G3_FROZEN_GEOMETRY_CONFLICT(停车线, 停报主控);
-      gate_imbalance.ok=False → raise G3_DECENTER_ORDER_CONFLICT
-      (排程冲突停车线, 报告挂 exc.report 含逐墩账+卸架顺序建议)。
+      +gate_imbalance(④墩不平衡·最小推力读数, T7; 键名沿④包络期保持兼容)。三门任一红 →
+      停车线 raise(报告挂 exc.report, 停报主控):
+      gate_dag.ok=False → G3_GATE_DAG_CONFLICT(P2 终审 BLK-2, ①红同 ③④
+      停车线); gate_stress.ok=False → G3_FROZEN_GEOMETRY_CONFLICT
+      (停车线, 禁调封卷几何参数自救); gate_imbalance.ok=False →
+      G3_DECENTER_ORDER_CONFLICT(排程冲突停车线, 报告挂 exc.report
+      含逐墩账+卸架顺序建议)。
   pier_imbalance(snap, H_env_by_hole, lam, pier_dims=None) -> dict
       brief 接口(T7④): 当前事件(snap.event 须 DECENTERING 类)下该孔
       两侧内墩 {pier_id: {H_L,H_R,dH,M_unb,M_res,ratio,e_kernel,verdict,
@@ -120,7 +123,12 @@ CODE_R6_ADJ = "DAG_R6_ADJ_DECENTERING"
 DEFAULT_EXCLUDED_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "out", "print", "excluded_ids.json")
-SWALLOW_THRESHOLD = 0.99   # W1: ≥99% 被 RING 实体吞没 → 双建模占位[工程参数]
+# W1 交接口径(P2 终审 BLK-3 裁决): 0.985 = sequencer.DM_SWALLOW_THRESHOLD
+# 同值(承重模型实际剔除集; 跨文件钉见 test_p2_sequencer)。0.99 只作报告
+# info 对照(SWALLOW_THRESHOLD_INFO), 不再是交接口径 —— 两口径漂移曾致
+# 报告 25 块 vs 承重 29 块差 4 块(吞没率 0.9870-0.9891)。
+SWALLOW_THRESHOLD = 0.985  # W1: ≥98.5% 被 RING 实体吞没 → 双建模占位[工程参数]
+SWALLOW_THRESHOLD_INFO = 0.99   # 旧交接口径, 报告 info 对照(非剔除集)
 
 
 def stone_role(sid):
@@ -745,6 +753,14 @@ class G3_FROZEN_GEOMETRY_CONFLICT(Exception):
     禁调封卷几何参数自救, 阈值不为绿而调(判据先行, 数字后置)。"""
 
 
+class G3_GATE_DAG_CONFLICT(Exception):
+    """P2 停车线(①门, P2 终审 BLK-2): 支撑活跃 DAG 有违例(悬空/无活跃
+    支撑/RING 无架/幻影/R6 跳孔…) —— 与 ③④ 同礼: run_g3 raise, 停报
+    主控, 修正走 sequencer/ledger(补边/修排程), 禁在 narration/报告层
+    掩盖红读数出厂。报告挂 exc.report(gate_dag/W1 节齐, 与 ③④ 停车线
+    同形)。"""
+
+
 _RING_VOL_CACHE = {}       # (孔, family, params 指纹) -> 体积(同 sequencer 缓存口径)
 
 
@@ -800,7 +816,12 @@ def _stone_weight(stone, density=None):
     # type: (Dict[str, Any], Optional[float]) -> float
     """石重=体积×密度。体积分支与 sequencer.stone_weight 同式(RING=族
     网格散度体积 / CORE=params.bbox 直积 / 其余 w×h×d 断面[估计]);
-    density=None 取 STONE_DENSITY(比值对共同密度不变[三红线])。"""
+    density=None 取 STONE_DENSITY(比值对共同密度不变[三红线])。
+    fail-loud(P2 终审 W-6): 无 w/h/d 断面键的石(真账=492 块 IMPOST,
+    族体积 16.59)被要求计重 → raise, 不静默计 0 —— 静默 0 曾使 IMPOST
+    恒 0 重且两实现同式互证不报警; 承重积分集(③环/④R5a)不含 IMPOST,
+    该 raise 即"IMPOST 误入积分集"的哨兵(票3: .superpowers/sdd/
+    p2-carryover-tickets.md)。"""
     if density is None:
         density = STONE_DENSITY
     p = stone.get("params", {}) or {}
@@ -812,8 +833,12 @@ def _stone_weight(stone, density=None):
     elif role == RING_ROLE:
         vol = _ring_volume(stone)
     else:
-        vol = (float(p.get("w", 0.0)) * float(p.get("h", 0.0))
-               * float(p.get("d", 0.0)))
+        if not all(k in p for k in ("w", "h", "d")):
+            raise ValueError(
+                "_stone_weight: 石 %s (role=%s) 无 w/h/d 断面键 —— 不在承重"
+                "积分集(③环/④R5a), 拒绝静默计 0 重(终审 W-6/票3); 如需计重"
+                "先补口径, 禁 0 兜底" % (stone.get("id", "?"), role))
+        vol = (float(p["w"]) * float(p["h"]) * float(p["d"]))
     return vol * density
 
 
@@ -1937,17 +1962,27 @@ def imbalance_gate(events, H_env_by_hole, ledger=None, in_void=None,
 # run_g3(报告串接: gate_dag(①)+gate_stress(③)+gate_imbalance(④, T7))
 # ---------------------------------------------------------------------------
 
-def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
+def run_g3(events, ledger, in_void=None, rbo_ids=None,
            threshold=SWALLOW_THRESHOLD, r5a=None):
-    # type: (List[Dict[str, Any]], Dict[str, Any], Optional[List[Dict[str, Any]]], Optional[Set[str]], Optional[List[str]], float, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
+    # type: (List[Dict[str, Any]], Dict[str, Any], Optional[Set[str]], Optional[List[str]], float, Optional[Dict[str, List[str]]]) -> Dict[str, Any]
     """G3 报告: gate_dag(①)+double_model 清单(W1)+gate_stress(③压力线)
-    +gate_imbalance(④墩不平衡·最小推力读数, T7)。③ acceptance(结构带=环+
-    胶结锁固带; P2-T6 裁决)不可行 → raise G3_FROZEN_GEOMETRY_CONFLICT
-    停报主控(停车线; 禁调封卷几何参数自救)。④ λ 卸架档+核距双指标逐
-    DECENTERING 事件全墩: H 区间取③ acceptance 可行区间(同报告单源);
-    红 → raise G3_DECENTER_ORDER_CONFLICT(排程冲突, 停报主控, 报告挂
-    exc.report 含逐墩账+卸架顺序建议; 修正走 sequencer, 禁调 λ/裕度/
-    核宽自救)。快照面用 snapshots(...)/Snapshot.copy()。"""
+    +gate_imbalance(④墩不平衡·最小推力读数, T7)。三门任一红 → 停车线
+    raise(报告挂 exc.report, 停报主控):
+      ① gate_dag 红 → raise G3_GATE_DAG_CONFLICT(P2 终审 BLK-2: 红读数
+         不得无停车线出厂; 修正走 sequencer/ledger, 禁改旁白文案自救);
+      ③ acceptance(结构带=环+胶结锁固带; P2-T6 裁决)不可行 → raise
+         G3_FROZEN_GEOMETRY_CONFLICT(停车线; 禁调封卷几何参数自救);
+      ④ λ 卸架档+核距双指标逐 DECENTERING 事件全墩: H 区间取③ acceptance
+         可行区间(同报告单源); 红 → raise G3_DECENTER_ORDER_CONFLICT
+         (排程冲突, 报告挂 exc.report 含逐墩账+卸架顺序建议; 修正走
+         sequencer, 禁调 λ/裕度/核宽自救)。
+    W1 清单口径(BLK-3): threshold 缺省 SWALLOW_THRESHOLD=0.985(=sequencer
+    DM_SWALLOW_THRESHOLD 同值钉); 报告另记 SWALLOW_THRESHOLD_INFO=0.99
+    旧口径 info 对照。占位石不判红(单自持边 Σ=1.0 合规), 清单仅供 P3
+    视觉隐藏。快照面用 snapshots(...)/Snapshot.copy()。
+    [接口位→票4] ①吃券架几何的参数位已删(原 centerings 形参零引用,
+    终审面7 残留1); 券架支承判据与注册表消费细则见
+    .superpowers/sdd/p2-carryover-tickets.md 票1/票4。"""
     viols, stats = check_dag_all(events, ledger, in_void=in_void)
     counts = {}  # type: Dict[str, int]
     for v in viols:
@@ -1957,6 +1992,15 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
         rbo_ids = _load_rbo_ids()
     if rbo_ids:
         scan = double_model_scan(ledger, rbo_ids=rbo_ids, threshold=threshold)
+        # BLK-3 info 对照: 同一 ratio_by_id 单源, 旧 0.99 口径只报告不剔除
+        n_info = sum(1 for r in scan["ratio_by_id"].values()
+                     if r >= SWALLOW_THRESHOLD_INFO)
+        scan["info_099"] = {
+            "threshold": SWALLOW_THRESHOLD_INFO,
+            "n_placeholders": n_info,
+            "note": ("旧交接口径对照(非剔除集); 主口径=%.3f 与 sequencer."
+                     "DM_SWALLOW_THRESHOLD 同值钉(BLK-3)" % threshold),
+        }
     else:
         scan = {"threshold": float(threshold), "n_rbo": 0,
                 "ratio_by_id": {}, "placeholders": [], "missing_ids": [],
@@ -1980,7 +2024,8 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
         "double_model_placeholders": scan["placeholders"],
         "double_model_scan": scan,
         "w1_note": ("ring_band_overlap 占位石单自持边 Σ=1.0 合规, gate_dag "
-                    "不判红; placeholders 仅供 P3 视觉隐藏(W1 交接)"),
+                    "不判红; placeholders 仅供 P3 视觉隐藏(W1 交接; 口径 "
+                    "0.985=sequencer DM_SWALLOW_THRESHOLD 同值)"),
     }
     report["gate_stress"] = stress_gate(ledger, r5a=r5a)
     if not report["gate_stress"]["ok"]:
@@ -2004,6 +2049,17 @@ def run_g3(events, ledger, centerings=None, in_void=None, rbo_ids=None,
             + (" ...共 %d 条" % len(report["gate_imbalance"]["violations"])
                if len(report["gate_imbalance"]["violations"]) > 6 else ""))
         exc.report = report          # 停报主控: 三节齐 + 逐墩账 + 顺序建议
+        raise exc
+    # [P2 终审 BLK-2] ①红停车线: raise 点在三节齐后 —— 报告挂 exc.report
+    # 含全部已算节(①③④+W1), narration/主控从红账派生读数不缺节;
+    # ③④ 红在各自算毕即 raise(上游 ①红不改写 ③④ 的既有停车线语义)。
+    if not report["gate_dag"]["ok"]:
+        exc = G3_GATE_DAG_CONFLICT(
+            "G3①支撑活跃 DAG 违例(交付闸停车线, 停报主控; 修正走 "
+            "sequencer/ledger 补支撑边或修排程, 禁改旁白/报告文案自救): "
+            + "; ".join("%s×%d" % (c, n) for c, n in sorted(counts.items()))
+            + " | 首违例: " + (viols[0] if viols else ""))
+        exc.report = report          # 停报主控: 三节齐的完整报告
         raise exc
     return report
 
@@ -2037,25 +2093,60 @@ def canonical_digest(report):
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
-def main():
-    # type: () -> int
+def _git_head(here):
+    # type: (str) -> str
+    """仓库 HEAD(40 位); 取不到记 unknown(报告 generation 元数据)。"""
     import subprocess
-    here = os.path.dirname(os.path.abspath(__file__))
-    led = L.load_ledger(os.path.join(here, "out", "ledger_sequenced.json"))
-    with open(DEFAULT_SEQ_PATH, encoding="utf-8") as f:
-        seqdoc = json.load(f)
-    # rbo_ids=None → W1 双建模全桶扫描(ring_band_overlap 桶单源);
-    # 三门任一红 → 停车线异常原样抛出(停报主控), 本 CLI 不接判据。
-    report = run_g3(seqdoc["events"], led)
     try:
         head = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=here, capture_output=True,
             text=True, timeout=30).stdout.strip()
     except Exception:
         head = ""
+    return head if len(head) == 40 else "unknown"
+
+
+def main():
+    # type: () -> int
+    here = os.path.dirname(os.path.abspath(__file__))
+    led = L.load_ledger(os.path.join(here, "out", "ledger_sequenced.json"))
+    with open(DEFAULT_SEQ_PATH, encoding="utf-8") as f:
+        seqdoc = json.load(f)
+    # rbo_ids=None → W1 双建模全桶扫描(ring_band_overlap 桶单源);
+    # 三门任一红 → 停车线异常(停报主控), 本 CLI 不接判据: 红报告仍落盘
+    # (取证件, 门读数如实为红) + 返回码 1 —— 下游 narration/beats 从红
+    # 报告派生读数, 不许"红账+绿文案"自相矛盾工件出厂(P2 终审 BLK-2)。
+    try:
+        report = run_g3(seqdoc["events"], led)
+    except (G3_GATE_DAG_CONFLICT, G3_FROZEN_GEOMETRY_CONFLICT,
+            G3_DECENTER_ORDER_CONFLICT) as exc:
+        report = getattr(exc, "report", None)
+        head = _git_head(here)
+        if report is not None:
+            report["meta"]["generation"] = {
+                "command": "python3 3d/g3_check.py",
+                "git_head": head,
+                "git_head_note": ("生成时代码状态 HEAD; 本工件 untracked, 由本"
+                                  "命令重出, 复现账见 3d/refs/artifact_sha256.txt"),
+                "content_sha256_excl_timing": canonical_digest(report),
+                "digest_note": ("elapsed_s 计时字段字节级不稳定, 完整性以本摘要为锚"
+                                "(除 elapsed_s 与 meta.generation 外逐字段)"),
+            }
+            out = os.path.join(here, "out", "g3_report.json")
+            with open(out, "w", encoding="utf-8") as f:
+                json.dump(report, f, ensure_ascii=False, indent=1,
+                          sort_keys=True)
+            reds = [k for k in ("gate_dag", "gate_stress", "gate_imbalance")
+                    if k in report and not report[k].get("ok")]
+            print("STOP G3_GATE_RED %s -> %s (rc=1 停报主控, 交付链拒绝)"
+                  % (",".join(reds) or exc.__class__.__name__, out))
+        else:
+            print("STOP %s (rc=1 停报主控; 异常未携报告)" % exc)
+        return 1
+    head = _git_head(here)
     report["meta"]["generation"] = {
         "command": "python3 3d/g3_check.py",
-        "git_head": head if len(head) == 40 else "unknown",
+        "git_head": head,
         "git_head_note": ("生成时代码状态 HEAD; 本工件 untracked, 由本命令"
                           "重出, 复现账见 3d/refs/artifact_sha256.txt"),
         "content_sha256_excl_timing": canonical_digest(report),

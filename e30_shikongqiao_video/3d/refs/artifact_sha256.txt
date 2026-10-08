@@ -47,5 +47,18 @@ fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/e
 #   2d. python3 3d/narration.py (读 sequence.json + g3_report.json 计数
 #       字段, 纯函数可字节复现; narration_lint 零红才落盘)
 #         → 3d/out/narration_beats.md
-e7087ffddf4c864ab281ddb92b81e76298830287d2d35ac34dbad3381833bd06  3d/out/event_ledger.json
-565f488498786701b1f20cb060d9ea62957cd1466717584b7acea299587ac0b1  3d/out/narration_beats.md
+# [P2FinalFix 重锚·被取代记录] e7087ffddf4c864ab281ddb92b81e76298830287d2d35ac34dbad3381833bd06  3d/out/event_ledger.json
+# [P2FinalFix 重锚·被取代记录] 565f488498786701b1f20cb060d9ea62957cd1466717584b7acea299587ac0b1  3d/out/narration_beats.md
+
+# [P2FinalFix 重锚] 记录时点: 2026-10-08, P2 终审修复轮(P2FinalReview
+# FIX-FIRST 3 blocker 处置)。变更面: event_ledger.json 增 meta.centerings
+# (17 副券架注册表, spec §3/§4 承诺兑现; 石账零触碰 —— 纯度钉
+# test_p2_full::test_event_ledger_artifact_valid_and_idempotent);
+# narration_beats.md 三门摘要行从报告 ok 位派生(BLK-2, 禁硬编码"全 ok")
+# + 口径注记/P3 交接注记两行。sequence.json 与 ledger_sequenced.json
+# **逐位未动**(上行 sha 与 P2-T8 记录一致, 重出实测复核)。
+#   另: sequencer.main 的 _in_void_ids 推导式内逐石重算已括出(性能修复,
+#   行为零变化 —— 单次全跑从数百秒级回到 ~30s 量级, 修复后全链实测
+#   build/check/validate ~7s + dmscan ~25s)。
+a908f60d279bd55daf40ab031c150c6f13fdc3f898d81459009832518ec42452  3d/out/event_ledger.json
+d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narration_beats.md
