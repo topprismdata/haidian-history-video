@@ -148,10 +148,127 @@ def _register_square_ppm(cam, res, hppm, anchor_px, span_pts, span_px, z_probe,
     return res, round(anchor_frac[1] * res[1])
 
 
+def apply_m23_fix():
+    """内存材质修复栈(不保存 blend, 每次 render 前应用; 记录于 params.m23_fix)。
+    依据: 主控三问初判(分色✗/风化✗/石缝△) + 黑楔探针实证(voussoir 法线翻面,
+    probe_fix vs probe_fix_novous vs probe_fix_recalc 三级对照, /tmp 探针留存)。
+    1) 青石三区冷灰蓝压暗(对齐 materials.py qingshi 口径, 告别近白);
+    2) 汉白玉微暖(与青石拉开分色);
+    3) 体积雾密度 x0.15(洗白主因; 特写/全景一致);
+    4) voussoir/coursing 法线重算(黑楔根因);
+    5) 石面插入中尺度逐石微差噪声(乘法 x0.86..1.06, 与既有块编号噪声叠加)。"""
+    fixes = {}
+    COOL = (0.58, 0.66, 0.80)
+    MARB = (1.0, 0.97, 0.92)
+
+    def tint(mat, f):
+        n_changed = 0
+        for n in mat.node_tree.nodes:
+            for inp in n.inputs:
+                if inp.type == 'RGBA' and not inp.is_linked:
+                    c = list(inp.default_value)
+                    inp.default_value = [c[i] * f[i] for i in range(3)] + [c[3]]
+                    n_changed += 1
+            if n.bl_idname == 'ShaderNodeValToRGB':
+                for e in n.color_ramp.elements:
+                    e.color = [e.color[i] * f[i] for i in range(3)] + [e.color[3]]
+                    n_changed += 1
+        return n_changed
+
+    for mn, f in (("stone_body", COOL), ("stone_course", COOL), ("stone_ring", COOL),
+                  ("marble", MARB), ("deck_marble", MARB)):
+        m = bpy.data.materials.get(mn)
+        if m:
+            fixes[mn] = tint(m, f)
+
+    fm = bpy.data.materials.get("fog")
+    if fm:
+        for n in fm.node_tree.nodes:
+            for inp in n.inputs:
+                if inp.type == 'VALUE' and not inp.is_linked and inp.name == 'Density':
+                    inp.default_value *= 0.15
+                    fixes["fog_density"] = round(inp.default_value, 5)
+
+    import bmesh
+    for nm in ("voussoir", "coursing"):
+        o = bpy.data.objects.get(nm)
+        if o:
+            bm = bmesh.new()
+            bm.from_mesh(o.data)
+            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+            bm.to_mesh(o.data)
+            bm.free()
+            fixes["recalc_" + nm] = True
+
+    # 逐石中尺度微差: Noise(scale 1.1, detail 8) -> Ramp(0.42->1.06, 0.62->0.86) -> Mix multiply
+    for mn in ("stone_body", "stone_course", "stone_ring"):
+        m = bpy.data.materials.get(mn)
+        if not m:
+            continue
+        nt = m.node_tree
+        bsdf = next(n for n in nt.nodes if n.bl_idname == 'ShaderNodeBsdfPrincipled')
+        inp = bsdf.inputs['Base Color']
+        if not inp.is_linked:
+            continue
+        src = inp.links[0].from_socket
+        geo = nt.nodes.new('ShaderNodeNewGeometry')
+        noise = nt.nodes.new('ShaderNodeTexNoise')
+        noise.inputs['Scale'].default_value = 1.1
+        noise.inputs['Detail'].default_value = 8.0
+        ramp = nt.nodes.new('ShaderNodeValToRGB')
+        ramp.color_ramp.elements[0].position = 0.42
+        ramp.color_ramp.elements[0].color = (1.06, 1.06, 1.06, 1.0)
+        ramp.color_ramp.elements[1].position = 0.62
+        ramp.color_ramp.elements[1].color = (0.86, 0.86, 0.86, 1.0)
+        mix = nt.nodes.new('ShaderNodeMixRGB')
+        mix.blend_type = 'MULTIPLY'
+        mix.inputs['Fac'].default_value = 1.0
+        nt.links.new(src, mix.inputs['Color1'])
+        nt.links.new(geo.outputs['Position'], noise.inputs['Vector'])
+        nt.links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
+        nt.links.new(ramp.outputs['Color'], mix.inputs['Color2'])
+        nt.links.new(mix.outputs['Color'], inp)
+        fixes["perstone_noise_" + mn] = True
+    return fixes
+
+
+def apply_golden_light():
+    """金光对齐变体(内存, 不保存 blend): 主控指定的 WNW 暖阳光行向 (0.760,-0.307,-0.574)
+    (P1 RM-123108 同源/P3Light 定版), 低角度暖色 Key SUN + 天光压低增暖。
+    albedo 不动(本征冷灰蓝), 暖调全靠灯光——材质判读版与金光对照版同 albedo。
+    拱腹辉光依赖 SUN 穿洞+水面 bounce(Cycles 自然解), 不加塞光。"""
+    changes = {}
+    sun = next((o for o in bpy.data.objects if o.type == 'LIGHT' and o.data.type == 'SUN'), None)
+    d = mathutils.Vector((0.760, -0.307, -0.574)).normalized()
+    if sun:
+        sun.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()  # -Z 对齐行进方向
+        sun.data.energy = 26.0
+        sun.data.color = (1.0, 0.50, 0.20)          # 低角深金橙(探针 G4 定版)
+        sun.data.angle = math.radians(0.8)          # 低角锐影
+        changes["sun"] = dict(dir=[round(v, 3) for v in d], energy=26.0,
+                              color=[1.0, 0.50, 0.20], angle_deg=0.8)
+    sky = next((n for n in sc.world.node_tree.nodes if n.bl_idname == 'ShaderNodeTexSky'), None)
+    if sky:
+        sky.sun_elevation = math.radians(4.0)
+        sky.sun_rotation = math.radians(292.0)      # 原 WNW 口径
+        sky.aerosol_density = 1.2                   # 地平线暖霾
+        changes["sky"] = dict(elev_deg=4.0, rot_deg=292.0, aerosol=1.2)
+    bgw = next((n for n in sc.world.node_tree.nodes if n.bl_idname == 'ShaderNodeBackground'), None)
+    if bgw:
+        bgw.inputs['Strength'].default_value = 0.05
+        changes["world_strength"] = 0.05
+    return changes
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
     group, out = argv[0], argv[1]
-    samples_ov = int(argv[2]) if len(argv) > 2 else None
+    golden = len(argv) > 2 and argv[2] == "golden"
+    samples_ov = None
+    if len(argv) > 2 and argv[2].isdigit():
+        samples_ov = int(argv[2])
+    if len(argv) > 3 and argv[3].isdigit():
+        samples_ov = int(argv[3])
     cfg = GROUPS[group]
     samples = samples_ov or cfg["samples"]
     t0 = time.time()
@@ -262,6 +379,12 @@ def main():
     sc.render.resolution_x = w
     sc.render.resolution_y = h
     params["res"] = [w, h]
+    params["m23_fix"] = apply_m23_fix()
+    if golden:
+        params["lighting_variant"] = "golden"
+        params["golden_light"] = apply_golden_light()
+    else:
+        params["lighting_variant"] = "neutral(材质判读版)"
 
     # 材质/灯光现状快照(供 GPT 审定位"材质缺失 vs 光照掩盖")
     mats = {}

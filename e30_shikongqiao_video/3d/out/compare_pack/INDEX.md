@@ -90,6 +90,26 @@ cd 3d && blender -b e30_bridge.blend --python compare_pack_render.py -- <组名>
    不构成对照项, 但北脸/燕翅背面若入镜需补毛石粗糙灰材质。
 7. **e2 裁窗精配**: wire_end 基准展示片含注记线导致模板配准失败, 可人工标 4 点单应性精配。
 
+## 3b. 金光对齐变体(主控追加) 与 水线垂直标定验证
+
+**光照口径**: 金光版=对照主图(`pair_c_quandongB_f175_GOLDEN.jpg` 等 *_GOLDEN*), 中性版=材质判读版
+(`pair_*_f*.jpg`)。albedo 两版相同(本征冷灰蓝不动), 暖调全靠灯光: WNW 暖阳光行向
+(0.760,-0.307,-0.574)(P1 RM-123108 同源/P3Light 定版), 探针扫参定版 sun E=26 色(1.0,0.50,0.20)
+angle 0.8° / 天光 elev 4° aerosol 1.2 / world strength 0.05(G4)。拱腹辉光依赖 SUN 穿洞+水面 bounce。
+
+**预测水线量化(f175 组, `overlay_f175_lines.jpg` + `_summary.json`)**: 模型 z0=水面(M19 冬照基准),
+z=0 交线经位姿画全桥——墩列竖向边检测: 可测 2/16 墩(pier4 -49px, pier5 -56px, 预测线系统性低于
+照片水线), 其余 nd_low_contrast/nd_out_of_frame(金光过曝区不可采样, 模型线为纯预测——主控第3条两
+口径的后者)。系统性偏差方向一致 = 冠线-only 位姿的垂直退化(同 b/c/d 组声明), 非水面基准错;
+待改进 #4 位姿重解后复测。
+
+**逐石像素层(已建, 部分受阻)**: `3d/compare_pack_perstone.py`( stones_pX 描摹多边形=照片真值,
+渲染侧 Position AOV 逐像素反查 stone_id+被摄面法线带过滤, IoU≥0.7 或偏移≤3×位姿RMS=PASS,
+阈值入档) + `3d/compare_pack_aov.py`(Position/Normal 双 EXR)。受阻: Blender 5.2 移除
+`scene.node_tree`(合成器 API 变更), File Output 出 AOV 需迁移到 `scene.compositing_node_group`;
+脚本待迁移后即可对 A05/A06(a5/a6) 跑全表, A07-A09 需先重跑 `m20_pose_final.py` 生成
+pose_p2017.json(依赖 model_ctrl.json 已补齐, 已获主控批准)。
+
 ## 4. 挂载位
 
 - `gpt_review.md` —— 主控提交 ChatGPT 视觉审后的批评回灌区（判据: 材质存在性与质感/石缝/分色/风化/几何对齐）。
