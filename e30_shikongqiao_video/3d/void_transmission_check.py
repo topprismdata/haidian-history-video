@@ -46,16 +46,20 @@ def main():
     def px(x, z):
         return (int(round(cx + x * scale)), int(round(cy + (CAMZ - z) * scale)))
 
-    # 墩身基准: 孔 8/9 之间 x=±10.44 墩列(宽 2.17, 取中 ±0.6), z 带 3.0-4.5
+    # 墙面基准: 墩中心=PIER_X 值本身(±5.335/±15.552/…, 墩宽 2.17 取 ±0.5),
+    # z 带 2.5-5.0 = 实体墩身(孔间)。注意 (PIER_X[k]+PIER_X[k+1])/2 是孔心!
     refs = []
-    for x0 in (10.44, -10.44):
-        for z in np.arange(WALL_BAND_Z[0], WALL_BAND_Z[1] + 1e-9, 0.25):
+    for k in range(1, F.N_SPAN):
+        x0 = GM.PIER_X[k]
+        if abs(x0) > 70:
+            continue
+        for z in np.arange(2.5, 5.0 + 1e-9, 0.25):
             for dx in (-0.5, 0.0, 0.5):
                 u, v = px(x0 + dx, z)
                 if 0 <= v < H_img and 0 <= u < W_img:
                     refs.append(im[v, u])
     wall = float(np.median(refs))
-    thr = wall - 30.0            # 暗判: 低于墙面 30 灰阶(洞内无直光)
+    thr = wall * 0.4              # 暗判: 低于墙面 40%(洞内=暗/透背景)
     out = {"png": os.path.basename(PNG), "wall_median": round(wall, 1),
            "dark_thr": round(thr, 1), "arches": {}}
     n_red = 0

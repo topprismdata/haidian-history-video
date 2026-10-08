@@ -680,7 +680,35 @@ def build():
     _hwf = (G.DECK_DOWN_W + G.DECK_UP_W) / 4.0   # 墙面平均半宽
     _vb, _cb, _mstats = MAS.build_masonry(_hwf)
     bm_to_obj(_vb, "voussoir", m_ring)
-    bm_to_obj(_cb, "coursing", m_course)
+    _co = bm_to_obj(_cb, "coursing", m_course)
+    # ── [拱线族返工清债 2026-10-08] coursing 弧区布尔扣除(主控终修令①):
+    # M18 贴面流程的 intrados 裁切线吃旧曲线(b>a 孔洞内残留贴面砖, 挡光
+    # 86-100%, 归因表 attr_a9_514dd33.json) —— 弧区直接与新洞体求差,
+    # 任何残留洞内贴面一律切除; 段包/P4 侧已走排除单源(1047/217)不受影响。
+    _cut3 = bm_to_obj(G.build_void_bm(), "void_cutter3", m_course)
+    _m3 = _co.modifiers.new("vc_arc", 'BOOLEAN')
+    _m3.operation = 'DIFFERENCE'
+    _m3.solver = 'EXACT'
+    _m3.object = _cut3
+    bpy.context.view_layer.objects.active = _co
+    bpy.ops.object.modifier_apply(modifier=_m3.name)
+    bpy.data.objects.remove(_cut3, do_unlink=True)
+    # 结果断言: 洞心中高射线不得命中 coursing(与 bridge_body 同判)
+    bpy.context.view_layer.update()
+    _dgc = bpy.context.evaluated_depsgraph_get()
+    _coursing_ev = _co.evaluated_get(_dgc)
+    _mwic = _coursing_ev.matrix_world.inverted()
+    _dc = (_mwic.to_3x3() @ Vector((0.0, -1.0, 0.0))).normalized()
+    for _i in range(G.N_SPAN):
+        _xc = (G.PIER_X[_i] + G.PIER_X[_i + 1]) / 2.0
+        _spz = G.arch_springer_z(_i)
+        _z = _spz + G.arch_rise(_i) * 0.5
+        _o = _mwic @ Vector((_xc, 12.0, _z))
+        _hit, _loc, _n, _idx = _coursing_ev.ray_cast(_o, _dc)
+        if _hit:
+            raise RuntimeError(
+                "COURSING_ARC_SILENT_FAIL: 孔%d 洞心中高射线命中 coursing"
+                "(贴面砖残留洞内) —— 禁止静默出厂" % (_i + 1))
     # pier_plinth 水线石带: 拱改高后起拱线近水面, 石带会伸进洞口成横条 -> void 布尔裁净
     _cut2 = bm_to_obj(G.build_void_bm(), "void_cutter2", m_ring)
     _pp = bpy.data.objects["pier_plinth"]
