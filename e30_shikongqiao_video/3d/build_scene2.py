@@ -1108,24 +1108,29 @@ _ARC_POLY_CACHE = {}     # type: Dict[Tuple[int, int], List[Tuple[float, float]]
 
 def _void_piece_polys(band, key):
     # type: (Dict[str, float], int) -> List[List[Tuple[float, float]]]
-    """void 净空凸分解: [拱下矩形部, 左弧段, 右弧段](CCW, 有限多边形)。
+    """void 净空凸分解: [拱下矩形部, 左弧段, 右弧段](有限多边形; 方向自洽)。
     [拱线族返工 2026-10-08] 弧段走 facts 单心圆弧: 每段 = 起拱弦半边 + 半弧
-    (facts.arch_half_arc 角度离散, 与 build_void_bm 切割折线同一顶点集);
+    (facts.arch_arc_pts 角度离散, 与 build_void_bm 切割折线同一顶点集);
     b>a 孔(8/9/10) horseshoe 外鼓段(≤2.7cm)随半弧自然含入, 弧段仍是凸多边形
     (圆盘∩z≥起拱线∩半平面的交)。key 由调用方按 arch 序号缓存。"""
     xc, a, spz = band["xc"], band["a"], band["springer"]
     b = band["b"]
     box = [(xc - a, VOID_Z_MIN), (xc + a, VOID_Z_MIN),
            (xc + a, spz), (xc - a, spz)]
+    # 弧顶点集 = build_void_bm 切割折线同一离散(facts.arch_arc_pts 单源,
+    # b>a 孔含起拱点->赤道单弦约定); 以冠点(最高点)分左右两个凸片。
+    arc = _F.arch_arc_pts(xc, spz, a, b, ARC_N_SEG)
+    ci = max(range(len(arc)), key=lambda k: arc[k][1])
+    right = arc[:ci + 1]                      # 右起拱点 -> 冠
     halves = []
     for sign in (-1, 1):
-        # 半弧: 右起拱点->冠, 角度离散; 与切割折线同一采样(单源)。
-        # 右半片 CCW: 底弦右行 -> 弧上行 -> 中线闭合; 左半片 = x 镜像 + 逆序(CCW 保持)。
-        arc = _F.arch_half_arc(xc, spz, a, b, 1, ARC_N_SEG)
-        poly = [(xc, spz), (xc + a, spz)] + arc + [(xc, spz + b)]
-        if sign < 0:
-            poly = [((2.0 * xc - px), pz) for px, pz in poly]
-            poly.reverse()
+        if sign > 0:
+            half = right
+        else:
+            half = [((2.0 * xc - px), pz) for px, pz in right]
+        # 环向: 底弦 -> 弧(起拱->冠, 首尾顶点由底弦/冠点显式给出) -> 中线闭合。
+        # 右片 CCW; 左片为镜像(CW) —— _sh_clip 对 clip 负面积自动反转, 方向自洽。
+        poly = [(xc, spz), (xc + sign * a, spz)] + half[1:-1] + [(xc, spz + b)]
         halves.append(poly)
     if key not in _ARC_POLY_CACHE:
         _ARC_POLY_CACHE[key] = [box] + halves

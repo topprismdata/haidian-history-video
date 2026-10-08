@@ -173,12 +173,24 @@ def arch_signed_r(x, z, xc, springer, a, b):
 
 
 def arch_arc_pts(xc, springer, a, b, n):
-    """intrados 弧按角度参数取 2n+1 点, 从右起拱点经冠到左起拱点(x 单调递减),
-    含 horseshoe 外鼓段(b>a 时跨出 ±a 到 ±arch_x_extent)。
-    build_void_bm 切割折线单源: 与 build_scene2 弧段凸片共用同一顶点集。"""
-    right = arch_half_arc(xc, springer, a, b, 1, n)
-    left = arch_half_arc(xc, springer, a, b, -1, n)
-    return right + left[1:]          # 冠点不重复
+    """intrados 弧按角度参数取点, 从右起拱点经冠到左起拱点(x 单调递减)。
+    build_void_bm 切割折线单源: 与 build_scene2 弧段凸片共用同一顶点集。
+    b>a 孔的起拱 horseshoe 外鼓带(≤2.7cm)不用微扇形采样: 起拱点->外鼓端点
+    (圆心高度 "赤道", (xc±R, spz+d))单一弦元代替 —— 弦弓高 <0.2mm, 消除
+    布尔 EXACT 求解器的 7mm 级平行窄壁简并(实测会翻转邻接面法线, 见
+    body_changelog 拱线族返工节)。"""
+    d, R = arch_circle(a, b)
+    if b <= a:
+        right = arch_half_arc(xc, springer, a, b, 1, n)
+        left = arch_half_arc(xc, springer, a, b, -1, n)
+        return right + left[1:]          # 冠点不重复
+    # b>a: 右端 = 起拱点 -> 赤道端点(单弦), 再 θ∈(0, π/2] 角度采样上冠
+    right = [(xc + a, springer), (xc + R, springer + d)]
+    for k in range(1, n + 1):
+        t = (_math.pi / 2.0) * k / n
+        right.append((xc + R * _math.cos(t), springer + d + R * _math.sin(t)))
+    left = [((2.0 * xc - px), pz) for px, pz in reversed(right[1:-1])]
+    return right + left + [(xc - a, springer)]
 
 
 def arch_half_arc(xc, springer, a, b, sign, n):

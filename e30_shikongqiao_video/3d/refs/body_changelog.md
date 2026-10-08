@@ -9,6 +9,26 @@
 
 > 规则（facts.py docstring / spec §7）: M2.5 用户批准后 facts 本体节锁死；此后改锁死条目必须先在本文件登记，再改，再重跑本体判据（L1+L2 正检+负控，判据全绿才算完成）。
 
+## 2026-10-08 ArchRoundFix 拱线族返工: 两圆心尖拱(ogee) → 单心圆弧拱(全 17 孔) —— 用户实锤几何级缺陷
+
+**返工依据(B 线+照片宽高比, 三源互证)**: ① `construction_history.md` B 线: "本桥券洞=圆弧拱, 中孔近半圆、向两端渐浅(M19/M20 实测 RISE_E 0.32); '尖拱推力优势'论述不适用" —— 研究档写对了, 几何没回灌; ② `gpt_brief.md`: 半圆券 f/l=0.50, 正视照片券洞宽高比 1.00, 斜拍压缩曾致误判尖拱; ③ `ref_elevation.jpg` 正视照 17 孔全圆弧无尖拱; `bridge_geom.py` 旧头注: 实测连通域宽高比 0.76~0.98 集中于 1。缺陷引入点=M13(两圆心尖拱), M15 以矢跨比冻结(比值对但形状族错)。
+
+**改动文件**: `facts.py`(拱线纯数学单源重写+死代码删除)、`bridge_geom2.py`(别名清理+build_void_bm 弧离散)、`build_scene2.py`(point_in_void/_void_piece_polys/_kept_pieces 与切割折线逐顶点一致)、`qa_bridge.py`(MET_ARCH_FAMILY 圆弧族不变量+新闸门 MET_ARCH_SHAPE)、`masonry.py`/`qa_l2.py`(注释口径); 新增 `tests/test_arch_shape_gate.py`(pinned ogee 负控)、`3d/m20_crownline_check.py`(冬照冠线逐孔校验)。`arch_z/arch_dzdx/arch_signed_r` **签名不变**, 全部消费方(void/券石/qa_l2/centering/sequencer/g3/m20 链)自动再同步。
+
+**数学**: 单心圆过三锚点(±a, spz)/(0, spz+b)唯一: 圆心高偏移 d=(b²−a²)/2b, R=(a²+b²)/2b。b<a 即 M15 已修的单心平拱分支(本返工推广为全孔唯一定义); b=a 恰半圆(孔7/12); b>a(孔8/9/10, f/l 0.53-0.56)圆弧必带起拱 horseshoe 微外鼓(≤2.7cm): void 布尔/切割按 `arch_x_extent` 含外鼓段, 起拱线可见位置不漂(冬照 1.4±0.3 保持)。**rise_ratio 剖面零改动**(M19/M20 实测: 错的是族不是数), 冠/起拱/跨/矢锚点逐位不变 —— m20_ctrl/位姿链/masonry 块数全部零改动自证。
+
+**死代码删除**: `arch_e`/`_arc_pair` 双心路径、`CROWN_BLUNT_K`/`CROWN_BLUNT_CAP`+`blunt_s` 冠钝化(无 cusp 即无钝化需求); SOURCES 同步删除两行; `MET_ARCH_FAMILY` 冠高期望还原为精确 spz+矢(钝化 s·ln2 扣减随钝化删除)。
+
+**新闸门 MET_ARCH_SHAPE(负控制纪律: 红先绿后)**: 逐孔拱腹 41 点 Kasa 单圆拟合, rms/r < CIRCLE_FIT_RTOL(0.01, G2 已登记值首次接线)。**红**(闸门已入、facts 仍 ogee 的 commit 实跑): 孔9 `rms/r=0.01443 >= 0.010` fail, 孔8/9/10 另有 FAMILY 冠锚离圆 r≈0.055(cusp 13°+冠钝化下沉), 共 7 fail; b<a 14 孔残差 ~0 自证缺陷边界。**绿**(族返工后): 全 17 孔 rms/r ≤ 1.4e-12, check_body 零 fail。数字全表见 `refs/arch_shape_redgreen.txt`; 永久负控钉=pinned ogee 公式逐式照抄(测试断言 0.01443 漂移即红)。
+
+**冬照冠线逐孔校验(m20C_pose_winter, a12-a16)**: 逐孔 med/MAD 逐位一致(全局 med −0.68px ≤ 1px 门) —— 冠 z 由 deck−spandrel 决定、rise 零改动, 端孔(b<a)返工前后曲线恒等, 判"自然过"。p2017 中央两孔特写(b>a 缺陷孔所在): 7 参重投影 max 12.36→10.59px(圆弧族拟合更优, 与 B 线证据同向)。
+
+**重数与重冻结(全链重锚)**: masonry 重数 `voussoir_per_arch=[7,9,9,11,11,13,13,15,17,15,13,13,11,11,9,9,7]`=目标表精确镜像, total 193/coursing 2928(endzone 52/pier 876/bay 1508/impost 492)与返工前逐位一致; 券石账 G2_VERDICT PASS stones=5935 ring=193 impost=492。core_hash 重采(2026-10-08, bridge_body nv 2648→4368 系切割折线加密 40→80 点+horseshoe 外鼓面): bridge_body `ae6347e3…`/voussoir `920a8075…`/coursing `a2a70329…`(详见 freeze_manifest §7 新基线表); qa_l2 正检 QA_L2_OK(fail/warn/skip 0/0/0, sampled 1120)、负控 NEG_CAUGHT 10/10; ledger/sequence/event_ledger/narration 全链重出零错(G3 17/17)。小样渲 `ortho_side.png`(正视立面)/`ortho_arch.png`(中央孔特写)/`ortho_front.png`(轴视), 与返工前同机位同 seed, 拱洞带像素差 1.45%。
+
+**已知账(如实)**: ①build_scene2 `_kept_pieces` 洞外竖条整条保留支不裁 horseshoe 外鼓带(b>a 孔起拱侧保留片最厚 2.7cm, 渲染亚像素; masonry 砌石链无此账 —— 其底界贴 arch_z 解析曲线已含外鼓); ②b>a 孔券石环端块内下角距真外鼓弧 ≤2.7cm(环站点 x 域 [xc−a, xc+a]), 同为亚像素级。两账随"M20b 端孔高分辨裁决"或专题清算。
+
+---
+
 ## 2026-10-05 WaterFix 水面/岸坡观感修复（建议 1–5）—— 纯材质参数/节点，零几何
 
 **改动文件**: `materials.py`（仅 `water_material`/`earth_material` 内部，**函数签名零改动**，stone/marble/qingshi/fog 未动）、新增 `3d/ab_water_split.py` + `3d/ab_water/measure_ab.py`（A/B 证据）。本体 `bridge_body`/`voussoir`/`impost` 顶点未动（freeze_hash 三对象 sha_sorted 与冻结值逐位一致：861d8836… / b4421770… / 5154f49e…，nv 4409/1656/136 不变）。

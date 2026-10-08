@@ -65,14 +65,15 @@ build platform: Darwin (arm64)  build type: Release
 | MESH_TOL | 0.005 m | assumptions.py | 券石入净空 epsilon（网格数值容差，G1 分家设定） |
 | CIRCLE_FIT_RTOL | 0.01 | assumptions.py | G2: f/l 只是必要条件，圆拟合残差/半径 ≤1% 证明"是圆" |
 | MET_CLOSURE | 0.5 m | facts.py `CLOSURE_TOL`（终审 I12 落地，qa_bridge 消费） | T2b 闭合口径（N_SPAN−1 个内墩）；阈值承计划稿 |
-| MET_ARCH_RATIO | 0.56±0.02 | facts.py `ARCH_RATIO_TARGET`/`ARCH_RATIO_TOL`（终审 I12 落地，qa_bridge 消费；M14 起比对 facts.rise_ratio 剖面中心） | 券形设计意图尖拱 0.56（六审标定，0.61 哥特味收 0.56）；M19 冬照隐含 0.53±0.08 覆盖 0.56 故冻结 |
+| MET_ARCH_RATIO | 0.56±0.02 | facts.py `ARCH_RATIO_TARGET`/`ARCH_RATIO_TOL`（终审 I12 落地，qa_bridge 消费；M14 起比对 facts.rise_ratio 剖面中心） | 圆弧族中央孔 f/l 设计意图 0.56（六审标定；[拱线族返工 2026-10-08] 语义随族更新, 尖拱语境作废）；M19 冬照隐含 0.53±0.08 覆盖 0.56 故冻结 |
+| MET_ARCH_SHAPE | rms/r < 0.01 | assumptions.py `CIRCLE_FIT_RTOL`（qa_bridge 逐孔 Kasa 单圆拟合, 拱腹 41 点; [拱线族返工 2026-10-08] 新闸门） | G2 阈值首次接线; 负控制红先绿后（ogee 孔9 实测 0.01443 红 → 圆弧全 17 孔 ≤1.4e-12 绿, 见 refs/arch_shape_redgreen.txt; 永久负控钉 tests/test_arch_shape_gate.py） |
 | WALL_NORMAL θ | 6° | qa_l2.py | 离散弦面理论半扇形角 π/NSEG_ARC/2≈2.25°，G2 取 6° |
 | WALL_NORMAL 采样带 | \|y\|<7.0；z>SPRINGER+0.02；\|n_y\|<0.5；\|r−a\|≤0.15 | qa_l2.py | T5 实测修订：剔除 26 个洞缘倾斜 n-gon（§8-1）；负控翻"采样带内前 10 面"（R3） |
 | IMPOST_ANCHOR | 0.5 m（xz 平面距离） | qa_l2.py | T5 修订：起拱线石是 x×z 纵剖面陈述，3D 距离版假红 34/34 |
 | VOUSSOIR_IN_VOID | r < a − MESH_TOL | qa_l2.py | 2026-10-04 修订：券石内缘=拱腹，须加径向条件否则全孔误杀 |
 | L3/T7 阈值 | OVERLAY_IOU_MIN=0.76；VOID_XC_TOL=0.02 | register_overlay.py | 扰动标定（E2 可接受/不可接受分布中点，Brumana 精度-目标挂钩）；复现 `refs/calibrate_iou.py` |
 
-实现参数（非文物事实，不冻结）: NSEG_ARC=40, NSEG_X=240, SEG=40, VOID_CUT_MARGIN=0.05（券洞挖除体布尔施工余量，"黑横杠"bug 标定值；2026-10-05 终审 I13/I9/I12 外置命名）；建模假定: BODY_BOTTOM=−2.20。~~BRIDGE_ABUT_TARGET=2.00~~ 已随 C6 裁决删除（桥台唯一生效值 = facts.BRIDGE_ABUT=1.35，150.0 精确闭合唯一解）。
+实现参数（非文物事实，不冻结）: NSEG_ARC=40（[拱线族返工 2026-10-08] 语义=每半弧角度段数, 切割折线全弧 2×40 点; b>a 孔起拱外鼓带以"起拱点→赤道端点"单弦代替, 消布尔窄壁简并）, NSEG_X=240, SEG=40, VOID_CUT_MARGIN=0.05（券洞挖除体布尔施工余量，"黑横杠"bug 标定值；2026-10-05 终审 I13/I9/I12 外置命名）；建模假定: BODY_BOTTOM=−2.20。~~BRIDGE_ABUT_TARGET=2.00~~ 已随 C6 裁决删除（桥台唯一生效值 = facts.BRIDGE_ABUT=1.35，150.0 精确闭合唯一解）。
 
 ## 6. 渲染图哈希 + seed
 
@@ -122,7 +123,7 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | pytest | 37 passed（候选时点） | 47 passed（含 T8 冻结包 10 条） | 绿（测试只增未红） |
 | （信息项）`e30_bridge.blend` 文件 SHA | `10b750218354822e…` | `a3dcfcaa956b077b…` | 非判据（.blend 内含渲染时刻等元数据，字节级不同属预期；真相源=脚本+数据） |
 
-**〔现行基线〕2026-10-06 M18 砌筑 + M19 冬照重标定后重采**（同 build d13f752e3b9c；重建命令 `blender -b --python build_scene2.py` 零错 SAVED v2，endzone=52 pier=878 bay=1312 impost=204 grand=2639；随后 `blender -b e30_bridge.blend --python qa_l2.py` → QA_L2_OK、`--negative` → NEG_CAUGHT 10/10、`_check_abutment.py` → ALL PASS C1-C11、`pytest tests/bridge3d -q` → 312 passed、`e30_shikongqiao_video/tests -q` → 64 passed）:
+**〔存档, 被 2026-10-08 ArchRoundFix 重采取代〕2026-10-06 M18 砌筑 + M19 冬照重标定后重采**（同 build d13f752e3b9c；重建命令 `blender -b --python build_scene2.py` 零错 SAVED v2，endzone=52 pier=878 bay=1312 impost=204 grand=2639；随后 `blender -b e30_bridge.blend --python qa_l2.py` → QA_L2_OK、`--negative` → NEG_CAUGHT 10/10、`_check_abutment.py` → ALL PASS C1-C11、`pytest tests/bridge3d -q` → 312 passed、`e30_shikongqiao_video/tests -q` → 64 passed）:
 
 | 项 | 值（2026-10-06 重采） |
 |---|---|
@@ -138,6 +139,24 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | `bridge_body` 世界 bbox | x[−34.864,34.864] y[−72.273,72.273] z[−2.2,**7.3**]（M19 DECK_Z_TOP 同步） |
 | L1 fail 数 | 0（qa_bridge M19 判据重整后基线绿） |
 | L2 正检 / 负控 | ok=true, warn=0 / 翻 10 面 → NEG_CAUGHT 10/10 |
+
+**〔现行基线〕2026-10-08 ArchRoundFix 拱线族返工（ogee→单心圆弧）后重采**（取代上行 M18/M19 表; 同 build d13f752e3b9c; 重建命令 `blender -b --python build_scene2.py` 零错 SAVED v2, M18_COURSING endzone=52 pier=876 bay=1508 impost=492 grand=2928 与返工前逐位一致; masonry_stats voussoir_total=193=目标表镜像; 随后 `qa_l2.py` → QA_L2_OK(fail/warn/skip 0/0/0, sampled 1120)、`--negative` → NEG_CAUGHT 10/10; ledger/sequence/event_ledger/narration 全链重出零错, G3 17/17; 判据 suite: `pytest tests/bridge3d -q` → 312 passed）。返工依据与红绿证据见 body_changelog「ArchRoundFix」节 + refs/arch_shape_redgreen.txt:
+
+| 项 | 值（2026-10-08 重采） |
+|---|---|
+| `bridge_body` sha_sorted | `ae6347e340973e1311496be3d8e511b4efc76be58f595ed27d7c62a886856a53` |
+| `bridge_body` sha_order | `9032dbf69c19dd9487e390d75f09bb8ba39c6cbc062e48baebf99f13f87c7e56` |
+| `voussoir` sha_sorted | `920a80757ffd6358913dbc0afec16fbbd291c16e78ce73bf1123a11df5d9d702` |
+| `voussoir` sha_order | `5ded50aac3f494316d4d3cd3de64464ce3124dda5794efa2f014ceb9e8fe0085` |
+| `coursing` sha_sorted | `a2a703290b35f74d8e552310b7e604e7f62427ac03bad19bbdebeaf186e715ce` |
+| `coursing` sha_order | `7a6e4bef86ccae301ca249f75d81d59da0c92bed1f23fad3b59b88ba2b3724ab` |
+| `bridge_body` 顶点/面数 | 4368 / 2348（vs 返工前 2648/1520: 切割折线 40→2×40 点加密+horseshoe 外鼓面, 非缺陷） |
+| `voussoir` 顶点/面数 | 2316 / 1544（块数/拓扑不变, 位置沿新弧重排 → sha 变） |
+| `coursing` 顶点/面数 | 66964 / 39466（计数不变, 底界沿新弧 → sha 变） |
+| `bridge_body` 世界 bbox | x[−34.864,34.864] y[−72.273,72.273] z[−2.2,7.3]（不变） |
+| L1 fail 数 | 0（check_body 全绿, 含新 MET_ARCH_SHAPE） |
+| L2 正检 / 负控 | ok=true(fail/warn/skip 0/0/0, sampled 1120) / 翻 10 面 → NEG_CAUGHT 10/10 |
+| MET_ARCH_SHAPE | 全 17 孔 rms/r ≤1.4e-12 绿（返工前 ogee 孔9 0.01443 红, 见 refs/arch_shape_redgreen.txt） |
 
 **证据分层（主控收尾要求，两类不可混为一谈）**:
 
@@ -202,10 +221,10 @@ M2.5 冻结包机位口径（简报 G3）: ortho side 2200px + hero/arch 1600px/
 | 11 | PIER_MAIN_W_C | 2.90 m | 中央孔墩束宽 |
 | 12 | PIER_FOUND_W_C | 3.20 m | 中央孔墩基础宽 |
 | 13 | BRIDGE_ABUT | 1.35 m | 桥台长（T2b 闭合唯一解，非测绘值） |
-| 14 | CROWN_BLUNT_K | 0.40 | 冠钝化强度 s=K·e（七审P1-1 标定，无文献） |
-| 15 | CROWN_BLUNT_CAP | 0.020 | 钝化带宽封顶 s≤CAP·a（七审"冠顶最后 3-5% 弧长"，无文献） |
+| ~~14~~ | ~~CROWN_BLUNT_K~~ | ~~0.40~~ | **已随拱线族返工删除（2026-10-08）**: 无 cusp 即无钝化需求, 死代码清除（body_changelog ArchRoundFix 节） |
+| ~~15~~ | ~~CROWN_BLUNT_CAP~~ | ~~0.020~~ | 同上删除 |
 | 16 | CLOSURE_TOL | 0.5 m | MET_CLOSURE 闭合容差（判据阈值参数，终审 I12 落地；现脚本判据值承 T2b 计划稿，无文献） |
-| 17 | ARCH_RATIO_TARGET | 0.56 | MET_ARCH_RATIO 券形设计意图 f/l（判据阈值参数，六审标定 0.56；qa_bridge 比对 rise_ratio 剖面中心） |
+| 17 | ARCH_RATIO_TARGET | 0.56 | MET_ARCH_RATIO 圆弧族中央孔 f/l 设计意图（判据阈值参数，六审标定 0.56；[拱线族返工 2026-10-08] 语义随族更新; qa_bridge 比对 rise_ratio 剖面中心） |
 | 18 | ARCH_RATIO_TOL | 0.02 | MET_ARCH_RATIO 容差带宽（判据阈值参数，终审 I12 落地；现脚本判据值，无文献） |
 | 附 | ARCH_RATIO | 0.50 | [图像推导]，非米制来源，同列依赖非测绘证据 |
 
