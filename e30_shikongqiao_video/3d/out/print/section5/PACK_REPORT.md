@@ -8,15 +8,15 @@
 | 项 | 值 |
 |---|---|
 | 段账面石 | 2747 |
-| 打印单元(exported) | 1123 |
-| skipped(带 reason) | 1624 |
-| 守恒 | 2747 = 1123 + 1624 |
-| 批数(220x220 床) | 34 |
-| 总体积(打印件) | 7416.3 cm3 |
-| maoshi 体积/件数 | 3769.4 cm3 / 484 |
-| qingshi 体积/件数 | 3646.9 cm3 / 639 |
-| fit 档分布 | LOOSE 10, NORMAL 501, TIGHT 612 |
-| fit_diagonal 斜置 | 2 件 |
+| 打印单元(exported) | 1047 |
+| skipped(带 reason) | 1700 |
+| 守恒 | 2747 = 1047 + 1700 |
+| 批数(220x220 床) | 31 |
+| 总体积(打印件) | 7104.9 cm3 |
+| maoshi 体积/件数 | 3662.4 cm3 / 446 |
+| qingshi 体积/件数 | 3442.5 cm3 / 601 |
+| fit 档分布 | LOOSE 4, NORMAL 463, TIGHT 580 |
+| fit_diagonal 斜置 | 0 件 |
 | oversize 独占批 | 0 件 |
 
 ## 预估偏差(spec#4 M1 估 ~913)
@@ -24,26 +24,26 @@
 | 口径 | 打印单元 | 段石率 |
 |---|---|---|
 | spec 估算(2747 x 0.332) | 913 | 0.332 |
-| 实测(本包) | 1123 | 0.409 |
-| 偏差 | +210 | +23.0% |
+| 实测(本包) | 1047 | 0.381 |
+| 偏差 | +134 | +14.7% |
 
 ## 分孔
 
 | zone | 账面石 | 打印单元 | 排除 |
 |---|---|---|---|
 | ARCH07 | 512 | 192 | 320 |
-| ARCH08 | 575 | 247 | 328 |
-| ARCH09 | 573 | 245 | 328 |
-| ARCH10 | 575 | 247 | 328 |
+| ARCH08 | 575 | 223 | 352 |
+| ARCH09 | 573 | 217 | 356 |
+| ARCH10 | 575 | 223 | 352 |
 | ARCH11 | 512 | 192 | 320 |
 
 ## skipped 原因分布
 
 | reason | 件数 |
 |---|---|
-| g2_excluded:in_void | 900 |
-| g2_excluded:ring_band_overlap | 100 |
-| g2_excluded:void_cut_fragment | 624 |
+| g2_excluded:in_void | 924 |
+| g2_excluded:ring_band_overlap | 140 |
+| g2_excluded:void_cut_fragment | 636 |
 
 ## 口径
 
