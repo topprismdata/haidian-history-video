@@ -6,6 +6,7 @@
 # blender-free: 网格路径走 p1a_slice 纯逻辑段(classify/print_scope/处置)，
 # 与 G2 门同序 —— 零漂移测本身就是该重建正确性的逐字节证明。
 import copy
+import csv
 import filecmp
 import hashlib
 import json
@@ -377,3 +378,113 @@ def test_zones_filter_selects_and_skips(tmp_path):
                            zones=["ARCH01"])
     role_skips = [e for e in m_c["skipped"] if e["id"].endswith(".B09")]
     assert len(role_skips) == 1 and "reason" not in role_skips[0]
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# P4-T4: 装配图(每孔 assembly_ortho x5 + 段总图) + 分号位表 CSV + 施工卡
+# (sequence 子序列钉)。产物为 tracked 落盘件(blender 装配门本机真跑产出,
+# 门控语义: blender 依赖只在生成侧, 判据查盘不重渲 —— 两连跑逐字节幂等
+# 由生成器 PNG 去元数据 + 确定性 CSV/MD 保证, 报告附实测)。
+
+SEC5 = os.path.join(PRINT_DIR, "section5")
+ASSEMBLY_DIR = os.path.join(SEC5, "assembly")
+CARDS_PATH = os.path.join(SEC5, "construction_cards.md")
+SEQ_PATH = os.path.join(REPO, "3d", "out", "sequence.json")
+ORDER_TAG = "[工程推断·非史料]"
+
+
+def _csv_rows(path):
+    # type: (str) -> list
+    with open(path, encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def _card_order_rows(text):
+    # type: (str) -> list
+    """施工卡装配次序行解析: [(stage_id, seq:int, unit_id, raw_line), ...]
+    (文件序)。只认『## 装配次序』节内首格为整数的表数据行(表头/分隔行/
+    批次总表行不算序行)。"""
+    out = []
+    stage = None
+    in_order = False
+    for ln in text.splitlines():
+        if ln.startswith("### "):
+            stage = ln[4:].split()[0]
+            continue
+        if ln.startswith("## "):
+            in_order = "装配次序" in ln
+            continue
+        if in_order and ln.startswith("| "):
+            cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+            if cells and cells[0].isdigit():
+                out.append((stage, int(cells[0]), cells[1], ln))
+    return out
+
+
+def test_five_assembly_orthos_exist():
+    """5 孔 x (assembly_ortho PNG + 分号位表 CSV): 在盘且非空; CSV 行数
+    ==该孔打印单元数, unit 集合与 manifest 分孔恰等(不重不漏); batch 列
+    与 manifest 单源; 床位坐标在 220 床内。"""
+    with open(os.path.join(SEC5, "manifest.json"), encoding="utf-8") as fh:
+        man = json.load(fh)
+    by_zone = {}
+    for s in man["stones"]:
+        by_zone.setdefault(s["id"].split(".")[0], set()).add(s["id"])
+    assert sorted(by_zone) == list(SEC.SEGMENT)
+    man_batch = {s["id"]: s["batch"] for s in man["stones"]}
+    for zone in SEC.SEGMENT:
+        png = os.path.join(ASSEMBLY_DIR, zone + ".png")
+        assert os.path.isfile(png) and os.path.getsize(png) > 1024, png
+        with open(png, "rb") as fh:
+            assert fh.read(8) == b"\x89PNG\r\n\x1a\n", png
+        rows = _csv_rows(os.path.join(ASSEMBLY_DIR, zone + ".csv"))
+        assert len(rows) == len(by_zone[zone]), zone
+        ids = [r["unit_id"] for r in rows]
+        assert len(set(ids)) == len(ids), zone
+        assert set(ids) == by_zone[zone], zone
+        for r in rows:
+            assert int(r["batch"]) == man_batch[r["unit_id"]], r
+            for k in ("bed_x_mm", "bed_y_mm"):
+                assert -1e-6 <= float(r[k]) <= 220.0 + 1e-6, r
+
+
+def test_section_overview_exists():
+    """段总图(五孔侧视拼合+墩位缺口/M5(a) 底座端槽示意注记)在盘且非空。"""
+    png = os.path.join(ASSEMBLY_DIR, "section_overview.png")
+    assert os.path.isfile(png) and os.path.getsize(png) > 5000, png
+    with open(png, "rb") as fh:
+        assert fh.read(8) == b"\x89PNG\r\n\x1a\n"
+
+
+def test_card_subsequence_order():
+    """施工卡装配次序 == sequence.json 原序过滤(段打印单元事件子序列,
+    stage 依 sequence 给定序 x 事件依 event_range 原序) —— 任何重排(按批/
+    按 id/按孔聚类)必红。负控: 期望子序列非空且非回文序(比较器有齿)。"""
+    with open(os.path.join(SEC5, "manifest.json"), encoding="utf-8") as fh:
+        units = {s["id"] for s in json.load(fh)["stones"]}
+    with open(SEQ_PATH, encoding="utf-8") as fh:
+        seqdoc = json.load(fh)
+    evs, stages = seqdoc["events"], seqdoc["sequence"]
+    expected = []
+    for st in stages:
+        lo, hi = st["event_range"]
+        for i in range(lo - 1, hi):
+            e = evs[i]
+            if e.get("stone_id") in units:
+                expected.append((st["id"], int(e["seq"]), e["stone_id"]))
+    assert len(expected) == len(units)          # 段单元事件全覆盖, 恰一次
+    assert expected != expected[::-1]           # 负控: 序有信息量
+    with open(CARDS_PATH, encoding="utf-8") as fh:
+        got = [(a, b, c) for a, b, c, _ln in _card_order_rows(fh.read())]
+    assert got == expected
+
+
+def test_card_tag_no_history():
+    """卡内装配序行逐行含 [工程推断·非史料] 字样; SEC.card_lint 零发现
+    (标签文法词表复用 narration_lint, 判域独立 —— 见生成器 docstring)。"""
+    with open(CARDS_PATH, encoding="utf-8") as fh:
+        text = fh.read()
+    rows = _card_order_rows(text)
+    assert rows
+    assert all(ORDER_TAG in ln for _s, _q, _u, ln in rows)
+    assert SEC.card_lint(text) == []
