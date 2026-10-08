@@ -561,17 +561,20 @@ def test_real_ledger_g3_fullchain():
     # 出界支)释放 48 块跨缘真石(12 孔×4: 2 面×SPANDREL/BACK, 归因见
     # p2-task-6-report.md §8), 全部入日程 → +48 PLACE_STONE。面石/RING
     # 账目计数不变(2290/2290/193), 砖谱 stones_pX.json 字节不变。
-    assert len(events) == 4118
+    # [拱线族返工 2026-10-08] 4118→4094: b>a 三孔净空边界上移 +24 砧石入
+    # in_void → −24 PLACE_STONE(新实测直读重出 sequence.json, 逐孔分解见
+    # test_p2_sequencer 同源推导; 其余 14 孔零差)。
+    assert len(events) == 4094
 
     t0 = time.perf_counter()
     viols, stats = G3.check_dag_all(events, led)
     el = time.perf_counter() - t0
-    print("g3 真账 4118 事件 snapshot+check: %.2fs (含 in_void 推导)"
+    print("g3 真账 4094 事件 snapshot+check: %.2fs (含 in_void 推导)"
           % el)
     assert viols == [], viols[:10]     # 除 W1 白名单外零违例(清单不判红)
-    assert stats["n_snapshots"] == 4118
+    assert stats["n_snapshots"] == 4094
     assert el < 10.0, "性能闸: %.2fs ≥ 10s" % el
-    assert len(stats["final_present"]) == 3931
+    assert len(stats["final_present"]) == 3907  # [拱线族返工 2026-10-08] 新实测重钉: b>a 三孔(8/9/10)净空边界上移 → in_void 2004→2028 / 日程 3931→3907 / 事件 4118→4094(逐孔分解 ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差; 推导见 test_p2_sequencer)
 
     # in_void 推导与 excluded_ids.json 逐位相等(幻影闸单源交叉核)
     in_void = G3.derive_in_void(led)

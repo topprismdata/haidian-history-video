@@ -151,7 +151,11 @@ def arch_x_extent(a, b):
 
 def arch_z(x, xc, springer, a, b):
     """单心圆弧拱 intrados 高度 z(x), x∈[xc-a, xc+a](上分支; b>a 时该式给
-    跨内分支, 起拱点 horseshoe 外鼓段由 arch_x_extent/arch_arc_pts 处理)。"""
+    跨内分支, 起拱点 horseshoe 外鼓段由 arch_x_extent/arch_arc_pts 处理)。
+    跨外(|x-xc|>a)哨兵=起拱线(恢复 M15 前旧契约: 拱腹面止于起拱线, 肩外
+    高度不随圆外推)—— sequencer/centering 锁固带语义依赖此约定。"""
+    if abs(x - xc) > a:
+        return springer
     d, R = arch_circle(a, b)
     dd = R * R - (x - xc) ** 2
     return springer + d + _math.sqrt(dd) if dd > 0.0 else springer + d

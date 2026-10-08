@@ -44,7 +44,7 @@ def test_pace_build_schema_and_conservation():
                     "--target-sec", "240", "--out", out], check=True, cwd=REPO3D)
     p = json.load(open(out))
     assert p["fps"] == 30
-    assert len(p["stages"]) == 408
+    assert len(p["stages"]) == 407  # # [拱线族返工 2026-10-08] 新实测: b>a 三孔 +24 入 in_void → −24 PLACE_STONE → 真段 408→407(pace 含 S000 题卡 409→408), 逐孔分解见 test_p2_sequencer
     # 守恒: start/end 连续无缝, 末帧==total_frames
     assert p["stages"][0]["start"] == 0
     for a, b in zip(p["stages"], p["stages"][1:]):
@@ -61,7 +61,8 @@ def test_pace_build_schema_and_conservation():
         assert s["pad_frames"] == 0
         assert s["first_event"] <= s["last_event"]
     assert p["generated_by"] == "pace_build"
-    assert p["source_sha"] == "1cefc071"
+    # [拱线族返工 2026-10-08] 源序列重锚: sequence.json sha8 1cefc071→77d2532b(与 artifact_sha256 同源)
+    assert p["source_sha"] == "77d2532b"
 
 
 def test_pace_scale_exact():
@@ -86,7 +87,7 @@ def test_pace_build_prologue_s000():
     import pace_build as PB
     p = _build("pace_pro5.json", 240, prologue_sec=5.0)
     base = _build("pace_nopro.json", 240)
-    assert len(p["stages"]) == 409 and len(base["stages"]) == 408
+    assert len(p["stages"]) == 408 and len(base["stages"]) == 407  # # [拱线族返工 2026-10-08] 新实测: b>a 三孔 +24 入 in_void → −24 PLACE_STONE → 真段 408→407(pace 含 S000 题卡 409→408), 逐孔分解见 test_p2_sequencer
     s0, s1 = p["stages"][0], p["stages"][1]
     assert s0["id"] == "S000"
     assert (s0["first_event"], s0["last_event"]) == (0, 0)
@@ -283,12 +284,12 @@ def test_remotion_pace_sourced():
     assert r.returncode == 0, (r.returncode, r.stdout, r.stderr)
     got = json.loads(r.stdout.strip().splitlines()[-1])
     real_pace = json.load(open(real))
-    # 序幕 5s 后重钉: 7350 帧, 409 stage(S000 题卡; seg-01 窗自动张开)
+    # 序幕 5s 后重钉: 7350 帧, 408 stage(S000 题卡; seg-01 窗自动张开) [拱线族返工 2026-10-08] 409→408
     assert got["duration"] == real_pace["total_frames"] == 7350
     assert got["fps"] == real_pace["fps"] == 30
-    assert got["stages"] == len(real_pace["stages"]) == 409
+    assert got["stages"] == len(real_pace["stages"]) == 408  # [拱线族返工 2026-10-08] 409→408(真段 407+S000)
     assert got["first"]["from"] == 0 and got["last"]["to"] == got["duration"]
     clips = got["clips"]
-    assert len(clips) == 409
+    assert len(clips) == 408  # [拱线族返工 2026-10-08] 409→408
     for a, b in zip(clips, clips[1:]):
         assert a["to"] == b["from"], "Remotion 段边界与 pace 不同源"

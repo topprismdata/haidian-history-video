@@ -46,7 +46,8 @@ SEC_UNITS = 1123         # 段(ARCH07-11)打印单元 == 段 manifest.stones
 SEC_RAW = 2747           # 段账面石(含排除)
 DEF_UNITS = 990          # 留续 12 孔打印单元
 DEF_RAW = 3188           # 留续账面石(含排除)
-EXCLUDED = 3822          # 排除石(in_void 2004/void_cut 1568/ring_band 182/thin 68)
+# [拱线族返工 2026-10-08] 3822→3898 新实测(excluded_ids.json 重出直读): in_void 2028(+24 全在 b>a 三孔)/void_cut 1580(+12)/ring_band 222(+40)/thin 68(不变)
+EXCLUDED = 3898          # 排除石(in_void 2028/void_cut 1580/ring_band 222/thin 68)
 UNITS_CURRENT = 2113     # 现行全桥打印单元 = 1123+990
 # P1-T8 原始轮历史口径(04f2e54, 已被 T8b 更替, 只作考古对账)
 UNITS_T8_ORIG = 1974

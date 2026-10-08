@@ -61,7 +61,10 @@ DEFAULT_OUT = os.path.join(_PARENT, "out", "film", "layout_film.blend")
 
 GN_TREE = "P1_LAYOUT_INSTANCES"
 COL_FAM = "COL_FAMILIES"
-N_A = 2824                                    # P1 族对象数(构建时硬断言复核)
+# N_A [拱线族返工 2026-10-08 改派生] 旧硬钉 2824(P1 族对象数)随几何换族失效:
+# uniq 跨洞裁剪石族由几何重推导, families.blend 重出后 A 族数 2824→2832,
+# 硬钉使 b_rank(N_A+i) 与 A 族尾段重号 → 族名序号断链@2825。
+# 现以单源重算 plan 的 len(a_index) 为准(与 A 侧 got_names==a_names 对账互证)。
 
 
 # ────────────────────── 纯数据侧(单源重算, blender-free) ──────────────────────
@@ -91,8 +94,9 @@ def compute_plan(stones, sched):
     miss = set(keys_a) - set(keys_all)
     if miss:
         raise RuntimeError("A 键不在全量清点(账退化): %s" % sorted(miss)[:3])
+    n_a = len(keys_a)                            # 派生 A 族数(原硬钉 N_A=2824 已废)
     b_keys = [k for k in keys_all if k not in cens_a]
-    b_rank = {k: N_A + i for i, k in enumerate(b_keys)}
+    b_rank = {k: n_a + i for i, k in enumerate(b_keys)}
 
     by_key = {}
     for k in keys_all:
@@ -112,7 +116,7 @@ def compute_plan(stones, sched):
         })
     return {"rows": rows, "a_index": a_index, "b_rank": b_rank,
             "cens_a": cens_a, "cens_all": cens_all,
-            "b_keys": b_keys, "sched": sched}
+            "b_keys": b_keys, "sched": sched, "n_a": n_a}
 
 
 # ────────────────────── blender 构建 ──────────────────────
@@ -133,6 +137,7 @@ def _vec_attr(me, name, data):
 
 def build(out_path, plan):
     t0 = time.time()
+    N_A = plan["n_a"]          # 派生 A 族数(单源 plan, 原模块硬钉已废)
     rows = plan["rows"]
     bpy.ops.wm.read_factory_settings(use_empty=True)
 

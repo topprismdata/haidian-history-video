@@ -4,7 +4,7 @@
 
 判据(brief Task 8 Step1/Step2 全量; 预估数已被实测取代——如实钉实测,
 禁为凑 brief 预估改数):
-- 真账全链: 5935 石全序(入日程石恰一次), 事件 4118/stages 408 如实钉,
+- 真账全链: 5935 石全序(入日程石恰一次), 事件 4094/stages 407 如实钉,
   frontier 轨迹合法, run_g3 三门 ok=True(复用 run_g3 单源, 不复制判据;
   acceptance/robustness 双 17/17 + gate_imbalance 0/192 +
   viol_uniform_hmax 条件性在册);
@@ -61,8 +61,10 @@ _G3OUT = os.path.join(_OUT, "g3_report.json")
 _BEATSOUT = os.path.join(_OUT, "narration_beats.md")
 
 # 实测钉(2026-10-07 真账, P2-T7b 波序; brief 预估 ~6000+/200-600 已被取代)
-N_EVENTS = 4118
-N_STAGES = 408
+# [拱线族返工 2026-10-08] 4118→4094: 新实测(重出 sequence.json 直读)——b>a 三孔(8/9/10)净空边界上移, +24 砧石入 in_void(ARCH08 +4/ARCH09 +16/ARCH10 +4, 见 test_p2_sequencer 同源推导), 各失一条 PLACE_STONE; 其余 14 孔零差。
+N_EVENTS = 4094
+# [拱线族返工 2026-10-08] 408→407 新实测(−24 事件后 stage 叙事分组重排, 见 test_p3_pace)
+N_STAGES = 407
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +113,9 @@ def test_real_chain_full_order_and_counts(chain):
     res, led = chain["res"], chain["led"]
     meta = res["meta"]
     assert meta["n_stones_ledger"] == 5935
-    assert meta["n_stones_in_void"] == 2004
+    # [拱线族返工 2026-10-08] 2004→2028 新实测: +24 全在 b>a 三孔
+    # (ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差), 推导见 test_p2_sequencer。
+    assert meta["n_stones_in_void"] == 2028
     assert meta["n_dm_excluded"] == 29
     # 全序: 入日程石恰一次(5935 = 入日程 + in_void 幻影)
     hits = {}
@@ -119,7 +123,7 @@ def test_real_chain_full_order_and_counts(chain):
         sid = e.get("stone_id")
         if sid and e["etype"] in E.MASONRY_TYPES:
             hits[sid] = hits.get(sid, 0) + 1
-    assert sum(hits.values()) == meta["n_stones"] == 3931
+    assert sum(hits.values()) == meta["n_stones"] == 3907  # [拱线族返工 2026-10-08] 新实测重钉: b>a 三孔(8/9/10)净空边界上移 → in_void 2004→2028 / 日程 3931→3907 / 事件 4118→4094(逐孔分解 ARCH08 +4/ARCH09 +16/ARCH10 +4, 其余 14 孔零差; 推导见 test_p2_sequencer)
     assert all(n == 1 for n in hits.values())
     assert len(res["events"]) == N_EVENTS
     assert len(res["sequence"]) == N_STAGES
