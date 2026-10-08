@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python 3.9.6（stdlib+numpy）、bpy（仅网格提取路径，若需）、既有 export_print/printcheck。
 
+## 口径更新（2026-10-08 P4-T3 考古）
+
+- 全文凡遇「1974 全桥账/单元」→ 现行口径为 **2113 单元+3822 排除==5935**（1123 段+990 留续）；1974 系 T8 原始轮历史口径，仅作带限定语的历史引用。T3 已按此实现并测试钉死。
+
 ## Global Constraints
 
 - Python 3.9.6；测试 blender-free（网格路径门控 skipif）
