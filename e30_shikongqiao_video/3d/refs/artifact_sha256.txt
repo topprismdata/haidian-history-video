@@ -70,3 +70,18 @@ d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narrati
 #   total 7350); 唯一回写通道 pace_writeback.py 原地补 pad 后本行 sha
 #   须随写轮同更新(测试 test_artifact_sha256_sidecar_matches_disk 钉)。
 29af17205b202e59f22cc1d189b47d5812464fce9c3d6144a25b8f640e812464  3d/out/film/pace.json
+
+# [ArchRoundFix 重锚] 记录时点: 2026-10-08, 拱线族返工(ogee→单心圆弧, 全17孔)。
+# 变更面: 拱线数学单源(facts)+void/券石/qa 全链再同步; 石账块数零变
+# (stones=5935 ring=193 impost=492, masonry_stats voussoir/coursing 逐位同前),
+# 曲线族换 → 石坐标变 → 下列全部重锚工件重出。生成命令链同上(1→5 + sequencer
+# + g3_check + narration), 全部零错; L2 正检 QA_L2_OK / 负控 NEG_CAUGHT 10/10;
+# MET_ARCH_SHAPE 新闸门绿(返工前 ogee 红 0.01443, 见 refs/arch_shape_redgreen.txt)。
+6dcb15102eee7472bc93d578da860e17cd617ffaf6d61f6cc0b3216ab8906ceb  3d/out/ledger_full.json
+77d2532b41981edd8ccda92f3a4baa9ea76c035680634d7f47932e372438a5ce  3d/out/sequence.json
+28a91edeb7fc66677a35ae16363510156294fcc253b2ca2d882c0156557ba74d  3d/out/ledger_sequenced.json
+b74ce26167fcbbdda344563066abcfebc0a7c103901903a21f1e1e9b38cc8326  3d/core_hash.json
+494d5393fc47a4b987b25ff408f7260f2dd479041a2f67efe4aa34ef5f19fb01  3d/out/print/central_slice/manifest.json
+1664d68f0550540127861d46f5cb7dfa14a5ed4f4f0f78faebf818e3307ea630  3d/out/print/excluded_ids.json
+f370972f930e54e234388d4a863372e68d905deed0e5143b8504104288858680  3d/out/event_ledger.json
+cb000af14804a6bbadc9733acb76ef32285f9d5567ec579c09359cbbd9f28107  3d/out/narration_beats.md

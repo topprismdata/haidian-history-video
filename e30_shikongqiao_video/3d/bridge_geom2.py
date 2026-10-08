@@ -58,14 +58,15 @@ def arch_springer_z(i):
 SPANS = list(_GM.SPANS)
 
 
-# [M14 归一] 两圆心尖拱纯数学移至 facts(与 PIER_W_INT 同模式: 规则即数据,
-# qa_bridge 纯数据侧可无 bmesh 消费同一实现, 杜绝第二套公式失同步)。
-arch_e = _F.arch_e
-_arc_pair = _F._arc_pair
+# [拱线族返工 2026-10-08] 单心圆弧拱纯数学在 facts(规则即数据, qa_bridge 纯数据侧
+# 可无 bmesh 消费同一实现, 杜绝第二套公式失同步)。两圆心 ogee 路径(arch_e/_arc_pair/
+# CROWN_BLUNT_K/CAP)已随族返工删除 —— 无 cusp 即无钝化需求。
 arch_z = _F.arch_z
 arch_dzdx = _F.arch_dzdx
 arch_signed_r = _F.arch_signed_r
-CROWN_BLUNT_K, CROWN_BLUNT_CAP = _F.CROWN_BLUNT_K, _F.CROWN_BLUNT_CAP
+arch_circle = _F.arch_circle
+arch_x_extent = _F.arch_x_extent
+arch_arc_pts = _F.arch_arc_pts
 
 
 def pier_w(i):
@@ -129,19 +130,17 @@ def build_void_bm():
         b = arch_rise(i)   # M12 P0-2: 矢高剖面(中央高/端矮)
         springer = arch_springer_z(i)
         w = DECK_DOWN_W * VOID_CUT_WIDTH_K   # 贯通系数外置 assumptions(与 SPANDREL_C 数值巧合, no_literals 锁)
-        # 截面 = 下部竖直边墙(矩形基座) + 上部半圆券。半圆严格从 SPRINGER 起,
-        # 不允许在券圈内部多出一段直边(GPT v4 扣分点)。
+        # 截面 = 下部竖直边墙(矩形基座) + 上部单心圆弧券。[拱线族返工 2026-10-08]
+        # 圆弧严格从起拱点起, b>a 孔(8/9/10)带 horseshoe 微外鼓(≤2.7cm, facts 档
+        # 单心圆唯一解的几何必然); 折线走 facts.arch_arc_pts 角度参数单源离散,
+        # 与 build_scene2._void_piece_polys 同一折线(不引入第二种离散化)。
         # 闭合轮廓: 逆时针封闭无自相交
-        # 底左 -> 底右 -> 右起拱点 -> 沿圆弧到左起拱点 -> 闭合回底左
+        # 底左 -> 底右 -> 右起拱点 -> 沿圆弧(含外鼓)到左起拱点 -> 闭合回底左
+        pts = _F.arch_arc_pts(xc, springer, a, b, NSEG_ARC)
         prof = [
             (xc - a, BODY_BOTTOM - 0.8),
             (xc + a, BODY_BOTTOM - 0.8),
-            (xc + a, springer),
-        ]
-        for k in range(1, NSEG_ARC):
-            xx = xc + a - 2.0 * a * k / NSEG_ARC
-            prof.append((xx, arch_z(xx, xc, springer, a, b)))
-        prof.append((xc - a, springer))
+        ] + pts          # (xc+a, spz) ... (xc-a, spz) 沿弧
         n = len(prof)
 
         def hw_at(z):

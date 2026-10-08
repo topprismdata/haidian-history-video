@@ -2,39 +2,13 @@
  "batches": [
   {
    "batch": 0,
-   "fit_diagonal": [
-    "ARCH09.EAST.RING.C00.B01"
-   ],
    "oversize": false,
    "stones": [
-    "ARCH09.EAST.RING.C00.B01"
-   ],
-   "used_mm": [
-    167.64772081743655,
-    167.64772081743655
-   ]
-  },
-  {
-   "batch": 1,
-   "fit_diagonal": [
-    "ARCH09.EAST.RING.C00.B17"
-   ],
-   "oversize": false,
-   "stones": [
+    "ARCH09.EAST.RING.C00.B01",
     "ARCH09.EAST.RING.C00.B17",
     "ARCH09.EAST.RING.C00.B02",
     "ARCH09.EAST.RING.C00.B16",
-    "ARCH09.EAST.RING.C00.B03"
-   ],
-   "used_mm": [
-    212.72466125488282,
-    213.52504225145756
-   ]
-  },
-  {
-   "batch": 2,
-   "oversize": false,
-   "stones": [
+    "ARCH09.EAST.RING.C00.B03",
     "ARCH09.EAST.RING.C00.B15",
     "ARCH09.EAST.RING.C00.B04",
     "ARCH09.EAST.RING.C00.B14",
@@ -42,18 +16,18 @@
     "ARCH09.EAST.RING.C00.B13",
     "ARCH09.EAST.RING.C00.B06",
     "ARCH09.EAST.RING.C00.B12",
-    "ARCH09.EAST.RING.C00.B07",
-    "ARCH09.EAST.RING.C00.B11"
+    "ARCH09.EAST.RING.C00.B07"
    ],
    "used_mm": [
-    199.36021270751957,
-    170.64131145477296
+    210.9454483032227,
+    218.85291309356694
    ]
   },
   {
-   "batch": 3,
+   "batch": 1,
    "oversize": false,
    "stones": [
+    "ARCH09.EAST.RING.C00.B11",
     "ARCH09.EAST.CORE.C13.B00",
     "ARCH09.EAST.CORE.C13.B02",
     "ARCH09.EAST.RING.C00.B08",
@@ -61,12 +35,12 @@
     "ARCH09.EAST.RING.C00.B09"
    ],
    "used_mm": [
-    154.13111922753188,
-    198.0827109972636
+    154.7602600097656,
+    207.63144604365033
    ]
   },
   {
-   "batch": 4,
+   "batch": 2,
    "oversize": false,
    "stones": [
     "ARCH09.EAST.CORE.C14.B01",
@@ -79,28 +53,24 @@
    ]
   },
   {
-   "batch": 5,
+   "batch": 3,
    "oversize": false,
    "stones": [
     "ARCH09.EAST.CORE.C15.B01",
     "ARCH09.EAST.CORE.C15.B00",
     "ARCH09.EAST.CORE.C15.B02",
-    "ARCH09.WEST.SPANDREL.C07.B06"
+    "ARCH09.EAST.SPANDREL.C09.B00"
    ],
    "used_mm": [
-    187.13626493168402,
+    186.04230643199782,
     211.6
    ]
   },
   {
-   "batch": 6,
+   "batch": 4,
    "oversize": false,
    "stones": [
-    "ARCH09.EAST.SPANDREL.C07.B06",
-    "ARCH09.EAST.SPANDREL.C09.B00",
     "ARCH09.WEST.SPANDREL.C09.B00",
-    "ARCH09.EAST.SPANDREL.C09.B06",
-    "ARCH09.WEST.SPANDREL.C09.B06",
     "ARCH09.EAST.SPANDREL.C15.B04",
     "ARCH09.WEST.SPANDREL.C15.B04",
     "ARCH09.WEST.SPANDREL.C15.B06",
@@ -131,32 +101,28 @@
     "ARCH09.WEST.SPANDREL.C13.B02",
     "ARCH09.EAST.SPANDREL.C13.B04",
     "ARCH09.WEST.SPANDREL.C13.B04",
-    "ARCH09.EAST.SPANDREL.C12.B05"
-   ],
-   "used_mm": [
-    206.6927734918648,
-    218.31652632157042
-   ]
-  },
-  {
-   "batch": 7,
-   "oversize": false,
-   "stones": [
+    "ARCH09.EAST.SPANDREL.C12.B05",
     "ARCH09.WEST.SPANDREL.C12.B05",
     "ARCH09.EAST.SPANDREL.C12.B01",
     "ARCH09.WEST.SPANDREL.C12.B01",
     "ARCH09.EAST.SPANDREL.C10.B09",
     "ARCH09.WEST.SPANDREL.C10.B09",
     "ARCH09.EAST.SPANDREL.C10.B01",
-    "ARCH09.WEST.SPANDREL.C10.B01",
+    "ARCH09.WEST.SPANDREL.C10.B01"
+   ],
+   "used_mm": [
+    202.46248488152042,
+    210.31999999999923
+   ]
+  },
+  {
+   "batch": 5,
+   "oversize": false,
+   "stones": [
     "ARCH09.WEST.SPANDREL.C11.B00",
     "ARCH09.EAST.SPANDREL.C11.B00",
     "ARCH09.EAST.SPANDREL.C11.B04",
     "ARCH09.WEST.SPANDREL.C11.B04",
-    "ARCH09.EAST.SPANDREL.C10.B03",
-    "ARCH09.WEST.SPANDREL.C10.B03",
-    "ARCH09.EAST.SPANDREL.C10.B07",
-    "ARCH09.WEST.SPANDREL.C10.B07",
     "ARCH09.EAST.SPANDREL.C12.B00",
     "ARCH09.EAST.BACK.C12.B00",
     "ARCH09.WEST.SPANDREL.C12.B00",
@@ -167,32 +133,16 @@
     "ARCH09.WEST.BACK.C12.B06",
     "ARCH09.EAST.BACK.C11.B00",
     "ARCH09.WEST.BACK.C11.B00",
-    "ARCH09.EAST.BACK.C09.B06",
-    "ARCH09.WEST.BACK.C09.B06",
     "ARCH09.EAST.SPANDREL.C13.B01",
     "ARCH09.EAST.BACK.C13.B01",
     "ARCH09.WEST.SPANDREL.C13.B01",
     "ARCH09.WEST.BACK.C13.B01",
-    "ARCH09.EAST.SPANDREL.C08.B00",
-    "ARCH09.WEST.SPANDREL.C08.B00",
     "ARCH09.EAST.BACK.C13.B04",
     "ARCH09.WEST.BACK.C13.B04",
     "ARCH09.EAST.SPANDREL.C11.B05",
     "ARCH09.EAST.BACK.C11.B05",
     "ARCH09.WEST.SPANDREL.C11.B05",
     "ARCH09.WEST.BACK.C11.B05",
-    "ARCH09.EAST.SPANDREL.C09.B01",
-    "ARCH09.WEST.SPANDREL.C09.B01"
-   ],
-   "used_mm": [
-    210.9765263215704,
-    218.05782107130634
-   ]
-  },
-  {
-   "batch": 8,
-   "oversize": false,
-   "stones": [
     "ARCH09.EAST.SPANDREL.C15.B05",
     "ARCH09.WEST.SPANDREL.C15.B05",
     "ARCH09.EAST.SPANDREL.C15.B03",
@@ -223,8 +173,6 @@
     "ARCH09.WEST.SPANDREL.C13.B05",
     "ARCH09.EAST.BACK.C15.B07",
     "ARCH09.WEST.BACK.C15.B07",
-    "ARCH09.WEST.SPANDREL.C13.B03",
-    "ARCH09.EAST.SPANDREL.C13.B03",
     "ARCH09.EAST.BACK.C15.B02",
     "ARCH09.WEST.BACK.C15.B02",
     "ARCH09.EAST.BACK.C13.B07",
@@ -232,7 +180,17 @@
     "ARCH09.EAST.BACK.C14.B07",
     "ARCH09.WEST.BACK.C14.B07",
     "ARCH09.EAST.SPANDREL.C10.B00",
-    "ARCH09.WEST.SPANDREL.C10.B00",
+    "ARCH09.WEST.SPANDREL.C10.B00"
+   ],
+   "used_mm": [
+    213.71098446519227,
+    217.08226258122158
+   ]
+  },
+  {
+   "batch": 6,
+   "oversize": false,
+   "stones": [
     "ARCH09.EAST.SPANDREL.C10.B08",
     "ARCH09.WEST.SPANDREL.C10.B08",
     "ARCH09.WEST.SPANDREL.C10.B02",
@@ -241,8 +199,6 @@
     "ARCH09.WEST.BACK.C15.B05",
     "ARCH09.EAST.BACK.C14.B05",
     "ARCH09.WEST.BACK.C14.B05",
-    "ARCH09.WEST.BACK.C10.B07",
-    "ARCH09.EAST.BACK.C10.B07",
     "ARCH09.EAST.BACK.C15.B00",
     "ARCH09.WEST.BACK.C15.B00",
     "ARCH09.WEST.BACK.C09.B00",
@@ -267,40 +223,22 @@
     "ARCH09.WEST.BACK.C15.B01",
     "ARCH09.EAST.BACK.C14.B04",
     "ARCH09.WEST.BACK.C14.B04",
-    "ARCH09.EAST.BACK.C08.B00",
-    "ARCH09.WEST.BACK.C08.B00",
     "ARCH09.EAST.BACK.C15.B06",
     "ARCH09.WEST.BACK.C15.B06",
     "ARCH09.EAST.BACK.C13.B02",
     "ARCH09.WEST.BACK.C13.B02",
     "ARCH09.EAST.BACK.C13.B05",
     "ARCH09.WEST.BACK.C13.B05",
-    "ARCH09.EAST.BACK.C07.B06",
-    "ARCH09.WEST.BACK.C07.B06",
     "ARCH09.EAST.BACK.C14.B08",
     "ARCH09.WEST.BACK.C14.B08",
     "ARCH09.EAST.BACK.C15.B08",
-    "ARCH09.WEST.BACK.C15.B08"
-   ],
-   "used_mm": [
-    218.70498762511474,
-    217.97296672646561
-   ]
-  },
-  {
-   "batch": 9,
-   "oversize": false,
-   "stones": [
+    "ARCH09.WEST.BACK.C15.B08",
     "ARCH09.EAST.BACK.C14.B03",
     "ARCH09.WEST.BACK.C14.B03",
     "ARCH09.WEST.BACK.C12.B01",
     "ARCH09.EAST.BACK.C12.B01",
-    "ARCH09.WEST.BACK.C09.B01",
-    "ARCH09.EAST.BACK.C09.B01",
     "ARCH09.EAST.BACK.C14.B06",
     "ARCH09.WEST.BACK.C14.B06",
-    "ARCH09.EAST.BACK.C13.B03",
-    "ARCH09.WEST.BACK.C13.B03",
     "ARCH09.WEST.BACK.C10.B00",
     "ARCH09.EAST.BACK.C10.B00",
     "ARCH09.EAST.IMPOST.C00.B01",
@@ -329,8 +267,6 @@
     "ARCH09.WEST.BACK.C14.B10",
     "ARCH09.EAST.BACK.C10.B08",
     "ARCH09.WEST.BACK.C10.B08",
-    "ARCH09.EAST.BACK.C10.B03",
-    "ARCH09.WEST.BACK.C10.B03",
     "ARCH09.EAST.BACK.C11.B04",
     "ARCH09.WEST.BACK.C11.B04",
     "ARCH09.EAST.BACK.C15.B09",
@@ -347,8 +283,8 @@
     "ARCH09.WEST.IMPOST.C01.B02"
    ],
    "used_mm": [
-    217.4662047914059,
-    70.74031494140664
+    219.1368582251407,
+    161.38710387492355
    ]
   }
  ],
@@ -361,30 +297,30 @@
   "ring-wedge": {
    "count": 17,
    "stl": "qingshi/ARCH09_EAST_RING_C00_B01.stl",
-   "volume_cm3": 521.782074023045
+   "volume_cm3": 467.49444865253054
   },
   "slab": {
    "count": 8,
    "stl": "maoshi/ARCH09_EAST_CORE_C13_B00.stl",
-   "volume_cm3": 771.3215389036734
+   "volume_cm3": 753.6873628182709
   },
   "wedge-std": {
-   "count": 196,
-   "stl": "maoshi/ARCH09_EAST_BACK_C07_B06.stl",
-   "volume_cm3": 515.6083396530346
+   "count": 168,
+   "stl": "maoshi/ARCH09_EAST_BACK_C09_B00.stl",
+   "volume_cm3": 437.7016931632267
   }
  },
  "ledger_print": "ledger_print.json",
  "materials": {
-  "maoshi": 106,
-  "qingshi": 139
+  "maoshi": 92,
+  "qingshi": 125
  },
  "meta": {
   "bed_mm": [
    220.0,
    220.0
   ],
-  "created_utc": "2026-10-07T10:48:33Z",
+  "created_utc": "2026-10-08T13:55:46Z",
   "curve_hash": "e30-p1t8-full",
   "roles": [
    "RING",
@@ -404,46 +340,18 @@
   "arch_idx": 8,
   "note": "RING=全深筒券楔(贯通东西); IMPOST=起拱线出挑脚步(东西墙面各一套); SPANDREL/BACK/CORE=场景链条石/背衬/牺牲芯",
   "roles": {
-   "BACK": 98,
+   "BACK": 84,
    "CORE": 8,
    "IMPOST": 24,
    "RING": 17,
-   "SPANDREL": 98
+   "SPANDREL": 84
   },
-  "stones": 245,
+  "stones": 217,
   "zone": "ARCH09"
  },
  "stones": [
   {
-   "batch": 6,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.SPANDREL.C07.B06",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C07_B06.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C07_B06.3mf",
-   "uuid": "9e69ef5d-621a-42f4-80d5-dad141a1b647",
-   "volume_cm3": 3.9795430504336062
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.SPANDREL.C08.B00",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C08_B00.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C08_B00.3mf",
-   "uuid": "b195d5fe-7f8a-4817-9a63-af762ef6b60d",
-   "volume_cm3": 4.662912885260534
-  },
-  {
-   "batch": 6,
+   "batch": 3,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -453,39 +361,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C09_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C09_B00.3mf",
-   "uuid": "3c4f63c1-9ec3-44d8-95e9-ea086fc62d1c",
-   "volume_cm3": 8.13682556149405
+   "uuid": "a50093ef-d76c-4109-8026-659b9d3b49b3",
+   "volume_cm3": 7.369480341321307
   },
   {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.SPANDREL.C09.B01",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C09_B01.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C09_B01.3mf",
-   "uuid": "23fbbbfe-c875-48aa-876c-f5785611ea39",
-   "volume_cm3": 1.870763862895027
-  },
-  {
-   "batch": 6,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.SPANDREL.C09.B06",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C09_B06.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C09_B06.3mf",
-   "uuid": "9786804a-4771-4240-841b-1b44a72105b3",
-   "volume_cm3": 7.990161008009193
-  },
-  {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -495,11 +375,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B00.3mf",
-   "uuid": "9374c878-cdce-4876-9607-8960d66a4c0f",
+   "uuid": "28d67c6e-2bc5-45b6-99aa-16b1fb59105d",
    "volume_cm3": 0.8598193611573235
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -509,11 +389,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B01.3mf",
-   "uuid": "4f3f38e8-4dbb-4d5e-81fa-b00f03d7bcf3",
+   "uuid": "78a8cafc-e024-4075-92bb-974a840a307b",
    "volume_cm3": 1.2821931830307327
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -523,39 +403,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B02.3mf",
-   "uuid": "1802ac08-805d-4e40-8399-34c4f53b4ccd",
-   "volume_cm3": 1.9209611170592658
+   "uuid": "e2492f9d-582f-40d3-9452-b825ea432074",
+   "volume_cm3": 1.671899766704984
   },
   {
-   "batch": 7,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.EAST.SPANDREL.C10.B03",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B03.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B03.3mf",
-   "uuid": "1e06da12-3cc9-494e-a5c2-c321cda101f1",
-   "volume_cm3": 1.0355292593635235
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.EAST.SPANDREL.C10.B07",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B07.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B07.3mf",
-   "uuid": "5ab3a46d-9f56-4f3b-a34a-89053380ec0b",
-   "volume_cm3": 1.9476676771018155
-  },
-  {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -565,11 +417,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B08.3mf",
-   "uuid": "0016054b-5edb-4e5c-8ae7-f65b281dfae8",
+   "uuid": "7d2842a4-321c-42af-b678-b48bc958ded1",
    "volume_cm3": 1.0171027799079069
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -579,11 +431,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C10_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C10_B09.3mf",
-   "uuid": "530c0df1-d46e-4f66-9312-89425cfdec92",
+   "uuid": "7e2e27cc-b695-447f-acbc-5ef4b72b3aed",
    "volume_cm3": 3.94358766010064
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -593,11 +445,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B00.3mf",
-   "uuid": "6cd8e69a-5acf-4715-a225-be882a682f55",
+   "uuid": "e36cf867-d7e5-4ff8-a84d-4eaf7861f3fa",
    "volume_cm3": 7.364174967225205
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -607,11 +459,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B04.3mf",
-   "uuid": "ba360a51-0cc8-4475-9633-4fe67ffbc79d",
-   "volume_cm3": 3.095821174769251
+   "uuid": "7ca685de-b2c8-4c37-b369-163bf8783cea",
+   "volume_cm3": 2.071369190620795
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -621,11 +473,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C11_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C11_B05.3mf",
-   "uuid": "10b77326-7df5-402c-8d1a-b4364b873efe",
+   "uuid": "d547847e-7502-41d1-b29b-a418e9b33c8e",
    "volume_cm3": 2.917093535442728
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -635,11 +487,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B00.3mf",
-   "uuid": "81480bce-bcf1-4ce8-90b5-b6fa5950e9e6",
+   "uuid": "50832b9e-e8fb-4470-9f19-dc5ac0c7a18f",
    "volume_cm3": 4.354858913158509
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -649,11 +501,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B01.3mf",
-   "uuid": "e8292b55-a371-49be-9ebf-abe25666e677",
-   "volume_cm3": 2.7073398373407387
+   "uuid": "d8ea9c19-259f-416b-837e-9098db3cac69",
+   "volume_cm3": 2.4665575344642723
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -663,11 +515,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B05.3mf",
-   "uuid": "f26981d6-b3fb-403d-949a-05b081ab1906",
+   "uuid": "bf6a04e0-2a67-41fd-915d-70b4b5803c12",
    "volume_cm3": 2.1649367141433555
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -677,11 +529,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C12_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C12_B06.3mf",
-   "uuid": "93afc135-157c-46ac-a0b7-3b05bdea8582",
+   "uuid": "a8ed315e-42b1-437e-8e29-43624f96e189",
    "volume_cm3": 4.26650624628773
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -691,11 +543,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B00.3mf",
-   "uuid": "7486e8f4-6eb3-4a81-8933-2d209af971d5",
+   "uuid": "9589c9ef-7bff-4be5-8da4-0cc6414b2378",
    "volume_cm3": 4.995926762532867
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -705,11 +557,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B01.3mf",
-   "uuid": "44b0b659-f807-4e44-a553-e582193ecd40",
+   "uuid": "cdc7e03d-945d-462f-816a-8a69c9d39f34",
    "volume_cm3": 4.011434108838241
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -719,25 +571,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B02.3mf",
-   "uuid": "9ce27c3d-023d-4d9e-b0ed-84e67dc24def",
-   "volume_cm3": 5.60665796835127
+   "uuid": "fd52b25f-2f93-4978-9e56-d65b834aa116",
+   "volume_cm3": 5.128467797602137
   },
   {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.SPANDREL.C13.B03",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B03.stl",
-   "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B03.3mf",
-   "uuid": "e36f7d60-5ad8-4aea-9801-009ba1af6918",
-   "volume_cm3": 1.683991585455692
-  },
-  {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -747,11 +585,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B04.3mf",
-   "uuid": "cc2c0b90-7d96-44e9-950d-1779939c0391",
-   "volume_cm3": 5.157056980748484
+   "uuid": "5e9a96b3-e64e-4016-9260-22dbb595c779",
+   "volume_cm3": 5.281169245177467
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -761,11 +599,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B05.3mf",
-   "uuid": "e45973a5-1d3b-417d-89ba-5792a18f3e57",
+   "uuid": "d1f9155a-0852-4976-a265-7d053ccce473",
    "volume_cm3": 2.141789186475493
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -775,11 +613,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B06.3mf",
-   "uuid": "4c4e3d75-6794-46e7-830b-a77ac3dafef7",
+   "uuid": "9bc88f54-0bde-4291-a6b7-d9569dd49b6a",
    "volume_cm3": 4.924397604270196
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -789,11 +627,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C13_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C13_B07.3mf",
-   "uuid": "3f7d034a-93f4-4be6-a718-e689f2416165",
+   "uuid": "da180150-9d85-4866-bc2c-c1f4e37d4a9d",
    "volume_cm3": 2.02749252463681
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -803,11 +641,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B00.3mf",
-   "uuid": "e85e11ba-4a94-4b11-bfd1-39baedf349a6",
+   "uuid": "c67fb0cc-54d4-44df-bc7f-55047e9fb62e",
    "volume_cm3": 1.036109780009332
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -817,11 +655,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B01.3mf",
-   "uuid": "405a0e14-cfb1-4406-84ca-d2175ae7b095",
+   "uuid": "cd12d026-a7b9-46ac-b010-eaf0ae6e48b0",
    "volume_cm3": 2.971204940719349
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -831,11 +669,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B02.3mf",
-   "uuid": "e4f8e9fb-bbd8-4ff0-8a01-343bd4820768",
+   "uuid": "7b52de2a-7c12-4095-8241-0ea94b5dca5f",
    "volume_cm3": 3.3054085472208627
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -845,11 +683,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B03.3mf",
-   "uuid": "317b958e-70af-46b6-be73-c734e4b965c3",
+   "uuid": "847b80f4-050f-466f-a651-71db9a774cc0",
    "volume_cm3": 5.902562300810024
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -859,11 +697,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B04.3mf",
-   "uuid": "beae1e3a-8bfb-4a41-a22c-95bad64ed8ac",
+   "uuid": "edebd0d0-a253-41a9-88c1-f6b9deccc58a",
    "volume_cm3": 2.3368694758878794
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -873,11 +711,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B05.3mf",
-   "uuid": "e60461da-774f-4c89-bcd1-30da374ad3c9",
+   "uuid": "5c6d3987-50c0-4c3f-abb2-9d9260c8ffb0",
    "volume_cm3": 7.262939684458274
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -887,11 +725,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B06.3mf",
-   "uuid": "2a7eeee5-9b82-4d9e-bc64-71f7cadaba0a",
+   "uuid": "58b12fc5-29c7-4d2b-a8dd-ba9c1b8dd627",
    "volume_cm3": 1.0023202419262391
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -901,11 +739,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B07.3mf",
-   "uuid": "7814ed35-12c8-4def-892d-041df0aefc7c",
+   "uuid": "651d43cd-8522-4ee3-981f-ee76135409d3",
    "volume_cm3": 2.954127276697565
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -915,11 +753,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B08.3mf",
-   "uuid": "e12049e7-81ea-4bba-a656-191357f5362b",
+   "uuid": "d052138e-f5df-4fbb-88ed-f294648815d5",
    "volume_cm3": 3.0998761008989373
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -929,11 +767,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B09.3mf",
-   "uuid": "ffed85e6-715c-4142-af41-4d2047ba86f7",
+   "uuid": "ec95c3c8-8baa-4101-81d6-d9c9d16a8cbd",
    "volume_cm3": 3.7054681767600988
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -943,11 +781,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C14_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C14_B10.3mf",
-   "uuid": "c6cc989e-6392-4ca6-96a4-e9f4425b591c",
+   "uuid": "c1e4c3b6-84c1-4fe9-add4-0ca7f22ccb94",
    "volume_cm3": 0.9460133054804987
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -957,11 +795,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B00.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B00.3mf",
-   "uuid": "d31c89b8-cbc0-485f-8ff1-22f5e7f084a7",
+   "uuid": "90fab482-30b3-40c2-9a29-e2855305dc88",
    "volume_cm3": 5.06610230888297
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -971,11 +809,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B01.3mf",
-   "uuid": "382c7b3a-3fcd-4601-a2e7-bad4d8f1aeaa",
+   "uuid": "d37e9006-e662-42c7-a447-fff8e16a768e",
    "volume_cm3": 3.358710471070239
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -985,11 +823,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B02.3mf",
-   "uuid": "681b76ed-03fe-407e-b60e-1b2cd034e8ae",
+   "uuid": "52db79d4-c39b-4aee-89d3-7f8f7af50031",
    "volume_cm3": 4.633327531382439
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -999,11 +837,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B03.3mf",
-   "uuid": "f115e773-1b6f-43c3-a577-f56e55dcf813",
+   "uuid": "ff985d91-c208-4f11-b59f-c2ab30cda016",
    "volume_cm3": 1.3107126797615662
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1013,11 +851,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B04.3mf",
-   "uuid": "3622c659-0a0e-4f79-9059-0be476d0ef1c",
+   "uuid": "85a628a2-8585-4907-b415-5d7fed3eb7f8",
    "volume_cm3": 3.487565920712986
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1027,11 +865,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B05.3mf",
-   "uuid": "b52366f5-e2d6-47d7-bfbb-dda9d5b9e50a",
+   "uuid": "57d1d4d4-abc0-4c45-82e3-fe92e92f3e27",
    "volume_cm3": 3.834314532092217
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1041,11 +879,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B06.3mf",
-   "uuid": "ae74dadf-c537-469d-8dc3-adb28d74eb5e",
+   "uuid": "e62050d0-3fb6-4b89-b02b-bdbdc057444f",
    "volume_cm3": 6.7342615980288
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1055,11 +893,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B07.3mf",
-   "uuid": "43662de2-2b50-4e3e-92f1-0902724a7a35",
+   "uuid": "7d9214b8-e2d9-47df-8966-fe7c8272fc8f",
    "volume_cm3": 0.9965751238509261
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1069,11 +907,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B08.3mf",
-   "uuid": "da94466b-b5b7-438f-83d8-2ee7356c6fe3",
+   "uuid": "e5189db4-aa07-4b1b-892b-481aa8b8f623",
    "volume_cm3": 2.3180260083272053
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1083,11 +921,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B09.3mf",
-   "uuid": "0809f90e-9e48-4d02-8e56-5478240b21e9",
+   "uuid": "7a57daa3-f3fb-442e-881a-56335ba39fb9",
    "volume_cm3": 1.3012781409465328
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1097,39 +935,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_EAST_SPANDREL_C15_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_SPANDREL_C15_B10.3mf",
-   "uuid": "6702e29a-d6dd-4e86-89a9-1eda56474862",
+   "uuid": "482f91d5-6fac-4301-a553-3265c6f4c27f",
    "volume_cm3": 4.6959074120135345
   },
   {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.BACK.C07.B06",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C07_B06.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C07_B06.3mf",
-   "uuid": "64b8558e-f411-4b41-bc8b-af4fcbbe3cbf",
-   "volume_cm3": 1.4352560441616045
-  },
-  {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.BACK.C08.B00",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C08_B00.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C08_B00.3mf",
-   "uuid": "81ba6cc0-ad75-4242-a755-deb9a611bce6",
-   "volume_cm3": 3.320540916387757
-  },
-  {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1139,39 +949,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C09_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C09_B00.3mf",
-   "uuid": "0d2146a8-2d28-4111-a808-9bac822f6524",
-   "volume_cm3": 3.6192635675900426
+   "uuid": "ef00dfe2-0e0f-4e72-b5af-1d9f62fb9d4e",
+   "volume_cm3": 3.2779480781345183
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.BACK.C09.B01",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C09_B01.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C09_B01.3mf",
-   "uuid": "f3f8d974-31fe-4283-983b-b41b8d1be9ec",
-   "volume_cm3": 1.3756419324849605
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.BACK.C09.B06",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C09_B06.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C09_B06.3mf",
-   "uuid": "f6cdb63d-9dbb-4b6e-a8af-b10f1bea01fe",
-   "volume_cm3": 3.1811360546337175
-  },
-  {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1181,11 +963,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B00.3mf",
-   "uuid": "cb8d4400-28b3-4efd-98fa-123503372eef",
+   "uuid": "e0130ccb-cc91-4856-8548-ecf3f472e8b1",
    "volume_cm3": 0.6793562416166474
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1195,11 +977,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B01.3mf",
-   "uuid": "52ed0e92-7974-464f-982c-05210a32e309",
+   "uuid": "493fbd80-f75f-4318-93e6-c8be56a5d629",
    "volume_cm3": 0.601937594844261
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1209,39 +991,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B02.3mf",
-   "uuid": "ec6e9fee-ec6a-4233-95d5-5e99fde70d9e",
-   "volume_cm3": 1.8507189573260592
+   "uuid": "50fb570f-2cd9-44da-88d7-bbb164e970b1",
+   "volume_cm3": 1.610764822625229
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.EAST.BACK.C10.B03",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C10_B03.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B03.3mf",
-   "uuid": "c194435f-49d2-4cd7-bb76-76f6a2ba3892",
-   "volume_cm3": 0.37184845885765105
-  },
-  {
-   "batch": 8,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.EAST.BACK.C10.B07",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C10_B07.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B07.3mf",
-   "uuid": "ede4b5db-22c7-401a-ad2e-e2df023b284d",
-   "volume_cm3": 0.9601998530675934
-  },
-  {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1251,11 +1005,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B08.3mf",
-   "uuid": "7d7b7bdb-54ad-4109-90b0-78c454049214",
+   "uuid": "d8cccaac-34ef-4bf2-9daa-a1effb55582a",
    "volume_cm3": 0.7436513779263534
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1265,11 +1019,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C10_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C10_B09.3mf",
-   "uuid": "c8545a85-1b7a-442f-871f-489ab504145b",
+   "uuid": "ec4e8d86-3a41-4e7e-b91b-19584264920d",
    "volume_cm3": 1.8065405136244206
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1279,11 +1033,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B00.3mf",
-   "uuid": "f64c3df3-8145-400c-9087-b1bb59d93ad2",
+   "uuid": "186c82e8-a736-43b6-a994-53e49401811e",
    "volume_cm3": 2.7982635393569666
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1293,11 +1047,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B04.3mf",
-   "uuid": "5dd999bd-df03-4dc9-9979-48f17a3b04de",
-   "volume_cm3": 1.1090392484732692
+   "uuid": "a0a8dc26-f223-4140-8fc2-74df032f750f",
+   "volume_cm3": 0.742042127368031
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1307,11 +1061,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C11_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C11_B05.3mf",
-   "uuid": "378022b6-067d-4fe5-8f95-70453215d59b",
+   "uuid": "a3bcfb11-875a-4043-9e31-63ae0eb55113",
    "volume_cm3": 2.362488126613992
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1321,11 +1075,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B00.3mf",
-   "uuid": "77b70003-a66c-45ae-b511-0f6a3f0ab7a9",
+   "uuid": "1ec987eb-14f1-4cad-9d29-870eaf346dab",
    "volume_cm3": 3.228109462242702
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1335,11 +1089,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B01.3mf",
-   "uuid": "52eb322f-0558-43fa-96cb-356b2e565fd5",
-   "volume_cm3": 1.0787533380790324
+   "uuid": "37d38a4a-c322-403a-b3e2-b83b1b97838c",
+   "volume_cm3": 0.9828124039577081
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1349,11 +1103,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B05.3mf",
-   "uuid": "f7d4f058-e17d-44e3-9c7a-0e783d179c20",
+   "uuid": "1d77ed1d-ea8b-4537-8274-6844362c7343",
    "volume_cm3": 0.8186446136020269
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1363,11 +1117,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C12_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C12_B06.3mf",
-   "uuid": "7e48659c-33d2-4b5e-bc5f-569fb8bc8f6f",
+   "uuid": "333c68a3-72bd-4ff2-b9c1-b8b549e4f314",
    "volume_cm3": 2.9664290392764854
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1377,11 +1131,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B00.3mf",
-   "uuid": "9f59e033-8bc5-4b86-b3a5-0f3c08c73b8b",
+   "uuid": "344fc7bc-ed6b-49e5-a336-6dec1852b912",
    "volume_cm3": 1.702726828267806
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1391,11 +1145,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B01.3mf",
-   "uuid": "c5b9dd78-107b-4691-9642-ac9a4b9b3aef",
+   "uuid": "883222b1-f2fc-46a4-9d45-2ad4e7251cd4",
    "volume_cm3": 2.7930756711268625
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1405,25 +1159,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B02.3mf",
-   "uuid": "909abe6a-5347-4479-88db-ae21ce75b173",
-   "volume_cm3": 2.321360927117446
+   "uuid": "341422fd-2041-40b6-8f40-b903199deeb5",
+   "volume_cm3": 2.123372752276974
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.EAST.BACK.C13.B03",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_EAST_BACK_C13_B03.stl",
-   "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B03.3mf",
-   "uuid": "35bf01b8-6ec6-4e45-bbe2-8c3b24f92b7a",
-   "volume_cm3": 1.317588761387539
-  },
-  {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1433,11 +1173,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B04.3mf",
-   "uuid": "e9ee70ae-6218-461f-a927-c2b71ebc42a9",
-   "volume_cm3": 2.3839255646795148
+   "uuid": "1a4aec06-0bcf-40ca-ab8a-8bf5ae8f11a0",
+   "volume_cm3": 2.4412982873713585
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1447,11 +1187,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B05.3mf",
-   "uuid": "25029f78-d6d8-45ec-89c8-6fab321413e0",
+   "uuid": "dc0fb9b0-b008-4d78-97aa-5aa9b6551464",
    "volume_cm3": 1.781184225391707
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1461,11 +1201,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B06.3mf",
-   "uuid": "92f878c4-c738-49cf-9bf6-f044a775e1d3",
+   "uuid": "f2b16d78-6d60-4e94-a3a4-d76553ce84df",
    "volume_cm3": 2.193938516429455
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1475,11 +1215,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C13_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C13_B07.3mf",
-   "uuid": "8b53f391-f327-4cac-ba67-cf1a486a2a2f",
+   "uuid": "095e6ee9-dd66-46d9-a4bb-e600db773e76",
    "volume_cm3": 2.013746410438121
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1489,11 +1229,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B00.3mf",
-   "uuid": "41aba3ff-4e3a-4e2d-8e33-331b30eedf1e",
+   "uuid": "dfd527d0-172d-4437-aecf-3321bdad5d07",
    "volume_cm3": 0.7061513856976461
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1503,11 +1243,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B01.3mf",
-   "uuid": "c7be6a91-3992-4b65-b381-179b5985bbfc",
+   "uuid": "910ec11f-e72b-49d5-bd34-954d52b8de7f",
    "volume_cm3": 0.9786972834997304
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1517,11 +1257,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B02.3mf",
-   "uuid": "d2fb7627-b897-4c92-9cc0-e0f45810d8df",
+   "uuid": "7c5d6e12-5149-4e2d-8226-bc13134e0ff5",
    "volume_cm3": 2.3396384950206963
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1531,11 +1271,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B03.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B03.3mf",
-   "uuid": "17a0a2dc-fa31-4629-b813-62b053903d0d",
+   "uuid": "fe7908f5-52e5-43a4-beb4-954c417d35e4",
    "volume_cm3": 2.310508977490567
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1545,11 +1285,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B04.3mf",
-   "uuid": "d98ee9a3-95a8-4ab9-92d5-48da9ca30761",
+   "uuid": "041da8d6-9b74-4ba3-a228-9606d6ab4cac",
    "volume_cm3": 1.9980792362843114
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1559,11 +1299,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B05.3mf",
-   "uuid": "fe79a3ec-b5c3-4047-8ad6-11a972e2233e",
+   "uuid": "1df20d66-d82a-4cef-9559-af7d2a859903",
    "volume_cm3": 3.2794846020089907
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1573,11 +1313,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B06.3mf",
-   "uuid": "22bc2186-2d1c-4838-a89c-37d7b4d64a93",
+   "uuid": "12496e34-448c-487f-8b9e-32e04e8e3f23",
    "volume_cm3": 0.7813115762724989
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1587,11 +1327,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B07.3mf",
-   "uuid": "46d3de2a-eab6-4266-943b-09787d22f4e5",
+   "uuid": "ab30a7b2-d77e-4092-8c0b-f20f0745fffa",
    "volume_cm3": 1.4438321628330146
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1601,11 +1341,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B08.3mf",
-   "uuid": "58883bf0-0754-401b-8653-ebc2c25d1060",
+   "uuid": "fa70db4e-a828-4c8b-9c1d-f40800c3cdba",
    "volume_cm3": 2.049528356388059
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1615,11 +1355,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B09.3mf",
-   "uuid": "31081f10-7eb9-4e7f-a834-35144db9fbb2",
+   "uuid": "8e93582d-7e18-40c9-8eb0-ebf05ca2dc1d",
    "volume_cm3": 1.7304570410882394
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1629,11 +1369,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C14_B10.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C14_B10.3mf",
-   "uuid": "9474e40b-416e-42f8-841e-51f7f7190eca",
+   "uuid": "81f9451c-a511-481e-9eef-71c48f23d092",
    "volume_cm3": 0.6919966290139828
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1643,11 +1383,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B00.3mf",
-   "uuid": "e99efdfd-5ee9-402b-be67-c7c2101efd8b",
+   "uuid": "b0b60dcb-071b-4f7a-a5f6-948709c4ea9d",
    "volume_cm3": 2.3996365925881338
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1657,11 +1397,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B01.3mf",
-   "uuid": "e3530862-49d6-453c-b7ff-8182aa33be1e",
+   "uuid": "c1c7e455-69f2-45fd-b95b-baa67981d32c",
    "volume_cm3": 2.255274067663791
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1671,11 +1411,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B02.3mf",
-   "uuid": "eb8240fe-387c-44fa-93e3-87885bc8db83",
+   "uuid": "aadd2021-bb07-48cd-b8a0-334a1f5df408",
    "volume_cm3": 2.264907357852887
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1685,11 +1425,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B03.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B03.3mf",
-   "uuid": "c6f7f201-8b8d-4354-afda-5837370e0971",
+   "uuid": "f94fb582-e0fd-4e5e-a07c-fdc6fb4240b8",
    "volume_cm3": 1.203472635248346
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1699,11 +1439,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B04.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B04.3mf",
-   "uuid": "b68d4679-2a3b-4f57-812b-a5f38e2946e7",
+   "uuid": "e5c951a7-89fd-4618-892c-79b8283de7f7",
    "volume_cm3": 1.7196899035498676
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1713,11 +1453,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B05.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B05.3mf",
-   "uuid": "7d17972a-80db-4b8c-85fe-cfe66c5ec97e",
+   "uuid": "6791311d-983a-4730-b9a5-6ea72e90767e",
    "volume_cm3": 3.286835708158587
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1727,11 +1467,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B06.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B06.3mf",
-   "uuid": "59304afd-96ba-4ba7-8b5b-cd3eeb101744",
+   "uuid": "eb8a385b-f48d-4232-bdaa-119107d14dd2",
    "volume_cm3": 2.4005724170718565
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1741,11 +1481,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B07.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B07.3mf",
-   "uuid": "ebe6f04e-a73d-423e-8c2a-feac0a686466",
+   "uuid": "dcaefb7e-99f0-4016-bc9c-02d77a55ce51",
    "volume_cm3": 0.9863626062802867
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1755,11 +1495,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B08.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B08.3mf",
-   "uuid": "04d9dd3f-c547-487a-8853-45a71f4c7cff",
+   "uuid": "52471e93-f7cb-4eeb-893e-d6a8264cb112",
    "volume_cm3": 0.9289803142465717
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1769,11 +1509,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B09.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B09.3mf",
-   "uuid": "92347cdc-63cd-41d1-8346-6c50ab0958fb",
+   "uuid": "340e76a5-78e5-4d3b-a4b7-2f45e630d5c1",
    "volume_cm3": 0.8959396764686475
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1783,39 +1523,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_EAST_BACK_C15_B10.stl",
    "stl3mf": "maoshi/ARCH09_EAST_BACK_C15_B10.3mf",
-   "uuid": "50e86a36-970e-492f-b7e2-3a388dbc96e7",
+   "uuid": "03e808dc-9324-4959-811a-7ec5eada03de",
    "volume_cm3": 2.0112199433577977
   },
   {
-   "batch": 5,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.SPANDREL.C07.B06",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C07_B06.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C07_B06.3mf",
-   "uuid": "9ddd5b60-eeec-44bc-a3a2-5c35edd38131",
-   "volume_cm3": 3.9795430504336062
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.SPANDREL.C08.B00",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C08_B00.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C08_B00.3mf",
-   "uuid": "ac06874e-f400-4858-bcef-91d9977a1aa9",
-   "volume_cm3": 4.662912885260534
-  },
-  {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -1825,39 +1537,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C09_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C09_B00.3mf",
-   "uuid": "98aefb33-31c5-4e98-9f8e-3456b400ba3d",
-   "volume_cm3": 8.13682556149405
+   "uuid": "d1e54555-7cfd-4ad8-be06-c591a635633b",
+   "volume_cm3": 7.369480341321307
   },
   {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.SPANDREL.C09.B01",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C09_B01.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C09_B01.3mf",
-   "uuid": "c5faec4b-1b27-4281-9918-2c85dd94bb20",
-   "volume_cm3": 1.870763862895027
-  },
-  {
-   "batch": 6,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.SPANDREL.C09.B06",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C09_B06.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C09_B06.3mf",
-   "uuid": "6ad8bf46-c4da-46cf-ac75-3318d0539db4",
-   "volume_cm3": 7.990161008009193
-  },
-  {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1867,11 +1551,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B00.3mf",
-   "uuid": "96d7e6d6-fb7c-4802-bf39-30b380f4dff6",
+   "uuid": "7442c08a-478e-4d04-8925-cf1ce1a038cb",
    "volume_cm3": 0.8598193611573235
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1881,11 +1565,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B01.3mf",
-   "uuid": "85b43b33-7ec5-40bf-ab03-bf4bff04093d",
+   "uuid": "38845095-fe87-4402-8a41-5df980f32b73",
    "volume_cm3": 1.2821931830307327
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1895,39 +1579,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B02.3mf",
-   "uuid": "bcab21bc-780c-4702-955c-d8cc4d3b9954",
-   "volume_cm3": 1.9209611170592666
+   "uuid": "3616b0d2-f5cd-4d37-8531-f16f67dbd951",
+   "volume_cm3": 1.6718997667049842
   },
   {
-   "batch": 7,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.WEST.SPANDREL.C10.B03",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B03.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B03.3mf",
-   "uuid": "505b0a2b-0062-48d9-9ef0-5cf6f0ecfd58",
-   "volume_cm3": 1.0355292593635235
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.WEST.SPANDREL.C10.B07",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B07.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B07.3mf",
-   "uuid": "a2cb3a7d-bffb-46e9-99ee-2eccc158f56f",
-   "volume_cm3": 1.9476676771018155
-  },
-  {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1937,11 +1593,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B08.3mf",
-   "uuid": "d7b4f286-34c0-439f-bc54-83b1de451a13",
+   "uuid": "27888bb4-f86d-46c0-b54d-54d6ee031ea0",
    "volume_cm3": 1.017102779907907
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1951,11 +1607,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C10_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C10_B09.3mf",
-   "uuid": "156e13d7-125d-4ecc-8c71-51e3f3b07d22",
+   "uuid": "31149250-c8e7-46e8-8b6f-2b55bb759c2e",
    "volume_cm3": 3.94358766010064
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1965,11 +1621,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B00.3mf",
-   "uuid": "e9d40cf5-07d2-4a3c-86f0-123b6493175f",
+   "uuid": "8a019a8f-27a8-4c50-bb26-f4247e91a0a3",
    "volume_cm3": 7.364174967225204
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1979,11 +1635,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B04.3mf",
-   "uuid": "4460a347-2a5b-4f77-acc2-3497e8f8489c",
-   "volume_cm3": 3.0958211747692506
+   "uuid": "9068ba56-d859-4e42-927d-eb89a1696b9d",
+   "volume_cm3": 2.0713691906207945
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -1993,11 +1649,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C11_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C11_B05.3mf",
-   "uuid": "20a83697-1041-4b2e-8c67-eeb1f3766a2b",
+   "uuid": "4366885d-b800-49b7-8b61-9e0d785138d6",
    "volume_cm3": 2.917093535442727
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2007,11 +1663,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B00.3mf",
-   "uuid": "c80e47ad-dff6-4436-ad1b-db37308a031a",
+   "uuid": "3a382cad-ed14-4cce-b5f2-9c9807b03188",
    "volume_cm3": 4.354858913158507
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2021,11 +1677,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B01.3mf",
-   "uuid": "17ce8cc2-88e0-48f2-9002-32bb663c2874",
-   "volume_cm3": 2.7073398373407387
+   "uuid": "6acb86c9-eed5-4bd0-8e23-f8eb797a3754",
+   "volume_cm3": 2.4665575344642723
   },
   {
-   "batch": 7,
+   "batch": 4,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2035,11 +1691,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B05.3mf",
-   "uuid": "3c1f7a51-04d5-4fb0-a9ee-e349476d2abc",
+   "uuid": "6ae456c5-5813-462a-b642-1634be4b3de7",
    "volume_cm3": 2.1649367141433555
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2049,11 +1705,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C12_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C12_B06.3mf",
-   "uuid": "80a17463-4504-4f2a-8c7a-f90f60c91142",
+   "uuid": "53b544d8-dee1-4b3c-b61e-d0260a402d64",
    "volume_cm3": 4.26650624628773
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2063,11 +1719,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B00.3mf",
-   "uuid": "813c7cb7-5775-4599-b957-84fece5996d1",
+   "uuid": "c28bfaaf-7e81-4763-9371-c34fa1a82e59",
    "volume_cm3": 4.995926762532867
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2077,11 +1733,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B01.3mf",
-   "uuid": "23106771-10c7-4726-a868-e6ad5ec8c3a9",
+   "uuid": "1e59f91b-391f-44e0-8c29-8bd7dc6ba3f1",
    "volume_cm3": 4.011434108838241
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2091,25 +1747,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B02.3mf",
-   "uuid": "8c7a5022-90bd-4d67-959a-8889bfd97faf",
-   "volume_cm3": 5.60665796835127
+   "uuid": "8ba98e5d-e315-4853-bba0-17b63365bf33",
+   "volume_cm3": 5.128467797602137
   },
   {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.SPANDREL.C13.B03",
-   "material": "qingshi",
-   "role": "SPANDREL",
-   "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B03.stl",
-   "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B03.3mf",
-   "uuid": "5ced401c-2f08-4c1b-9060-b082d9c3a667",
-   "volume_cm3": 1.6839915854556922
-  },
-  {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2119,11 +1761,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B04.3mf",
-   "uuid": "a56d12e8-b4b2-4c42-a8ea-28ab46f7f61e",
-   "volume_cm3": 5.157056980748484
+   "uuid": "0ee38666-74b7-46cf-930c-b659ad08e286",
+   "volume_cm3": 5.281169245177468
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2133,11 +1775,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B05.3mf",
-   "uuid": "79673d4d-3a35-4385-b13c-e87ba6b82e74",
+   "uuid": "b2f349cc-cefa-4e73-a310-f8bda59f838a",
    "volume_cm3": 2.141789186475493
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2147,11 +1789,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B06.3mf",
-   "uuid": "5cacb0ab-dd5a-44c0-884f-498b09069dff",
+   "uuid": "67bd68d1-2e26-496e-b626-c4e660c326fe",
    "volume_cm3": 4.924397604270196
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2161,11 +1803,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C13_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C13_B07.3mf",
-   "uuid": "cb42c85a-08d3-4e9d-9216-b87b8cc23c6f",
+   "uuid": "0daf3be7-c981-40db-a3b6-d281069b8b1b",
    "volume_cm3": 2.02749252463681
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2175,11 +1817,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B00.3mf",
-   "uuid": "b31017ad-d44b-45b5-933b-2f118f6372b7",
+   "uuid": "a994d3b9-ee25-40c7-942e-6931cf5f0568",
    "volume_cm3": 1.036109780009332
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2189,11 +1831,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B01.3mf",
-   "uuid": "10cfe237-a2f1-497f-a453-1ade7bdedaf1",
+   "uuid": "f7ae8c5c-c9e3-4699-bb63-d0f7e5b74010",
    "volume_cm3": 2.971204940719349
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2203,11 +1845,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B02.3mf",
-   "uuid": "b0182b61-93f8-416e-be3c-55a86ecdb7dc",
+   "uuid": "90db9b9b-b595-427e-82ad-6601c1a0699c",
    "volume_cm3": 3.305408547220863
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2217,11 +1859,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B03.3mf",
-   "uuid": "9f27e3aa-f469-41d3-8f9b-159a167f40cb",
+   "uuid": "8ae796b2-cc8b-462d-8716-8d5f3f615c53",
    "volume_cm3": 5.902562300810024
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2231,11 +1873,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B04.3mf",
-   "uuid": "a9c3163f-082d-4bfa-9e44-a73ad0ff75ac",
+   "uuid": "eccf804e-acb2-4fcd-b8c8-f89f638a1700",
    "volume_cm3": 2.3368694758878794
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2245,11 +1887,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B05.3mf",
-   "uuid": "9544c420-b0ff-4ca6-9800-ff86702e2c7a",
+   "uuid": "5253cb47-e4c6-4bf2-a6e8-94231c9f0fd9",
    "volume_cm3": 7.262939684458274
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2259,11 +1901,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B06.3mf",
-   "uuid": "6db3f353-d870-4b0a-993d-90ea757bd2c1",
+   "uuid": "f319c0e0-3fbb-404c-ac91-ccddadf5972c",
    "volume_cm3": 1.0023202419262394
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2273,11 +1915,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B07.3mf",
-   "uuid": "1b032ef7-14de-4cbd-bea8-699d20cbcfc6",
+   "uuid": "1221fa77-0e15-419f-8542-9da93ef64993",
    "volume_cm3": 2.954127276697565
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2287,11 +1929,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B08.3mf",
-   "uuid": "79583bed-64f5-4263-ba0a-202ef95bf86a",
+   "uuid": "fa5cd929-bb74-4b3d-b2e2-afef3592ecf9",
    "volume_cm3": 3.099876100898938
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2301,11 +1943,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B09.3mf",
-   "uuid": "0976fd26-eba6-43fd-8887-d2d03ab34501",
+   "uuid": "1793d14a-21df-44d0-89dc-eaa5e03f1c28",
    "volume_cm3": 3.7054681767601
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2315,11 +1957,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C14_B10.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C14_B10.3mf",
-   "uuid": "0690734a-3465-43fc-9036-4dd3fe5f1279",
+   "uuid": "25a2b44e-2039-46c2-8342-a9fb214c90b1",
    "volume_cm3": 0.9460133054804989
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2329,11 +1971,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B00.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B00.3mf",
-   "uuid": "7a1f5e97-cc38-4d0d-9dc9-c508d24cd729",
+   "uuid": "aa187747-fdb4-41a8-9334-3ed4aad5ccbb",
    "volume_cm3": 5.0661023088829715
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2343,11 +1985,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B01.3mf",
-   "uuid": "97ab4155-453e-48f0-96f8-5e9f42a512d2",
+   "uuid": "08cde108-f608-4bda-9872-d77adcce0f95",
    "volume_cm3": 3.3587104710702382
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2357,11 +1999,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B02.3mf",
-   "uuid": "a065c86b-0b5c-43d8-b9cd-c47182cfa783",
+   "uuid": "80e5c187-7d4f-4d02-9d8e-91749049eeeb",
    "volume_cm3": 4.633327531382439
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2371,11 +2013,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B03.3mf",
-   "uuid": "6306ffe2-e8bf-4349-ab92-b9722a8ef479",
+   "uuid": "2d6b8f67-7084-489a-a28a-36bae706d8f7",
    "volume_cm3": 1.3107126797615662
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2385,11 +2027,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B04.3mf",
-   "uuid": "c6ed8096-dd4f-4546-945c-218f74cd97fa",
+   "uuid": "dcb3785e-21c2-4009-a3bf-aaae9fced5d3",
    "volume_cm3": 3.487565920712986
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2399,11 +2041,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B05.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B05.3mf",
-   "uuid": "30f140d2-a364-4928-be04-b4d91a500100",
+   "uuid": "54be44ef-9cb0-41e8-af1b-bd30c8c9360d",
    "volume_cm3": 3.834314532092217
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2413,11 +2055,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B06.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B06.3mf",
-   "uuid": "4b265841-2c14-4cc6-a1e9-5f9be10f2e7c",
+   "uuid": "0af5a7f3-5e03-43bd-920b-a8380cd0dd81",
    "volume_cm3": 6.7342615980288025
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2427,11 +2069,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B07.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B07.3mf",
-   "uuid": "0aea6c26-6a5f-4841-b58c-a5eae3054eca",
+   "uuid": "902261d9-8f75-4c23-8cc7-44c7faf92700",
    "volume_cm3": 0.9965751238509257
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2441,11 +2083,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B08.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B08.3mf",
-   "uuid": "4048fa37-b2ce-4831-be9e-2b8b17ff637d",
+   "uuid": "8c285f7a-58dc-4dc1-96cc-69143d3dec55",
    "volume_cm3": 2.3180260083272053
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2455,11 +2097,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B09.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B09.3mf",
-   "uuid": "ce33cc46-2d2c-45d0-be20-2b806d7a46dc",
+   "uuid": "ed1d8d64-4c13-4046-8f55-a955383b26ad",
    "volume_cm3": 1.3012781409465326
   },
   {
-   "batch": 6,
+   "batch": 4,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2469,39 +2111,11 @@
    "role": "SPANDREL",
    "stl": "qingshi/ARCH09_WEST_SPANDREL_C15_B10.stl",
    "stl3mf": "qingshi/ARCH09_WEST_SPANDREL_C15_B10.3mf",
-   "uuid": "6ef19e4c-7c5e-4785-bae5-7efeb18543b6",
+   "uuid": "bd7f6ace-fff3-415a-a9fc-312a04d91076",
    "volume_cm3": 4.6959074120135345
   },
   {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.BACK.C07.B06",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C07_B06.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C07_B06.3mf",
-   "uuid": "2b2fd813-ed07-4e8a-bcf9-5cdd73993e26",
-   "volume_cm3": 1.4352560441616045
-  },
-  {
-   "batch": 8,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.BACK.C08.B00",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C08_B00.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C08_B00.3mf",
-   "uuid": "a56af32e-1abe-4a03-82e1-35d12a146ec6",
-   "volume_cm3": 3.320540916387757
-  },
-  {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2511,39 +2125,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C09_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C09_B00.3mf",
-   "uuid": "e6e84716-20d6-4497-8e22-e7521c75b35b",
-   "volume_cm3": 3.6192635675900426
+   "uuid": "1abc9c4c-d28d-4fb1-86e3-aee1cfd197a2",
+   "volume_cm3": 3.2779480781345187
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.BACK.C09.B01",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C09_B01.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C09_B01.3mf",
-   "uuid": "6b337fbd-0581-425d-b602-f887d1f99f44",
-   "volume_cm3": 1.3756419324849603
-  },
-  {
-   "batch": 7,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.BACK.C09.B06",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C09_B06.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C09_B06.3mf",
-   "uuid": "6002f8ff-231d-4c3e-aa4a-b85efe31495e",
-   "volume_cm3": 3.1811360546337175
-  },
-  {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2553,11 +2139,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B00.3mf",
-   "uuid": "072deaba-6cf5-4ec7-8660-f0d593e94ea8",
+   "uuid": "9b7754bc-a69e-4d9a-a02e-dbb9e8b53377",
    "volume_cm3": 0.6793562416166476
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2567,11 +2153,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B01.3mf",
-   "uuid": "be13b658-0049-40ec-a97b-b25326975a0e",
+   "uuid": "437d9779-9753-4bcb-86c8-91896c75e58f",
    "volume_cm3": 0.601937594844261
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2581,39 +2167,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B02.3mf",
-   "uuid": "34e42abd-28ad-40b8-a9d9-15fc037c2fa8",
-   "volume_cm3": 1.85071895732606
+   "uuid": "278d9bb9-f1f7-4e45-8bc3-ad856d065e49",
+   "volume_cm3": 1.6107648226252291
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.WEST.BACK.C10.B03",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C10_B03.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B03.3mf",
-   "uuid": "fb6b1e37-2a79-445b-99d7-a6209e4b0d5d",
-   "volume_cm3": 0.371848458857651
-  },
-  {
-   "batch": 8,
-   "clearance_model_mm": 7.5,
-   "clearance_print_mm": 0.15,
-   "family": "wedge-std",
-   "fit": "TIGHT",
-   "id": "ARCH09.WEST.BACK.C10.B07",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C10_B07.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B07.3mf",
-   "uuid": "9e809c0c-87c3-4b4d-808c-355044bb14ac",
-   "volume_cm3": 0.9601998530675936
-  },
-  {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2623,11 +2181,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B08.3mf",
-   "uuid": "de7feaaf-57ef-4905-82cb-690c4bd6ce41",
+   "uuid": "1f11e823-97eb-404a-b54c-56a83877ae2e",
    "volume_cm3": 0.7436513779263533
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2637,11 +2195,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C10_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C10_B09.3mf",
-   "uuid": "2598bb04-cbd5-4051-bdc9-21266c1c35cf",
+   "uuid": "bb36c820-aa22-40fc-bcdb-08e6f032ac4b",
    "volume_cm3": 1.8065405136244206
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2651,11 +2209,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B00.3mf",
-   "uuid": "6fc03d8f-0a93-4916-b1a8-71bd7f9ee7ad",
+   "uuid": "6bfc3739-d0dd-4acb-ada1-b26da8930ef9",
    "volume_cm3": 2.7982635393569666
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2665,11 +2223,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B04.3mf",
-   "uuid": "6bb7cf4a-8820-44fb-86c9-c2de1d4a986f",
-   "volume_cm3": 1.1090392484732692
+   "uuid": "6de7e49a-99ca-4d23-9514-d5b44568b8e6",
+   "volume_cm3": 0.7420421273680309
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2679,11 +2237,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C11_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C11_B05.3mf",
-   "uuid": "038f339f-f8ee-4e1a-a170-2e7357f2c415",
+   "uuid": "8b8192ff-d6fd-4800-a77a-9a97fcd3da34",
    "volume_cm3": 2.362488126613992
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2693,11 +2251,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B00.3mf",
-   "uuid": "f6c76e69-fcc0-4baf-8f11-568ce69f7ce7",
+   "uuid": "29d69e15-9254-4701-b762-0e7d826b1699",
    "volume_cm3": 3.228109462242702
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2707,11 +2265,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B01.3mf",
-   "uuid": "b13f9808-c557-46e4-8df3-5b330925c049",
-   "volume_cm3": 1.0787533380790324
+   "uuid": "77703b75-7c3b-4a86-b64a-a595741efd2b",
+   "volume_cm3": 0.9828124039577083
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2721,11 +2279,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B05.3mf",
-   "uuid": "6efa65f3-860e-45e0-afb0-b5c8aff2d715",
+   "uuid": "1e2ae9d7-54d8-45c8-8a92-4beffa2432cd",
    "volume_cm3": 0.8186446136020269
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "wedge-std",
@@ -2735,11 +2293,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C12_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C12_B06.3mf",
-   "uuid": "132bac58-d959-4f0d-985d-5d321f3f3fbb",
+   "uuid": "1ac82925-f60e-4990-beaf-c64613eb560d",
    "volume_cm3": 2.966429039276484
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2749,11 +2307,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B00.3mf",
-   "uuid": "b3f391e1-8a69-4ba9-a3f8-762c4cdec1be",
+   "uuid": "24cf27da-e453-4a84-8135-ecfd185505b9",
    "volume_cm3": 1.702726828267806
   },
   {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2763,11 +2321,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B01.3mf",
-   "uuid": "db15d91b-71a5-48fd-943d-0c061e39e0dc",
+   "uuid": "4458a72c-3682-4155-b550-8e500657e662",
    "volume_cm3": 2.7930756711268625
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2777,25 +2335,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B02.3mf",
-   "uuid": "331d0b5d-d9e1-459f-acbc-7412413624d8",
-   "volume_cm3": 2.321360927117446
+   "uuid": "c095eb7d-6720-464c-a777-2880c6b4864a",
+   "volume_cm3": 2.123372752276974
   },
   {
-   "batch": 9,
-   "clearance_model_mm": 15.0,
-   "clearance_print_mm": 0.3,
-   "family": "wedge-std",
-   "fit": "NORMAL",
-   "id": "ARCH09.WEST.BACK.C13.B03",
-   "material": "maoshi",
-   "role": "BACK",
-   "stl": "maoshi/ARCH09_WEST_BACK_C13_B03.stl",
-   "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B03.3mf",
-   "uuid": "c4af181b-6051-440e-9ebb-26d57d814e56",
-   "volume_cm3": 1.3175887613875386
-  },
-  {
-   "batch": 7,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2805,11 +2349,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B04.3mf",
-   "uuid": "d6b56d84-70ce-47d5-b6a3-4b22bc7d99ca",
-   "volume_cm3": 2.3839255646795157
+   "uuid": "63dd2684-bc2c-483a-b4e2-236f34e66096",
+   "volume_cm3": 2.441298287371359
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2819,11 +2363,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B05.3mf",
-   "uuid": "6662f93d-d668-46d5-a342-5a67782a810b",
+   "uuid": "b5b80bba-1627-4c6c-8a02-844096eaee42",
    "volume_cm3": 1.7811842253917065
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2833,11 +2377,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B06.3mf",
-   "uuid": "e0572558-bc5d-4006-aab4-af346dfc84a8",
+   "uuid": "93392bca-df7a-4a26-8979-24e9271b468b",
    "volume_cm3": 2.193938516429455
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2847,11 +2391,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C13_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C13_B07.3mf",
-   "uuid": "c4f69105-da9f-4eaa-9b89-250ed721c5d0",
+   "uuid": "9017c11b-f66e-4880-900a-b7129780ce48",
    "volume_cm3": 2.0137464104381206
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2861,11 +2405,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B00.3mf",
-   "uuid": "eb6452f6-4a69-460d-9064-a9f1b1a7c5bf",
+   "uuid": "3c601eec-cca7-4444-bebc-bd1b206f9e00",
    "volume_cm3": 0.7061513856976461
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2875,11 +2419,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B01.3mf",
-   "uuid": "cc970db7-bfa0-4bcc-871c-ccaadfbdd901",
+   "uuid": "9efe6c14-50a1-4dfa-a0ef-aa67528fc279",
    "volume_cm3": 0.9786972834997306
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2889,11 +2433,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B02.3mf",
-   "uuid": "a15314f8-d0ee-4d65-a599-b2781ea85d58",
+   "uuid": "b43a2c52-8c35-4324-a56b-e84a9395e7b9",
    "volume_cm3": 2.3396384950206963
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2903,11 +2447,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B03.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B03.3mf",
-   "uuid": "778fc360-6297-4dfb-8ed8-30163970987f",
+   "uuid": "1eac8ebb-5002-4dc8-b350-fd466a7ecee2",
    "volume_cm3": 2.310508977490567
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2917,11 +2461,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B04.3mf",
-   "uuid": "48cf2924-9df9-443b-bb24-1711d6e9478d",
+   "uuid": "0a3341d7-c4be-4875-baa7-ba9ca161e6f3",
    "volume_cm3": 1.9980792362843114
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2931,11 +2475,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B05.3mf",
-   "uuid": "18fe263c-eab4-4a24-ae95-4e66602fb0e5",
+   "uuid": "55e21f3a-e6c3-4994-89a5-1ec0c383f91e",
    "volume_cm3": 3.2794846020089894
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2945,11 +2489,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B06.3mf",
-   "uuid": "fac9b8bd-d3c0-4730-96da-ddc5dabd97aa",
+   "uuid": "19cc4d55-f4bc-464e-9eb9-cb8854577b12",
    "volume_cm3": 0.7813115762724989
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2959,11 +2503,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B07.3mf",
-   "uuid": "bf3cc3d6-6a6d-4964-a907-0e5443d11b67",
+   "uuid": "36156a18-814b-48df-adff-53d0681d240c",
    "volume_cm3": 1.4438321628330146
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2973,11 +2517,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B08.3mf",
-   "uuid": "b7771a99-06ec-40f6-944d-061a22f95604",
+   "uuid": "f635787f-ee39-4fdb-b94a-593e487f76c6",
    "volume_cm3": 2.049528356388059
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -2987,11 +2531,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B09.3mf",
-   "uuid": "c2d1ffff-9dae-4617-9c0f-6205480eeaa7",
+   "uuid": "11b1f79f-10a2-4c7d-a33d-ed18a1b40ac0",
    "volume_cm3": 1.7304570410882394
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3001,11 +2545,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C14_B10.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C14_B10.3mf",
-   "uuid": "ee500c97-b1bc-4c0c-8b6a-7d6486e0bc5c",
+   "uuid": "6fc853db-9241-42e6-8625-27788192480d",
    "volume_cm3": 0.6919966290139828
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3015,11 +2559,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B00.3mf",
-   "uuid": "3dc373c5-339c-4207-9fdf-f25d5d998b86",
+   "uuid": "58e0c1a9-b94f-49b9-8d35-9d595946eb93",
    "volume_cm3": 2.3996365925881338
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3029,11 +2573,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B01.3mf",
-   "uuid": "e8de40ce-d0e8-42fa-8a9c-896c8fd31fcb",
+   "uuid": "a4911ade-8ab6-4446-ad66-b022ea2b7841",
    "volume_cm3": 2.255274067663791
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3043,11 +2587,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B02.3mf",
-   "uuid": "a5181c61-7de9-4d21-b743-7988452edcd7",
+   "uuid": "65a5d03f-9819-4ea2-98bd-640350ed4cd5",
    "volume_cm3": 2.264907357852887
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3057,11 +2601,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B03.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B03.3mf",
-   "uuid": "0badf272-3dd1-47ef-adda-197ce4dfd3e8",
+   "uuid": "71a281bb-1867-4335-b209-d8ac1963d4d8",
    "volume_cm3": 1.203472635248346
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3071,11 +2615,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B04.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B04.3mf",
-   "uuid": "1c8c45e0-58b3-4a15-bc53-b2e1de81a65a",
+   "uuid": "127e6b55-b53a-4a23-82f8-7e4ec6ae9de3",
    "volume_cm3": 1.719689903549868
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3085,11 +2629,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B05.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B05.3mf",
-   "uuid": "dd097e65-1d78-4e37-9f0e-88209d229ae0",
+   "uuid": "e864feaf-be6f-4b8f-97a4-b65f61dc99e7",
    "volume_cm3": 3.286835708158586
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3099,11 +2643,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B06.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B06.3mf",
-   "uuid": "dac300e7-c449-4da9-8053-f9345536078a",
+   "uuid": "407fbfbe-6d48-46f6-ae7e-e641496f489f",
    "volume_cm3": 2.4005724170718565
   },
   {
-   "batch": 8,
+   "batch": 5,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3113,11 +2657,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B07.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B07.3mf",
-   "uuid": "0454c3a5-7a04-430c-a197-5b200c8d0ec1",
+   "uuid": "bd123525-1143-4bb1-8c3e-548bc417cac5",
    "volume_cm3": 0.9863626062802867
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3127,11 +2671,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B08.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B08.3mf",
-   "uuid": "2f29b534-31d5-4899-a3d5-a148181635b0",
+   "uuid": "6fc27c5c-fbbf-4136-a654-e9160427cf47",
    "volume_cm3": 0.9289803142465717
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3141,11 +2685,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B09.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B09.3mf",
-   "uuid": "fc3f3efd-0965-4f5c-9079-7eef188e9e6c",
+   "uuid": "29c1758e-7eb0-48e2-a602-a9e930568540",
    "volume_cm3": 0.8959396764686475
   },
   {
-   "batch": 8,
+   "batch": 6,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "wedge-std",
@@ -3155,11 +2699,11 @@
    "role": "BACK",
    "stl": "maoshi/ARCH09_WEST_BACK_C15_B10.stl",
    "stl3mf": "maoshi/ARCH09_WEST_BACK_C15_B10.3mf",
-   "uuid": "5a837c76-7174-46ab-b3a1-e6a758ef7f91",
+   "uuid": "08720f2b-f515-4972-801f-5d3407ee1228",
    "volume_cm3": 2.0112199433577977
   },
   {
-   "batch": 3,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3169,11 +2713,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C13_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C13_B00.3mf",
-   "uuid": "cdac9983-fc9e-4648-9a3f-6025fbe22443",
-   "volume_cm3": 116.33926169883928
+   "uuid": "8bd8b627-2ff4-461f-bb86-6fb860c67556",
+   "volume_cm3": 108.11367894189559
   },
   {
-   "batch": 3,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3183,11 +2727,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C13_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C13_B02.3mf",
-   "uuid": "eebdab80-51d7-424e-8411-d2cbbd1bfb3e",
-   "volume_cm3": 70.93543188533864
+   "uuid": "d1cab1b5-638e-4926-93c9-032fc06218a2",
+   "volume_cm3": 67.66404178473056
   },
   {
-   "batch": 4,
+   "batch": 2,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3197,11 +2741,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B00.3mf",
-   "uuid": "b8932b85-2f64-453f-a590-7dea45fe3c6d",
+   "uuid": "78f8498f-8c6b-426e-a954-15e6abdc730b",
    "volume_cm3": 115.75781244836077
   },
   {
-   "batch": 4,
+   "batch": 2,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3211,11 +2755,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B01.3mf",
-   "uuid": "bf56f314-4495-4bf4-92b7-c2fb1c2d31e3",
-   "volume_cm3": 88.9535928098328
+   "uuid": "761a2b59-16e7-436e-abcc-c2f01dd43a7b",
+   "volume_cm3": 82.8163895819821
   },
   {
-   "batch": 4,
+   "batch": 2,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3225,11 +2769,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C14_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C14_B02.3mf",
-   "uuid": "620050c6-f1ec-4bd9-ac54-4da4d6ee8efd",
+   "uuid": "3b3b28fb-d31b-4ac3-a5ad-3a534382864f",
    "volume_cm3": 115.75781244836077
   },
   {
-   "batch": 5,
+   "batch": 3,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3239,11 +2783,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B00.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B00.3mf",
-   "uuid": "5dac2d4a-405e-4bad-b29d-7b09e49b6e84",
+   "uuid": "9c95e942-47fa-4ff5-b5fa-834476a12730",
    "volume_cm3": 87.09124650822493
   },
   {
-   "batch": 5,
+   "batch": 3,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3253,11 +2797,11 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B01.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B01.3mf",
-   "uuid": "0ceafe4b-7644-4677-ad43-7f95bee75442",
+   "uuid": "8713301f-9e2d-4242-90d3-ac18d82b2cef",
    "volume_cm3": 89.39513459649127
   },
   {
-   "batch": 5,
+   "batch": 3,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "slab",
@@ -3267,7 +2811,7 @@
    "role": "CORE",
    "stl": "maoshi/ARCH09_EAST_CORE_C15_B02.stl",
    "stl3mf": "maoshi/ARCH09_EAST_CORE_C15_B02.3mf",
-   "uuid": "b150fe79-fbd7-407d-b1a7-af99e4a49d68",
+   "uuid": "f7517742-88a7-4655-acb5-00305432a261",
    "volume_cm3": 87.09124650822493
   },
   {
@@ -3276,17 +2820,16 @@
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
    "fit": "NORMAL",
-   "fit_diagonal": true,
    "id": "ARCH09.EAST.RING.C00.B01",
    "material": "qingshi",
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B01.3mf",
-   "uuid": "b6e9b04c-4a9b-4f64-a173-3396897dee9b",
-   "volume_cm3": 25.13307124292949
+   "uuid": "1e8dfc3a-3cdd-4dd0-ab2f-b2702d0f5b53",
+   "volume_cm3": 30.026426435997575
   },
   {
-   "batch": 1,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3296,11 +2839,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B02.3mf",
-   "uuid": "af71b3a6-edb0-47b6-a6b8-e05a5c214f5b",
-   "volume_cm3": 35.19061660750495
+   "uuid": "76c71cb8-7365-4423-8163-2305f4890469",
+   "volume_cm3": 30.556783717626544
   },
   {
-   "batch": 1,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3310,11 +2853,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B03.3mf",
-   "uuid": "af35a51b-5140-4693-877b-6d6fb753b4ec",
-   "volume_cm3": 34.85954894847571
+   "uuid": "54991d94-d55d-4269-86a7-d6975c266bd0",
+   "volume_cm3": 29.597423506670285
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3324,25 +2867,25 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B04.3mf",
-   "uuid": "ef1a82b0-f4f5-4bf6-96d5-d2a73ce2294c",
-   "volume_cm3": 33.283155959469525
+   "uuid": "1b401527-9903-4b18-b856-7f298fcfd345",
+   "volume_cm3": 28.28071775400226
   },
   {
-   "batch": 2,
-   "clearance_model_mm": 25.0,
-   "clearance_print_mm": 0.5,
+   "batch": 0,
+   "clearance_model_mm": 15.0,
+   "clearance_print_mm": 0.3,
    "family": "ring-wedge",
-   "fit": "LOOSE",
+   "fit": "NORMAL",
    "id": "ARCH09.EAST.RING.C00.B05",
    "material": "qingshi",
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B05.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B05.3mf",
-   "uuid": "9da30eb6-77ad-46ce-994e-8ff8be4cbf42",
-   "volume_cm3": 30.205705992756286
+   "uuid": "3521de66-ee24-490e-898e-ade03a873361",
+   "volume_cm3": 26.979200611242078
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3352,11 +2895,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B06.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B06.3mf",
-   "uuid": "df7bce35-5696-4018-bb4d-366a21502ad4",
-   "volume_cm3": 29.964109793308896
+   "uuid": "d71b9cfe-d838-41b5-95bc-485bc511fab8",
+   "volume_cm3": 25.823002392191107
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3366,11 +2909,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B07.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B07.3mf",
-   "uuid": "053cfdc9-5214-48d6-9ba9-6f9c7eff3bb0",
-   "volume_cm3": 28.65240532988996
+   "uuid": "f0384152-e698-4cf0-8c56-87a7dfedc513",
+   "volume_cm3": 24.880459294902867
   },
   {
-   "batch": 3,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3380,11 +2923,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B08.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B08.3mf",
-   "uuid": "ca7969f8-d604-4b98-8c09-c5a7c1de6732",
-   "volume_cm3": 27.91392991250887
+   "uuid": "d6b93d93-f4cb-455a-a204-c4f98f294a7b",
+   "volume_cm3": 24.172210624781897
   },
   {
-   "batch": 3,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3394,11 +2937,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B09.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B09.3mf",
-   "uuid": "e326fc8f-8000-4c67-8e9a-1bebd79152d2",
-   "volume_cm3": 31.564656631417314
+   "uuid": "33f1a696-a481-4cc3-848a-a256081f50a7",
+   "volume_cm3": 26.95425747358245
   },
   {
-   "batch": 3,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3408,11 +2951,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B10.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B10.3mf",
-   "uuid": "07dab96f-4309-4055-871d-243cc736986a",
-   "volume_cm3": 27.916694899475825
+   "uuid": "1cc1f4d4-47c5-485d-acfb-cf5ec6efdb80",
+   "volume_cm3": 24.171872329475498
   },
   {
-   "batch": 2,
+   "batch": 1,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3422,11 +2965,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B11.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B11.3mf",
-   "uuid": "30ebfb5a-1856-4ad5-bb57-8ca8bcd4fb35",
-   "volume_cm3": 28.651978094071662
+   "uuid": "e373f1f3-9809-4b7d-92e4-4d4d90650510",
+   "volume_cm3": 24.879712043130738
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3436,25 +2979,25 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B12.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B12.3mf",
-   "uuid": "ff884cb3-dfef-48e5-8b53-9309f0692897",
-   "volume_cm3": 29.962291575753174
+   "uuid": "4e1dd305-5135-446c-a1de-9c3dfec728e8",
+   "volume_cm3": 25.82167610509638
   },
   {
-   "batch": 2,
-   "clearance_model_mm": 25.0,
-   "clearance_print_mm": 0.5,
+   "batch": 0,
+   "clearance_model_mm": 15.0,
+   "clearance_print_mm": 0.3,
    "family": "ring-wedge",
-   "fit": "LOOSE",
+   "fit": "NORMAL",
    "id": "ARCH09.EAST.RING.C00.B13",
    "material": "qingshi",
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B13.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B13.3mf",
-   "uuid": "4fdd73a0-b4af-40ac-8a17-3fb719264a47",
-   "volume_cm3": 30.202560619564732
+   "uuid": "933538e8-668d-40e5-a57b-48d20702eb68",
+   "volume_cm3": 26.97694010537326
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3464,11 +3007,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B14.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B14.3mf",
-   "uuid": "ee92a716-8afb-470b-83f7-1541caeb1d27",
-   "volume_cm3": 33.27707372999909
+   "uuid": "737ab527-49eb-48e3-8666-e5066585228c",
+   "volume_cm3": 28.276776648626637
   },
   {
-   "batch": 2,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3478,11 +3021,11 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B15.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B15.3mf",
-   "uuid": "bb64e907-db79-46ee-a7d2-48084983c969",
-   "volume_cm3": 34.84661632756903
+   "uuid": "da9f14ae-c33b-4d08-8fbd-66403c69bffd",
+   "volume_cm3": 29.589910942038273
   },
   {
-   "batch": 1,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
@@ -3492,26 +3035,25 @@
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B16.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B16.3mf",
-   "uuid": "72f20f58-09cb-43ac-9055-f2917d660b5a",
-   "volume_cm3": 35.154106258301
+   "uuid": "0f3e966b-fba5-47fd-bc6d-b875c1f9969b",
+   "volume_cm3": 30.53971227237361
   },
   {
-   "batch": 1,
+   "batch": 0,
    "clearance_model_mm": 15.0,
    "clearance_print_mm": 0.3,
    "family": "ring-wedge",
    "fit": "NORMAL",
-   "fit_diagonal": true,
    "id": "ARCH09.EAST.RING.C00.B17",
    "material": "qingshi",
    "role": "RING",
    "stl": "qingshi/ARCH09_EAST_RING_C00_B17.stl",
    "stl3mf": "qingshi/ARCH09_EAST_RING_C00_B17.3mf",
-   "uuid": "211c7462-028b-45a4-b773-b58409f70a73",
-   "volume_cm3": 25.003552100049408
+   "uuid": "081d4722-a06c-4e0e-8b9d-6562ca9fe84b",
+   "volume_cm3": 29.967366395419027
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3521,11 +3063,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B01.3mf",
-   "uuid": "40487ad7-e65b-4042-a8eb-fd9801686657",
+   "uuid": "29c3f04c-25c7-45da-ab19-f25ff2d854e6",
    "volume_cm3": 0.22528250833787128
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3535,11 +3077,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B02.3mf",
-   "uuid": "6ea76ecd-aba6-4cf2-827b-d4f3b208b8e9",
+   "uuid": "fb13ac8a-2b82-4eaa-a812-eb3a0a43fe1a",
    "volume_cm3": 0.22527290745350295
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3549,11 +3091,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B03.3mf",
-   "uuid": "694caf47-619b-43f8-beda-b857fb85062b",
+   "uuid": "de717730-7b4b-4b34-b736-9632218bbeca",
    "volume_cm3": 0.2252631651109348
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3563,11 +3105,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C00_B04.3mf",
-   "uuid": "9707824e-8c22-475b-8372-9a5cad228b24",
+   "uuid": "0ff88232-5297-43a1-a9d8-8b46762492cf",
    "volume_cm3": 0.225270494538407
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3577,11 +3119,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B01.3mf",
-   "uuid": "57e19e1c-79a1-48df-84f7-8ea407eef258",
+   "uuid": "3b03dbf1-e087-451c-8012-35f6834cc88c",
    "volume_cm3": 0.2486365588899483
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3591,11 +3133,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B02.3mf",
-   "uuid": "9523a449-ec83-46c8-9e29-b6b2db0648f0",
+   "uuid": "ae0bd242-e5a8-401e-9c21-a00e80f4e67a",
    "volume_cm3": 0.13932082617406372
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3605,11 +3147,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B03.3mf",
-   "uuid": "d0df62ae-addd-41fd-9ace-3788061d6d4e",
+   "uuid": "7b676db8-4dea-4ead-992b-c92c228b796e",
    "volume_cm3": 0.24862580938968976
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3619,11 +3161,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C01_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C01_B04.3mf",
-   "uuid": "e7646bf3-fb90-4ba9-88ca-660256655d7a",
+   "uuid": "6fbee705-dfac-4cd1-8ed5-a06155755087",
    "volume_cm3": 0.1393217174866504
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3633,11 +3175,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B01.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B01.3mf",
-   "uuid": "b4f99131-d980-496f-8a24-78cad7e28770",
+   "uuid": "fa73dfd9-cc7a-482a-8223-cd098d0245fc",
    "volume_cm3": 0.2720152777225707
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3647,11 +3189,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B02.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B02.3mf",
-   "uuid": "08d5dc64-26de-4393-a7c9-7cfa013c5788",
+   "uuid": "6611770c-c8b1-4efa-a9d1-66c1f767be72",
    "volume_cm3": 0.27200711069397365
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3661,11 +3203,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B03.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B03.3mf",
-   "uuid": "02f326e4-f1e9-4663-9f1f-92f4f13e6154",
+   "uuid": "031c6513-5430-4f88-8fdd-7f0c2464da92",
    "volume_cm3": 0.2719975447398967
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3675,11 +3217,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_EAST_IMPOST_C02_B04.stl",
    "stl3mf": "qingshi/ARCH09_EAST_IMPOST_C02_B04.3mf",
-   "uuid": "5648b2bd-81d2-461e-ac69-f92b7c906a4d",
+   "uuid": "d6845528-d57f-45ba-89f6-8ec91a2f5a24",
    "volume_cm3": 0.2720033334364928
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3689,11 +3231,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B01.3mf",
-   "uuid": "7eefe75f-e5a1-421f-96b2-28fadb393b00",
+   "uuid": "81f76f16-a493-4ab2-b469-29e7cb4190b5",
    "volume_cm3": 0.22528250833787128
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3703,11 +3245,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B02.3mf",
-   "uuid": "62cdbea4-2c7f-4446-ab63-deb9312c99bb",
+   "uuid": "38072da0-4b7b-4a47-b2ae-0c19fd6e17f9",
    "volume_cm3": 0.22527290745350295
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3717,11 +3259,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B03.3mf",
-   "uuid": "ff475501-2f67-45be-bccd-60668bc5703f",
+   "uuid": "c45da0f6-5765-4cd6-99ea-2c57c0634d04",
    "volume_cm3": 0.22526316511093475
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3731,11 +3273,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C00_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C00_B04.3mf",
-   "uuid": "d2d3aad6-34ae-488c-8cd7-45c8df01cca1",
+   "uuid": "377c16ee-743e-4364-b855-a52845cb80ab",
    "volume_cm3": 0.22527049453840703
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3745,11 +3287,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B01.3mf",
-   "uuid": "99f19c7b-dd9c-4228-a75b-3846a3499308",
+   "uuid": "3f8eda1d-5868-46c6-a9a4-243abc89e0e0",
    "volume_cm3": 0.24863655888994823
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3759,11 +3301,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B02.3mf",
-   "uuid": "8cdce1fb-27fe-49e9-a0e2-bbbdd5cd08fe",
+   "uuid": "2c7fba3d-c8a6-4327-82bf-d64b0d8ef63e",
    "volume_cm3": 0.13932082617406372
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3773,11 +3315,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B03.3mf",
-   "uuid": "e097d146-51ae-4557-8268-37173c74bd06",
+   "uuid": "f5b338c3-f27c-4072-b54d-d26bcaef94dc",
    "volume_cm3": 0.24862580938968976
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3787,11 +3329,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C01_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C01_B04.3mf",
-   "uuid": "a920706b-8b8f-4f7e-99e4-610f947455c6",
+   "uuid": "a8e5977b-1f0f-478b-96c0-2d4dd2438fc9",
    "volume_cm3": 0.1393217174866504
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3801,11 +3343,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B01.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B01.3mf",
-   "uuid": "f2bf82b9-2e55-471d-8203-ea1c652654a8",
+   "uuid": "4a14f8e5-e648-4026-a222-891c9f6f9ca7",
    "volume_cm3": 0.2720152777225707
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3815,11 +3357,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B02.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B02.3mf",
-   "uuid": "6057aa07-b79f-41bf-bd1f-c802ad9903d3",
+   "uuid": "dc83e98f-f6ff-4888-acab-7ec1bb44165f",
    "volume_cm3": 0.27200711069397365
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3829,11 +3371,11 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B03.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B03.3mf",
-   "uuid": "75a7041b-e333-48dd-bea4-5f508963bb9f",
+   "uuid": "bbc87d75-9ef9-4df7-bae6-7b8f794a985e",
    "volume_cm3": 0.2719975447398967
   },
   {
-   "batch": 9,
+   "batch": 6,
    "clearance_model_mm": 7.5,
    "clearance_print_mm": 0.15,
    "family": "impost-step",
@@ -3843,7 +3385,7 @@
    "role": "IMPOST",
    "stl": "qingshi/ARCH09_WEST_IMPOST_C02_B04.stl",
    "stl3mf": "qingshi/ARCH09_WEST_IMPOST_C02_B04.3mf",
-   "uuid": "bcfaf62f-6e95-43ab-b0de-d45dfd118887",
+   "uuid": "d96656e8-5fe3-4850-bfa1-1b8e2dcdcb0d",
    "volume_cm3": 0.2720033334364928
   }
  ]

@@ -14,12 +14,12 @@ G2 门产物: 全石流形+壁厚+分批+装配图 (report verdict: PASS)
    对角约定敏感: 两对角约定实测最大相对差 6.2e-3 —— 本 manifest
    的 cm3/h 数字是【耳切对角约定】口径, 换剖分器有 ~0.6% 级漂移,
    不是同一数字。
-2. 估时 151.2h 是【实心体上界】(12cm3/h 经验): 未扣 infill/支撑/
+2. 估时 138.7h 是【实心体上界】(12cm3/h 经验): 未扣 infill/支撑/
    失败重打; 实际耗时的唯一权威是切片器实测。
 3. CORE 体积与面石【有意重叠】(y_extent=full_wall, 牺牲芯建模语
    义) —— 各族体积不可加和成'净打印料'; 与面石同批时以面石外形
    为准抠芯。
-4. 超床件以旋转后判定: 对角斜置(fit_diagonal)非独占批 2 块: ARCH09.EAST.RING.C00.B01, ARCH09.EAST.RING.C00.B17
+4. 超床件以旋转后判定: 对角斜置(fit_diagonal)非独占批 0 块: 无
    真超床独占批(oversize) 0 块: 无
 
 ## 缝的打印当量(模型 mm -> 打印件 mm)
@@ -40,21 +40,21 @@ G2 门产物: 全石流形+壁厚+分批+装配图 (report verdict: PASS)
 单元, 谱系 meta.scope.run_units.parent_ids; 现行真总体 475 石全
 单 run, 机制为断料场景结构保证。试印包打包层遇多 run 石响亮拒绝
 (逐 run STL 归 T5/T7 打包轮)。
-- legacy clip 存量(check_stone.legacy_clip_survey, n=1568, n_fail=896): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, 本轮不修。
+- legacy clip 存量(check_stone.legacy_clip_survey, n=1580, n_fail=907): 以 RING 为准排除不入 verdict, 几何质量债务记 T5/T7 追偿单, 本轮不修。
 
 ## 构成
 | 族 | 数量 | 体积 cm3(打印件) |
 |---|---|---|
 | impost-step | 24 | 5.53 |
-| ring-wedge | 17 | 521.78 |
-| slab | 8 | 771.32 |
-| wedge-std | 196 | 515.61 |
+| ring-wedge | 17 | 467.49 |
+| slab | 8 | 753.69 |
+| wedge-std | 168 | 437.70 |
 
-- 石数: 245 (roles: {"BACK": 98, "CORE": 8, "IMPOST": 24, "RING": 17, "SPANDREL": 98})
-- 总体积: 1814.2 cm3(耳切对角约定口径, 实心体上界); 0.4mm 喷嘴 FDM 经验估时 ~151.2 h。
+- 石数: 217 (roles: {"BACK": 84, "CORE": 8, "IMPOST": 24, "RING": 17, "SPANDREL": 84})
+- 总体积: 1664.4 cm3(耳切对角约定口径, 实心体上界); 0.4mm 喷嘴 FDM 经验估时 ~138.7 h。
 
 ## RING 真相弃用/修配件清单(T8b ring_dedup)
-- 带 subsume(整块弃, 材料由 RING 代表): 0 块; trim(按 masonry 切割折线裁短后保留拼装): 475 块; 裁后薄片(thin_merge, 不单独印): 0 块。明细: g2_report.json ring_dedup.pairs(逐块 collide/unique 体积 pre-inset 口径)。
+- 带 subsume(整块弃, 材料由 RING 代表): 0 块; trim(按 masonry 切割折线裁短后保留拼装): 435 块; 裁后薄片(thin_merge, 不单独印): 0 块。明细: g2_report.json ring_dedup.pairs(逐块 collide/unique 体积 pre-inset 口径)。
 - trim 修配件 id: ARCH01.EAST.CORE.C07.B00, ARCH01.EAST.CORE.C08.B02, ARCH02.EAST.CORE.C09.B00, ARCH02.EAST.CORE.C09.B02, ARCH02.EAST.SPANDREL.C04.B00, ARCH02.EAST.SPANDREL.C04.B04, ARCH02.EAST.SPANDREL.C05.B00, ARCH02.EAST.SPANDREL.C05.B02, ARCH02.WEST.SPANDREL.C04.B00, ARCH02.WEST.SPANDREL.C04.B04, ARCH02.WEST.SPANDREL.C05.B00, ARCH02.WEST.SPANDREL.C05.B02
 
 ## 切片器注意

@@ -90,14 +90,28 @@ PIER_W_INT = [2.830, 2.736, 2.641, 2.547, 2.453, 2.359, 2.264, 2.170,  # [工作
               2.170, 2.264, 2.359, 2.453, 2.547, 2.641, 2.736, 2.830]  # 半表和=20.0(4对×5.0)精确
 
 
-# --- 六审四刀#1: 矢跨比剖面 + 两圆心尖拱纯数学(单一数据源) ---
-# 0.61 版中央 cusp 角 25°(GPT: 读成哥特), 收到 0.56 后 e/a=0.127、cusp 13°
-# —— "圆弧主导+轻微收尖"。soft-min 冠钝化试验已废(e=0 端孔两弧全等时整弧
-# 均匀沉 s*ln2, 是缩水不是圆角)。bridge_geom2/qa_bridge/masonry 消费同一函数。
+# --- 矢跨比剖面 + 单心圆弧拱纯数学(单一数据源) ---
+# [2026-10-08 拱线族返工(用户实锤几何级缺陷)] 两圆心尖拱(ogee)整体作废,
+# 全 17 孔改单心圆弧拱(round arch)。依据三线互证:
+#   ① refs/construction_history.md B线: "本桥券洞=圆弧拱, 中孔近半圆、向两端
+#      渐浅(M19/M20 实测 RISE_E 0.32); '尖拱推力优势'论述不适用" —— 研究档
+#      写对了, 几何没回灌;
+#   ② refs/gpt_brief.md: 半圆券 f/l=0.50, 近正面照片券洞宽高比 1.00(斜拍压缩
+#      曾致误判尖拱 1.19);
+#   ③ refs/ref_elevation.jpg 正视照片: 17 孔全圆弧无尖拱;
+#      bridge_geom.py 旧模块头注: 实测连通域宽高比 0.76~0.98 集中于 1。
+# 单心圆弧过三锚点(两起拱点 (±a, spz) 与冠点 (0, spz+b))的圆唯一:
+#   圆心高度偏移 d = (b²-a²)/(2b)(b>a 在起拱线上方, b<a 在下方, b=a 恰在起拱线),
+#   半径 R = b - d = (a²+b²)/(2b)。b>a 时圆弧过自身的"赤道"再上冠, 起拱段
+#   向墩内微 horseshoe 外鼓(孔9 R-a=2.7cm, 渲染不可分辨); b<a 即 M15 已修的
+#   单心平拱分支, 本返工把它推广为全孔唯一定义。rise_ratio 剖面零改动
+#   (M19/M20 实测比值; 冠/起拱锚点逐位不变 —— 错的是族不是数)。
+# bridge_geom2/qa_bridge/masonry 消费同一函数。
 import math as _math
 RISE_C = 0.56             # [图像推导] 六审标定: 中央孔矢跨比(与 winter/ovf 侧视对照定)
                           # [M19] 冬照中央冠5.9/起拱1.4 → 隐含 0.53±0.08, 覆盖 0.56(残差0.03)
                           # → 冻结不动; 改之须同步 ARCH_RATIO_TARGET 判据。
+                          # [拱线族返工 2026-10-08] 沿用: 圆弧族只换曲线族, 矢跨剖面不动。
 RISE_E = 0.32             # [图像推导] M19 冬照重标定: 端孔矢跨比: 端冠1.7 & 起拱近水(≥0.15 硬约束)
                           # → rise ≤ ~1.45/4.50 → 0.32±0.05(旧 0.46 使端起拱线
                           # = 1.70-2.07 = -0.37 没入水面, 违反 springer≥0.15 硬约束)
@@ -105,14 +119,6 @@ SPRINGER_WATER_MIN = 0.15  # [工作值] 起拱线水上硬下限(m, 常水位 z
                            # M19 RISE_E 重标定所依据的"springer≥0.15 硬约束"升格为判据阈值;
                            # MET_SPRINGER 消费 —— deck 相对判据按构造平移不变, 全局 Z 漂移
                            # (重演 M12 枯湖基准事故)由本条唯一绝对判据抓。
-# [七审P1-1] 冠钝化复活, 语义修正: 混合尺度 s 与 cusp 强度 e 成正比(角点局部!)。
-# 上轮 soft-min 废除的原因是 s∝b 时 e=0 端孔(两弧全等)整弧均匀沉 s*ln2 ——
-# 那是"缩高"不是"圆角"。s=K*e 则 e=0→s=0→精确回到 min, 钝化只发生在两弧
-# 真实相交的角域(冠顶最后 ~s 弧长), 矢高/肩点零污染。目标 cusp 13°->~9°。
-CROWN_BLUNT_K = 0.40      # [工作值] 七审标定: s=K*e; 0=纯尖角; 无文献
-# 带宽封顶: log-sum-exp 过渡带 ~±3s, K*e 在中央孔给到 ±0.15a(15% 弧长, 过宽,
-# 会啃肩线)。七审要求"只处理冠顶最后 3-5% 弧长"→ s<=0.02a。
-CROWN_BLUNT_CAP = 0.020   # [工作值] 钝化带宽封顶 s<=CAP*a; 七审"只处理冠顶最后 3-5% 弧长"; 无文献
 
 
 def rise_ratio(i):
@@ -129,92 +135,75 @@ def spandrel(i):
     return SPANDREL_C + (SPANDREL_E - SPANDREL_C) * u
 
 
-def arch_e(a, b):
-    """尖拱(cusp)圆心偏移 e=(b^2-a^2)/(2a), b>=a 才 >0。b<a 是平拱分支(见下)。
-    [M15 修] 旧实现把 b<a 截成 e=0 → 渲染成 rise=a 的半圆, '端孔矮'设计意图
-    静默丢失(void/券石/L2 全链一致地错)。正确: b<a 为单心平拱(segmental),
-    圆心在起拱线下方 e'=(a^2-b^2)/(2b), R=b+e'。"""
-    return max(0.0, (b * b - a * a) / (2.0 * a)) if a > 1e-6 else 0.0
+def arch_circle(a, b):
+    """单心圆弧拱参数 (d, R): 过三锚点 (±a, 0)/(0, b) 的唯一圆。
+    d = 圆心相对起拱线的高度偏移(b>a 为正=圆心在线上, b<a 为负=线下, b=a 恰在线上);
+    R = b - d。判据(qa_bridge MET_ARCH_SHAPE)与生成器消费同一公式, 无第二套。"""
+    return ((b * b - a * a) / (2.0 * b), (a * a + b * b) / (2.0 * b)) if b > 1e-6 else (0.0, a)
 
 
-def _arc_pair(x, xc, a, b):
-    """拱线两弧在 x 处(高度, 斜率)。b>=a: 两圆心尖拱(左圆心 xc+e 右 xc-e,
-    起拱线上)。b<a: 单心平拱, 两"弧"退化为同一圆(圆心 xc, springer-e'),
-    高度已含 -e' 平移, 肩点/冠点精确归位。"""
-    if b >= a - 1e-12:
-        e = arch_e(a, b)
-        R = a + e
-        out = []
-        for cc in (xc + e, xc - e):
-            dd = R * R - (x - cc) ** 2
-            if dd > 1e-9:
-                sq = _math.sqrt(dd)
-                out.append((sq, -(x - cc) / sq))
-            else:
-                out.append((0.0, 0.0))
-        return out
-    ep = (a * a - b * b) / (2.0 * b) if b > 1e-6 else 0.0
-    R = b + ep
-    dd = R * R - (x - xc) ** 2
-    if dd > 1e-9:
-        sq = _math.sqrt(dd)
-        return [(sq - ep, -(x - xc) / sq), (sq - ep, -(x - xc) / sq)]
-    return [(0.0, 0.0), (0.0, 0.0)]
-
-
-def blunt_s(a, b):
-    """冠钝化混合尺度 s = min(K·e, CAP·a)(七审P1-1: 与 cusp 强度 e 成正比, 角点局部;
-    公开给 qa_bridge 判据消费 —— 冠高期望须扣 s·ln2, 单一数据源不许第二套公式)。"""
-    return min(CROWN_BLUNT_K * arch_e(a, b), CROWN_BLUNT_CAP * a)
+def arch_x_extent(a, b):
+    """intrados 弧的 |x-xc| 最大半宽: b<=a 弧止于起拱点(±a); b>a 弧过圆心高度
+    "赤道"后才上冠, 最大半宽= R(horseshoe 微外鼓, 孔9 仅 2.7cm)。void 布尔/切割
+    折线的 x 域边界由此单源给出。"""
+    return arch_circle(a, b)[1] if b > a else a
 
 
 def arch_z(x, xc, springer, a, b):
-    """两圆心尖拱 intrados 高度 z(x), x∈[xc-a, xc+a] = 两圆下包络 min,
-    冠角用 e 比例 soft-min 局部圆化(s=0 时精确 min)。"""
-    (h1, _), (h2, _) = _arc_pair(x, xc, a, b)
-    lo, hi = (h1, h2) if h1 <= h2 else (h2, h1)
-    s = blunt_s(a, b)
-    if s <= 1e-9:
-        return springer + lo
-    return springer + lo - s * _math.log(1.0 + _math.exp((lo - hi) / s))
+    """单心圆弧拱 intrados 高度 z(x), x∈[xc-a, xc+a](上分支; b>a 时该式给
+    跨内分支, 起拱点 horseshoe 外鼓段由 arch_x_extent/arch_arc_pts 处理)。"""
+    d, R = arch_circle(a, b)
+    dd = R * R - (x - xc) ** 2
+    return springer + d + _math.sqrt(dd) if dd > 0.0 else springer + d
 
 
 def arch_dzdx(x, xc, springer, a, b):
-    (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
-    if h1 <= h2:
-        lo, hi, dlo, dhi = h1, h2, d1, d2
-    else:
-        lo, hi, dlo, dhi = h2, h1, d2, d1
-    s = blunt_s(a, b)
-    if s <= 1e-9:
-        return dlo
-    w = _math.exp((lo - hi) / s)
-    return (dlo + w * dhi) / (1.0 + w)
+    d, R = arch_circle(a, b)
+    dd = R * R - (x - xc) ** 2
+    if dd <= 1e-12:
+        return 0.0
+    return -(x - xc) / _math.sqrt(dd)
 
 
 def arch_signed_r(x, z, xc, springer, a, b):
-    """点(x,z)到 intrados 的有符号径向距离(负=吃进洞口)。
+    """点(x,z)到 intrados 圆的有符号径向距离(负=吃进洞口)。
     竖直 z 比较在陡肩段(斜率~9)会把 x 向偏移放大成假侵入; 径向与斜率无关。"""
-    if b < a - 1e-12:
-        ep = (a * a - b * b) / (2.0 * b) if b > 1e-6 else 0.0
-        r = _math.hypot(x - xc, z - (springer - ep)) - (b + ep)
-        return r
-    e = arch_e(a, b)
-    R = a + e
-    cc = (xc + e) if x <= xc else (xc - e)
-    r = _math.hypot(x - cc, z - springer) - R
-    s = blunt_s(a, b)
-    if s > 1e-9:
-        (h1, d1), (h2, d2) = _arc_pair(x, xc, a, b)
-        if h1 <= h2:
-            lo, hi, d = h1, h2, d1
-        else:
-            lo, hi, d = h2, h1, d2
-        dip = s * _math.log(1.0 + _math.exp((lo - hi) / s))
-        # 曲线在圆下方 dip(径向分量 dip*nz): 圆距离换算到曲线距离须**加回**,
-        # 减会双重扣 dip(自查: 设计内缩点被误判侵入 2*dip)。
-        r += dip / _math.hypot(d, 1.0)
-    return r
+    d, R = arch_circle(a, b)
+    return _math.hypot(x - xc, z - (springer + d)) - R
+
+
+def arch_arc_pts(xc, springer, a, b, n):
+    """intrados 弧按角度参数取点, 从右起拱点经冠到左起拱点(x 单调递减)。
+    build_void_bm 切割折线单源: 与 build_scene2 弧段凸片共用同一顶点集。
+    b>a 孔的起拱 horseshoe 外鼓带(≤2.7cm)不用微扇形采样: 起拱点->外鼓端点
+    (圆心高度 "赤道", (xc±R, spz+d))单一弦元代替 —— 弦弓高 <0.2mm, 消除
+    布尔 EXACT 求解器的 7mm 级平行窄壁简并(实测会翻转邻接面法线, 见
+    body_changelog 拱线族返工节)。"""
+    d, R = arch_circle(a, b)
+    if b <= a:
+        right = arch_half_arc(xc, springer, a, b, 1, n)
+        left = arch_half_arc(xc, springer, a, b, -1, n)
+        return right + left[1:]          # 冠点不重复
+    # b>a: 右端 = 起拱点 -> 赤道端点(单弦), 再 θ∈(0, π/2] 角度采样上冠
+    right = [(xc + a, springer), (xc + R, springer + d)]
+    for k in range(1, n + 1):
+        t = (_math.pi / 2.0) * k / n
+        right.append((xc + R * _math.cos(t), springer + d + R * _math.sin(t)))
+    left = [((2.0 * xc - px), pz) for px, pz in reversed(right[1:-1])]
+    return right + left + [(xc - a, springer)]
+
+
+def arch_half_arc(xc, springer, a, b, sign, n):
+    """半弧 n+1 点: sign=+1 右起拱点->冠, sign=-1 左起拱点->冠(角度离散,
+    与 arch_arc_pts 同一参数化)。b>a 时含起拱区 horseshoe 外鼓点。"""
+    d, R = arch_circle(a, b)
+    # 起拱点极角 θ_s(右端): cosθ_s = a/R, sinθ_s = -d/R; 弧至冠 θ=π/2
+    t_s = _math.atan2(-d, a)
+    out = []
+    for k in range(n + 1):
+        t = t_s + (_math.pi / 2.0 - t_s) * k / n
+        out.append((xc + sign * R * _math.cos(t), springer + d + R * _math.sin(t)))
+    return out
 
 
 def pier_w(i):
@@ -262,9 +251,7 @@ SOURCES = {
     "PUBLISHED_GENERAL_WIDTH": ("官方散文", "公园管理中心'科普公园'2023-12-01 '桥身宽8米' https://gygl.beijing.gov.cn/xxgk/xxgk_gyxx/202312/t20231201_3336230.html ; 北京日报引颐和园科普讲师 '桥面宽是8米'; 科普概称无测点, 不得直接映射到几何; 与6.56口径冲突(C2)"),
     "PUBLISHED_BRIDGE_HEIGHT": ("官方散文", "中新网2025-12-09 '高7米' https://www.chinanews.com.cn/cul/2025/12-09/10529704.shtml ; 北京日报引颐和园讲师'桥洞最高点有7米'; 科普公园'桥洞最高达7米' 表述互异(C3); 科普口径无测点无基准面, 禁映射DECK_Z_TOP(C3b: 若指主孔洞内净高则误差3.6%, 优于'桥面顶'口径的10.7%)"),
     "ARCH_RATIO": ("图像推导", "近正面原始照比例假设; ESRGAN退出计量链"),
-    "RISE_C": ("图像推导", "中央孔矢跨比 0.56: 六审与 winter/ovf 侧视对照标定; M19 冬照冠5.9/起拱1.4 隐含 0.53±0.08 覆盖 0.56(残差0.03) 故冻结不动; 改之须同步 ARCH_RATIO_TARGET 判据"),
-    "CROWN_BLUNT_K": ("工作值", "冠钝化强度 s=K·e(七审P1-1 复活并修正语义: 混合尺度与 cusp 强度 e 成正比, e=0 端孔精确回 min), 七审标定值, 无文献"),
-    "CROWN_BLUNT_CAP": ("工作值", "钝化带宽封顶 s<=CAP·a=0.020a(七审要求只处理冠顶最后 3-5% 弧长), 七审标定值, 无文献"),
+    "RISE_C": ("图像推导", "中央孔矢跨比 0.56: 六审与 winter/ovf 侧视对照标定; M19 冬照冠5.9/起拱1.4 隐含 0.53±0.08 覆盖 0.56(残差0.03) 故冻结不动; 改之须同步 ARCH_RATIO_TARGET 判据。[拱线族返工 2026-10-08] 数值保持不变: 单心圆弧只换曲线族, 矢跨剖面/冠/起拱锚点逐位不变"),
     "SPRINGER_WATER_MIN": ("工作值", "起拱线水上硬下限 0.15m(常水位 z=0 基准), M19 RISE_E 重标定所依据的 springer>=0.15 硬约束升格为判据阈值(冬照标定), 无文献"),
     "SPRINGER": ("工作值", "= DECK_Z_TOP-SPANDREL_C-rise_ratio(8)*SPAN_MAX = 1.14, 非独立事实; 冬照中央起拱线 1.4±0.3 残差 -0.26; 旧 2.50 承枯湖基准作废"),
     "SPANDREL_C": ("图像推导", "中央拱肩(冠内缘→行走面) 1.4±0.3; 旧恒定 1.00 作废"),
@@ -282,6 +269,6 @@ SOURCES = {
     "PIER_FOUND_W_C": ("工作值", "无文献, 沿用现脚本值(C5 归一)"),
     "BRIDGE_ABUT": ("工作值", "现生效1.35, 无文献; T2b闭合归因后定稿; 原登记[待核]按实况改[工作值]"),
     "CLOSURE_TOL": ("工作值", "判据容差, 现脚本值(原硬写在 qa_bridge 判据源码, 终审 I12 落地); 阈值承 T2b 计划稿口径, 无文献"),
-    "ARCH_RATIO_TARGET": ("工作值", "尖拱矢跨比设计意图 0.56(0.61 哥特味收 0.56, 六审标定), 现脚本值(原硬写在 qa_bridge 判据源码, 终审 I12 落地); 与 RISE_C 同一设计意图, 判据比对 rise_ratio 剖面中心"),
+    "ARCH_RATIO_TARGET": ("工作值", "中央孔矢跨比设计意图 0.56(六审标定; [拱线族返工 2026-10-08] 语义随族更新: 圆弧拱中央孔 f/l 设计意图, 原尖拱语境作废), 现脚本值(原硬写在 qa_bridge 判据源码, 终审 I12 落地); 与 RISE_C 同一设计意图, 判据比对 rise_ratio 剖面中心"),
     "ARCH_RATIO_TOL": ("工作值", "f/l 容差带宽, 现脚本值(原硬写在 qa_bridge 判据源码, 终审 I12 落地); 无文献"),
 }
