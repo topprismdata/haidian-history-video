@@ -229,6 +229,12 @@ e30_shikongqiao_video/3d/ledger_cache/
 !e30_shikongqiao_video/3d/out/print/central_slice/manifest.json
 !e30_shikongqiao_video/3d/out/print/central_slice/SLICE_NOTES.md
 
+# ── 放行：P3-T8 试渲预算表（2026-10-08）─────────────────────────────────
+# ⚠ 夜跑签字材料(绿灯材料本体, 用户只看这一页拍板); 其余 3d/out/film/**
+#   (blend/PNG/jsonl/pace.json)仍不入库(可由脚本重出, sha 走 sidecar)。
+!e30_shikongqiao_video/3d/out/film/
+!e30_shikongqiao_video/3d/out/film/TRIAL_BUDGET.md
+
 # ── 放行：P3 建造动画 film 子包(pace 单一节奏源; 2026-10-08)──────────────
 # 全局 * 只放行 3d/*.py 直属文件, 子包须先放行目录; 不加则 pace/film_state
 # 等静默失联(P2 终审 C1 同机制)。

@@ -109,6 +109,10 @@ def _seq_tables(seqdoc, stages):
     缺事件(篡改删事件)在此 ValueError 报缺 —— 这是「双实现必不一致
     或 validator 报缺」负控的实现点: 删事件后 range 仍声称覆盖被删
     seq, 表扩展越界即红; 中段缺则桶计数短缺, 同样红。
+
+    序幕合同(T8): 恰 stages[0] 允许 (0,0) 无事件段(S000 题卡, cursor=0
+    → 桶宽按 0 计, 不占事件覆盖); 其余 stage first_event 须 >=1,
+    (0,0) 出现在任何其他位置一律红(会把 cursor 打回 0 清空在场集)。
     """
     events = seqdoc.get("events") if isinstance(seqdoc, dict) else None
     if not isinstance(events, list):
@@ -120,6 +124,8 @@ def _seq_tables(seqdoc, stages):
         if not isinstance(a, int) or not isinstance(b, int) \
                 or isinstance(a, bool) or isinstance(b, bool) or a > b:
             raise ValueError("stage #%d event_range 非法: %r..%r" % (i, a, b))
+        if a == 0 and b == 0 and i == 0:
+            continue                          # S000 无事件段: 桶宽 0
         if a < 1:
             raise ValueError("stage #%d first_event<1: %r" % (i, a))
         if b > n_ev:
@@ -141,7 +147,9 @@ def _seq_tables(seqdoc, stages):
             raise ValueError("事件 #%d seq 非法: %r" % (pos, s))
         buckets[seq2stage[s]].append(e)
     for i, st in enumerate(stages):
-        want = st["last_event"] - st["first_event"] + 1
+        empty = (i == 0 and st["first_event"] == 0
+                 and st["last_event"] == 0)     # S000 无事件段: 桶宽 0
+        want = 0 if empty else (st["last_event"] - st["first_event"] + 1)
         if len(buckets[i]) != want:
             raise ValueError("validator 报缺: stage #%d(%s) 事件桶 %d != "
                              "range 宽 %d(缺/多事件)"

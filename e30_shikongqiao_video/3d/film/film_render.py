@@ -7,6 +7,20 @@
     blender -b -P 3d/film/film_render.py -- --frames 0-0 --out out/film/frames/
     [--blend 3d/out/e30_layout.blend] [--pace ...] [--seq ...]
     [--work out/film/work.blend] [--samples 16]
+    [--cam-track auto|BUILD|DECENTER|DONE]   # T8 试渲: 缺省 auto=按 phase
+
+--cam-track(T8 试渲 10 stage×3 机位): auto(缺省)=CAMERA_TRACKS[phase],
+  行为与 T5 逐字节同(测试钉); 显式键=该机位轨道覆盖(设签/审计只影响
+  相机, 在场判定仍单源 film_state, probe.camera.track 实录所用轨道)。
+  DONE 覆盖于 DONE 帧域外时 t 钳 0(=loc_start 起推位)。
+
+断点续跑(T8 写死方案, 取代 T5b 遗留二选一): **内置按 (帧,机位) 去重续跑**
+  —— 每次启动先读 out/selection.jsonl 已录 (frame, cam_track) 集, 命中
+  即跳(不重渲); cam_track 记**有效轨道**(auto 展开成 phase, 同轨等价
+  复用); 选择记录是「帧已提交」的唯一凭据(PNG 先写、记录后写, 有记录
+  必有 PNG), 中断后原命令重跑即续, selection/probe 行序=调用序(段按
+  升序跑)。**pace 重生成/帧号语义变更后必须清空 out 目录重渲**
+  (旧记录属旧账, 去重会错跳)。
 
 ═══ 驱动纪律(薄执行, 不内嵌判据) ═══
 在场判定只 import film_state(单源); 本脚本对每帧仅做机械执行:
@@ -312,10 +326,11 @@ def done_domain(pace, sequence):
 
 # ────────────────────────── 每帧执行 ──────────────────────────
 
-def apply_camera(cam, phase, f, done_lo, total):
-    """相机 = CAMERA_TRACKS[phase]; DONE 段内 loc_start→loc_end 线性。"""
-    tr = FG.CAMERA_TRACKS[phase]
-    if phase == "DONE" and "loc_start" in tr:
+def apply_camera(cam, track, f, done_lo, total):
+    """相机 = CAMERA_TRACKS[track]; track=phase(auto) 或 --cam-track 覆盖。
+    DONE 段内 loc_start→loc_end 线性(覆盖于域外时 t 钳 0=起推位)。"""
+    tr = FG.CAMERA_TRACKS[track]
+    if track == "DONE" and "loc_start" in tr:
         hi = max(done_lo, total - 1)
         t = 0.0 if hi <= done_lo else (f - done_lo) / float(hi - done_lo)
         t = min(1.0, max(0.0, t))
@@ -336,12 +351,13 @@ def apply_camera(cam, phase, f, done_lo, total):
             "type": cam.data.type,
             "ortho_scale": round(cam.data.ortho_scale, 6),
             "lens": round(cam.data.lens, 6),
-            "track": FG.CAMERA_TRACKS[phase].get("cam_id", phase)}
+            "track": FG.CAMERA_TRACKS[track].get("cam_id", track)}
 
 
 def apply_frame(scene, f, st, gn_ident, wedges, cens, cam, done_lo, total,
-                n_scene):
-    """状态 → 场景态(纯执行), 返回场景回读 probe(负控取证源)。"""
+                n_scene, cam_track="auto"):
+    """状态 → 场景态(纯执行), 返回场景回读 probe(负控取证源)。
+    cam_track="auto"=按 phase; 显式键=机位覆盖(仅相机, 状态零影响)。"""
     vis_idx = len(st["visible"])
     for ob in bpy.data.objects:
         for m in ob.modifiers:
@@ -359,7 +375,8 @@ def apply_frame(scene, f, st, gn_ident, wedges, cens, cam, done_lo, total,
         up = cid in st["centering_up"]
         cobj.hide_viewport = up is False
         cobj.hide_render = up is False
-    cam_probe = apply_camera(cam, st["phase"], f, done_lo, total)
+    track = st["phase"] if cam_track == "auto" else cam_track
+    cam_probe = apply_camera(cam, track, f, done_lo, total)
     scene.frame_set(f)
     return {"frame": f, "vis_idx": vis_idx,
             "scene_instances": n_scene,
@@ -384,6 +401,10 @@ def parse_args():
     ap.add_argument("--seq", default=DEFAULT_SEQ)
     ap.add_argument("--work", default=DEFAULT_WORK)
     ap.add_argument("--samples", type=int, default=16)
+    ap.add_argument("--cam-track", default="auto",
+                    choices=("auto", "BUILD", "DECENTER", "DONE"),
+                    help="机位轨道: auto=按 phase(缺省, T5 行为); "
+                         "显式键=覆盖(T8 试渲 10 stage×3 机位)")
     a = ap.parse_args(argv)
     if "-" in a.frames:
         lo, hi = a.frames.split("-", 1)
@@ -393,6 +414,24 @@ def parse_args():
     if a.f0 < 0 or a.f1 < a.f0:
         raise ValueError("--frames 非法: %r" % a.frames)
     return a
+
+
+def _done_frames(sel_path):
+    """已提交 (帧, 有效机位) 集 = selection.jsonl 已录对(续跑去重凭据);
+    旧行无 cam_track 字段视为未提交(缺字段=旧账, 重渲覆盖)。"""
+    done = set()
+    if os.path.isfile(sel_path):
+        with open(sel_path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    r = json.loads(line)
+                    done.add((int(r["frame"]), r["cam_track"]))
+                except (ValueError, KeyError):
+                    continue          # 半行/缺字段(中断残尾或旧账)不算提交
+    return done
 
 
 def main():
@@ -423,20 +462,37 @@ def main():
 
     sel_path = os.path.join(a.out, "selection.jsonl")
     prb_path = os.path.join(a.out, "probe.jsonl")
+    # 断点续跑(T8 写死): 已录 (帧,机位) 去重跳过——选择记录是帧提交凭据,
+    # 有记录必有 PNG; pace 语义变更后须清目录(见模块 docstring)。
+    done = _done_frames(sel_path)
+    if done:
+        fr = [p[0] for p in done]
+        print("RESUME 已录 %d 项(帧 %d..%d), 命中即跳"
+              % (len(done), min(fr), max(fr)), flush=True)
     timings = {}
     total0 = time.time()
     for f in range(a.f0, a.f1 + 1):
         t_f = time.time()
         st = FS.state_at_frame(pace, sequence, f)     # 在场判定单源
+        track = st["phase"] if a.cam_track == "auto" else a.cam_track
+        if (f, track) in done:
+            print("SKIP frame=%d track=%s (selection.jsonl 已录)"
+                  % (f, track), flush=True)
+            continue
         probe = apply_frame(scene, f, st, gn_ident, wedges, cens,
-                            cam, done_lo, pace["total_frames"], n_scene)
-        scene.render.filepath = os.path.join(a.out, "f%06d.png" % f)
+                            cam, done_lo, pace["total_frames"], n_scene,
+                            cam_track=a.cam_track)
+        # PNG 命名: track==phase(正片帧, 含 auto)沿用 f%06d.png(Remotion
+        # 帧图源约定); 显式覆盖的变体机位加轨名后缀, 避免同帧三轨互覆。
+        png = "f%06d.png" % f if track == st["phase"] \
+            else "f%06d_%s.png" % (f, track)
+        scene.render.filepath = os.path.join(a.out, png)
         bpy.ops.render.render(write_still=True)
         dt = time.time() - t_f
         timings[f] = round(dt, 3)
         rec = {"frame": f, "selected": sorted(st["visible"]),
                "wedge_lambda": st["wedge_lambda"], "phase": st["phase"],
-               "driver": "film_render"}
+               "cam_track": track, "driver": "film_render"}
         with open(sel_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
         with open(prb_path, "a", encoding="utf-8") as fh:

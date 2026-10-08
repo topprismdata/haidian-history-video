@@ -596,6 +596,9 @@ _SIDEAR_EXPECTED = frozenset([
     "3d/out/print/excluded_ids.json",
     "3d/out/event_ledger.json",
     "3d/out/narration_beats.md",
+    # P3-T8(2026-10-08): pace.json 单一节奏源入 sidecar(序幕 5s 重生成,
+    # sha 随重生成同轮更新; BLK-1: sidecar+本钉同轮扩)
+    "3d/out/film/pace.json",
 ])
 
 

@@ -62,3 +62,11 @@ fa1a4ef3528715c0b35b67665a0b11d9807fabd275fcb863d059f04a10045873  3d/out/print/e
 #   build/check/validate ~7s + dmscan ~25s)。
 a908f60d279bd55daf40ab031c150c6f13fdc3f898d81459009832518ec42452  3d/out/event_ledger.json
 d19d037d5eb5ef5e5647e28db21ca07b5fd93c742baaf8fd3da71cc92143d600  3d/out/narration_beats.md
+#
+# [P3-T8 追加] 记录时点: 2026-10-08, pace.json 单一节奏源入 sidecar
+# (P3 全局纪律: pace.json 与交付工件入本表; BLK-1 完备性钉同轮扩)。
+# 生成链: python3 3d/film/pace_build.py --sequence 3d/out/sequence.json
+#   --target-sec 240 --prologue-sec 5 → 409 stage(S000 题卡 150 帧,
+#   total 7350); 唯一回写通道 pace_writeback.py 原地补 pad 后本行 sha
+#   须随写轮同更新(测试 test_artifact_sha256_sidecar_matches_disk 钉)。
+29af17205b202e59f22cc1d189b47d5812464fce9c3d6144a25b8f640e812464  3d/out/film/pace.json

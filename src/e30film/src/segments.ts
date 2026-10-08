@@ -12,8 +12,9 @@ export interface FilmSegment {
 
 export const SEGMENTS: FilmSegment[] = [
   {
-    // 片头空镜段: pace 无前缀 stage(S001.start=0), 当前为零宽字幕窗;
-    // 锚帧 0 已定义——音频槽 seg-01.mp3 从 0 起播, 片头窗待 pace 层扩片头后自然张开。
+    // 片头题卡段: pace S000(序幕 5s, 无事件空场段)——本段字幕窗
+    // from=0 to=stageStart("S001") 查表即得, pace 重算自动跟手。
+    // 音频槽 seg-01.mp3 从 0 起播。
     id: "seg-01",
     label: "开场",
     from: 0,

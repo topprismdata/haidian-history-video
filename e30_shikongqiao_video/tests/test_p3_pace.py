@@ -15,14 +15,16 @@ REPO3D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _SEQ = os.path.join(REPO3D, "3d", "out", "sequence.json")
 
 
-def _build(out_name, target_sec):
+def _build(out_name, target_sec, prologue_sec=None):
     """跑 CLI 生成 pace 并返回 dict(产物落 /tmp/p3test)."""
     os.makedirs("/tmp/p3test", exist_ok=True)
     out = os.path.join("/tmp/p3test", out_name)
-    subprocess.run([sys.executable, "3d/film/pace_build.py",
-                    "--sequence", "3d/out/sequence.json",
-                    "--target-sec", str(target_sec), "--out", out],
-                   check=True, cwd=REPO3D)
+    cmd = [sys.executable, "3d/film/pace_build.py",
+           "--sequence", "3d/out/sequence.json",
+           "--target-sec", str(target_sec), "--out", out]
+    if prologue_sec is not None:
+        cmd += ["--prologue-sec", str(prologue_sec)]
+    subprocess.run(cmd, check=True, cwd=REPO3D)
     return json.load(open(out))
 
 
@@ -68,6 +70,56 @@ def test_pace_scale_exact():
         p = _build("pace_%d.json" % tgt, tgt)
         assert p["total_frames"] == tgt * 30, tgt
         assert sum(s["frames"] for s in p["stages"]) == p["total_frames"], tgt
+
+
+def test_pace_build_prologue_s000():
+    """序幕题卡段(T8): --prologue-sec 5 前置 S000(无事件 (0,0), cursor=0),
+    内容段节拍零改动, total 相应增长, generated_by 记变更, validate 绿;
+    中段 (0,0) 与首段 (0,b>0) 一律拒绝(无事件段唯一合法编码合同)."""
+    _3d = os.path.join(REPO3D, "3d")
+    for _p in (_3d, os.path.join(_3d, "film")):
+        if _p not in sys.path:
+            sys.path.insert(0, _p)
+    import pytest
+    import film_state as FS
+    import film_verify as FV
+    import pace_build as PB
+    p = _build("pace_pro5.json", 240, prologue_sec=5.0)
+    base = _build("pace_nopro.json", 240)
+    assert len(p["stages"]) == 409 and len(base["stages"]) == 408
+    s0, s1 = p["stages"][0], p["stages"][1]
+    assert s0["id"] == "S000"
+    assert (s0["first_event"], s0["last_event"]) == (0, 0)
+    assert s0["frames"] == 150 and (s0["start"], s0["end"]) == (0, 150)
+    assert (s1["id"], s1["first_event"], s1["start"]) == ("S001", 1, 150)
+    # 内容段节拍零改动: frames 与事件区间逐段同无序幕版
+    assert [(s["frames"], s["first_event"], s["last_event"])
+            for s in p["stages"][1:]] == \
+        [(s["frames"], s["first_event"], s["last_event"])
+            for s in base["stages"]]
+    assert p["total_frames"] == 7200 + 150 == base["total_frames"] + 150
+    assert p["generated_by"] == "pace_build --prologue-sec 5"
+    assert base["generated_by"] == "pace_build"          # 缺省零变
+    # 状态机零改动: S000 全段 cursor=0 空场; S001 首帧整拍推进
+    pace_p = os.path.join("/tmp/p3test", "pace_pro5.json")
+    seq = json.load(open(_SEQ))
+    st0 = FS.state_at_frame(p, seq, 0)
+    assert st0["event_cursor"] == 0 and st0["visible"] == frozenset()
+    assert FS.state_at_frame(p, seq, 149)["event_cursor"] == 0
+    st150 = FS.state_at_frame(p, seq, 150)
+    assert st150["event_cursor"] == 10 and len(st150["visible"]) == 10
+    # 双实现 S000 同读(validator 桶宽 0 放行)
+    assert FV.expected_state(0, pace_p, _SEQ) == st0
+    # 序幕合同负控: 中段 (0,0) 与首段 (0,3) 均红
+    bad_mid = json.loads(json.dumps(p))
+    bad_mid["stages"][5]["first_event"] = 0
+    bad_mid["stages"][5]["last_event"] = 0
+    with pytest.raises(ValueError, match="0 非法"):
+        PB.validate_pace(bad_mid)
+    bad_open = json.loads(json.dumps(p))
+    bad_open["stages"][0]["last_event"] = 3
+    with pytest.raises(ValueError, match="0 非法"):
+        PB.validate_pace(bad_open)
 
 
 def test_pace_close_ring_boost():
@@ -231,11 +283,12 @@ def test_remotion_pace_sourced():
     assert r.returncode == 0, (r.returncode, r.stdout, r.stderr)
     got = json.loads(r.stdout.strip().splitlines()[-1])
     real_pace = json.load(open(real))
-    assert got["duration"] == real_pace["total_frames"] == 7200
+    # 序幕 5s 后重钉: 7350 帧, 409 stage(S000 题卡; seg-01 窗自动张开)
+    assert got["duration"] == real_pace["total_frames"] == 7350
     assert got["fps"] == real_pace["fps"] == 30
-    assert got["stages"] == len(real_pace["stages"]) == 408
+    assert got["stages"] == len(real_pace["stages"]) == 409
     assert got["first"]["from"] == 0 and got["last"]["to"] == got["duration"]
     clips = got["clips"]
-    assert len(clips) == 408
+    assert len(clips) == 409
     for a, b in zip(clips, clips[1:]):
         assert a["to"] == b["from"], "Remotion 段边界与 pace 不同源"

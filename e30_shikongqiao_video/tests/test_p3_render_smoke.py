@@ -165,7 +165,8 @@ def test_wedge_drop_negative_control(smoke):
     z1 = probe[TOTAL - 1]["wedge_z"]
     assert set(z0) == set(z1) and len(z0) == 17, "楔石物体应 17 孔全有"
     for hole in z0:
-        # frame0 λ=0, frame7199 λ=1 → 位移 = -1.0 * WEDGE_DROP_M
+        # frame0 λ=0, 末帧 λ=1(序幕 5s 后末帧=7349, 以 pace 重生成为准)
+        # → 位移 = -1.0 * WEDGE_DROP_M
         assert z1[hole] - z0[hole] == pytest.approx(-FG.WEDGE_DROP_M,
                                                     abs=1e-6), \
             "楔石 %s z 差 != -WEDGE_DROP_M" % hole

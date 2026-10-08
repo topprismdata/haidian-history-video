@@ -39,7 +39,8 @@ def test_dual_impl_frame_by_frame_real():
     pace = load_pace(_PACE_PATH)
     seq = json.load(open(_SEQ_PATH))
     total = pace["total_frames"]
-    assert total == 7200 and len(pace["stages"]) == 408   # 真账口径钉
+    # 序幕 5s 后重钉: 7350 帧, 409 stage(S000 题卡, 桶宽 0)
+    assert total == 7350 and len(pace["stages"]) == 409
     n = 0
     for f in range(0, total, 7):
         ref = state_at_frame(pace, seq, f)
@@ -51,7 +52,7 @@ def test_dual_impl_frame_by_frame_real():
         assert isinstance(mine["phase"], str)
         assert ref == mine, "帧 %d 双实现不一致" % f
         n += 1
-    assert n == 1029                                      # 0..7199 步 7
+    assert n == 1050                                      # 0..7349 步 7(序幕 5s 后重钉)
 
 
 # ── 2. 幻影 2004 永不可见(双实现分别断言) ──

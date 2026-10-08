@@ -187,19 +187,37 @@ def _real():
 
 def test_load_pace_real_schema():
     pace = load_pace(_PACE_PATH)
-    assert pace["fps"] == 30 and pace["total_frames"] == 7200
-    assert len(pace["stages"]) == 408
+    # 序幕 5s 后重钉: 7200+150=7350 帧, 408+1=409 stage(S000 题卡)
+    assert pace["fps"] == 30 and pace["total_frames"] == 7350
+    assert len(pace["stages"]) == 409
     assert pace["stages"][0]["start"] == 0
     with pytest.raises(IndexError):
-        stage_at_frame(pace, 7200)
-    assert stage_at_frame(pace, 7199) == 407
+        stage_at_frame(pace, 7350)
+    assert stage_at_frame(pace, 7349) == 408
+
+
+def test_real_prologue_s000_empty():
+    """S000 题卡段(序幕 5s): 首帧 event_cursor=0, 在场空, BUILD——
+    无事件段语义: 状态机零改动读出空场(题卡期无石在场)."""
+    pace, seq = _real()
+    s0 = state_at_frame(pace, seq, 0)
+    assert s0["stage"] == 0 and s0["event_cursor"] == 0
+    assert s0["visible"] == frozenset()
+    assert s0["centering_up"] == frozenset()
+    assert s0["phase"] == "BUILD"
+    assert all(v == 0.0 for v in s0["wedge_lambda"].values())
+    s149 = state_at_frame(pace, seq, 149)          # S000 末帧同态
+    assert s149["stage"] == 0 and s149["event_cursor"] == 0
+    s150 = state_at_frame(pace, seq, 150)          # S001 首帧起整拍推进
+    assert s150["stage"] == 1 and s150["event_cursor"] == 10
+    assert len(s150["visible"]) == 10
 
 
 def test_real_last_frame_pin_3931():
     """末帧 = 终态回归口径: 在场集 3931, 券架全卸, λ 全 1, DONE."""
     pace, seq = _real()
     st = state_at_frame(pace, seq, pace["total_frames"] - 1)
-    assert st["stage"] == 407 and st["event_cursor"] == 4118
+    assert st["stage"] == 408 and st["event_cursor"] == 4118  # 序幕 5s 后重钉
     assert len(st["visible"]) == 3931
     assert st["phase"] == "DONE"
     assert st["centering_up"] == frozenset()
