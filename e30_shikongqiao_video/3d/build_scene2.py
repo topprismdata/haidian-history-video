@@ -991,6 +991,7 @@ import export_print as _EP
 COL_FAMILIES = "COL_FAMILIES"
 LAYOUT_MAX_OBJECTS = 50          # --layout 场景 Object 硬门(主场景不持有 5000 Object; W1 对齐简报, 实测 20)
 ARC_STEP = 0.04                  # void 弧段折线采样步长(m); 折线内接矢高 ~1e-4m 亚像素
+ARC_N_SEG = 40                   # 单心圆弧角度离散段数(每半弧); 与 assumptions.NSEG_ARC 同义沿用
 CLIP_EPS = 1e-9
 VOID_Z_MIN = _BODY_BOTTOM - 2.0  # void 矩形部下界(低于一切砌体; 只为 SH 裁剪有限化)
 
@@ -1030,24 +1031,28 @@ def hw_wall(x, z):
 
 def arch_band(i):
     # type: (int) -> Dict[str, float]
-    """第 i 孔(0 基)的 void 判定带: 拱心 x/半跨/矢高/起拱线/带界/顶界。"""
+    """第 i 孔(0 基)的 void 判定带: 拱心 x/半跨/矢高/起拱线/带界/顶界/弧外扩半宽。
+    xe = facts.arch_x_extent(b>a 的 horseshoe 微外鼓, 单心圆唯一解几何必然)。"""
     px, spans = piers_and_spans()
     xc = (px[i] + px[i + 1]) / 2.0
     a = spans[i] / 2.0
     b = _F.rise_ratio(i) * spans[i]
     springer = deck_z_at(xc) - _F.spandrel(i) - b
     return {"xc": xc, "a": a, "b": b, "springer": springer,
+            "xe": _F.arch_x_extent(a, b),
             "x_lo": px[i], "x_hi": px[i + 1], "z_hi": deck_z_at(xc)}
 
 
 def point_in_void(x, z, band):
     # type: (float, float, Dict[str, float]) -> bool
-    """点是否落在第 i 孔券洞净空内(矩形部 |x-xc|<a + 两圆心尖拱 intrados 下方;
-    内弧高度走 facts.arch_z 单一来源, 与 build_void_bm 同式)。"""
+    """点是否落在第 i 孔券洞净空内(矩形部 |x-xc|<a + 单心圆弧 intrados 内侧;
+    圆内测试走 facts.arch_signed_r 单一来源, 与 build_void_bm 同式)。起拱线以上
+    的 x 夹持用 xe(b>a 时弧微外鼓出 ±a, 由同一单源给出)。"""
     if z > band["springer"]:
         if z > band["springer"] + band["b"] + CLIP_EPS:
             return False
-        if abs(x - band["xc"]) > band["a"]:
+        xe = band.get("xe", band["a"])
+        if abs(x - band["xc"]) > xe:
             return False
         return _F.arch_signed_r(x, z, band["xc"], band["springer"],
                                 band["a"], band["b"]) < 0.0
@@ -1103,21 +1108,24 @@ _ARC_POLY_CACHE = {}     # type: Dict[Tuple[int, int], List[Tuple[float, float]]
 
 def _void_piece_polys(band, key):
     # type: (Dict[str, float], int) -> List[List[Tuple[float, float]]]
-    """void 净空凸分解: [拱下矩形部, 左弧弓形, 右弧弓形](CCW, 有限多边形)。
-    弧高走 facts.arch_z(与 build_void_bm 同源); b<a 平拱时两弓形同圆心自然
-    拼合。key=(id(band), ) 不做 —— 调用方按 arch 序号缓存。"""
+    """void 净空凸分解: [拱下矩形部, 左弧段, 右弧段](CCW, 有限多边形)。
+    [拱线族返工 2026-10-08] 弧段走 facts 单心圆弧: 每段 = 起拱弦半边 + 半弧
+    (facts.arch_half_arc 角度离散, 与 build_void_bm 切割折线同一顶点集);
+    b>a 孔(8/9/10) horseshoe 外鼓段(≤2.7cm)随半弧自然含入, 弧段仍是凸多边形
+    (圆盘∩z≥起拱线∩半平面的交)。key 由调用方按 arch 序号缓存。"""
     xc, a, spz = band["xc"], band["a"], band["springer"]
+    b = band["b"]
     box = [(xc - a, VOID_Z_MIN), (xc + a, VOID_Z_MIN),
            (xc + a, spz), (xc - a, spz)]
     halves = []
     for sign in (-1, 1):
-        x0 = xc + sign * a
-        x1 = xc
-        n = max(2, int(math.ceil(abs(x1 - x0) / ARC_STEP)))
-        poly = [(x0, spz), (x1, spz)]
-        for k in range(n, -1, -1):     # 拱顶侧: 从 x1 回扫到 x0(保 CCW)
-            xx = x0 + (x1 - x0) * k / n
-            poly.append((xx, _F.arch_z(xx, xc, spz, a, band["b"])))
+        # 半弧: 右起拱点->冠, 角度离散; 与切割折线同一采样(单源)。
+        # 右半片 CCW: 底弦右行 -> 弧上行 -> 中线闭合; 左半片 = x 镜像 + 逆序(CCW 保持)。
+        arc = _F.arch_half_arc(xc, spz, a, b, 1, ARC_N_SEG)
+        poly = [(xc, spz), (xc + a, spz)] + arc + [(xc, spz + b)]
+        if sign < 0:
+            poly = [((2.0 * xc - px), pz) for px, pz in poly]
+            poly.reverse()
         halves.append(poly)
     if key not in _ARC_POLY_CACHE:
         _ARC_POLY_CACHE[key] = [box] + halves
@@ -1149,32 +1157,35 @@ def _kept_pieces(x0, x1, z0, z1, band):
     kept = []      # type: List[List[Tuple[float, float]]]
     cuts = [x0, x1] + [v for v in (vx0, xc, vx1) if x0 < v < x1]
     cuts = sorted(set(cuts))
+    # 拱腹弦线表 = 券洞挖除体折线的【同一顶点集】(facts.arch_half_arc 角度离散,
+    # [拱线族返工 2026-10-08] 起 proxy 布尔切割与 layout 离散净空逐顶点一致,
+    # 不引入第二种离散化)。b>a 孔的 horseshoe 外鼓点(|x-xc|>a)不入跨内弦表
+    # —— 该域由 _void_piece_polys 弧段凸片经 SH 裁剪分类处理, 跨内弦线单调。
+    arc = _F.arch_half_arc(xc, spz, a, b, 1, _ASSUM.NSEG_ARC)
+    us = sorted({round(abs(px - xc), 9) for px, _ in arc if abs(px - xc) <= a + 1e-9})
+    sta = [xc - u for u in reversed(us)] + [xc + u for u in us[1:]]   # 升序, 冠点不重复
+    zv = {round(x, 9): _F.arch_z(x, xc, spz, a, b) for x in sta}
+
+    def _chord(x):
+        # cutter 折线在 x 处的高度(所在 station 区间线性内插)
+        if x <= sta[0]:
+            return zv[round(sta[0], 9)]
+        if x >= sta[-1]:
+            return zv[round(sta[-1], 9)]
+        for s0, s1 in zip(sta[:-1], sta[1:]):
+            if s0 <= x <= s1:
+                t = (x - s0) / (s1 - s0)
+                return zv[round(s0, 9)] + t * (zv[round(s1, 9)]
+                                               - zv[round(s0, 9)])
+        return zv[round(sta[-1], 9)]
     for sa, sb in zip(cuts[:-1], cuts[1:]):
         if sb <= vx0 + CLIP_EPS or sa >= vx1 - CLIP_EPS:
+            # 洞外/墩内竖条整条保留。b>a 孔的 horseshoe 外鼓带(sa∈(vx1, vx1+2.7cm])
+            # 亦走此支: 保留片最厚 2.7cm 渲染亚像素, 如实挂账(见 body_changelog)。
             kept.append([(sa, z0), (sb, z0), (sb, z1), (sa, z1)])
             continue
-        # 拱腹线按【弧长】步进采样(起拱段斜率 ~9, 按 x 等分弦误差会吃进洞内)
-        # 拱腹线取券洞挖除体的同一折线(assumptions.NSEG_ARC 等 x 距 stations 的
-        # 弦), 石块边与 station 间的底边线性内插到同一弦上 —— layout 的离散
-        # 净空与 proxy 布尔切割逐弦一致, 不引入第二种离散化。
-        sta = [vx0 + (vx1 - vx0) * k / _ASSUM.NSEG_ARC
-               for k in range(_ASSUM.NSEG_ARC + 1)]
-        zav = {round(x, 9): _F.arch_z(x, xc, spz, a, b) for x in sta}
-
-        def _chord(x):
-            # cutter 折线在 x 处的高度(所在 station 区间线性内插)
-            if x <= sta[0]:
-                return zav[round(sta[0], 9)]
-            if x >= sta[-1]:
-                return zav[round(sta[-1], 9)]
-            for s0, s1 in zip(sta[:-1], sta[1:]):
-                if s0 <= x <= s1:
-                    t = (x - s0) / (s1 - s0)
-                    return zav[round(s0, 9)] + t * (zav[round(s1, 9)]
-                                                    - zav[round(s0, 9)])
-            return zav[round(sta[-1], 9)]
         inner = [x for x in sta if sa < x < sb]
-        raw = ([(sa, _chord(sa))] + [(x, zav[round(x, 9)]) for x in inner]
+        raw = ([(sa, _chord(sa))] + [(x, zv[round(x, 9)]) for x in inner]
                + [(sb, _chord(sb))])
         if not (min(z for _, z in raw) <= z1 and max(z for _, z in raw) >= z0):
             continue   # 整条弦线在 z 带外(全保留或全切除)

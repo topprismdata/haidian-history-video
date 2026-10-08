@@ -167,14 +167,13 @@ def test_clip_footprint_triage_and_mass_balance():
     void_area = hit / float(n * n) * (x1 - x0) * (z1 - z0)
     assert area == pytest.approx((x1 - x0) * (z1 - z0) - void_area, rel=0.05)
     # 保留片顶点不得落在净空内(折线近似 + z 带直切在边界上留 <=ARC_STEP 斜率
-    # 型残隙, 设计界 0.04m = 0.29px 亚像素; 深入净空者必红)。[P2-T6b] 冠钝
-    # soft-min 使 cutter 折线在拱肩钝化带内下潜(幅值 = facts.blunt_s 单源),
-    # 跨缘竖条保留片顶点允许再让 blunt_s —— 仍深入钝化包络者必红。
+    # 型残隙, 设计界 0.04m = 0.29px 亚像素; 深入净空者必红)。[拱线族返工
+    # 2026-10-08] 单心圆弧无钝化带, cutter 折线即圆弧本身, 余量只剩 ARC_STEP。
     def _near_bd(x, z):
         if z > band["springer"]:
             r = abs(F.arch_signed_r(x, z, band["xc"], band["springer"],
                                     band["a"], band["b"]))
-            return r < BS.ARC_STEP + F.blunt_s(band["a"], band["b"])
+            return r < BS.ARC_STEP
         return abs(abs(x - band["xc"]) - band["a"]) < BS.ARC_STEP
     for p in polys:
         for (x, z) in p:

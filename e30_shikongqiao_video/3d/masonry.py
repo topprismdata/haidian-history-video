@@ -856,7 +856,7 @@ def _phase_shift(st, xc, spz, a, b, phase):
 
 
 def build_voussoir(bm, hw_front, half_depth):
-    """17 孔尖拱券石环(全深筒券)。块数: 谱 ring.counts > VOUSSOIR_TARGET 兜底;
+    """17 孔圆弧券石环(全深筒券; 拱线族返工 2026-10-08 前为尖拱)。块数: 谱 ring.counts > VOUSSOIR_TARGET 兜底;
     ring.phase(rad) 转弧长偏移施加于内部缝。返回每孔块数。"""
     counts = []
     for i in range(G.N_SPAN):

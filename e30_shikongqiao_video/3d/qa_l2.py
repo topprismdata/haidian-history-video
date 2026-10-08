@@ -104,7 +104,7 @@ def main():
             b = G.arch_rise(i)
             if abs(c.x - xc) >= a - 0.1:
                 continue
-            az = G.arch_z(c.x, xc, spz, a, b)   # 真实尖拱 intrados
+            az = G.arch_z(c.x, xc, spz, a, b)   # 真实圆弧 intrados(拱线族返工 2026-10-08)
             if abs(c.z - az) > 0.15 or c.z <= spz + 0.02:
                 continue
             return (xc, az, a, b, spz)
@@ -126,7 +126,7 @@ def main():
             continue
         xc, az, a, b, spz = hit
         tot += 1
-        d = G.arch_dzdx(poly.center.x, xc, spz, a, b)               # 尖拱切线斜率
+        d = G.arch_dzdx(poly.center.x, xc, spz, a, b)               # 圆弧切线斜率
         ix, iz = d / math.hypot(d, 1.0), -1.0 / math.hypot(d, 1.0)  # 指向拱内(下)法线
         dot = poly.normal.x * ix + poly.normal.z * iz
         if dot < math.cos(THETA):
