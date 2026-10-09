@@ -66,3 +66,11 @@ bridge_body 切割已开(12/528)——RoundArchFix 据此完成 coursing 弧区�
   blender 渲染必须走 **bash 命名服务模式**(不限流, 4K s1024≈900-1300s)。
 - blend 正交相机垂直 ppm≠水平 ppm(sensor36×24 实测拉伸~2x), 需实测 vppm 校正。
 - 低倍目测不可靠实例: "round ✓"误判(实为环浮雕+平顶槽)——一切几何结论过闸门。
+
+## 7. 终版落定(2026-10-09)
+
+- 第五轮几何 v3(adc59a5a) + 水线约束位姿(wlfit×3 帧)全套复渲落地: 6 中性 + 4 金光, 940-1322s/张
+- pairs 终版 12 张: 7 中性(材质判读) + 4 GOLDEN(对照主图, 券洞B 单孔对单孔) + overlay 水线版×2
+- 逐石: a6 62 石全 PASS(边界偏移中位 0.45px 亚像素); a5 表 4 石(窗口覆盖小, 如实)
+- 透光闸门 v2 入 build 链常驻; 联裁归因(coursing 未随新弧)已由 RoundArchFix 修复并过闸
+- commits: 02cfa8b/dcb3b5c/fbe672f/c6aa1d6/57a0daa/3f70a92/e25bcab
