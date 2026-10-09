@@ -159,6 +159,10 @@ def build_void_bm():
         except ValueError: pass
         try: bm.faces.new(B)                                     # +y 端面
         except ValueError: pass
+    # [拱线族返工清债 2026-10-08] 全脸三角化: 轮廓闭合端盖是 80+ 顶点的凹
+    # 多边形 ngon —— EXACT 布尔对凹 ngon 输入静默放弃弧段切割(M14
+    # "非共面静默失败"同类; 症状=矩形槽照切、弧段不切、零报错, 3ac909d2 实证)。
+    # 三角化后求解器输入全凸三角形; 挖除体用后即删, 对成品网格零影响。
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.normal_update()
     return bm

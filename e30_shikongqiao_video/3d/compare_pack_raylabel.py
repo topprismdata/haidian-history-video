@@ -77,7 +77,7 @@ Rwinv_t = Rwinv.T.copy()
 # 相机参数(标定画幅 K)
 f_px = pose["f"]
 cx, cy = pose["w"] / 2.0, pose["h"] / 2.0
-cam_o = Rw @ mathutils.Vector(tuple(float(v) for v in C))  # 世界系(桥旋转-112°)
+cam_o = mathutils.Vector(tuple(float(v) for v in C))
 Rcw = (Rw @ mathutils.Matrix(R.tolist()).transposed() @ mathutils.Matrix.Diagonal((1, -1, -1, 1)).to_3x3())
 fwd = Rcw @ mathutils.Vector((0, 0, -1))
 right = Rcw @ mathutils.Vector((1, 0, 0))
@@ -111,10 +111,9 @@ for j in range(ny):
         # 像素 -> 世界射线
         u = (u_px - cx) / f_px
         v = (cy - v_px) / f_px
-        d = (fw + right * u + up * v)
-        dn = mathutils.Vector((float(d[0]), float(d[1]), float(d[2])))
-        dn.normalize()
-        hit, loc, nrm, _idx, ob, _mw = sc.ray_cast(dg, cam_o, dn)
+        d = fw + right * u + up * v
+        d.normalize()
+        hit, loc, nrm, _idx, ob, _mw = sc.ray_cast(dg, cam_o, d)
         if not hit or ob.name not in ("bridge_body", "voussoir", "coursing"):
             continue
         hit_any += 1

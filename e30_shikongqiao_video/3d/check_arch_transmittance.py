@@ -66,15 +66,27 @@ def main():
         bay_w = (a["bay_x1"] - a["bay_x0"])
         zs = np.linspace(0.25, crown - 0.15, 22)
         xs = np.linspace(a["bay_x0"] + 0.25, a["bay_x1"] - 0.25, 22)
+        # 量测模型修正(主控指出的低 z 级墩面侵占): z<spz 带的期望净宽不再是常量 bay_w,
+        # 而是从洞脚净宽线性收窄到起拱线处圆弧弦宽(墩面收分 22° 使洞脚两侧被墩面侵占)。
+        chord_spz = 2.0 * ah  # 起拱线处圆弧弦宽
+        w_exp_band = None
         n_open = 0
         prof = []
         for z in zs:
             op = 0
             # 该 z 级期望圆弧弦宽(模型, 米)
+            # [拱线族返工 2026-10-08] 模型曲线修正: 原=半圆(圆心 spz, 半径 a)。
+            # 实际设计=单心圆弧(segmental, facts.arch_circle): 圆心高偏 d=(b²-a²)/2b
+            # (b<a 在起拱线下), 半径 R=(a²+b²)/2b —— 14/17 孔为段形(b<a), 半圆模型
+            # 对其系统性错形(量测段形 vs 模型半圆 → 假 RED rmse 1.65-4.03)。
+            _aa = ctrl["arches"][str(i)]["a"]
+            _bb = ctrl["arches"][str(i)]["b"]
+            _dd = (_bb * _bb - _aa * _aa) / (2.0 * _bb)
+            _RR = (_aa * _aa + _bb * _bb) / (2.0 * _bb)
             if z <= spz:
-                w_exp = bay_w
+                w_exp = bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))  # 线性收窄(墩面侵占修正)
             else:
-                w_exp = 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
+                w_exp = 2.0 * math.sqrt(max(0.0, _RR * _RR - (z - (spz + _dd)) ** 2))
             for x in xs:
                 o = B_vec(float(x), SHOOT, float(z))
                 hit, loc, *_ = sc.ray_cast(dg, o, dirv)
@@ -88,14 +100,18 @@ def main():
         trans = n_open / (len(zs) * len(xs))
         # 透光宽度剖面 rmse(米)
         w_meas = np.array(prof) * bay_w
-        w_mod = np.array([bay_w if z <= spz else 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
+        w_mod = np.array([(bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))) if z <= spz
+                          else 2.0 * math.sqrt(max(0.0, _RR * _RR - (z - (spz + _dd)) ** 2))
                           for z in zs])
         rmse = float(np.sqrt(np.mean((w_meas - w_mod) ** 2)))
         ok = (trans >= PROB_TOL) and (rmse <= ARC_RMSE_MAX)
         reason = None if ok else ("low_transmittance(未切/矩形槽)" if trans < PROB_TOL else
                                   "shape_not_circle(ogee 类)")
         rows.append(dict(arch=i, verdict="PASS" if ok else "RED", reason=reason,
-                         transmittance=round(trans, 3), width_rmse_m=round(rmse, 3)))
+                         transmittance=round(trans, 3), width_rmse_m=round(rmse, 3),
+                         zs=[round(z, 2) for z in zs],
+                         w_meas=[round(v, 2) for v in w_meas],
+                         w_model=[round(v, 2) for v in w_mod]))
     npass = sum(1 for r in rows if r["verdict"] == "PASS")
     gate = "PASS" if npass == 17 else "RED"
     out = dict(gate=gate, pass_n=npass, arches=rows,

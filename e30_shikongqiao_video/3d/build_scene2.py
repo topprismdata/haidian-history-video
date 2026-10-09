@@ -468,6 +468,49 @@ def build():
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.modifier_apply(modifier=m.name)
     bpy.data.objects.remove(void, do_unlink=True)
+    # ── VOID_BOOLEAN_SILENT_FAIL 结果断言(拱线族返工清债 2026-10-08)──
+    # M14 先例(EXACT 非共面静默失败)在拱线族切换后复现: bowtie 自交折线
+    # 时代, EXACT 求解器对挖除体弧段静默放弃(矩形槽照切、弧段不切, 无任何
+    # 报错) —— 只信结果: 逐孔洞心中高射线 ±y 穿透, bridge_body 命中即构建
+    # 失败, raise 禁止静默出厂(渲染级复核见 out/print 透光率闸 + qa_l2
+    # ARCH_THROUGH_RAY)。
+    # 射线闸(拱线族返工清债 2026-10-08): 用【对象级 ray_cast】(局部系,
+    # 不依赖 view_layer depsgraph 时效 —— scene.ray_cast 在 apply 后未
+    # update 时全不中, 已实证)。从体外(桥宽外 y=+12)沿 −y: 开孔 → 穿透;
+    # 实心 → 命中。正检=墩身实体带必中(防 API 口径漂移假绿)。
+    bpy.context.view_layer.update()   # 强制 depsgraph 刷新(apply/删对象后
+    # scene.ray_cast 对旧状态求值, 墩身正检全不中=该 API 时效陷阱实证)
+    dg = bpy.context.evaluated_depsgraph_get()
+    _body_ev = body.evaluated_get(dg)
+    _mwi = _body_ev.matrix_world.inverted()
+    _mrot = _mwi.to_3x3()
+    _n_open = 0
+    for _i in range(G.N_SPAN):
+        _xc = (G.PIER_X[_i] + G.PIER_X[_i + 1]) / 2.0
+        _spz = G.arch_springer_z(_i)
+        _b = G.arch_rise(_i)
+        for _fr in (0.5, 0.8):
+            _z = _spz + _b * _fr
+            _o = _mwi @ Vector((_xc, 12.0, _z))
+            _d = (_mrot @ Vector((0.0, -1.0, 0.0))).normalized()
+            _hit, _loc, _n, _idx = _body_ev.ray_cast(_o, _d)
+            if _hit:
+                raise RuntimeError(
+                    "VOID_BOOLEAN_SILENT_FAIL: 孔%d 高程比 %.2f 处 −y 射线命中 "
+                    "bridge_body(挖除体弧段被静默放弃, 矩形槽照切) —— 禁止静默"
+                    "出厂; 处置=修切割体/求解器输入后重建, 不许调判据自救"
+                    % (_i + 1, _fr))
+            _n_open += 1
+    # 正检(防"射线全不中"的 API 假绿): 墩身实体带必中 body —— 墩中心即
+    # PIER_X 值本身(PIER_X[k]=支撑 k 中心; 取 pier 10 中心 15.552, z 在
+    # 起拱线以下 0.5m = 实体墩)
+    _px = G.PIER_X[10]
+    _o = _mwi @ Vector((_px, 12.0, G.arch_springer_z(8) - 0.5))
+    _hit, _loc, _n, _idx = _body_ev.ray_cast(_o, _d)
+    if not _hit:
+        raise RuntimeError("VOID_PROBE_SANE_FAIL: 墩身正检射线未命中 body "
+                           "(射线 API 口径异常, 结果断言不可信)")
+    print("VOID_THROUGH_OK: 17 孔 x 2 高程射线全穿透 + 墩身正检过(结果断言过)")
     # ── 八轮 P0-1 桥头-引道体系参数(2026-10-06: 作为独立建筑构件重做; 七审 50-60% 项)
     #    [九轮第二刀 2026-10-06 massing 收口: 台体靠桥端厚/向岸渐退(前脸 5.00->4.55),
     #     坡道侧墙非恒厚直板(实腹顶棱幂曲线外展 + 肩宽 1.27->0.15 递减 + 石颊露出
@@ -637,7 +680,35 @@ def build():
     _hwf = (G.DECK_DOWN_W + G.DECK_UP_W) / 4.0   # 墙面平均半宽
     _vb, _cb, _mstats = MAS.build_masonry(_hwf)
     bm_to_obj(_vb, "voussoir", m_ring)
-    bm_to_obj(_cb, "coursing", m_course)
+    _co = bm_to_obj(_cb, "coursing", m_course)
+    # ── [拱线族返工清债 2026-10-08] coursing 弧区布尔扣除(主控终修令①):
+    # M18 贴面流程的 intrados 裁切线吃旧曲线(b>a 孔洞内残留贴面砖, 挡光
+    # 86-100%, 归因表 attr_a9_514dd33.json) —— 弧区直接与新洞体求差,
+    # 任何残留洞内贴面一律切除; 段包/P4 侧已走排除单源(1047/217)不受影响。
+    _cut3 = bm_to_obj(G.build_void_bm(), "void_cutter3", m_course)
+    _m3 = _co.modifiers.new("vc_arc", 'BOOLEAN')
+    _m3.operation = 'DIFFERENCE'
+    _m3.solver = 'EXACT'
+    _m3.object = _cut3
+    bpy.context.view_layer.objects.active = _co
+    bpy.ops.object.modifier_apply(modifier=_m3.name)
+    bpy.data.objects.remove(_cut3, do_unlink=True)
+    # 结果断言: 洞心中高射线不得命中 coursing(与 bridge_body 同判)
+    bpy.context.view_layer.update()
+    _dgc = bpy.context.evaluated_depsgraph_get()
+    _coursing_ev = _co.evaluated_get(_dgc)
+    _mwic = _coursing_ev.matrix_world.inverted()
+    _dc = (_mwic.to_3x3() @ Vector((0.0, -1.0, 0.0))).normalized()
+    for _i in range(G.N_SPAN):
+        _xc = (G.PIER_X[_i] + G.PIER_X[_i + 1]) / 2.0
+        _spz = G.arch_springer_z(_i)
+        _z = _spz + G.arch_rise(_i) * 0.5
+        _o = _mwic @ Vector((_xc, 12.0, _z))
+        _hit, _loc, _n, _idx = _coursing_ev.ray_cast(_o, _dc)
+        if _hit:
+            raise RuntimeError(
+                "COURSING_ARC_SILENT_FAIL: 孔%d 洞心中高射线命中 coursing"
+                "(贴面砖残留洞内) —— 禁止静默出厂" % (_i + 1))
     # pier_plinth 水线石带: 拱改高后起拱线近水面, 石带会伸进洞口成横条 -> void 布尔裁净
     _cut2 = bm_to_obj(G.build_void_bm(), "void_cutter2", m_ring)
     _pp = bpy.data.objects["pier_plinth"]
