@@ -7,26 +7,26 @@
  "denoise": "OPENIMAGEDENOISE",
  "camera": {
   "type": "perspective_pose",
-  "pose_json": "m20_ctrl/m20B_pose_f675.json",
+  "pose_json": "m20_ctrl/m20B_pose_f675_wlfit.json",
   "pose_tag": "f675",
   "pose_rms_px": 7.830461815494378,
   "pose_n": 40,
-  "lens_mm": 141.172,
-  "f_px_at_cal": 7529.2,
+  "lens_mm": 127.055,
+  "f_px_at_cal": 6776.3,
   "cal_wh": [
    1920,
    1080
   ],
   "frame": "模型系->世界系(Rz(-112°), bridge_body 实测旋转)",
   "cam_pos_model": [
-   133.848,
-   -63.335,
-   15.756
+   126.294,
+   -59.761,
+   14.733
   ],
   "cam_pos": [
-   -108.864,
-   -100.376,
-   15.756
+   -102.72,
+   -94.711,
+   14.733
   ]
  },
  "res": [
@@ -119,7 +119,7 @@
   "view_transform": "AgX",
   "blend": "e30_bridge.blend(只读, 材质=最终程序化石栈: 青石 body/course/ring + 汉白玉 marble + 灰浆 mortar)"
  },
- "render_sec": 1121.3,
- "png_bytes": 8590479,
+ "render_sec": 1119.8,
+ "png_bytes": 8607065,
  "blend_sha16": "adc59a5a43868795"
 }

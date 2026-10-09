@@ -109,7 +109,11 @@ def pair_arch(lab, ftag, crop_json):
     photo = Image.open(os.path.join(HERE, f"real_券洞{lab}.jpg")).convert("RGB")
     grp = {"A": "b", "B": "c", "C": "d"}[lab]
     ren = Image.open(os.path.join(REN, f"{'golden_' if GOLDEN else ''}{grp}_{ftag}.png")).convert("RGB")
-    box = crop_json[lab]["crop"]  # 1920x1080 标定画幅坐标
+    box = list(crop_json[lab]["crop"])  # 1920x1080 标定画幅坐标
+    if lab == "B":  # 单孔对单孔: 券洞B 拱门满幅裁窗(收 15%/8%)
+        box = [box[0] + int((box[2] - box[0]) * 0.15), box[1] + int((box[3] - box[1]) * 0.08),
+               box[2] - int((box[2] - box[0]) * 0.15), box[3] - int((box[3] - box[1]) * 0.08)]
+    box = tuple(box)
     rw, rh = ren.size
     s = rw / 1920.0
     rbox = tuple(int(v * s) for v in box)
