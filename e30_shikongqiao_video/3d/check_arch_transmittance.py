@@ -75,10 +75,18 @@ def main():
         for z in zs:
             op = 0
             # 该 z 级期望圆弧弦宽(模型, 米)
+            # [拱线族返工 2026-10-08] 模型曲线修正: 原=半圆(圆心 spz, 半径 a)。
+            # 实际设计=单心圆弧(segmental, facts.arch_circle): 圆心高偏 d=(b²-a²)/2b
+            # (b<a 在起拱线下), 半径 R=(a²+b²)/2b —— 14/17 孔为段形(b<a), 半圆模型
+            # 对其系统性错形(量测段形 vs 模型半圆 → 假 RED rmse 1.65-4.03)。
+            _aa = ctrl["arches"][str(i)]["a"]
+            _bb = ctrl["arches"][str(i)]["b"]
+            _dd = (_bb * _bb - _aa * _aa) / (2.0 * _bb)
+            _RR = (_aa * _aa + _bb * _bb) / (2.0 * _bb)
             if z <= spz:
                 w_exp = bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))  # 线性收窄(墩面侵占修正)
             else:
-                w_exp = 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
+                w_exp = 2.0 * math.sqrt(max(0.0, _RR * _RR - (z - (spz + _dd)) ** 2))
             for x in xs:
                 o = B_vec(float(x), SHOOT, float(z))
                 hit, loc, *_ = sc.ray_cast(dg, o, dirv)
@@ -93,7 +101,7 @@ def main():
         # 透光宽度剖面 rmse(米)
         w_meas = np.array(prof) * bay_w
         w_mod = np.array([(bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))) if z <= spz
-                          else 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
+                          else 2.0 * math.sqrt(max(0.0, _RR * _RR - (z - (spz + _dd)) ** 2))
                           for z in zs])
         rmse = float(np.sqrt(np.mean((w_meas - w_mod) ** 2)))
         ok = (trans >= PROB_TOL) and (rmse <= ARC_RMSE_MAX)
