@@ -66,13 +66,17 @@ def main():
         bay_w = (a["bay_x1"] - a["bay_x0"])
         zs = np.linspace(0.25, crown - 0.15, 22)
         xs = np.linspace(a["bay_x0"] + 0.25, a["bay_x1"] - 0.25, 22)
+        # 量测模型修正(主控指出的低 z 级墩面侵占): z<spz 带的期望净宽不再是常量 bay_w,
+        # 而是从洞脚净宽线性收窄到起拱线处圆弧弦宽(墩面收分 22° 使洞脚两侧被墩面侵占)。
+        chord_spz = 2.0 * ah  # 起拱线处圆弧弦宽
+        w_exp_band = None
         n_open = 0
         prof = []
         for z in zs:
             op = 0
             # 该 z 级期望圆弧弦宽(模型, 米)
             if z <= spz:
-                w_exp = bay_w
+                w_exp = bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))  # 线性收窄(墩面侵占修正)
             else:
                 w_exp = 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
             for x in xs:
@@ -88,14 +92,18 @@ def main():
         trans = n_open / (len(zs) * len(xs))
         # 透光宽度剖面 rmse(米)
         w_meas = np.array(prof) * bay_w
-        w_mod = np.array([bay_w if z <= spz else 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
+        w_mod = np.array([(bay_w + (chord_spz - bay_w) * (z / max(spz, 1e-6))) if z <= spz
+                          else 2.0 * math.sqrt(max(0.0, ah * ah - (z - spz) ** 2))
                           for z in zs])
         rmse = float(np.sqrt(np.mean((w_meas - w_mod) ** 2)))
         ok = (trans >= PROB_TOL) and (rmse <= ARC_RMSE_MAX)
         reason = None if ok else ("low_transmittance(未切/矩形槽)" if trans < PROB_TOL else
                                   "shape_not_circle(ogee 类)")
         rows.append(dict(arch=i, verdict="PASS" if ok else "RED", reason=reason,
-                         transmittance=round(trans, 3), width_rmse_m=round(rmse, 3)))
+                         transmittance=round(trans, 3), width_rmse_m=round(rmse, 3),
+                         zs=[round(z, 2) for z in zs],
+                         w_meas=[round(v, 2) for v in w_meas],
+                         w_model=[round(v, 2) for v in w_mod]))
     npass = sum(1 for r in rows if r["verdict"] == "PASS")
     gate = "PASS" if npass == 17 else "RED"
     out = dict(gate=gate, pass_n=npass, arches=rows,
