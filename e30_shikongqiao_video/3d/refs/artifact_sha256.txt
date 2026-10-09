@@ -77,20 +77,24 @@
 # 曲线族换 → 石坐标变 → 下列全部重锚工件重出。生成命令链同上(1→5 + sequencer
 # + g3_check + narration), 全部零错; L2 正检 QA_L2_OK / 负控 NEG_CAUGHT 10/10;
 # MET_ARCH_SHAPE 新闸门绿(返工前 ogee 红 0.01443, 见 refs/arch_shape_redgreen.txt)。
-# [P4T6 噪声类换锚] ledger_full/ledger_sequenced 石条目带 uuid4(逐次生成随机),
-# 字节锚跨 generation 不可复现 —— 上行两行登记本机 generation(445fd90 码 + 本盘
-# ledger 8475a5b7 派生), 内容与 merge 记录等价, 证据: ①派生 g2_report/excluded_ids
-# 逐字段恒等(仅 created_utc 异, 已回滚 merge 原字节); ②sequencer 派生 sequence.json
-# 77d2532b / event_ledger f370972f / narration cb000af1 / core_hash b74ce261 落回 v2
-# blend 上全部**逐字节复现** merge 记录(纯函数铁证)。根治债票(B): content-hash
-# 口径(沿 g3_report content_sha256_excl_timing 先例), 排 RoundArchFix 清债后。
+# [P4T6 (B) content-hash 锚改造 2026-10-09, RoundArchFix 清债后落地] 下列 5 件
+# 为生成噪声件(石条目 uuid4 逐次生成 + meta.created_utc 门时刻): 字节锚跨
+# generation 不可复现(445fd90 后实测两代互证), 改登记 **content_sha256_excl_timing**
+# = json 载入 → 剥 meta.created_utc 与 stones[].uuid → sort_keys 紧凑 dumps → sha256
+# (g3_report content_sha256_excl_timing 先例的推广; 判据实现:
+# tests/test_p2_g3_thrust.py _content_sha256_excl_timing/_CONTENT_HASHED)。
+# 机器可验性不变: 归一化是盘上字节的确定函数, clean clone 重出后可核。
+# (A) 时代的双盲互证保留作史: 派生件逐字段恒等 + sequence/event_ledger/
+# narration/core_hash 逐字节复现 merge 记录。core_hash 本身确定性(取决于
+# blend), 保持字节锚; 2026-10-09 两级重冻结: 3ac909d2(过渡)→84085824,
+# 布尔修复最终版 adc59a5a → 28585991(上行现行值, adc59a5a 的实冻结)。
 
-8475a5b7c404928e929b410d1ef681b1678153feccf46d83c580e67c4eab9c60  3d/out/ledger_full.json
+f9ce94c89e384094e1acbad14aa26f8503646eb897806f3138e4264715bc0243  3d/out/ledger_full.json
 77d2532b41981edd8ccda92f3a4baa9ea76c035680634d7f47932e372438a5ce  3d/out/sequence.json
-b024651bebbc4475669da7b6aeae86881da739a7eda772ee684a11e501ab5015  3d/out/ledger_sequenced.json
-b74ce26167fcbbdda344563066abcfebc0a7c103901903a21f1e1e9b38cc8326  3d/core_hash.json
-494d5393fc47a4b987b25ff408f7260f2dd479041a2f67efe4aa34ef5f19fb01  3d/out/print/central_slice/manifest.json
-1664d68f0550540127861d46f5cb7dfa14a5ed4f4f0f78faebf818e3307ea630  3d/out/print/excluded_ids.json
+5ebc7d308a286d2819b95ac8ccbad75321082675cb4b431d8fd6838b38b6a37a  3d/out/ledger_sequenced.json
+28585991e34f4ce9a7baa24d624e7efc38a19508e98f4d0fefaf49427e2b6cba  3d/core_hash.json
+2cbcbfa3f40247736921084f92e15fe6493e782c1ef0462bf90b026f14a14191  3d/out/print/central_slice/manifest.json
+3148b1c5afd114897d9d5adbaa1e77c29db792ef8cdb67f8b21374eec67da086  3d/out/print/excluded_ids.json
 f370972f930e54e234388d4a863372e68d905deed0e5143b8504104288858680  3d/out/event_ledger.json
 cb000af14804a6bbadc9733acb76ef32285f9d5567ec579c09359cbbd9f28107  3d/out/narration_beats.md
 
@@ -113,7 +117,8 @@ cb000af14804a6bbadc9733acb76ef32285f9d5567ec579c09359cbbd9f28107  3d/out/narrati
 #        (T4; 装配门 → section5/construction_cards.md(71 stage/1047 行)
 #         + assembly/ 五孔 PNG/CSV + 段总图; 卡+CSV 可纯 python
 #         `python3 3d/section_pack.py --assembly --cards-only` 再生;
-#         注: assembly/ PNG 为返工前渲染待重渲, CSV/卡已随新账重出)
+#         注: assembly/ PNG 为返工前渲染待重渲, CSV/卡已随新账重出;
+#         manifest 为 (B) content-hash 类(uuid 随账代换)
 #   4. python3 3d/print_status.py init
 #        --manifest 3d/out/print/section5/manifest.json
 #        --out 3d/out/print/print_status.json
@@ -121,7 +126,7 @@ cb000af14804a6bbadc9733acb76ef32285f9d5567ec579c09359cbbd9f28107  3d/out/narrati
 #         本行 sha 钉的是 init 模板位 —— 用户台架开工经 advance 推进
 #         后须随重锚轮同更新本行, 沿 event_ledger 先例)
 ebfe7ea0fe97dcfdeea41ca57298cad22f97fca7cf7219e37ec15fdd2f9c71d3  3d/out/print/thin_features.json
-04453386489ef87313717f876b1e9b483c02b00cba3f688b80c1b2de1f7dd034  3d/out/print/section5/manifest.json
+56f877d6e06bb3b7e8958143e5c33ecc58a84a99fbbdccff6f34faddad8ff4a1  3d/out/print/section5/manifest.json
 fa8a65438746f5052bf1352b4a67c135b15327c0e3d61c270ec55573a60bb3ff  3d/out/print/deferred_holes.json
 5f2451f9df6a50f2de37a9ff23b7c52cdb9461aac104b6ecb4f920b3cae186ca  3d/out/print/section5/construction_cards.md
 7d95e02a6adcbc5f9adb7cca183a673394c335a44744233e44e279f9b21f17ce  3d/out/print/print_status.json

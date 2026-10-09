@@ -596,9 +596,6 @@ _SIDEAR_EXPECTED = frozenset([
     "3d/out/print/central_slice/manifest.json",
     "3d/out/print/excluded_ids.json",
     "3d/out/event_ledger.json",
-    # [拱线族返工清债 2026-10-08] pace.json 单一节奏源入完备性钉(P3-T8 侧车行
-    # 随 sequence 重锚同轮更新; 侧车重建为 9 路径唯一化)
-    "3d/out/film/pace.json",
     "3d/out/narration_beats.md",
     # P3-T8(2026-10-08): pace.json 单一节奏源入 sidecar(序幕 5s 重生成,
     # sha 随重生成同轮更新; BLK-1: sidecar+本钉同轮扩)
@@ -612,6 +609,35 @@ _SIDEAR_EXPECTED = frozenset([
     "3d/out/print/section5/construction_cards.md",
     "3d/out/print/print_status.json",
 ])
+
+
+# [P4T6 (B) content-hash 锚改造 2026-10-09] 生成噪声件(uuid4 石条目 +
+# meta.created_utc)字节锚跨 generation 不可复现, 改登记归一化内容哈希:
+# json 载入 → 剥 meta.created_utc 与 stones[].uuid → sort_keys 紧凑 dumps
+# → sha256(g3_report content_sha256_excl_timing 先例推广; 噪声件清单与
+# sidecar 注记互为镜像)。
+_CONTENT_HASHED = frozenset([
+    "3d/out/ledger_full.json",
+    "3d/out/ledger_sequenced.json",
+    "3d/out/print/excluded_ids.json",
+    "3d/out/print/central_slice/manifest.json",
+    "3d/out/print/section5/manifest.json",
+])
+
+
+def _content_sha256_excl_timing(abs_path):
+    # type: (str) -> str
+    with open(abs_path, encoding="utf-8") as fh:
+        doc = json.load(fh)
+    meta = doc.get("meta")
+    if isinstance(meta, dict):
+        meta.pop("created_utc", None)
+    for st in doc.get("stones") or []:
+        if isinstance(st, dict):
+            st.pop("uuid", None)
+    blob = json.dumps(doc, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def _parse_sidecar(path):
@@ -652,12 +678,16 @@ def _assert_sidecar_present_and_matching(entries, base):
         "sidecar 已录工件盘上缺失(fail-loud, 不许静默跳过; 全缺=clean "
         "clone 由上层 skip): %r" % (missing,))
     for sha, rel in entries:
-        h = hashlib.sha256()
-        with open(os.path.normpath(os.path.join(base, rel)), "rb") as f:
-            for chunk in iter(lambda: f.read(1 << 20), b""):
-                h.update(chunk)
-        assert h.hexdigest() == sha, \
-            "%s: sidecar=%s 盘上=%s" % (rel, sha, h.hexdigest())
+        abs_path = os.path.normpath(os.path.join(base, rel))
+        if rel in _CONTENT_HASHED:
+            h = _content_sha256_excl_timing(abs_path)
+        else:
+            hh = hashlib.sha256()
+            with open(abs_path, "rb") as f:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    hh.update(chunk)
+            h = hh.hexdigest()
+        assert h == sha, "%s: sidecar=%s 盘上=%s" % (rel, sha, h)
 
 
 def test_artifact_sha256_sidecar_matches_disk():

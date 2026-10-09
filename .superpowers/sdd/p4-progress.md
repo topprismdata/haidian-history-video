@@ -47,7 +47,7 @@
 
 - **发现**: 重锚链把 **uuid4 噪声件**(ledger_full/ledger_sequenced 石条目带逐次生成随机 uuid)与 **created_utc 时间戳件**(g2_report/excluded_ids/central manifest)当**字节锚**登记 —— 任何后 generation 都不可能逐字节复现, 即 merge 重锚块的两行在本机永远 red。
 - **双盲互证**: 派生 g2_report/excluded_ids 逐字段恒等(仅时间戳异); sequencer 派生 sequence `77d2532b`/event_ledger `f370972f`/narration `cb000af1`/core_hash `b74ce261`(落回 v2 blend)全部**逐字节复现** merge 记录 —— 链无实质非确定性, 纯锚选型问题。
-- **处置**: (A) 已照准执行 —— 两行换登本机 generation sha+证据注记, tracked 三件套回滚 merge 原字节(零 churn); (B) 债票: 噪声件改 content-hash 口径(沿 g3_report `content_sha256_excl_timing` 先例推广到 uuid/created_utc), 排 RoundArchFix 清债后实施。
+- **处置**: (A) 已执行 —— 两行换登本机 generation sha+证据注记, tracked 三件套回滚 merge 原字节(零 churn); **(B) 已于 2026-10-09(RoundArchFix 清债收官后)落地**: 5 噪声件(ledger_full/ledger_sequenced/excluded_ids/central manifest/section5 manifest)改登记 **content_sha256_excl_timing**(json 载入→剥 created_utc+stones[].uuid→sort_keys 紧凑 dumps→sha256, g3_report 先例推广), 判据集 `_CONTENT_HASHED`+归一化函数钉在 test_p2_g3_thrust; test_p4_section 的 CENTRAL_SHA 同步转 content 口径 —— 此后账代换(uuid/时间戳 reshuffle)不再假红, 内容变化(几何/计数)仍必红。core_hash 保持字节锚(确定性取决于 blend); 布尔修复最终 blend 落地后随冻结轮换值。
 
 ## 六、遗留与下一步
 
@@ -58,7 +58,7 @@
 | M3 雕刻件(狮/兽) | 段内自然豁免(桥台/栏杆段外), 顺延续段 | 后续段包 |
 | 打印执行 | P4 交付=制造包+工具链; 592h 量级长跑 | **用户台架** |
 | assembly/ PNG 五张+段总图 | 返工前渲染(几何旧), CSV/卡已随新账重出; 重渲走装配门 | 后续重渲轮 |
-| (B) content-hash 锚改造 | 噪声件(g2_report/excluded/central manifest/ledger×2) | RoundArchFix 清债后 |
-| P2 11 条计数钉重钉 + film 链重锚(pace 等) | merge 声明债务 | RoundArchFix / P3 线 |
+| core_hash 换值 | **已办**: 布尔修复最终 blend adc59a5a 重冻结 = 28585991(2026-10-09; 过渡锚 84085824=3ac909d2 已更替) | 完成 |
+| P2/P3 计数钉+film 链清债 | RoundArchFix 572b418/c1d653b/924c1da 已办大头; 残余见全量尾注 | RoundArchFix / P3 线 |
 
-全量测试(445fd90+T6 重锚后本机实跑): 分母 **538**, **512 passed / 24 failed / 2 errors**。红全部位于返工债务面, **P4 变更面零红**: ①P1/P2 实总体计数钉 15 —— p1_slice 3(ring_trim 903→827, 即 −76 单元代际漂移)/p2_sequencer 6(r5a/r5b/band-gate 族)/p2_full 4/p2_g3 dag+thrust real 2 —— 即 merge 声明的「11 条计数钉待重钉」族(实测 15 支); ②P3 film 链 11 —— pace 2/film_layout 1/render_smoke 3/state 2/verify 3(sequence 4094 重出后 pace/layout/blend 未重锚, merge 声明「film链重锚后续处理」)。P4 六文件+sidecar 2 测全绿(36 支)。sidecar 注记: `print_status.json` 钉 init 模板位, 台架推进后须随重锚轮更新该行。
+全量测试终数(主控前台 bg_8, 满速 578s, 含 (B) WIP): 分母 **539**(538+P3 新测 1), **528 passed / 11 failed**。红面全部为返工/清债在办债务, **与 (B) 改动零因果(spot-check 实证: stash (B) WIP 后 11 红照旧)**, P4 变更面零红: p2 推力实总体 1(r5a=1382/infeasible 钉, RoundArchFix 重钉复核在办)+P3 film 链 10(pace 2/layout 1/render_smoke 3/state 2/verify 3——stage 账本与事件钉跨相位脱钩, film 链重锚在办)。(B) 落地后账代换不再假红: 5 噪声件 content 锚判据即测即绿。sidecar 注记: `print_status.json` 钉 init 模板位, 台架推进后须随重锚轮更新该行。

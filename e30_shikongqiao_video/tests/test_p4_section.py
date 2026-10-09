@@ -26,7 +26,24 @@ from families import family_mesh  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRINT_DIR = os.path.join(REPO, "3d", "out", "print")
 CENTRAL = os.path.join(PRINT_DIR, "central_slice")
-CENTRAL_SHA = "494d5393fc47a4b987b25ff408f7260f2dd479041a2f67efe4aa34ef5f19fb01"
+# content_sha256_excl_timing 口径(sidecar P4T6 (B) 同源): 剥 created_utc+
+# stones[].uuid 生成噪声后哈希 —— central manifest 的 uuid/时间戳随账代换,
+# 字节锚会假红; 内容变化(几何/计数)仍必红。
+CENTRAL_SHA = "2cbcbfa3f40247736921084f92e15fe6493e782c1ef0462bf90b026f14a14191"
+
+
+def _central_content_sha(blob):
+    # type: (bytes) -> str
+    doc = json.loads(blob)
+    meta = doc.get("meta")
+    if isinstance(meta, dict):
+        meta.pop("created_utc", None)
+    for st in doc.get("stones") or []:
+        if isinstance(st, dict):
+            st.pop("uuid", None)
+    return hashlib.sha256(json.dumps(
+        doc, ensure_ascii=False, sort_keys=True,
+        separators=(",", ":")).encode("utf-8")).hexdigest()
 EXCLUDED_PATH = os.path.join(PRINT_DIR, "excluded_ids.json")
 
 # 真账实测(P1 G2 门口径, 445fd90 返工后): 段(ARCH07-11)账面石 2747,
@@ -163,7 +180,7 @@ def test_default_zone_none_reproduces_central(tmp_path, print_view):
     man_path = os.path.join(CENTRAL, "manifest.json")
     with open(man_path, "rb") as fh:
         blob = fh.read()
-    assert hashlib.sha256(blob).hexdigest() == CENTRAL_SHA   # 基线在位(未被漂移)
+    assert _central_content_sha(blob) == CENTRAL_SHA   # 基线在位(内容未漂移)
     ref = json.loads(blob)
 
     sub = P.slice_ledger(led, 8, scope_ids=scope_ids)        # 与门时序同一切片
